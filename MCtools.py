@@ -1,24 +1,41 @@
-#this is a file with small programs for Monte-Carlo fitting of SAXS patterns. It is released under a Creative Commons CC-BY-SA license.
-#Please cite as Brian R. Pauw, 2012, http://arxiv.org/abs/1210.5304 arXiv:1210.5304. (May be replaced later with a J. Appl. Cryst. reference)
-#contents (outdated):
-#* qgen_1D: generates 1D division of q between two points: depreciated as it can be replaced by linspace
-#Isph_1D: calculates the rayleigh function for a sphere radius or array of sphere radii
-#FF_sph_1D: computes the rayleigh form factor for a sphere radius or array of sphere radii
-#Igen_sph_normal: calculates a scattering intensity for (gaussian) polydisperse spheres
-#observability: calculates the observability of individual components in a set of spheres
-#MCFit_sph: Monte-carlo fitting of the data to extract polydispersity assuming spheres, by changing the radius of a fixed number of spheres
-#MCFit_sph: Monte-carlo fitting of the data to extract polydispersity assuming spheres, by continuously trying to add spheres
-#binning_1D: bins the data and propagates errors, or calculates errors if not initially provided
-#binning_weighted_1D: Weighted binning, where the intensities of a pixel are divided between the two neighbouring bins depending on the distances to the centres. If error provided is empty, the standard deviation of the intensities in the bins are computed. 
-#qpsi_2D: generates a set of q and psi matrices based on the input parameters  
-#Rsph_Moments: calculates the central distribution moments for sets of spheres
-#Vsph: calculates the volume of a sphere
-#Vell: calculates the volume of an ellipsoid
-#csqr: least-squares error to use with scipy.optimize.leastsq
-#Iopt: Optimize the scaling factor and background level of modeled data vs. intensity
-#* csqr_v1: least-squares for data with known error, size of parameter-space not taken into account
-#* Iopt_v1: old intensity scaling factor optimisation
-#(asterisk * indicates code to be depreciated)
+'''
+This is a file with small programs for Monte-Carlo fitting of SAXS patterns. It is 
+released under a Creative Commons CC-BY-SA license. Please cite as:
+
+Brian R. Pauw, 2012, http://arxiv.org/abs/1210.5304 arXiv:1210.5304. 
+
+(May be replaced later with a J. Appl. Cryst. reference)
+
+Contents (outdated):
+    * qgen_1D: generates 1D division of q between two points: 
+        depreciated as it can be replaced by linspace
+    Isph_1D: calculates the rayleigh function for a sphere radius or array of sphere radii
+    FF_sph_1D: computes the rayleigh form factor for a sphere radius or array of sphere 
+        radii
+    Igen_sph_normal: calculates a scattering intensity for (gaussian) polydisperse spheres
+    observability: calculates the observability of individual components in a set of spheres
+    MCFit_sph: Monte-carlo fitting of the data to extract polydispersity assuming spheres, 
+        by changing the radius of a fixed number of spheres
+    MCFit_sph: Monte-carlo fitting of the data to extract polydispersity assuming spheres, 
+        by continuously trying to add spheres
+    binning_1D: bins the data and propagates errors, or calculates errors if not initially 
+        provided
+    binning_weighted_1D: Weighted binning, where the intensities of a pixel are divided 
+        between the two neighbouring bins depending on the distances to the centres. If 
+        error provided is empty, the standard deviation of the intensities in the bins are 
+        computed. 
+    qpsi_2D: generates a set of q and psi matrices based on the input parameters  
+    Rsph_Moments: calculates the central distribution moments for sets of spheres
+    Vsph: calculates the volume of a sphere
+    Vell: calculates the volume of an ellipsoid
+    csqr: least-squares error to use with scipy.optimize.leastsq
+    Iopt: Optimize the scaling factor and background level of modeled data vs. intensity
+    * csqr_v1: least-squares for data with known error, size of parameter-space not taken 
+        into account
+    * Iopt_v1: old intensity scaling factor optimisation
+    
+    (asterisk * indicates code to be depreciated)
+'''
 
 import scipy # For many important functions
 from scipy import optimize # For the leastsq optimization function
