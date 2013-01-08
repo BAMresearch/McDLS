@@ -31,6 +31,11 @@ Contents (outdated):
     Iopt_v1: old intensity scaling factor optimisation, more robust but slower than Iopt
     
     (asterisk * indicates code to be depreciated)
+
+Made possible with help from (amongst others):
+    Samuel Tardif - Derivations (mostly observability) and checking of mathematics
+    Jan Skov Pedersen - checking of mathematics
+    Pawel Kwasniewski <kwasniew@esrf.fr> - Code cleanup and documentation
 '''
 
 import scipy # For many important functions
@@ -47,7 +52,7 @@ from numpy import *
 ###################################### Analyze_1D #########################################
 ###########################################################################################
 
-def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='lin',drhosqr=1,Convcrit=1.,StartFromMin=False,Maxntry=5):
+def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='lin',drhosqr=1,Convcrit=1.,StartFromMin=False,Maxntry=5,SimpleOutput=False):
     '''
     This function runs the monte-carlo fit MCFit_sph() several times, and returns 
     bin centres, means, standard deviations and observability limits for the bins. 
@@ -207,18 +212,22 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     print "histogramming..."
     Imean = numpy.mean(Irep,axis=1) #mean fitted intensity
     Istd = numpy.std(Irep,axis=1) #standard deviation on the fitted intensity, usually not plotted for clarity
-    #the observability3 function histograms the results and can be used independently of the MC code for rebinning the result. 
-    B = observability3(q,I=I,E=E,Rrep=Rrep,Histbins=Histbins,Histscale=Histscale,Bounds=Bounds,Rpfactor=Rpfactor,drhosqr=drhosqr)
     # store in output dict
     A = dict()
-    #copy all content of the result of observability3 to the output matrix
-    for keyname in B.keys():
-        A[keyname] = B[keyname]
     A['Rrep'] = Rrep
     A['Imean'] = Imean
     A['Istd'] = Istd
     A['q'] = q
     A['Niter'] = numpy.mean(Niters) #average number of iterations for all repetitions
+
+    #the observability3 function histograms the results and can be used independently of the MC code for rebinning the result. 
+    if SimpleOutput:
+        return A
+    
+    B = observability3(q,I=I,E=E,Rrep=Rrep,Histbins=Histbins,Histscale=Histscale,Bounds=Bounds,Rpfactor=Rpfactor,drhosqr=drhosqr)
+    #copy all content of the result of observability3 to the output matrix
+    for keyname in B.keys():
+        A[keyname] = B[keyname]
     return A
 
 ######################################## end ###############################################
@@ -244,87 +253,92 @@ def observability3(q,I=[],E=[],Rrep=[],Histbins=30,Histscale='lin',Bounds=[],Rpf
     Additional intensity and errors may be supplied for error-weighted observability. 
     Intensity is used for determining the intesity scaling and background levels.
     
-    Now with rebinning as well, to test whether this can be resolved by summing 
-    observabilities of contributions in a histogram. 
+    Now with rebinning as well, so we can keep track of which contribution ends up in 
+    which bin and calculate the correct minimum required contribution accordingly.
     '''
+
+    #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
     if Histscale == 'lin':
-        Hx = linspace(Bounds[0],Bounds[1],Histbins+1)
+        Hx = linspace(Bounds[0],Bounds[1],Histbins+1) #Hx contains the Histbins+1 bin edges, or class limits.
     else:
         Hx = 10**(linspace(log10(Bounds[0]),log10(Bounds[1]),Histbins+1))
-    nreps = size(Rrep,1)
-    ov = zeros(shape(Rrep))
-    Vf = zeros(shape(Rrep))
-    qm = zeros(shape(Rrep))
-    nins = zeros(shape(Rrep))
-    Vft = zeros([nreps])
-    #Hy = zeros([Histbins,Nreps])
-    Hy = zeros([Histbins,nreps])
-    ninsbin = zeros([Histbins,nreps])
-    for ri in range(nreps):
-        Rset = Rrep[:,ri]
-        FFset = FF_sph_1D(q,Rset)
-        Vset = (4./3*pi)*Rset**(3*Rpfactor)
-        # Calculate the intensities
-        Iset = FFset**2*(Vset[:,newaxis]+0*FFset)**2 # a set of intensities
-        Vst = sum(Vset**2) # total volume squared
-        It = sum(Iset,0) # the total intensity
-        if I==[]:
-            I = It
-        if E==[]:
-            E = 0.01*I
-        nu=E/I
-        # Optimize the intensities and calculate convergence criterium
-        #Sc,Conval1 = Iopt_v1(It,I,E,[1,1]) # V1 is more robust w.r.t. a poor initial guess
-        #Sc,Conval = eopt(It,I,E,Sc) # reoptimize with V2, there might be a slight discrepancy in the residual definitions of V1 and V2 which would prevent optimization.
 
-        for isi in range(size(Iset,0)):
-            ov[isi,ri] = (Iset[isi,:]/(It)).max()
-            #ov[isi] = numpy.max(Iset[isi,:]/(size(I)*Sc[0]*E))
-            qmi = numpy.argmax(Iset[isi,:]/(It))
-            qm[isi,ri] = q[qmi]
-            nins[isi,ri] = nu[qmi]/(size(Iset,0)*ov[isi,ri])
-            #nins[isi,ri] = nu[qmi]/(ov[isi,ri])
+    nreps = size(Rrep,1) #this binning and observability calculation process can be applied to a number nreps of identical but independent MC optimizations, with the nreps repetitions allowign for the estimation of the uncertainty on the final result.
+    #ov = zeros(shape(Rrep)) #observability
+    Vf = zeros(shape(Rrep)) #volume fraction for each contribution
+    qm = zeros(shape(Rrep)) #q-value at which the observability contribution for this component is largest
+    vfmin = zeros(shape(Rrep)) #number of required spheres of that size to make a measurable impact
+    vfminbin = zeros([Histbins,nreps]) #minimum required number of contributions /in a bin/ to make a measurable impact
+    Vft = zeros([nreps]) #total volume fractions
+    Hy = zeros([Histbins,nreps]) #total volume fraction contribution in a bin
+    Screps = zeros([2,nreps]) #Intensity scaling factors for matching to the experimental scattering pattern (Amplitude A and flat background term b, defined in the paper)
+
+    #loop over each repetition
+    for ri in range(nreps):
+        Rset = Rrep[:,ri] #the single set of R for this calculation
+        FFset = FF_sph_1D(q,Rset) #Form factors, all normalized to 1 at q=0.
+        Vset = (4./3*pi)*Rset**(3*Rpfactor) #compensated volume for each sphere in the set
+        # Calculate the intensities
+        Iset = FFset**2*(Vset[:,newaxis]+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
+        Vst = sum(Vset**2) # total compensated volume squared 
+        It = sum(Iset,0) # the total intensity of the scattering pattern
+        if I==[]:
+            I = It #in this case we are not comparing to a measured intensity (untested)
+        if E==[]:
+            E = 0.01*I #in this case we assume 1% standard deviation uncertainty on the data
+        
+        # Now for each sphere, calculate its volume fraction (p_c compensated):
+        Vsa = 4./3*pi*Rset**(3*Rpfactor)
+        # And the real particle volume:
+        Vpa = 4./3*pi*Rset**(3)
+
+        Sci = numpy.max(I)/numpy.max(It) #initial guess for the scaling factor.
+        Sc,Cv = Iopt(I,It,E,[Sci,1]) #optimize scaling and background for this repetition
+        Screps[:,ri]=Sc #scaling and background for this repetition.
+        Vf[:,ri] = Sc[0]*Vsa**2/(Vpa*drhosqr) # a set of volume fractions
+        Vft[ri] = sum(Vf[:,ri]) # total volume squared
+        for isi in range(size(Iset,0)): #For each sphere
+            #ov[isi,ri] = (Iset[isi,:]/(It)).max() #calculate the observability (the maximum contribution for that sphere to the total scattering pattern) NOTE: no need to compensate for p_c here, we work with volume fraction later which is compensated by default. additionally, we actually do not use this value.
+            qmi = numpy.argmax(Iset[isi,:]/(It)) #determine where this maximum observability is of contribution isi (index)
+            qm[isi,ri] = q[qmi] #point where the contribution of isi is maximum
+            #close approximation:
+            #vfmin[isi,ri] = (E[qmi]*Vf[isi,ri]/(Sc[0]*Iset[isi,qmi]))
+            #or more precice but slower:
+            vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Iset[isi,:]))
 
         # Now bin whilst keeping track of which contribution ends up in which bin:
-        #Hr = numpy.histogram(Rrep[:,nr],Hx,density=False,weights=Vf[:,nr])
-        Sci = numpy.max(I)/numpy.max(It)
-        Sc,Cv = Iopt(I,It,E,[Sci,1])
-        #print "Scaling: {0}, background {1}".format(Sc[0],Sc[1])
-        # Now for each sphere, calculate its volume fraction:
-        Vsa = 4./3*pi*Rset**(3*Rpfactor)
-        # Real particle volume:
-        Vpa = 4./3*pi*Rset**(3)
-        Vf[:,ri] = Sc[0]*Vsa**2/(Vpa*drhosqr) # a set of intensities
-        Vft[ri] = sum(Vf[:,ri]) # total volume squared
         for bini in range(Histbins):
-            findi = ((Rset>=Hx[bini])*(Rset<Hx[bini+1]))
-            #Hy[bini,ri] = sum(Rset[findi]*Vf[findi,ri])/sum(Vf[findi,ri])
-            Hy[bini,ri] = sum(Vf[findi,ri])
-            ninsbin[bini,ri] = numpy.mean(nins[findi,ri])
+            findi = ((Rset>=Hx[bini])*(Rset<Hx[bini+1])) #indexing which contributions fall into the radius bin
+            Hy[bini,ri] = sum(Vf[findi,ri]) #y contains the volume fraction for that radius bin
+            if sum(findi)==0:
+                vfminbin[bini,ri] = 0
+            else:
+                vfminbin[bini,ri] = numpy.max(vfmin[findi,ri])
+                vfminbin[bini,ri] = numpy.mean(vfmin[findi,ri])
             if isnan(Hy[bini,ri]):
                 Hy[bini,ri] = 0.
     Hmid = zeros(Histbins)
-    ninsmean = zeros(Histbins)
+    vfminbins = zeros(Histbins)
     for bini in range(Histbins):
         Hmid[bini] = numpy.mean(Hx[bini:bini+2])
-        nb = ninsbin[bini,:]
-        ninsmean[bini] = numpy.mean(nb[nb<inf])
+        vb = vfminbin[bini,:]
+        vfminbins[bini] = numpy.max(vb[vb<inf])
     Hmean = numpy.mean(Hy,axis=1)
     Hstd = numpy.std(Hy,axis=1)
     B = dict()
-    B['ov'] = ov
-    B['qm'] = qm
-    B['nins'] = nins
-    B['ninsmean'] = ninsmean
+    #B['ov'] = ov
+    #B['qm'] = qm
     B['Hx'] = Hx
     B['Hy'] = Hy
     B['Hmid'] = Hmid
     B['Hmean'] = Hmean
     B['Hstd'] = Hstd
     B['Hwidth'] = diff(Hx)
+    B['vfminbins'] = vfminbins
+    B['vfmin'] = vfmin
     B['Vf'] = Vf
     B['Vft'] = Vft
-    B['iobs'] = ninsmean*Hmean.sum()
+    B['Screps'] = Screps
     return B
 ######################################## end ###############################################
 
@@ -344,16 +358,19 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
     if MaskNegI == True:
         OutputI = False
     if (size(Qlimits) == 0): # no q-limits supplied
-        Qlimits = numpy.min(q)
+        #Qlimits = numpy.min(q)
+        Qlimits = 0.
     if (size(Qlimits) == 1): # only lower q limit supplied
-        if isinstance(Qlimits,int): # integer supplied, removing a number of values
-            Qlimits = q[Qlimits]
+        #I do not think people supply integers as limits. This code should be removed for clarity:
+        #if isinstance(Qlimits,int): # integer supplied, removing a number of values
+        #    Qlimits = q[Qlimits]
         Qlimits = append(Qlimits,numpy.max(q))
     if size(Qlimits) == 2: # make sure they are in the right order
-        if isinstance(Qlimits[0],int): # integer supplied, removing a number of values
-            Qlimits[0] = q[Qlimits[0]]
-        if isinstance(Qlimits[1],int): # integer supplied, removing a number of values
-            Qlimits[1] = q[Qlimits[1]]
+        #I do not think people supply integers as limits. This code should be removed for clarity:
+        #if isinstance(Qlimits[0],int): # integer supplied, removing a number of values
+        #    Qlimits[0] = q[Qlimits[0]]
+        #if isinstance(Qlimits[1],int): # integer supplied, removing a number of values
+        #    Qlimits[1] = q[Qlimits[1]]
         Qlimits = numpy.array([numpy.min(Qlimits),numpy.max(Qlimits)])
     # Apply limits
     I = I[(q > Qlimits[0])&(q <= Qlimits[1])] #this should exclude q=0 (you never know what users do)
