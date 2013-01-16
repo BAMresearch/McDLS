@@ -22,8 +22,6 @@ Contents (outdated):
         between the two neighbouring bins depending on the distances to the centres. If 
         error provided is empty, the standard deviation of the intensities in the bins are 
         computed. 
-    MCFit_sph: Monte-carlo fitting of the data to extract polydispersity assuming spheres, 
-        by changing the radius of a fixed number of spheres
     csqr: least-squares error to use with scipy.optimize.leastsq
     Iopt: Optimize the scaling factor and background level of modeled data vs. intensity
     csqr_v1: least-squares for data with known error, size of parameter-space not taken 
@@ -228,15 +226,18 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     #copy all content of the result of observability3 to the output matrix
     for keyname in B.keys():
         A[keyname] = B[keyname]
+    print "Done!"
     return A
 
 ######################################## end ###############################################
 
 
 def FF_sph_1D(q,Rsph):
-    #this function calculates the rayleigh function for a sphere
-    if size(Rsph)>1: #multimensional matrices required
-        Rsph=Rsph[:,newaxis] #change the dimension of Rsph array        
+    '''
+    Calculate the Rayleigh function for a sphere
+    '''
+    if size(Rsph)>1: # multimensional matrices required
+        Rsph=Rsph[:,newaxis] # change the dimension of Rsph array        
         qR=(q+0*Rsph)*(Rsph+0*q)
     else:
         qR=(q)*(Rsph)
@@ -351,8 +352,8 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
     Simpler form, but open source might mean slight improvements.
     '''
     # Initialise parameters
-    #OutputI can be set to True only if MaskNeg is not True
-    #Convcrit=1 #reasonable value for poisson weighting. any lower than this and we would be fitting noise
+    # OutputI can be set to True only if MaskNeg is not True
+    # Convcrit=1 #reasonable value for poisson weighting. any lower than this and we would be fitting noise
     Weighting = 'Poisson' # only one implemented
     Method = 'Randmove' # only one implemented
     if MaskNegI == True:
@@ -361,7 +362,7 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
         #Qlimits = numpy.min(q)
         Qlimits = 0.
     if (size(Qlimits) == 1): # only lower q limit supplied
-        #I do not think people supply integers as limits. This code should be removed for clarity:
+        # I do not think people supply integers as limits. This code should be removed for clarity:
         #if isinstance(Qlimits,int): # integer supplied, removing a number of values
         #    Qlimits = q[Qlimits]
         Qlimits = append(Qlimits,numpy.max(q))
