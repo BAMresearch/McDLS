@@ -22,6 +22,11 @@ Contents (outdated):
         between the two neighbouring bins depending on the distances to the centres. If 
         error provided is empty, the standard deviation of the intensities in the bins are 
         computed. 
+    McPlot: A procedure for generating a data-fit plot and size histogram based on 
+        Analyze_1D's results
+    McCSV: Function to write an arbitrary number of semicolon-separated values to a file
+    FixBounds: Internal function for estimating minimum and maximum size bounds based on 
+        q values.
     csqr: least-squares error to use with scipy.optimize.leastsq
     Iopt: Optimize the scaling factor and background level of modeled data vs. intensity
     csqr_v1: least-squares for data with known error, size of parameter-space not taken 
@@ -50,7 +55,7 @@ from numpy import *
 ###################################### Analyze_1D #########################################
 ###########################################################################################
 
-def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='lin',drhosqr=1,Convcrit=1.,StartFromMin=False,Maxntry=5,SimpleOutput=False):
+def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='lin',drhosqr=1,Convcrit=1.,StartFromMin=False,Maxntry=5,SimpleOutput=False,Plot=False):
     '''
     This function runs the monte-carlo fit MCFit_sph() several times, and returns 
     bin centres, means, standard deviations and observability limits for the bins. 
@@ -113,6 +118,9 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
         may just be due to bad luck. The Analyze_1D procedure will try to redo 
         that MC optimization for a maximum of Maxntry tries before concluding that
         it is not bad luck but bad input.
+    Plot : Bool, default: False
+        If set to True, will generate a plot showing the data and fit, as well as
+        the resulting size histogram.
 
     Returns:
     --------
@@ -149,11 +157,16 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
             in each of Nreps iterations
         'Vft' : size (Nreps) array
             Total scatterer volume fraction for each of the Nreps iterations 
-        'iobs' : array
-        'nins' : size (Nsph x Nreps) array
-        'ninsmean' : array
-        'ov' : size (Nsph x Nreps) array
-        'qm' : size (Nsph x Nreps) array
+        'vfmin' : size (Nsph x Nreps) array
+            minimum required volube fraction for each contribution to become statistically
+            significant.
+        'vfminbins' : size (Hmid) array 
+            array with the minimum required volume fraction per bin to become statistically 
+            significant. Used to display minimum required level in histogram.
+        'Screps' : size (2 x Nreps) array
+            Scaling and background values for each repetition. Used to display background 
+            level in data and fit plot.
+
 
     See also:
     ---------
@@ -166,14 +179,18 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     Or, simplified:
     A=Analyze_1D(q,I,numpy.maximum(0.01*I,E))
 
-    Plotting the histogram:
-    bar(A['Hx'][0:-1]*1e9,A['Hmean']/sum(A['Hmean']),width=A['Hwidth']*1e9,yerr=A['Hstd']/sum(A['Hmean']),color='orange',edgecolor='black',linewidth=1,zorder=2,ecolor='blue',capsize=5)
+    Plotting the data fit and histogram:
+    McPlot(q,I,numpy.maximum(0.01*I,E),A)
 
     '''
     #Rpower=3 when Rpfactor=1. Rpower = 3*Rpfactor
     #for volume weighting, Rpfactor = 1.5/3
     #TODO: depreciate the use of Rpower in favor of using Rpfactor which can be more consistently applied.
     Rpower = Rpfactor*3
+    #store initial values for q, I and E for plotting
+    initialq=q
+    initialI=I
+    initialE=E
     # q and psi limits
     validbools = (q>qlims[0])&(q<=qlims[1]) #excluding the lower q limit may prevent q=0 from appearing
     I = I[validbools]
@@ -184,6 +201,8 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     Niters = zeros([Nreps])
     Irep = zeros([len(I),Nreps])
     bignow = time.time() #for time estimation and reporting
+    #fix bounds
+    Bounds=FixBounds(q,Bounds=Bounds)
 
     #This is the loop that repeats the MC optimization Nreps times, after which we can calculate an uncertainty on the results.
     for nr in arange(0,Nreps):
@@ -207,7 +226,6 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
         print "\t*finished optimization number {0} of {1} \r\n\t*total elapsed time: {2} minutes \r\n\t*average time per optimization {3} minutes \r\n\t*total time remaining {4} minutes".format(nr+1,Nreps,tottime,avetime,remtime)
     
     #at this point, all MC optimizations have been completed and we can process all Nreps results.
-    print "histogramming..."
     Imean = numpy.mean(Irep,axis=1) #mean fitted intensity
     Istd = numpy.std(Irep,axis=1) #standard deviation on the fitted intensity, usually not plotted for clarity
     # store in output dict
@@ -222,15 +240,41 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     if SimpleOutput:
         return A
     
+    print "histogramming..."
     B = observability3(q,I=I,E=E,Rrep=Rrep,Histbins=Histbins,Histscale=Histscale,Bounds=Bounds,Rpfactor=Rpfactor,drhosqr=drhosqr)
     #copy all content of the result of observability3 to the output matrix
     for keyname in B.keys():
         A[keyname] = B[keyname]
+<<<<<<< HEAD
     print "Done!"
+=======
+
+    if Plot:
+        McPlot(initialq,initialI,initialE,A)
+
+>>>>>>> 42a62d760d4df7ebc62ca90df7df0dc8a70ec8fc
     return A
 
 ######################################## end ###############################################
-
+def FixBounds(q,Bounds=[]):
+    '''
+    This function will take the q and input bounds and outputs properly formatted two-element size bounds.
+    '''
+    qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
+    if len(Bounds)==0:
+        print 'Bounds not provided, so set related to minimum q or minimum q step and maximum q. Lower and upper bounds are {0} and {1}'.format(qBounds[0],qBounds[1])
+        Bounds=qBounds
+    elif len(Bounds)==1:
+        print 'Only one bound provided, assuming it denotes the maximum. Lower and upper bounds are set to {0} and {1}'.format(qBounds[0],Bounds[1])
+        Bounds=numpy.array([qBounds[0],Bounds])
+    elif len(Bounds)==2:
+        pass
+        #print 'Bounds provided, set to {} and {}'.format(Bounds[0],Bounds[1])
+    else:
+        print 'Wrong number of Bounds provided, defaulting to {} and {}'.format(qBounds[0],qBounds[1])
+        Bounds=qbounds
+    Bounds=numpy.array([numpy.min(Bounds),numpy.max(Bounds)])
+    return Bounds
 
 def FF_sph_1D(q,Rsph):
     '''
@@ -257,7 +301,8 @@ def observability3(q,I=[],E=[],Rrep=[],Histbins=30,Histscale='lin',Bounds=[],Rpf
     Now with rebinning as well, so we can keep track of which contribution ends up in 
     which bin and calculate the correct minimum required contribution accordingly.
     '''
-
+    #fix bounds in case not supplied
+    Bounds=FixBounds(q,Bounds)
     #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
     if Histscale == 'lin':
         Hx = linspace(Bounds[0],Bounds[1],Histbins+1) #Hx contains the Histbins+1 bin edges, or class limits.
@@ -382,9 +427,8 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
         q = q[I >= 0]
         E = E[I >= 0]
         I = I[I >= 0]
-    if size(Bounds) == 0: # if the bounds are not supplied, make a good guess
-        Bounds = array([pi/numpy.max(q),pi/numpy.min((numpy.min(q),numpy.min(diff(q))))]) # reasonable, but not necessarily correct, parameters
-        print 'Bounds not provided, so set related to minimum q or minimum q step and maximum q. Lower and upper bounds are {0} and {1}'.format(Bounds[0],Bounds[1])
+    #fix bounds:
+    Bounds=FixBounds(q,Bounds)
 
     #Rpower=2 #squared results in most reasonable end result. none=3, linear=2.5, squared=2, cubed=1.5, fourth=1. This reduces the volume dependency in the calculation leading to quicker convergence
     #Maxiter=1e6
@@ -512,6 +556,125 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
             return Rset,Conval # ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
 
 ######################################## end ###############################################
+
+def McPlot(q,I,E,A,Histscale='log',AxisMargin=0.3):
+    '''
+    This function plots the output of the Monte-Carlo procedure in two windows, with the left window the measured signal versus the fitted intensity (on double-log scale), and the righthand window the size distribution
+    '''
+
+    #set plot font
+    import matplotlib.font_manager as fm
+    plotfont = fm.FontProperties(
+                family = 'Courier New Bold', fname = '/Library/Fonts/Courier New Bold.ttf')
+    textfont = fm.FontProperties( #Baskerville.ttc does not work when saving to eps
+                family = 'Times New Roman', fname = '/Library/Fonts/Times New Roman.ttf')
+
+    #initialize figure and axes
+    fig=figure(figsize=(14,7),dpi=80,facecolor='w',edgecolor='k')
+    q_ax=fig.add_subplot(121,axisbg=(.95,.95,.95),xlim=(numpy.min(q)*(1-AxisMargin),numpy.max(q)*(1+AxisMargin)),ylim=(numpy.min(I)*(1-AxisMargin),numpy.max(I)*(1+AxisMargin)))
+    xlabel('q, 1/m',fontproperties=plotfont)
+    ylabel('I, 1/(m sr)',fontproperties=plotfont)
+    R_ax=fig.add_subplot(122,axisbg=(.95,.95,.95),xlim=(numpy.min(A['Hx'])*(1-AxisMargin),numpy.max(A['Hx'])*(1+AxisMargin)),ylim=(0,numpy.max(A['Hmean'])*(1+AxisMargin)))
+    if Histscale=='log':
+        xscale('log')
+    xlabel('Radius, m',fontproperties=plotfont)
+    ylabel('[Rel.] Volume Fraction',fontproperties=plotfont)
+    fig.subplots_adjust(left=0.06,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
+
+    #set axis font and ticks
+    R_ax.set_yticklabels(R_ax.get_yticks(), fontproperties = plotfont)
+    R_ax.set_xticklabels(R_ax.get_xticks(), fontproperties = plotfont)
+    q_ax.set_yticklabels(q_ax.get_yticks(), fontproperties = plotfont)
+    q_ax.set_xticklabels(q_ax.get_xticks(), fontproperties = plotfont)
+    #R_ax.spines['bottom'].set_color('black')
+    R_ax.spines['bottom'].set_lw(2)
+    R_ax.spines['top'].set_lw(2)
+    R_ax.spines['left'].set_lw(2)
+    R_ax.spines['right'].set_lw(2)
+    R_ax.tick_params(axis='both',colors='black',width=2,which='major',direction='in',length=6)
+    R_ax.tick_params(axis='x',colors='black',width=2,which='minor',direction='in',length=3)
+    R_ax.tick_params(axis='y',colors='black',width=2,which='minor',direction='in',length=3)
+    q_ax.spines['bottom'].set_lw(2)
+    q_ax.spines['top'].set_lw(2)
+    q_ax.spines['left'].set_lw(2)
+    q_ax.spines['right'].set_lw(2)
+    q_ax.tick_params(axis='both',colors='black',width=2,which='major',direction='in',length=6)
+    q_ax.tick_params(axis='x',colors='black',width=2,which='minor',direction='in',length=3)
+    q_ax.tick_params(axis='y',colors='black',width=2,which='minor',direction='in',length=3)
+
+    #fill R axes
+    axes(R_ax)
+    bar(A['Hx'][0:-1],A['Hmean'],width=A['Hwidth'],color='orange',edgecolor='black',linewidth=1,zorder=2,label='MC size histogram')
+    plot(A['Hmid'],A['vfminbins'],'r--',lw=5,label='Minimum visibility limit',zorder=3)
+    R_eb=errorbar(A['Hmid'],A['Hmean'],A['Hstd'],zorder=4,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=0,lw=2,solid_capstyle='round',solid_joinstyle='miter')
+    legend(loc=1,fancybox=True,prop=textfont)
+    title('Radius size histogram',fontproperties=textfont)
+    #not quite sure if I can set the error bar linewidth on the bar plot in "bar" or whether I have to replot the errors themselves separately to get that level of control 
+
+    #fill q axes
+    axes(q_ax)
+    eb=errorbar(q,I,E,zorder=2,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=5,label='Measured intensity',lw=2,solid_capstyle='round',solid_joinstyle='miter')
+    grid(lw=2,color='black',alpha=.5,dashes=[1,6],dash_capstyle='round',zorder=-1)
+    xscale('log')
+    yscale('log')
+    aq=sort(A['q'])
+    aI=A['Imean'][argsort(A['q'])]
+    plot(aq,aI,'r-',lw=3,label='MC Fit intensity',zorder=4)
+    plot(aq,numpy.mean(A['Screps'][1,:])+0*aq,'g-',linewidth=3,label='MC Background level:\n\t ({0:03.3g})'.format(numpy.mean(A['Screps'][1,:])),zorder=3)
+    legend(loc=1,fancybox=True,prop=textfont)
+    title('Measured vs. Fitted intensity',fontproperties=textfont)
+    
+    #Handles=dict
+    #Handles['fig']=fig
+    #Handles['R_ax']=R_ax
+    #Handles['q_ax']=q_ax
+    #return Handles
+    return
+
+def McCSV(filename,*args):
+    '''
+    This function writes a semicolon-separated csv file to [filename] containing an arbitrary number of columns of *args. in case of variable length columns, empty fields will contain ''.
+
+    Input arguments should be lists or 1D arrays, which will be ouput as:
+    arg1[0];arg2[0];arg3[0]
+    arg1[1];arg2[1];arg3[1]
+    etc.
+    
+    existing files with the same filename will be overwritten
+
+    '''
+    #uses sprintf rather than csv for flexibility
+    ncol=len(args)
+    #make format string used for every line, don't need this
+    #linestr=''
+    #for coli in range(ncol):
+    #    linestr=linestr+'{'+'};'
+    #linestr=linestr[0:-1]+'\n' #strip the last semicolon, add a newline
+
+
+    #find out the longest row
+    nrow=0
+    for argi in range(len(args)):
+        nrow=numpy.max((nrow,len(args[argi])))
+
+    #now we can open the file:
+    fh=open(filename,'w')
+    emptyfields=0
+    for rowi in range(nrow):
+        linestr=''
+        for coli in range(ncol):
+            #print 'rowi {} coli {} len(args[coli]) {}'.format(rowi,coli,len(args[coli]))
+            if len(args[coli])<=rowi: #we ran out of numbers for this arg
+                linestr=linestr+';' #add empty field
+                emptyfields+=1
+            else:
+                linestr=linestr+'{};'.format(args[coli][rowi])
+        linestr=linestr[0:-1]+'\n'
+
+        fh.write(linestr)
+
+    fh.close()
+    print '{} lines written with {} columns per line, and {} empty fields'.format(rowi,ncol,emptyfields)
 
 
 def binning_1D(q,I,E=[],Nbins=200,Stats='STD'):
