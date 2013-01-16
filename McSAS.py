@@ -6,7 +6,7 @@ Brian R. Pauw, 2012, http://arxiv.org/abs/1210.5304 arXiv:1210.5304.
 
 (May be replaced later with a J. Appl. Cryst. reference)
 
-Contents (outdated):
+Contents (updated 2013-01-16):
     Analyze_1D: A wrapper for the MC code which repeatedly runs the optimization and 
         computes the final volume-weighted sphere distribution.
     FF_sph_1D: computes the rayleigh form factor for a sphere radius or array of sphere 
@@ -34,6 +34,8 @@ Contents (outdated):
     csqr_v1: least-squares for data with known error, size of parameter-space not taken 
         into account
     Iopt_v1: old intensity scaling factor optimisation, more robust but slower than Iopt
+    pickle_read: Reads in pickled data from a file (by filename)
+    pickle_write: write a block or dictionary to a file (by filename)
     
     (asterisk * indicates code to be depreciated)
 
@@ -50,6 +52,7 @@ import os # Miscellaneous operating system interfaces
 import time # Timekeeping and timing of objects
 import sys # For printing of slightly more advanced messages to stdout
 from numpy import *
+import pickle #for pickle_read and pickle_write
 
 # 1D functions:
 
@@ -57,7 +60,7 @@ from numpy import *
 ###################################### Analyze_1D #########################################
 ###########################################################################################
 
-def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='lin',drhosqr=1,Convcrit=1.,StartFromMin=False,Maxntry=5,SimpleOutput=False,Plot=False):
+def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='log',drhosqr=1,Convcrit=1.,StartFromMin=False,Maxntry=5,SimpleOutput=False,Plot=False):
     '''
     This function runs the monte-carlo fit MCFit_sph() several times, and returns 
     bin centres, means, standard deviations and observability limits for the bins. 
@@ -97,7 +100,7 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
         Limits on the fitting range in q. units: m^-1
     Histbins : int, default: 50
         Number of bins used for the histogramming procedure.
-    Histscale : string, default: 'lin'
+    Histscale : string, default: 'log'
         Can be set to 'log' for histogramming on a logarithmic size scale, 
         recommended for q- and/or size-ranges spanning more than a decade.
     drhosqr : float, default: 1
@@ -185,10 +188,7 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     McPlot(q,I,numpy.maximum(0.01*I,E),A)
 
     '''
-    #Rpower=3 when Rpfactor=1. Rpower = 3*Rpfactor
     #for volume weighting, Rpfactor = 1.5/3
-    #TODO: depreciate the use of Rpower in favor of using Rpfactor which can be more consistently applied.
-    Rpower = Rpfactor*3
     #store initial values for q, I and E for plotting
     initialq=q
     initialI=I
@@ -210,11 +210,11 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     for nr in arange(0,Nreps):
         nt = 0 #keep track of how many failed attempts there have been 
         # do that MC thing! 
-        Rrep[:,nr],Irep[:,nr],ConVal,Details = MCFit_sph(q,I,E,Bounds=Bounds,Nsph=Nsph,Maxiter=Maxiter,Rpower=Rpower,OutputI=True,Convcrit=Convcrit,StartFromMin=StartFromMin,OutputDetails=True)
+        Rrep[:,nr],Irep[:,nr],ConVal,Details = MCFit_sph(q,I,E,Bounds=Bounds,Nsph=Nsph,Maxiter=Maxiter,Rpfactor=Rpfactor,OutputI=True,Convcrit=Convcrit,StartFromMin=StartFromMin,OutputDetails=True)
         while ConVal>Convcrit:
             #retry in the case we were unlucky in reaching convergence within Maxiter.
             nt+=1
-            Rrep[:,nr],Irep[:,nr],ConVal,Details=MCFit_sph(q,I,E,Bounds=Bounds,Nsph=Nsph,Maxiter=Maxiter,Rpower=Rpower,OutputI=True,Convcrit=Convcrit,StartFromMin=StartFromMin,OutputDetails=True)
+            Rrep[:,nr],Irep[:,nr],ConVal,Details=MCFit_sph(q,I,E,Bounds=Bounds,Nsph=Nsph,Maxiter=Maxiter,Rpfactor=Rpfactor,OutputI=True,Convcrit=Convcrit,StartFromMin=StartFromMin,OutputDetails=True)
             if nt>Maxntry:
                 #this is not a coincidence. We have now tried Maxntry+2 times
                 print "could not reach optimization criterion within {0} attempts, exiting...".format(Maxntry+2)
@@ -249,7 +249,7 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
         A[keyname] = B[keyname]
 
     if Plot:
-        McPlot(initialq,initialI,initialE,A)
+        McPlot(initialq,initialI,initialE,A,Histscale=Histscale)
 
     return A
 
@@ -387,7 +387,7 @@ def observability3(q,I=[],E=[],Rrep=[],Histbins=30,Histscale='lin',Bounds=[],Rpf
 ###########################################################################################
 ################################### Monte-carlo procedure #################################
 ###########################################################################################
-def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,StartFromMin=False,OutputDetails=False,OutputIterations=False):
+def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpfactor=1.5/3,Maxiter=1e5,Prior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,StartFromMin=False,OutputDetails=False,OutputIterations=False):
     '''
     Rewrite of the monte-carlo method previously implemented in Matlab. 
     Simpler form, but open source might mean slight improvements.
@@ -469,7 +469,7 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
 
     #calculate their form factors
     FFset=FF_sph_1D(q,Rset)
-    Vset=(4.0/3*pi)*Rset**Rpower
+    Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
     #calculate the intensities
     Iset=FFset**2*(Vset[:,newaxis]+0*FFset)**2 #a set of intensities
     Vst=sum(Vset**2) # total volume squared
@@ -478,7 +478,7 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
     Sc,Conval1=Iopt_v1(I,It/Vst,E,[1,1]) # V1 is more robust w.r.t. a poor initial guess
     Sc,Conval=Iopt(I,It/Vst,E,Sc) # reoptimize with V2, there might be a slight discrepancy in the residual definitions of V1 and V2 which would prevent optimization.
     #print "Initial conval V1",Conval1
-    print "Initial conval V2",Conval
+    print "Initial Chi-squared value",Conval
 
     if OutputIterations:
         # Output each iteration, starting with number 0. Iterations will be stored 
@@ -498,7 +498,7 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
     while (Conval>Convcrit) &(Niter<Maxiter):
         Rt=numpy.random.uniform(numpy.min(Bounds),numpy.max(Bounds),1)
         Ft=FF_sph_1D(q,Rt)
-        Vtt=(4.0/3*pi)*Rt**Rpower
+        Vtt=(4.0/3*pi)*Rt**(3*Rpfactor)
         Itt=(Ft**2*Vtt**2)
         # Calculate new total intensity
         Itest=(It-Iset[Ri,:]+Itt) # we do subtractions and additions, which give us another factor 2 improvement in speed over summation and is much more scalable
@@ -508,7 +508,7 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
         # test if the radius change is an improvement:
         if Convalt<Conval: # it's better
             Rset[Ri],Iset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itt,Itest,Vtt,Vstest,Sct,Convalt)
-            print "Improvement in iteration number %i, convergence value %f of %f\r" %(Niter,Conval,Convcrit),
+            print "Improvement in iteration number %i, Chi-squared value %f of %f\r" %(Niter,Conval,Convcrit),
             Nmoves+=1
             if OutputIterations:
                 # output each iteration, starting with number 0. 
@@ -533,7 +533,7 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpower=1.5,Maxiter=1e5,Prior=
         print "Normal exit"
     print "Number of iterations per second",Niter/(time.time()-Now)
     print "Number of valid moves",Nmoves
-    print "final convergence value %f" %(Conval)
+    print "final Chi-squared value %f" %(Conval)
     Details['Niter']=Niter
     Details['Nmoves']=Nmoves
     Details['elapsed']=(time.time()-Now)
@@ -672,6 +672,22 @@ def McCSV(filename,*args):
     fh.close()
     print '{} lines written with {} columns per line, and {} empty fields'.format(rowi,ncol,emptyfields)
 
+
+#some quick pickle functions to make my life easier
+
+def pickle_read(filename):
+    #nargs can be 1-4, indicates number of output variables, if it is even possible to extract more from pickle
+    fh=open(filename)
+    O=pickle.load(fh)
+    fh.close()
+    return O
+
+def pickle_write(filename,DBlock):
+    #writes DBlock to a file
+    fh=open(filename,'w')
+    pickle.dump(DBlock,fh)
+    fh.close()
+    return
 
 def binning_1D(q,I,E=[],Nbins=200,Stats='STD'):
     #python implementation of an unweighted binning routine. The intensities are sorted across bins of equal size. If error provided is empty, the standard deviation of the intensities in the bins are computed.
@@ -1027,7 +1043,7 @@ def Analyze_1D_Cylinder_RadiallyIsotropic(q,I,E,Bounds=[],Ncyl=[],Maxiter=[],Rpf
     #this function runs the monte-carlo fit several times, and returns bin centres, means, standard deviations and observability limits for the bins. Eventually, this may also plot. The drhosqr value can be set to the contrast (if known) so a volume fraction for each histogram bin is calculated.
     #Rpower = 3 when Rpfactor = 1. Rpower = 3*Rpfactor
     #for volume weighting, Rpfactor = 1.5/3
-    Rpower = Rpfactor*3
+    #Rpower = Rpfactor*3
     if Histscale=='lin':
         Hx1 = linspace(Bounds[0],Bounds[1],Histbins+1)
         if R2IsAspect:
