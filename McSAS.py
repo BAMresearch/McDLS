@@ -105,7 +105,7 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
         Scattering contrast - when known it will be used to calculate the absolute
         volume fraction of each contribution, units: m^-2
     Convcrit : float, default: 1
-        Convergence criterium for the least-squares fit. The fit converges once 
+        Convergence criterion for the least-squares fit. The fit converges once 
         the normalized chi squared < Convcrit. If convergence is reached with 
         Convcrit = 1, the model describes the data (on average) to within the 
         uncertainty, and thus all information has been extracted from the 
@@ -245,14 +245,11 @@ def Analyze_1D(q,I,E,Bounds=[],Nsph=200,Maxiter=1e5,Rpfactor=1.5/3,Nreps=100,qli
     #copy all content of the result of observability3 to the output matrix
     for keyname in B.keys():
         A[keyname] = B[keyname]
-<<<<<<< HEAD
     print "Done!"
-=======
 
     if Plot:
         McPlot(initialq,initialI,initialE,A,Histscale=Histscale)
 
->>>>>>> 42a62d760d4df7ebc62ca90df7df0dc8a70ec8fc
     return A
 
 ######################################## end ###############################################
