@@ -562,9 +562,12 @@ def McPlot(q,I,E,A,Histscale='log',AxisMargin=0.3):
     #set plot font
     import matplotlib.font_manager as fm
     plotfont = fm.FontProperties(
-                family = 'Courier New Bold', fname = '/Library/Fonts/Courier New Bold.ttf')
+                #this only works for macs, doesn't it?
+                #family = 'Courier New Bold', fname = '/Library/Fonts/Courier New Bold.ttf')
+                family = 'Arial')
     textfont = fm.FontProperties( #Baskerville.ttc does not work when saving to eps
-                family = 'Times New Roman', fname = '/Library/Fonts/Times New Roman.ttf')
+                #family = 'Times New Roman', fname = '/Library/Fonts/Times New Roman.ttf')
+                family = 'Times')
 
     #initialize figure and axes
     fig=figure(figsize=(14,7),dpi=80,facecolor='w',edgecolor='k')
