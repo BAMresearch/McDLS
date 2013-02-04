@@ -4,7 +4,7 @@
 {\colortbl;\red255\green255\blue255;}
 {\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}.}{\leveltext\leveltemplateid1\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid1}}
 {\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}}
-\paperw11900\paperh16840\margl1440\margr1440\vieww10760\viewh8400\viewkind0
+\paperw11900\paperh16840\margl1440\margr1440\vieww13620\viewh8400\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\b\fs58 \cf0 McSAS Quick Usage guide.\
@@ -61,7 +61,7 @@ These aspects will be discussed in that order in this document.\
 The dataset can be loaded using the pickle functions provided in McSAS:\
 -->\
 
-\f1 QIE=pickle_load('test_data.pydat')\
+\f1 QIE=pickle_read('test_data.pydat')\
 q=QIE[0,:]\
 I=QIE[1,:]\
 E=QIE[2,:]
@@ -87,11 +87,14 @@ The most straightforward way of fitting is by running:\
 \f1 Result=Analyze_1D(q,I,E)\
 
 \f0 <--\
+or, for the OO version:\
+-->\
+A=McSAS(Q=q,I=I,IERR=E)\
+<--\
 Which after a minute or so (or about five minutes for the provided extended dataset on an Intel i7 at 1.8 GHz (MacBook Air)) will result in a dictionary called Result with all the fitting details in it. \
 \
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
-\i\fs32 \cf0 2. Plotting the result\
+\i\fs32 2. Plotting the result\
 
 \i0\fs24 The result can be visualised using the built-in plotting function, which puts the data, its fit and the resulting size distribution alongside one another. This can be automatically started by using the option Plot=True in the Analyze_1D code, but can also be run separately. To plot, simply type:\
 -->\
@@ -99,12 +102,18 @@ Which after a minute or so (or about five minutes for the provided extended data
 \f1 McPlot(q,I,E,Result)\
 
 \f0 <--\
+or, for the OO version:\
+-->\
+A.Plot()\
+<--\
+\
 Which should give you the plot shown in test_data.pdf:\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
 \f2 \cf0 {{\NeXTGraphic test_data.png \width20162 \height10081
-}¬}
-\f0 \
+}¬}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f0 \cf0 \
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 The left-hand plot shows the data in black with error bars showing the uncertainty "E", the MC fit in red, and a green line indicating the fitted background level. The width of the green line also serves to indicate the fitting limits in q, and the background value is furthermore indicated in the legend.\
 \
@@ -126,19 +135,40 @@ Result[keyname] = B[keyname]\
 McPlot(q,I,E,Result)
 \f0 \
 <--\
+or, for the OO version:\
+-->\
+
+\f1 A.setpar(Histbins=[15],Histscale=['log'],drhosqr=1.e29) #mind the brackets!\
+A.Histogram()\
+A.Plot()\
+
+\f0 <--\
+\
 This should give the following figure (as shown in 'test_data_plot2.pdf'):\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
 \f2 \cf0 {{\NeXTGraphic test_data_plot2.png \width20162 \height10081
-}¬}
-\f0\i\fs32 \
+}¬}\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
-\i0\fs24 This plot shows more reasonable values for the relative volume fraction, the total volume fraction can be calculated from the 100 repetitions using:\
+\f0\i\fs32 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\i0\fs24 \cf0 This plot shows more reasonable values for the relative volume fraction, the total volume fraction can be calculated from the 100 repetitions using:\
 -->\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
-\f1 numpy.mean(Result['Vft'])\
+\f1 \cf0 numpy.mean(Result['Vft'])\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
-\f0 <--\
+\f0 \cf0 <--\
+or, for the OO version:\
+-->\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f1 \cf0 numpy.mean(A.getresult('Vft'))\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\f0 \cf0 <--\
 which should result in about 15%. \
 \
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
@@ -163,17 +193,23 @@ Then you can do this in one step (with plotting) using:\
 \f1 Result=Analyze_1D(q,I,E,Convcrit=5.,Nreps=25,Bounds=[1e-10,2e-8],qlims=[2e8,1e10],drhosqr=5.e29,Histbins=80,Histscale='lin',Nsph=100,Plot=True)\
 
 \f0 <--\
+or, for the OO version:\
+-->\
+
+\f1 A=McSAS(Q=q,I=I,IERR=E,Convcrit=5.,Nreps=25,Bounds=[1e-10,2e-8],qlims=[2e8,1e10],drhosqr=5.e29,Histbins=80,Histscale='log',Ncontrib=100,Plot=True)
+\f0 \
+<--\
+\
 Which returns a plot that looks a little wonky (given the low convergence criterion restrictions (the higher Convcrit, the more relaxed the criterion). But is otherwise perfectly valid (test_data_plot3.pdf):\
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2 \cf0 {{\NeXTGraphic test_data_plot3.png \width20162 \height10081
-}¬}
-\f0 \
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
-\cf0 \
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+}¬}\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
-\i\fs32 \cf0 4. Exporting the result\
+\f0 \cf0 \
+\
+
+\i\fs32 4. Exporting the result\
 
 \i0\fs24 At this point it may be a good idea to get the histogram data out of python and into another plotting program. You can export whatever information you want, but to get a useful set of four columns indicating left bin edge, bin width, bin value (height) and bin uncertainty (standard deviation), you can use:\
 -->\
@@ -192,7 +228,4 @@ If you have more questions that are not answered in either 1) the paper, 2) the 
 \
 Good luck!
 \i\fs32 \
-
-\i0\fs24 \
-\
 }
