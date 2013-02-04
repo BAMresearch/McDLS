@@ -415,6 +415,60 @@ class McSAS(object):
     ######################################## end ###############################################
     def Analyse_2D(self):
         pass
+
+    def CSVwrite(self,filename,*args):
+        '''
+        This function writes a semicolon-separated csv file to [filename] containing an arbitrary number of output variables *args. in case of variable length columns, empty fields will contain ''.
+
+        Input arguments should be names of fields in "self.results". For example:
+        A.McCSV('hist.csv','Hx','Hwidth','Hmean','Hstd')
+
+        i.e. just stick on as many columns as you'd like. They will be flattened by default. a header with the names will be added.
+        
+        existing files with the same filename will be overwritten by default. 
+
+        '''
+        #uses sprintf rather than csv for flexibility
+        ncol=len(args)
+        #make format string used for every line, don't need this
+        #linestr=''
+        #for coli in range(ncol):
+        #    linestr=linestr+'{'+'};'
+        #linestr=linestr[0:-1]+'\n' #strip the last semicolon, add a newline
+
+        inlist=list()
+        for argi in range(len(args)):
+            inlist.append(self.getresult(args[argi]).flatten())
+        #find out the longest row
+        nrow=0
+        for argi in range(len(args)):
+            nrow=numpy.max((nrow,len(inlist[argi])))
+
+        #now we can open the file:
+        fh=open(filename,'w')
+        emptyfields=0
+        #write header:
+        linestr=''
+        for coli in range(ncol):
+            linestr=linestr+'{};'.format(args[coli])
+        linestr=linestr[0:-1]+'\n'    
+        fh.write(linestr)
+        for rowi in range(nrow):
+            linestr=''
+            for coli in range(ncol):
+                #print 'rowi {} coli {} len(args[coli]) {}'.format(rowi,coli,len(args[coli]))
+                if len(inlist[coli])<=rowi: #we ran out of numbers for this arg
+                    linestr=linestr+';' #add empty field
+                    emptyfields+=1
+                else:
+                    linestr=linestr+'{};'.format(inlist[coli][rowi])
+            linestr=linestr[0:-1]+'\n'
+
+            fh.write(linestr)
+
+        fh.close()
+        print '{} lines written with {} columns per line, and {} empty fields'.format(rowi,ncol,emptyfields)
+
     ###########################################################################################
     ################################### Monte-carlo procedure #################################
     ###########################################################################################
@@ -787,10 +841,45 @@ class McSAS(object):
         '''
         This function plots the output of the Monte-Carlo procedure in two windows, with the left window the measured signal versus the fitted intensity (on double-log scale), and the righthand window the size distribution
         '''
+        def setaxis(ah):
+            import matplotlib.font_manager as fm
+            plotfont = fm.FontProperties(
+                        #this only works for macs, doesn't it?
+                        #family = 'Courier New Bold', fname = '/Library/Fonts/Courier New Bold.ttf')
+                        family = 'Arial')
+            textfont = fm.FontProperties( #Baskerville.ttc does not work when saving to eps
+                        #family = 'Times New Roman', fname = '/Library/Fonts/Times New Roman.ttf')
+                        family = 'Times')
+            "sets the axes parameters. axtyp can be one of 'q' or 'R'"
+            #setaxis font and ticks
+            ah.set_yticklabels(ah.get_yticks(), fontproperties = plotfont,size='large')
+            ah.set_xticklabels(ah.get_xticks(), fontproperties = plotfont,size='large')
+            ah.set_xlabel(ah.get_xlabel(), fontproperties=textfont,size='x-large')
+            ah.set_ylabel(ah.get_ylabel(), fontproperties=textfont,size='x-large')
+            #q_ax.set_yticklabels(q_ax.get_yticks(), fontproperties = plotfont)
+            #q_ax.set_xticklabels(q_ax.get_xticks(), fontproperties = plotfont)
+            #R_ax.spines['bottom'].set_color('black')
+            ah.spines['bottom'].set_lw(2)
+            ah.spines['top'].set_lw(2)
+            ah.spines['left'].set_lw(2)
+            ah.spines['right'].set_lw(2)
+            ah.tick_params(axis='both',colors='black',width=2,which='major',direction='in',length=6)
+            ah.tick_params(axis='x',colors='black',width=2,which='minor',direction='in',length=3)
+            ah.tick_params(axis='y',colors='black',width=2,which='minor',direction='in',length=3)
+            #q_ax.spines['bottom'].set_lw(2)
+            #q_ax.spines['top'].set_lw(2)
+            #q_ax.spines['left'].set_lw(2)
+            #q_ax.spines['right'].set_lw(2)
+            #q_ax.tick_params(axis='both',colors='black',width=2,which='major',direction='in',length=6)
+            #q_ax.tick_params(axis='x',colors='black',width=2,which='minor',direction='in',length=3)
+            #q_ax.tick_params(axis='y',colors='black',width=2,which='minor',direction='in',length=3)
+            return ah
+
         #load parameters
-        Par=self.getpar()
-        for kw in Par:
-            exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        Histscale=self.getpar('Histscale')
+        #let's not do this:
+        #for kw in Par:
+        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         #load original dataset
         q=self.getdata('Q',dataset='original')
         I=self.getdata('I',dataset='original')
@@ -798,76 +887,69 @@ class McSAS(object):
         #load fitted q and intensity
         #load result
         Result=self.getresult()
-        for kw in Result:
-            exec('{}=Result[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        #for kw in Result:
+        #    exec('{}=Result[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+
+        #check how many result plots we need to generate: maximum three.
+        nhists=len(Histscale)
 
         #set plot font
         import matplotlib.font_manager as fm
         plotfont = fm.FontProperties(
                     #this only works for macs, doesn't it?
                     #family = 'Courier New Bold', fname = '/Library/Fonts/Courier New Bold.ttf')
+                    size='large',
                     family = 'Arial')
+        
         textfont = fm.FontProperties( #Baskerville.ttc does not work when saving to eps
                     #family = 'Times New Roman', fname = '/Library/Fonts/Times New Roman.ttf')
+                    size='large',
                     family = 'Times')
-
         #initialize figure and axes
-        fig=figure(figsize=(14,7),dpi=80,facecolor='w',edgecolor='k')
-        q_ax=fig.add_subplot(121,axisbg=(.95,.95,.95),xlim=(numpy.min(q)*(1-AxisMargin),numpy.max(q)*(1+AxisMargin)),ylim=(numpy.min(I)*(1-AxisMargin),numpy.max(I)*(1+AxisMargin)))
-        xlabel('q, 1/m',fontproperties=plotfont)
-        ylabel('I, 1/(m sr)',fontproperties=plotfont)
-        if Histscale[0]=='log': #quick fix with the [0] reference. Needs fixing, this plotting function should be rewritten to support multiple variables.
-            R_ax=fig.add_subplot(122,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)*(1-AxisMargin),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)))
-            xscale('log')
-        else:
-            R_ax=fig.add_subplot(122,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)-(1-AxisMargin)*numpy.max(Hx),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)))
+        fig=figure(figsize=(7*(nhists+1),7),dpi=80,facecolor='w',edgecolor='k')
+        q_ax=fig.add_subplot(1,(nhists+1),1,axisbg=(.95,.95,.95),xlim=(numpy.min(q)*(1-AxisMargin),numpy.max(q)*(1+AxisMargin)),ylim=(numpy.min(I)*(1-AxisMargin),numpy.max(I)*(1+AxisMargin)),xscale='log',yscale='log',xlabel='q, 1/m',ylabel='I, 1/(m sr)')
+        q_ax=setaxis(q_ax)
 
-        xlabel('Radius, m',fontproperties=plotfont)
-        ylabel('[Rel.] Volume Fraction',fontproperties=plotfont)
-        fig.subplots_adjust(left=0.06,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
+        #xlabel('q, 1/m',fontproperties=plotfont)
+        #ylabel('I, 1/(m sr)',fontproperties=plotfont)
+        R_ax=list()
+        for histi in range(nhists):
+            #get data:
+            Hx=self.getresult(parname='Hx',VariableNumber=histi)
+            Hmean=self.getresult(parname='Hmean',VariableNumber=histi)
+            Hmid=self.getresult(parname='Hmid',VariableNumber=histi)
+            Hwidth=self.getresult(parname='Hwidth',VariableNumber=histi)
+            vfminbins=self.getresult(parname='vfminbins',VariableNumber=histi)
+            Hstd=self.getresult(parname='Hstd',VariableNumber=histi)
+            #prep axes
+            if Histscale[histi]=='log': #quick fix with the [0] reference. Needs fixing, this plotting function should be rewritten to support multiple variables.
+                R_ax.append(fig.add_subplot(1,(nhists+1),histi,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)*(1-AxisMargin),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)),xlabel='Radius, m',ylabel='[Rel.] Volume Fraction',xscale='log'))
+            else:
+                R_ax.append(fig.add_subplot(1,(nhists+1),histi,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)-(1-AxisMargin)*numpy.max(Hx),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)),xlabel='Radius, m',ylabel='[Rel.] Volume Fraction'))
 
-        #set axis font and ticks
-        R_ax.set_yticklabels(R_ax.get_yticks(), fontproperties = plotfont)
-        R_ax.set_xticklabels(R_ax.get_xticks(), fontproperties = plotfont)
-        q_ax.set_yticklabels(q_ax.get_yticks(), fontproperties = plotfont)
-        q_ax.set_xticklabels(q_ax.get_xticks(), fontproperties = plotfont)
-        #R_ax.spines['bottom'].set_color('black')
-        R_ax.spines['bottom'].set_lw(2)
-        R_ax.spines['top'].set_lw(2)
-        R_ax.spines['left'].set_lw(2)
-        R_ax.spines['right'].set_lw(2)
-        R_ax.tick_params(axis='both',colors='black',width=2,which='major',direction='in',length=6)
-        R_ax.tick_params(axis='x',colors='black',width=2,which='minor',direction='in',length=3)
-        R_ax.tick_params(axis='y',colors='black',width=2,which='minor',direction='in',length=3)
-        q_ax.spines['bottom'].set_lw(2)
-        q_ax.spines['top'].set_lw(2)
-        q_ax.spines['left'].set_lw(2)
-        q_ax.spines['right'].set_lw(2)
-        q_ax.tick_params(axis='both',colors='black',width=2,which='major',direction='in',length=6)
-        q_ax.tick_params(axis='x',colors='black',width=2,which='minor',direction='in',length=3)
-        q_ax.tick_params(axis='y',colors='black',width=2,which='minor',direction='in',length=3)
+            R_ax[histi]=setaxis(R_ax[histi])
+            #fill axes
+            bar(Hx[0:-1],Hmean,width=Hwidth,color='orange',edgecolor='black',linewidth=1,zorder=2,label='MC size histogram')
+            plot(Hmid,vfminbins,'r--',lw=5,label='Minimum visibility limit',zorder=3)
+            errorbar(Hmid,Hmean,Hstd,zorder=4,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=0,lw=2,solid_capstyle='round',solid_joinstyle='miter')
+            legend(loc=1,fancybox=True,prop=textfont)
+            title('Radius size histogram',fontproperties=textfont,size='x-large')
 
-        #fill R axes
-        axes(R_ax)
-        bar(Hx[0:-1],Hmean,width=Hwidth,color='orange',edgecolor='black',linewidth=1,zorder=2,label='MC size histogram')
-        plot(Hmid,vfminbins,'r--',lw=5,label='Minimum visibility limit',zorder=3)
-        R_eb=errorbar(Hmid,Hmean,Hstd,zorder=4,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=0,lw=2,solid_capstyle='round',solid_joinstyle='miter')
-        legend(loc=1,fancybox=True,prop=textfont)
-        title('Radius size histogram',fontproperties=textfont)
-        #not quite sure if I can set the error bar linewidth on the bar plot in "bar" or whether I have to replot the errors themselves separately to get that level of control 
+
+        fig.subplots_adjust(left=0.08,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
 
         #fill q axes
         axes(q_ax)
-        eb=errorbar(q,I,E,zorder=2,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=5,label='Measured intensity',lw=2,solid_capstyle='round',solid_joinstyle='miter')
+        errorbar(q,I,E,zorder=2,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=5,label='Measured intensity',lw=2,solid_capstyle='round',solid_joinstyle='miter')
         grid(lw=2,color='black',alpha=.5,dashes=[1,6],dash_capstyle='round',zorder=-1)
-        xscale('log')
-        yscale('log')
-        aq=sort(Qfit)[0,:]
-        aI=Imean[0,argsort(Qfit[0,:])]
+        #xscale('log')
+        #yscale('log')
+        aq=sort(Result['Qfit'][0,:])
+        aI=Result['Imean'][0,argsort(Result['Qfit'][0,:])]
         plot(aq,aI,'r-',lw=3,label='MC Fit intensity',zorder=4)
-        plot(aq,numpy.mean(Screps[1,:])+0*aq,'g-',linewidth=3,label='MC Background level:\n\t ({0:03.3g})'.format(numpy.mean(Screps[1,:])),zorder=3)
-        legend(loc=1,fancybox=True,prop=textfont)
-        title('Measured vs. Fitted intensity',fontproperties=textfont)
+        plot(aq,numpy.mean(Result['Screps'][1,:])+0*aq,'g-',linewidth=3,label='MC Background level:\n\t ({0:03.3g})'.format(numpy.mean(Result['Screps'][1,:])),zorder=3)
+        leg=legend(loc=1,fancybox=True,prop=textfont)
+        title('Measured vs. Fitted intensity',fontproperties=textfont,size='x-large')
         
 def FF_sph_1D(q,Rsph):
     '''
