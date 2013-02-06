@@ -217,6 +217,12 @@ Which returns a plot that looks a little wonky (given the low convergence criter
 \f1 McCSV('hist.csv',Result['Hx'],Result['Hwidth'],Result['Hmean'],Result['Hstd'])\
 
 \f0 <--\
+Or, in the OO version:\
+-->\
+
+\f1 A.CSVwrite('hist.csv','Hx','Hwidth','Hmean','Hstd')\
+
+\f0 <--\
 Which writes just that to a file named 'hist.csv', semicolon delimited. It actually contains one more bin edge, which is the trailing edge and is superfluous. \
 \
 

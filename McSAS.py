@@ -936,7 +936,7 @@ class McSAS(object):
             title('Radius size histogram',fontproperties=textfont,size='x-large')
 
 
-        fig.subplots_adjust(left=0.08,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
+        fig.subplots_adjust(left=0.1,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
 
         #fill q axes
         axes(q_ax)
