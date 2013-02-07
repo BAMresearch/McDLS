@@ -74,11 +74,13 @@ class McSAS(object):
 
         Parameters:
         -----------
-        q : 1D array 
+        Q : 1D array 
             q vector values, units: m^-1
+        PSI: 1D array
+            azimuthal angle of q on the detector, used for anisotropic scattering
         I : 1D array 
             I(q) values, units: (m sr)^-1, size should be identical to q
-        E : 1D array
+        IERR : 1D array
             Uncertainty (one standard deviation) of the measured I(q) values, these 
             should only reflect the relative uncertainties, absolute uncertainty 
             contributions should be indicated on the final histogram in addition to 
@@ -128,6 +130,22 @@ class McSAS(object):
         Plot : Bool, default: False
             If set to True, will generate a plot showing the data and fit, as well as
             the resulting size histogram.
+        BOUNDS : string
+            the McSAS function to use for calculating random number generator 
+            bounds based on input (f.ex. q and I). default: SphBounds
+        FF : string
+            the McSAS function to use for calculating the form factors.
+            default: FF_sph_1D 
+        RAND : string
+            the McSAS function to use for generating random numbers
+            default: random_uniform_sph
+        SMEAR : string
+            the McSAS function to use for smearing of intensity
+            default: _passthrough
+        VOL : string
+            the McSAS function to use for calculating the base object volume
+            default: vol_sph
+
 
         Returns:
         --------
@@ -181,10 +199,11 @@ class McSAS(object):
 
         Usage:
         ------
+        *for detailed usage, see accompanying documentation*
         To fit I(q):
-        A=Analyze_1D(q,I,numpy.maximum(0.01*I,E),Nsph=200,Convcrit=1,Bounds=array([pi/numpy.max(q),pi/numpy.min(q)]),Rpfactor=1.5/3,Maxiter=1e5,Histscale='lin',drhosqr=1,Nreps=100)
+        A=McSAS(Q=q,I=I,IERR=numpy.maximum(0.01*I,E),Ncontrib=200,Convcrit=1,Bounds=array([pi/numpy.max(q),pi/numpy.min(q)]),Rpfactor=1.5/3,Maxiter=1e5,Histscale='lin',drhosqr=1,Nreps=100,Plot=True)
         Or, simplified:
-        A=Analyze_1D(q,I,numpy.maximum(0.01*I,E))
+        A=McSAS(Q=q,I=I,IERR=numpy.maximum(0.01*I,E))
 
         Plotting the data fit and histogram:
         McPlot(q,I,numpy.maximum(0.01*I,E),A)
@@ -192,7 +211,7 @@ class McSAS(object):
         Initial goal for this function is to have identical functionality as Analyze_1D in a more flexible framework.
         """
         #initialize
-        self.dataset=dict() #where q, I and E is stored, original dataset
+        self.dataset=dict() #where Q, PSI, I and IERR is stored, original dataset
         self.fitdata=dict() #may be populated with a subset of the aforementioned dataset, limited to q-limits or psi limits and to positive I values alone
         self.parameters=dict() #where the fitting and binning settings are stored
         self.result=list() #where all the analysis results are stored, I do not think this needs separation after all into results of analysis and results of interpretation. However, this is a list of dicts, one per variable (as the method, especially for 2D analysis, can deal with more than one random values. analysis results are stored along with the histogrammed results of the first variable with index [0]:
@@ -221,10 +240,10 @@ class McSAS(object):
         self.check_parameters() #this is only a very simple function now in need of expansion
 
         #Analyse
-        self.Analyse_1D()
+        self.Analyse()
 
         ##Histogram
-        self.Histogram()
+        #self.Histogram()
 
         ##Plot
         if self.getpar('Plot'):
@@ -232,6 +251,69 @@ class McSAS(object):
             #Result=self.getresult()
             self.Plot()
 
+    def TwoDGenI(self):
+        "this function is run after the histogram procedure for anisotropic images, and will calculate the MC fit intensity in imageform"
+        Result=self.getresult()
+        #load original dataset
+        q=self.getdata('Q',dataset='original')
+        I=self.getdata('I',dataset='original')
+        E=self.getdata('IERR',dataset='original')
+        PSI=self.getdata('PSI',dataset='original')
+        #we need to recalculate the result in two dimensions
+        kansas=shape(q) #we will return to this shape
+        q=reshape(q,[1,-1]) #flatten
+        I=reshape(I,[1,-1]) #flatten
+        E=reshape(E,[1,-1]) #flatten
+        PSI=reshape(PSI,[1,-1]) #flatten
+
+        Randfunc=self.functions['RAND']
+        FFfunc=self.functions['FF']
+        VOLfunc=self.functions['VOL']
+        SMEARfunc=self.functions['SMEAR']
+        print 'Recalculating final result, this may take some time'
+        #for each result
+        Iave=zeros(shape(q))
+        Nreps=self.getpar('Nreps')
+        Rpfactor=self.getpar('Rpfactor')
+        qlims=self.getpar('qlims')
+        psilims=self.getpar('psilims')
+        Screps=self.getresult('Screps')
+        for nr in range(Nreps):
+            print 'regenerating set {} of {}'.format(nr,Nreps)
+            Rset=Result['Rrep'][:,:,nr]
+            #calculate their form factors
+            FFset=FFfunc(Rset)
+            Vset=VOLfunc(Rset,Rpfactor)
+            #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
+            #calculate the intensities
+            Iset=FFset**2*(Vset+0*FFset)**2 #a set of intensities
+            Vst=sum(Vset**2) # total volume squared
+            It=sum(Iset,0) # the total intensity - eq. (1)
+            It=reshape(It,(1,-1)) # reshaped to match I and q
+            # Optimize the intensities and calculate convergence criterium
+            #SMEAR function goes here
+            It=SMEARfunc(It)
+            Iave=Iave+It/Vst*Screps[0,nr]+Sc[1,nr] #add to average
+        #print "Initial conval V1",Conval1
+        Iave=Iave/Nreps
+        #mask (lifted from clip_dataset)
+        validbools=isfinite(q)
+        # Optional masking of negative intensity
+        if self.getpar('MaskNegI'):
+            validbools=validbools*(I >= 0)
+        if (qlims==[])and(psilims==[]):
+            #q limits not set, simply copy dataset to fitdata
+            validbools=validbools
+        if (not(qlims==[])): #and qlims is implicitly set
+            validbools = validbools*(q>numpy.min(qlims))&(q<=numpy.max(qlims)) #excluding the lower q limit may prevent q=0 from appearing
+        if (not(psilims==[])): #we assume here that we have a dataset ['PSI']
+            validbools = validbools*(PSI>numpy.min(psilims))&(PSI<=numpy.max(psilims)) #excluding the lower q limit may prevent q=0 from appearing
+        Iave=Iave*validbools
+        #shape back to imageform
+        I2D=reshape(Iave,kansas)
+        self.setresult(I2D=I2D)
+
+    
     def setfunctions(self,**kwargs):
         '''functions are defined here. 
         In particular here the following is specified:
@@ -240,11 +322,18 @@ class McSAS(object):
         1. The Form-factor function 'FF'. If called, this should get the required information from self and a supplied Nsets-by-nvalues shape-specifying parameter array. It should return an Nsets-by-q array. Orientational averaging should be part of the form-factor function (as it is most efficiently calculated there), so several form factor functions can exist for non-spherical objects.
         2. The shape volume calculation function 'VOL', which must be able to deal with input argument "Rpfactor", ranging from 0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets number of (Rpfactor-compensated)-volumes. 
         3. The smearing function 'SMEAR'. Should take information from self, and an input Icalc, to output an Ismear of the same length.
+
+        This function will actually cast the supplied function name into a function pointer.
         '''
         for kw in kwargs:
-            self.functions[kw]=kwargs[kw]
+            if kw in self.functions.keys():
+                if callable(kwargs[kw]):
+                    self.functions[kw]=kwargs[kw]
+                else:
+                    #make it into a function handle/pointer
+                    self.functions[kw]=getattr(self,kwargs[kw])
 
-    def Analyse_1D(self):
+    def Analyse(self):
         #get data
         q=self.getdata('Q')
         I=self.getdata('I')
@@ -255,9 +344,11 @@ class McSAS(object):
             exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         #find out how many values a shape is defined by:
         testR=self.functions['RAND']()
-        NRval=len(testR)
+        NRval=prod(shape((testR)))
 
         Rrep = zeros([Ncontrib,NRval,Nreps]) 
+        #DEBUG:
+        #print 'Rrep: {}'.format(shape(Rrep))
         Niters = zeros([Nreps])
         Irep = zeros([1,prod(shape(I)),Nreps])
         bignow = time.time() #for time estimation and reporting
@@ -413,8 +504,6 @@ class McSAS(object):
                 'Screps':Screps})
 
     ######################################## end ###############################################
-    def Analyse_2D(self):
-        pass
 
     def CSVwrite(self,filename,*args):
         '''
@@ -476,7 +565,7 @@ class McSAS(object):
         
         #def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpfactor=1.5/3,Maxiter=1e5,Prior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,StartFromMin=False,OutputDetails=False,OutputIterations=False):
         '''
-        Object-oriented and hopefullt shape-flexible form of the MC procedure.
+        Object-oriented and hopefully shape-flexible form of the MC procedure.
         '''
         #load dataset
         q=self.getdata('Q')
@@ -618,6 +707,9 @@ class McSAS(object):
         Sc,Conval=Iopt(I,Ifinal,E,Sc)    
         if OutputI:
             if OutputDetails:
+                #DEBUG:
+                #print 'Rset: {}, I: {}, Conval: {}'.format(shape(Rset),shape((Ifinal*Sc[0]+Sc[1])),shape(Conval))
+
                 return Rset,(Ifinal*Sc[0]+Sc[1]),Conval,Details
             else:
                 return Rset,(Ifinal*Sc[0]+Sc[1]),Conval
@@ -629,9 +721,6 @@ class McSAS(object):
 
     ######################################## end ###############################################
 
-    def MCFit_2D(self,shape,**kwargs):
-        pass
-    
     def _Iopt(self,I0,I1,startval):
         #intensity optimization function, returning values and reduced chi squared.
         pass
@@ -667,6 +756,31 @@ class McSAS(object):
                 'VOL':self.vol_sph,
                 'SMEAR':self._passthrough} #none
 
+    def random_uniform_ell(self,Nell=1):
+        #get parameters from self
+        Bounds=self.getpar('Bounds') 
+        #generate Nsph random numbers
+        Rset=zeros((Nell,3))
+        Rset[:,0]=numpy.random.uniform(numpy.min(Bounds[0]),numpy.max(Bounds[1]),Nell)
+        Rset[:,1]=numpy.random.uniform(numpy.min(Bounds[2]),numpy.max(Bounds[3]),Nell)
+        Rset[:,2]=numpy.random.uniform(numpy.min(Bounds[4]),numpy.max(Bounds[5]),Nell)
+
+        #output Nsph-by-3 array
+        return Rset
+
+    def random_logR_ell(self,Nell=1):
+        "like uniform, but with a higher likelihood of sampling smaller sizes. May speed up some fitting procedures."
+        #get parameters from self
+        Bounds=self.getpar('Bounds') 
+        #generate Nsph random numbers
+        Rset=zeros((Nell,3))
+        Rset[:,0]=10**(numpy.random.uniform(log10(numpy.min(Bounds[0])),log10(numpy.max(Bounds[1])),Nell))
+        Rset[:,1]=10**(numpy.random.uniform(log10(numpy.min(Bounds[2])),log10(numpy.max(Bounds[3])),Nell))
+        Rset[:,2]=numpy.random.uniform(numpy.min(Bounds[4]),numpy.max(Bounds[5]),Nell)
+
+        #output Nsph-by-3 array
+        return Rset
+
     def random_uniform_sph(self,Nsph=1):
         #get parameters from self
         Bounds=self.getpar('Bounds') 
@@ -677,6 +791,13 @@ class McSAS(object):
 
         #output Nsph-by-1 array
         return Rset
+
+    def vol_ell(self,Rset,Rpfactor=[]):
+        '''calculates the volume of an ellipsoid, taking Rpfactor from input or preset parameters'''
+        if Rpfactor==[]:
+            Rpfactor=self.getpar('Rpfactor')
+            
+        return ((4.0/3*pi)*Rset[:,0]**(2*Rpfactor)+Rset[:,1]**(Rpfactor))[:,newaxis]
 
     def vol_sph(self,Rset,Rpfactor=[]):
         '''calculates the volume of a sphere, taking Rpfactor from input or preset parameters'''
@@ -697,6 +818,41 @@ class McSAS(object):
 
         Fsph=3*(sin(qR)-qR*cos(qR))/(qR**3)
         return Fsph
+
+    def FF_ell_2D(self,Rset):
+        #Rset is n-by-3. R1=Rset[:,0],R2=Rset[:,1],R3=Rset[:,2]
+        #R1<R2, prolate ellipsoid (cigar-shaped), R1>R2, oblate ellipsoid (disk-shaped), rotation is offset from perfect orientation (psi-rot)
+        d_to_r=1./360*2*pi #degrees to radians, forget the dot and get yourself into a non-floating point mess, even though pi is floating point...
+        q=self.getdata('Q')#1-by-N
+        psi=self.getdata('PSI')#1-by-N
+        R1,R2,rot=Rset[:,0],Rset[:,1],Rset[:,2]
+        NR=prod(shape(R1))
+        if NR==1:
+            ##option 1:
+            #sda=sin((psi-rot)*d_to_r)
+            #cda=cos((psi-rot)*d_to_r)
+            #r=sqrt(R1**2*sda**2+R2**2*cda**2)
+            #qr=q*r
+            #Fell=3*(sin(qr)-qr*cos(qr))/(qr**3)
+            ##quicker?:
+            Fell=3*(
+                    sin(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+                        +R2**2*cos((psi-rot)*d_to_r)**2))
+                    -q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+                        +R2**2*cos((psi-rot)*d_to_r)**2)
+                    *cos(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+                        +R2**2*cos((psi-rot)*d_to_r)**2)))/((q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+                            +R2**2*cos((psi-rot)*d_to_r)**2))**3)
+        else: #calculate a series
+            Fell=zeros([NR,prod(shape(q))])
+            for Ri in range(size(R1)):
+                sda=sin((psi-rot[Ri])*d_to_r)
+                cda=cos((psi-rot[Ri])*d_to_r)
+                r=sqrt(R1[Ri]**2*sda**2+R2[Ri]**2*cda**2)
+                qr=q*r
+                Fell[Ri,:]=3*(sin(qr)-qr*cos(qr))/(qr**3)
+
+        return Fell #this will be n-by-len(q) array
 
     def _passthrough(self,In):
         '''a passthrough mechanism returning the input unchanged'''
@@ -779,6 +935,7 @@ class McSAS(object):
     def setpar(self,**kwargs):
         '''
         Sets the supplied parameters given in keyword-value pairs for known setting keywords (unknown key-value pairs are skipped)
+        If a supplied parameter is one of the function names, it is stored in the self.functions dict.
         '''
         for kw in kwargs:
             if kw in self.parameters.keys():
@@ -796,6 +953,26 @@ class McSAS(object):
                 self.dataset[kw]=kwargs[kw]
             else:
                 pass #do not store non-dataset values.
+
+    def EllBounds_2D(self):
+        '''
+        This function will take the q and psi input bounds and outputs properly formatted two-element size bounds for ellipsoids. Ellipsoids are defined by their equatorial radius, meridional radius and axis misalignment (default -45 to 45 degrees in PSI).
+        '''
+        Bounds=self.getpar('Bounds')
+        q=self.getdata('Q')
+        qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
+        if len(Bounds)==0:
+            print 'Bounds not provided, so set related to minimum q or minimum q step and maximum q. Lower and upper bounds are {0} and {1}'.format(qBounds[0],qBounds[1])
+            Bounds=numpy.array([qBounds[0],qBounds[1],qBounds[0],qBounds[1],-45,45])
+        elif len(Bounds)==6:
+            pass
+            #print 'Bounds provided, set to {} and {}'.format(Bounds[0],Bounds[1])
+        else:
+            print 'Wrong number of Bounds provided, defaulting to {} and {} for radii, -45, 45 for misalignment'.format(qBounds[0],qBounds[1])
+            Bounds=numpy.array([qBounds[0],qBounds[1],qBounds[0],qBounds[1],-45,45])
+        Bounds=numpy.array([numpy.min(Bounds[0:2]),numpy.max(Bounds[0:2]),numpy.min(Bounds[2:4]),numpy.max(Bounds[2:4]),numpy.min(Bounds[4:6]),numpy.max(Bounds[4:6])])
+
+        self.setpar(Bounds=Bounds)
 
     def SphBounds(self):
         '''
@@ -825,17 +1002,31 @@ class McSAS(object):
         #for now, all I need is a check that Histbins is a 1D vector with n values, where n is the number of parameters specifying a shape. 
 
         testR=self.functions['RAND']()
-        NRval=len(testR)
-        if prod(size((self.parameters['Histbins'])))==1:
-            self.parameters['Histbins']=self.parameters['Histbins']+0*testR
+        NRval=prod(shape(testR))
+        Histbins=self.getpar('Histbins')
+        if not(isinstance(Histbins,list)): #meaning it will be a string
+            HB=list()
+            for ri in range(NRval):
+                HB.append(int(Histbins))
+            self.setpar(Histbins=HB)
+        elif len(Histbins)<NRval:
+            #histbins is a list but not of the right length
+            while len(Histscale)<NRval:
+                Histbins.append(Histbins[0])
+            self.setpar(Histbins=Histbins)
         #now check histscale
-        Histscale=self.parameters['Histscale']
+        Histscale=self.getpar('Histscale')
         if not(isinstance(Histscale,list)): #meaning it will be a string
             HS=list()
             for ri in range(NRval):
                 HS.append(Histscale) #repeat until we have enough
             #replace histscale
-            self.parameters['Histscale']=HS
+            self.setpar(Histscale=HS)
+        elif len(Histscale)<NRval:
+            #histscale is a list but not of the right length
+            while len(Histscale)<NRval:
+                Histscale.append(Histscale[0])
+            self.setpar(Histscale=Histscale)
 
     def Plot(self,AxisMargin=0.3):
         '''
@@ -880,15 +1071,20 @@ class McSAS(object):
         #let's not do this:
         #for kw in Par:
         #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        #load result
+        Result=self.getresult()
         #load original dataset
         q=self.getdata('Q',dataset='original')
         I=self.getdata('I',dataset='original')
         E=self.getdata('IERR',dataset='original')
-        #load fitted q and intensity
-        #load result
-        Result=self.getresult()
-        #for kw in Result:
-        #    exec('{}=Result[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        TwoDMode=False
+        if ndim(q)>1:
+            #2D data
+            TwoDMode=True
+            PSI=self.getdata('PSI',dataset='original')
+            #we need to recalculate the result in two dimensions
+            #done by TwoDGenI function
+            I2D=self.getresult('I2D')
 
         #check how many result plots we need to generate: maximum three.
         nhists=len(Histscale)
