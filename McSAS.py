@@ -243,7 +243,11 @@ class McSAS(object):
         self.Analyse()
 
         ##Histogram
-        #self.Histogram()
+        self.Histogram()
+
+        if ndim(kwargs['Q'])>1:
+            #2D mode, regenerate intensity
+            self.TwoDGenI()
 
         ##Plot
         if self.getpar('Plot'):
@@ -282,7 +286,7 @@ class McSAS(object):
             print 'regenerating set {} of {}'.format(nr,Nreps)
             Rset=Result['Rrep'][:,:,nr]
             #calculate their form factors
-            FFset=FFfunc(Rset)
+            FFset=FFfunc(Rset,Q=q,PSI=PSI)
             Vset=VOLfunc(Rset,Rpfactor)
             #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
             #calculate the intensities
@@ -293,7 +297,7 @@ class McSAS(object):
             # Optimize the intensities and calculate convergence criterium
             #SMEAR function goes here
             It=SMEARfunc(It)
-            Iave=Iave+It/Vst*Screps[0,nr]+Sc[1,nr] #add to average
+            Iave=Iave+It*Screps[0,nr]+Screps[1,nr] #add to average
         #print "Initial conval V1",Conval1
         Iave=Iave/Nreps
         #mask (lifted from clip_dataset)
@@ -456,10 +460,10 @@ class McSAS(object):
 
         #now we histogram over each variable
         #for each variable parameter we define, we need to histogram separately. 
-        for vari in range(prod(size(Histbins))):
+        for vari in range(prod(shape(Histbins))):
             # Now bin whilst keeping track of which contribution ends up in which bin:
             #set bin edge locations
-            if Histscale == 'lin':
+            if Histscale[vari] == 'lin':
                 Hx = linspace(Bounds[0+2*vari],Bounds[1+2*vari],Histbins[vari]+1) #Hx contains the Histbins+1 bin edges, or class limits.
             else:
                 Hx = 10**(linspace(log10(Bounds[0+2*vari]),log10(Bounds[1+2*vari]),Histbins[vari]+1))
@@ -470,11 +474,12 @@ class McSAS(object):
 
             for ri in range(Nreps):
                 
-                Rset = Rrep[:,:,ri] #the single set of R for this calculation
+                Rset = Rrep[:,vari,ri] #the single set of R for this calculation
 
                 for bini in range(Histbins[vari]):
                     findi = ((Rset>=Hx[bini])*(Rset<Hx[bini+1])) #indexing which contributions fall into the radius bin
-                    findi = findi[:,0]
+                    #print 'findi: {} Vf: {}'.format(shape(findi),shape(Vf))
+                    #findi = findi[:,0]
                     Hy[bini,ri] = sum(Vf[findi,ri]) #y contains the volume fraction for that radius bin
                     if sum(findi)==0:
                         vfminbin[bini,ri] = 0
@@ -582,7 +587,7 @@ class McSAS(object):
         VOLfunc=self.functions['VOL']
         SMEARfunc=self.functions['SMEAR']
         testR=Randfunc()
-        NRval=prod(size(testR))
+        NRval=prod(shape(testR))
 
         Rset=numpy.zeros((Ncontrib,NRval))
 
@@ -819,30 +824,36 @@ class McSAS(object):
         Fsph=3*(sin(qR)-qR*cos(qR))/(qR**3)
         return Fsph
 
-    def FF_ell_2D(self,Rset):
+    def FF_ell_2D(self,Rset=[],Q=[],PSI=[]):
+        "all 2D functions should be able to potentially take externally supplied Q and PSI vectors"
         #Rset is n-by-3. R1=Rset[:,0],R2=Rset[:,1],R3=Rset[:,2]
         #R1<R2, prolate ellipsoid (cigar-shaped), R1>R2, oblate ellipsoid (disk-shaped), rotation is offset from perfect orientation (psi-rot)
         d_to_r=1./360*2*pi #degrees to radians, forget the dot and get yourself into a non-floating point mess, even though pi is floating point...
-        q=self.getdata('Q')#1-by-N
-        psi=self.getdata('PSI')#1-by-N
+        if Q==[]:
+            q=self.getdata('Q')#1-by-N
+            psi=self.getdata('PSI')#1-by-N
+        else:
+            #externally supplied data
+            q=Q
+            psi=PSI
         R1,R2,rot=Rset[:,0],Rset[:,1],Rset[:,2]
         NR=prod(shape(R1))
         if NR==1:
-            ##option 1:
-            #sda=sin((psi-rot)*d_to_r)
-            #cda=cos((psi-rot)*d_to_r)
-            #r=sqrt(R1**2*sda**2+R2**2*cda**2)
-            #qr=q*r
-            #Fell=3*(sin(qr)-qr*cos(qr))/(qr**3)
-            ##quicker?:
-            Fell=3*(
-                    sin(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-                        +R2**2*cos((psi-rot)*d_to_r)**2))
-                    -q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-                        +R2**2*cos((psi-rot)*d_to_r)**2)
-                    *cos(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-                        +R2**2*cos((psi-rot)*d_to_r)**2)))/((q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-                            +R2**2*cos((psi-rot)*d_to_r)**2))**3)
+            #option 1:
+            sda=sin((psi-rot)*d_to_r)
+            cda=cos((psi-rot)*d_to_r)
+            r=sqrt(R1**2*sda**2+R2**2*cda**2)
+            qr=q*r
+            Fell=3*(sin(qr)-qr*cos(qr))/(qr**3)
+            ##quicker? no, 20% slower:
+            #Fell=3*(
+            #        sin(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+            #            +R2**2*cos((psi-rot)*d_to_r)**2))
+            #        -q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+            #            +R2**2*cos((psi-rot)*d_to_r)**2)
+            #        *cos(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+            #            +R2**2*cos((psi-rot)*d_to_r)**2)))/((q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
+            #                +R2**2*cos((psi-rot)*d_to_r)**2))**3)
         else: #calculate a series
             Fell=zeros([NR,prod(shape(q))])
             for Ri in range(size(R1)):
@@ -1032,6 +1043,7 @@ class McSAS(object):
         '''
         This function plots the output of the Monte-Carlo procedure in two windows, with the left window the measured signal versus the fitted intensity (on double-log scale), and the righthand window the size distribution
         '''
+        import matplotlib.font_manager as fm
         def setaxis(ah):
             import matplotlib.font_manager as fm
             plotfont = fm.FontProperties(
@@ -1064,6 +1076,10 @@ class McSAS(object):
             #q_ax.tick_params(axis='both',colors='black',width=2,which='major',direction='in',length=6)
             #q_ax.tick_params(axis='x',colors='black',width=2,which='minor',direction='in',length=3)
             #q_ax.tick_params(axis='y',colors='black',width=2,which='minor',direction='in',length=3)
+            locs,labels = xticks()
+            xticks(locs, map(lambda x: "%g" % x, locs))
+            locs,labels = yticks()
+            yticks(locs, map(lambda x: "%g" % x, locs))
             return ah
 
         #load parameters
@@ -1073,6 +1089,18 @@ class McSAS(object):
         #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         #load result
         Result=self.getresult()
+        #check how many result plots we need to generate: maximum three.
+        nhists=len(Histscale)
+
+        #set plot font
+        plotfont = fm.FontProperties(
+                    size='large',
+                    family = 'Arial')
+        textfont = fm.FontProperties( #Baskerville.ttc does not work when saving to eps
+                    size='large',
+                    family = 'Times')
+        #initialize figure and axes
+        fig=figure(figsize=(7*(nhists+1),7),dpi=80,facecolor='w',edgecolor='k')
         #load original dataset
         q=self.getdata('Q',dataset='original')
         I=self.getdata('I',dataset='original')
@@ -1085,29 +1113,36 @@ class McSAS(object):
             #we need to recalculate the result in two dimensions
             #done by TwoDGenI function
             I2D=self.getresult('I2D')
+            Ishow=I.copy()
+            #quadrant 1 and 4 are simulated data, 2 and 3 are measured data
+            Ishow[(PSI>0)*(PSI<=90)]=I2D[(PSI>0)*(PSI<=90)]
+            Ishow[(PSI>180)*(PSI<=270)]=I2D[(PSI>180)*(PSI<=270)]
+            #xalimits=(-numpy.min(q[:,0]),numpy.max(q[:,-1]))
+            #yalimits=(-numpy.min(q[0,:]),numpy.max(q[-1,:]))
+            xmidi=int(round(size(q,1)/2))
+            ymidi=int(round(size(q,0)/2))
+            QX=numpy.array([-q[ymidi,0],q[ymidi,-1]])
+            QY=numpy.array([-q[0,xmidi],q[-1,xmidi]])
+            extent=(QX[0],QX[1],QY[0],QY[1])
 
-        #check how many result plots we need to generate: maximum three.
-        nhists=len(Histscale)
+            q_ax=fig.add_subplot(1,(nhists+1),1,axisbg=(.95,.95,.95),xlim=QX,ylim=QY,xlabel='q_x, 1/m',ylabel='q_y, 1_m')
+            imshow(log10(Ishow),extent=extent,origin='lower')
+            q_ax=setaxis(q_ax)
+            colorbar()
+        else:
+            q_ax=fig.add_subplot(1,(nhists+1),1,axisbg=(.95,.95,.95),xlim=(numpy.min(q)*(1-AxisMargin),numpy.max(q)*(1+AxisMargin)),ylim=(numpy.min(I)*(1-AxisMargin),numpy.max(I)*(1+AxisMargin)),xscale='log',yscale='log',xlabel='q, 1/m',ylabel='I, 1/(m sr)')
+            q_ax=setaxis(q_ax)
+            errorbar(q,I,E,zorder=2,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=5,label='Measured intensity',lw=2,solid_capstyle='round',solid_joinstyle='miter')
+            grid(lw=2,color='black',alpha=.5,dashes=[1,6],dash_capstyle='round',zorder=-1)
+            #xscale('log')
+            #yscale('log')
+            aq=sort(Result['Qfit'][0,:])
+            aI=Result['Imean'][0,argsort(Result['Qfit'][0,:])]
+            plot(aq,aI,'r-',lw=3,label='MC Fit intensity',zorder=4)
+            plot(aq,numpy.mean(Result['Screps'][1,:])+0*aq,'g-',linewidth=3,label='MC Background level:\n\t ({0:03.3g})'.format(numpy.mean(Result['Screps'][1,:])),zorder=3)
+            leg=legend(loc=1,fancybox=True,prop=textfont)
+        title('Measured vs. Fitted intensity',fontproperties=textfont,size='x-large')
 
-        #set plot font
-        import matplotlib.font_manager as fm
-        plotfont = fm.FontProperties(
-                    #this only works for macs, doesn't it?
-                    #family = 'Courier New Bold', fname = '/Library/Fonts/Courier New Bold.ttf')
-                    size='large',
-                    family = 'Arial')
-        
-        textfont = fm.FontProperties( #Baskerville.ttc does not work when saving to eps
-                    #family = 'Times New Roman', fname = '/Library/Fonts/Times New Roman.ttf')
-                    size='large',
-                    family = 'Times')
-        #initialize figure and axes
-        fig=figure(figsize=(7*(nhists+1),7),dpi=80,facecolor='w',edgecolor='k')
-        q_ax=fig.add_subplot(1,(nhists+1),1,axisbg=(.95,.95,.95),xlim=(numpy.min(q)*(1-AxisMargin),numpy.max(q)*(1+AxisMargin)),ylim=(numpy.min(I)*(1-AxisMargin),numpy.max(I)*(1+AxisMargin)),xscale='log',yscale='log',xlabel='q, 1/m',ylabel='I, 1/(m sr)')
-        q_ax=setaxis(q_ax)
-
-        #xlabel('q, 1/m',fontproperties=plotfont)
-        #ylabel('I, 1/(m sr)',fontproperties=plotfont)
         R_ax=list()
         for histi in range(nhists):
             #get data:
@@ -1119,9 +1154,9 @@ class McSAS(object):
             Hstd=self.getresult(parname='Hstd',VariableNumber=histi)
             #prep axes
             if Histscale[histi]=='log': #quick fix with the [0] reference. Needs fixing, this plotting function should be rewritten to support multiple variables.
-                R_ax.append(fig.add_subplot(1,(nhists+1),histi,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)*(1-AxisMargin),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)),xlabel='Radius, m',ylabel='[Rel.] Volume Fraction',xscale='log'))
+                R_ax.append(fig.add_subplot(1,(nhists+1),histi+2,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)*(1-AxisMargin),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)),xlabel='Radius, m',ylabel='[Rel.] Volume Fraction',xscale='log'))
             else:
-                R_ax.append(fig.add_subplot(1,(nhists+1),histi,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)-(1-AxisMargin)*numpy.max(Hx),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)),xlabel='Radius, m',ylabel='[Rel.] Volume Fraction'))
+                R_ax.append(fig.add_subplot(1,(nhists+1),histi+2,axisbg=(.95,.95,.95),xlim=(numpy.min(Hx)-(1-AxisMargin)*numpy.min(Hx),numpy.max(Hx)*(1+AxisMargin)),ylim=(0,numpy.max(Hmean)*(1+AxisMargin)),xlabel='Radius, m',ylabel='[Rel.] Volume Fraction'))
 
             R_ax[histi]=setaxis(R_ax[histi])
             #fill axes
@@ -1133,19 +1168,6 @@ class McSAS(object):
 
 
         fig.subplots_adjust(left=0.1,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
-
-        #fill q axes
-        axes(q_ax)
-        errorbar(q,I,E,zorder=2,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=5,label='Measured intensity',lw=2,solid_capstyle='round',solid_joinstyle='miter')
-        grid(lw=2,color='black',alpha=.5,dashes=[1,6],dash_capstyle='round',zorder=-1)
-        #xscale('log')
-        #yscale('log')
-        aq=sort(Result['Qfit'][0,:])
-        aI=Result['Imean'][0,argsort(Result['Qfit'][0,:])]
-        plot(aq,aI,'r-',lw=3,label='MC Fit intensity',zorder=4)
-        plot(aq,numpy.mean(Result['Screps'][1,:])+0*aq,'g-',linewidth=3,label='MC Background level:\n\t ({0:03.3g})'.format(numpy.mean(Result['Screps'][1,:])),zorder=3)
-        leg=legend(loc=1,fancybox=True,prop=textfont)
-        title('Measured vs. Fitted intensity',fontproperties=textfont,size='x-large')
         
 def FF_sph_1D(q,Rsph):
     '''
