@@ -130,6 +130,11 @@ class McSAS(object):
         Plot : Bool, default: False
             If set to True, will generate a plot showing the data and fit, as well as
             the resulting size histogram.
+        Memsave: Bool, default: False
+            For 2D pattern fitting, or for fitting patterns with a very large number 
+            of datapoints or contributions, it may make sense to turn this option on 
+            in order for intensity generating functions not to take up much memory.
+            The cost for this is perhaps a 20-ish percent reduction in speed.
         BOUNDS : string
             the McSAS function to use for calculating random number generator 
             bounds based on input (f.ex. q and I). default: SphBounds
@@ -281,18 +286,29 @@ class McSAS(object):
         Rpfactor=self.getpar('Rpfactor')
         qlims=self.getpar('qlims')
         psilims=self.getpar('psilims')
+        Memsave=self.getpar('Memsave')
+        Ncontrib=self.getpar('Ncontrib')
         Screps=self.getresult('Screps')
         for nr in range(Nreps):
             print 'regenerating set {} of {}'.format(nr,Nreps)
             Rset=Result['Rrep'][:,:,nr]
             #calculate their form factors
-            FFset=FFfunc(Rset,Q=q,PSI=PSI)
             Vset=VOLfunc(Rset,Rpfactor)
             #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
             #calculate the intensities
-            Iset=FFset**2*(Vset+0*FFset)**2 #a set of intensities
+            if Memsave==False:
+                FFset = FFfunc(Rset,Q=q,PSI=PSI) #Form factors, all normalized to 1 at q=0.
+                # Calculate the intensities
+                Iset = FFset**2*(Vset+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
+                It = sum(Iset,0) # the total intensity of the scattering pattern
+            else:
+                FFset=FFfunc(Rset[0,:][newaxis,:],Q=q,PSI=PSI)
+                It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
+                for ri in arange(1,Ncontrib):
+                    #calculate their form factors
+                    FFset=FFfunc(Rset[ri,:][newaxis,:],Q=q,PSI=PSI)
+                    It=It+FFset**2*(Vset[ri]+0*FFset)**2 #a set of intensities
             Vst=sum(Vset**2) # total volume squared
-            It=sum(Iset,0) # the total intensity - eq. (1)
             It=reshape(It,(1,-1)) # reshaped to match I and q
             # Optimize the intensities and calculate convergence criterium
             #SMEAR function goes here
@@ -365,7 +381,7 @@ class McSAS(object):
             while ConVal>Convcrit:
                 #retry in the case we were unlucky in reaching convergence within Maxiter.
                 nt+=1
-                Rrep[:,:,nr],Irep[:,:,nr],ConVal,Details = self.MCFit_1D(OutputI=True,OutputDetails=True)
+                Rrep[:,:,nr],Irep[:,:,nr],ConVal,Details = self.MCFit(OutputI=True,OutputDetails=True)
                 if nt>Maxntry:
                     #this is not a coincidence. We have now tried Maxntry+2 times
                     print "could not reach optimization criterion within {0} attempts, exiting...".format(Maxntry+2)
@@ -430,12 +446,21 @@ class McSAS(object):
         #loop over each repetition
         for ri in range(Nreps):
             Rset = Rrep[:,:,ri] #the single set of R for this calculation
-            FFset = FFfunc(Rset) #Form factors, all normalized to 1 at q=0.
             Vset = VOLfunc(Rset,Rpfactor) #compensated volume for each sphere in the set
-            # Calculate the intensities
-            Iset = FFset**2*(Vset+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
+            if Memsave==False:
+                FFset = FFfunc(Rset) #Form factors, all normalized to 1 at q=0.
+                # Calculate the intensities
+                Iset = FFset**2*(Vset+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
+                It = sum(Iset,0) # the total intensity of the scattering pattern
+            else:
+                FFset=FFfunc(Rset[0,:][newaxis,:])
+                It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
+                for Rr in arange(1,Ncontrib):
+                    #calculate their form factors
+                    FFset=FFfunc(Rset[Rr,:][newaxis,:])
+                    It=It+FFset**2*(Vset[Rr]+0*FFset)**2 #a set of intensities
+
             Vst = sum(Vset**2) # total compensated volume squared 
-            It = sum(Iset,0) # the total intensity of the scattering pattern
             It=reshape(It,(1,prod(shape(It))))
             It=SMEARfunc(It)
             
@@ -449,14 +474,21 @@ class McSAS(object):
             Screps[:,ri]=Sc #scaling and background for this repetition.
             Vf[:,ri] = (Sc[0]*Vsa**2/(Vpa*drhosqr)).flatten() # a set of volume fractions
             Vft[ri] = sum(Vf[:,ri]) # total volume squared
-            for isi in range(size(Iset,0)): #For each sphere
+            for isi in range(Ncontrib): #For each sphere
                 #ov[isi,ri] = (Iset[isi,:]/(It)).max() #calculate the observability (the maximum contribution for that sphere to the total scattering pattern) NOTE: no need to compensate for p_c here, we work with volume fraction later which is compensated by default. additionally, we actually do not use this value.
-                qmi = numpy.argmax(Iset[isi,:].flatten()/It.flatten()) #determine where this maximum observability is of contribution isi (index)
-                qm[isi,ri] = q[0,qmi] #point where the contribution of isi is maximum
+                if Memsave:
+                    FFset=FFfunc(Rset[isi,:][newaxis,:])
+                    Ir=FFset**2*(Vset[isi]+0*FFset)**2
+                    qmi = numpy.argmax(Ir.flatten()/It.flatten()) #determine where this maximum observability is of contribution isi (index)
+                    qm[isi,ri] = q[0,qmi] #point where the contribution of isi is maximum
+                    vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Ir))
+                else:
+                    qmi = numpy.argmax(Iset[isi,:].flatten()/It.flatten()) #determine where this maximum observability is of contribution isi (index)
+                    qm[isi,ri] = q[0,qmi] #point where the contribution of isi is maximum
+                    vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Iset[isi,:]))
                 #close approximation:
                 #vfmin[isi,ri] = (E[qmi]*Vf[isi,ri]/(Sc[0]*Iset[isi,qmi]))
                 #or more precice but slower:
-                vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Iset[isi,:]))
 
         #now we histogram over each variable
         #for each variable parameter we define, we need to histogram separately. 
@@ -566,9 +598,9 @@ class McSAS(object):
     ###########################################################################################
     ################################### Monte-carlo procedure #################################
     ###########################################################################################
-    def MCFit_1D(self,OutputI=False,OutputDetails=False,OutputIterations=False,Prior=[]):
+    def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False,Prior=[]):
         
-        #def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpfactor=1.5/3,Maxiter=1e5,Prior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,StartFromMin=False,OutputDetails=False,OutputIterations=False):
+        #def MCFit(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpfactor=1.5/3,Maxiter=1e5,Prior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,StartFromMin=False,OutputDetails=False,OutputIterations=False):
         '''
         Object-oriented and hopefully shape-flexible form of the MC procedure.
         '''
@@ -628,15 +660,30 @@ class McSAS(object):
             Rset=Prior[Remi,:]
             print "size now:", size(Rset,0)
         
-        #calculate their form factors
-        FFset=FFfunc(Rset)
-        Vset=VOLfunc(Rset,Rpfactor)
-        #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
-        #calculate the intensities
-        Iset=FFset**2*(Vset+0*FFset)**2 #a set of intensities
-        Vst=sum(Vset**2) # total volume squared
-        It=sum(Iset,0) # the total intensity - eq. (1)
-        It=reshape(It,(1,prod(shape(It)))) # reshaped to match I and q
+        if Memsave==False:
+            #calculate their form factors
+            FFset=FFfunc(Rset)
+            Vset=VOLfunc(Rset,Rpfactor)
+            #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
+            #calculate the intensities
+            Iset=FFset**2*(Vset+0*FFset)**2 #a set of intensities
+            Vst=sum(Vset**2) # total volume squared
+            It=sum(Iset,0) # the total intensity - eq. (1)
+            It=reshape(It,(1,prod(shape(It)))) # reshaped to match I and q
+        else:
+            #calculate intensity in memory saving mode:
+            #calculate volume for entire set, this does not take much space   
+            Vset=VOLfunc(Rset,Rpfactor)
+
+            FFset=FFfunc(Rset[0,:][newaxis,:])
+            It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
+            for ri in arange(1,Ncontrib):
+                #calculate their form factors
+                FFset=FFfunc(Rset[ri,:][newaxis,:])
+                It=It+FFset**2*(Vset[ri]+0*FFset)**2 #a set of intensities
+            Vst=sum(Vset**2) # total volume squared
+            It=reshape(It,(1,prod(shape(It)))) # reshaped to match I and q
+
         # Optimize the intensities and calculate convergence criterium
         #SMEAR function goes here
         It=SMEARfunc(It)
@@ -666,7 +713,13 @@ class McSAS(object):
             Vtt=VOLfunc(Rt,Rpfactor)
             Itt=(Ft**2*Vtt**2)
             # Calculate new total intensity
-            Itest=(It-Iset[Ri,:]+Itt) # we do subtractions and additions, which give us another factor 2 improvement in speed over summation and is much more scalable
+            if Memsave==False:
+                Itest=(It-Iset[Ri,:]+Itt) # we do subtractions and additions, which give us another factor 2 improvement in speed over summation and is much more scalable
+            else:
+                Fo=FFfunc(Rset[Ri,:][newaxis,:])
+                Io=(Fo**2*Vset[Ri]**2)
+                Itest=(It-Io+Itt)
+
             #SMEAR function goes here
             Itest=SMEARfunc(Itest)
             Vstest = (sqrt(Vst)-Vset[Ri])**2+Vtt**2
@@ -674,7 +727,10 @@ class McSAS(object):
             Sct,Convalt = Iopt(I,Itest/Vstest,E,Sc) # using version two here for a >10 times speed improvement
             # test if the radius change is an improvement:
             if Convalt<Conval: # it's better
-                Rset[Ri,:],Iset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itt,Itest,Vtt,Vstest,Sct,Convalt)
+                if Memsave:
+                    Rset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itest,Vtt,Vstest,Sct,Convalt)
+                else:
+                    Rset[Ri,:],Iset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itt,Itest,Vtt,Vstest,Sct,Convalt)
                 print "Improvement in iteration number %i, Chi-squared value %f of %f\r" %(Niter,Conval,Convcrit),
                 Nmoves+=1
                 if OutputIterations:
@@ -705,7 +761,8 @@ class McSAS(object):
         Details['Nmoves']=Nmoves
         Details['elapsed']=(time.time()-Now)
 
-        Ifinal=sum(Iset,0)/sum(Vset**2)
+        #Ifinal=sum(Iset,0)/sum(Vset**2)
+        Ifinal=It/sum(Vset**2)
         Ifinal=reshape(Ifinal,(1,prod(shape(Ifinal))))
         #SMEAR function goes here
         Ifinal=SMEARfunc(Ifinal)
@@ -752,6 +809,7 @@ class McSAS(object):
                 'StartFromMin':False,
                 'Maxntry':5,
                 'MaskNegI':False,
+                'Memsave':False,
                 'Plot':False}
 
         self.functions={
@@ -1183,6 +1241,7 @@ def FF_sph_1D(q,Rsph):
     return Fsph
 
 
+#---------------------------NON-OBJECT-ORIENTED-CODE----------------------------
 # 1D functions:
 
 ###########################################################################################
@@ -1812,6 +1871,39 @@ def pickle_write(filename,DBlock):
     pickle.dump(DBlock,fh)
     fh.close()
     return
+
+def binning_array(Q,PSI,I,IERR,S=2):
+    "this function applies a simple S-by-S binning routine on images. Calculates new error based on old error superseded by standard deviation in a bin"
+    def isodd(x):
+        #checks if a value is even or odd
+        return bool(x&1)
+    ddi={'Q':Q,'PSI':PSI,'I':I,'IERR':IERR}
+    
+    sq=shape(Q)
+    if isodd(sq[0]):
+        #trim edge
+        for it in ddi.keys():
+            ddi[it]=ddi[it][1:,:]
+    if isodd(sq[1]):
+        #trim edge
+        for it in ddi.keys():
+            ddi[it]=ddi[it][:,1:]
+    #now we can do n-by-n binning
+    sq=shape(Q)
+    qo=zeros((sq[0]/S,sq[1]/S))
+    ddo={'Q':qo.copy(),'PSI':qo.copy(),'I':qo.copy(),'IERR':qo.copy()}
+    for it in ['Q','PSI','I']:
+        for ri in range(sq[0]/S):
+            for ci in range(sq[1]/S):
+                ddo[it][ri,ci]=numpy.mean(ddi[it][S*ri:(S*ri+S),S*ci:(S*ci+S)])
+        
+    for ri in range(sq[0]/S):
+        for ci in range(sq[1]/S):
+            meanE=sqrt(sum((ddi['IERR'][S*ri:(S*ri+S),S*ci:(S*ci+S)])**2))/S**2
+            stdI=numpy.std(ddi['I'][S*ri:(S*ri+S),S*ci:(S*ci+S)])#sample standard deviation
+            #stdI=0
+            ddo['IERR'][ri,ci]=numpy.max((meanE,stdI))
+    return ddo
 
 def binning_1D(q,I,E=[],Nbins=200,Stats='STD'):
     #python implementation of an unweighted binning routine. The intensities are sorted across bins of equal size. If error provided is empty, the standard deviation of the intensities in the bins are computed.
