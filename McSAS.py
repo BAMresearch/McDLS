@@ -359,9 +359,15 @@ class McSAS(object):
         I=self.getdata('I')
         E=self.getdata('IERR')
         #get settings
-        Par=self.getpar()
-        for kw in Par:
-            exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        #Par=self.getpar()
+        #for kw in Par:
+        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        Priors=self.getpar('Priors')
+        Prior=self.getpar('Prior')
+        Ncontrib=self.getpar('Ncontrib')
+        Nreps=self.getpar('Nreps')
+        Convcrit=self.getpar('Convcrit')
+        Maxntry=self.getpar('Maxntry')
         #find out how many values a shape is defined by:
         testR=self.functions['RAND']()
         NRval=prod(shape((testR)))
@@ -375,6 +381,8 @@ class McSAS(object):
 
         #This is the loop that repeats the MC optimization Nreps times, after which we can calculate an uncertainty on the results.
         for nr in arange(0,Nreps):
+            if (Prior==[])and(Priors!=[]):
+                self.setpar(Prior=Priors[:,:,nr%size(Priors,2)])
             nt = 0 #keep track of how many failed attempts there have been 
             # do that MC thing! 
             ConVal=inf
@@ -473,7 +481,7 @@ class McSAS(object):
             Sc,Cv = Iopt(I,It,E,[Sci,1]) #optimize scaling and background for this repetition
             Screps[:,ri]=Sc #scaling and background for this repetition.
             Vf[:,ri] = (Sc[0]*Vsa**2/(Vpa*drhosqr)).flatten() # a set of volume fractions
-            Vft[ri] = sum(Vf[:,ri]) # total volume squared
+            Vft[ri] = sum(Vf[:,ri]) # total volume 
             for isi in range(Ncontrib): #For each sphere
                 #ov[isi,ri] = (Iset[isi,:]/(It)).max() #calculate the observability (the maximum contribution for that sphere to the total scattering pattern) NOTE: no need to compensate for p_c here, we work with volume fraction later which is compensated by default. additionally, we actually do not use this value.
                 if Memsave:
@@ -754,12 +762,12 @@ class McSAS(object):
             print "exited due to max. number of iterations (%i) reached" %(Niter)
         else:
             print "Normal exit"
-        print "Number of iterations per second",Niter/(time.time()-Now)
+        print "Number of iterations per second",Niter/(time.time()-Now+0.001) #the +0.001 seems necessary to prevent a divide by zero error on some Windows systems.   
         print "Number of valid moves",Nmoves
         print "final Chi-squared value %f" %(Conval)
         Details['Niter']=Niter
         Details['Nmoves']=Nmoves
-        Details['elapsed']=(time.time()-Now)
+        Details['elapsed']=(time.time()-Now+0.001)
 
         #Ifinal=sum(Iset,0)/sum(Vset**2)
         Ifinal=It/sum(Vset**2)
@@ -802,6 +810,8 @@ class McSAS(object):
                 'Nreps':100,
                 'qlims':[],
                 'psilims':[],
+                'Priors':[], #of shape Rrep, to be used as initial guess for Analyse function, Analyse will pass on a Prior to MCFit.
+                'Prior':[], #of shape Rset, to be used as initial guess for MCFit function
                 'Histbins':50,
                 'Histscale':'log',
                 'drhosqr':1,
@@ -860,7 +870,7 @@ class McSAS(object):
         if Rpfactor==[]:
             Rpfactor=self.getpar('Rpfactor')
             
-        return ((4.0/3*pi)*Rset[:,0]**(2*Rpfactor)+Rset[:,1]**(Rpfactor))[:,newaxis]
+        return ((4.0/3*pi)*Rset[:,0]**(2*Rpfactor)*Rset[:,1]**(Rpfactor))[:,newaxis]
 
     def vol_sph(self,Rset,Rpfactor=[]):
         '''calculates the volume of a sphere, taking Rpfactor from input or preset parameters'''
@@ -1711,12 +1721,12 @@ def MCFit_sph(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpfactor=1.5/3,Maxiter=1e5,Pr
         print "exited due to max. number of iterations (%i) reached" %(Niter)
     else:
         print "Normal exit"
-    print "Number of iterations per second",Niter/(time.time()-Now)
+    print "Number of iterations per second",Niter/(time.time()-Now+0.001)
     print "Number of valid moves",Nmoves
     print "final Chi-squared value %f" %(Conval)
     Details['Niter']=Niter
     Details['Nmoves']=Nmoves
-    Details['elapsed']=(time.time()-Now)
+    Details['elapsed']=(time.time()-Now+0.001)
 
     Ifinal=sum(Iset,0)/sum(Vset**2)
     Sc,Conval=Iopt(I,Ifinal,E,Sc)    
@@ -2234,7 +2244,7 @@ def MCFit_cyl_RadialIsotropic(q,I,E,Ncyl=200,Bounds=[],Convcrit=1,Rpfactor=1.,Ma
         print "exited due to max. number of iterations (%i) reached" %(Niter)
     else:
         print "Normal exit"
-    print "Number of iterations per second",Niter/(time.time()-Now)
+    print "Number of iterations per second",Niter/(time.time()-Now+0.001)
     print "Number of valid moves",Nmoves
     print "final convergence value %f" %(Conval)
     Ifinal=sum(Iset,0)/sum(Vset**2)
@@ -2242,7 +2252,7 @@ def MCFit_cyl_RadialIsotropic(q,I,E,Ncyl=200,Bounds=[],Convcrit=1,Rpfactor=1.,Ma
     Details=dict()
     Details['Niter']=Niter
     Details['Nmoves']=Nmoves
-    Details['elapsed']=(time.time()-Now)
+    Details['elapsed']=(time.time()-Now+0.001)
 
     if OutputI:
         if OutputDetails:
