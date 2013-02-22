@@ -3,8 +3,8 @@ This is a file with small programs for Monte-Carlo fitting of SAXS patterns. It 
 released under a Creative Commons CC-BY-SA license. Please cite as:
 
 Brian R. Pauw, 2012, http://arxiv.org/abs/1210.5304 arXiv:1210.5304. 
-
-(May be replaced later with a J. Appl. Cryst. reference)
+    Also available open access at J. Appl. Cryst. 46, (2013) with doi: 
+        http://dx.doi.org/10.1107/S0021889813001295
 
 Contents (updated 2013-01-16):
     *needs to be updated after finishing the OO variant**
@@ -1233,6 +1233,8 @@ class McSAS(object):
             errorbar(Hmid,Hmean,Hstd,zorder=4,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=0,lw=2,solid_capstyle='round',solid_joinstyle='miter')
             legend(loc=1,fancybox=True,prop=textfont)
             title('Radius size histogram',fontproperties=textfont,size='x-large')
+            #reapply limits in x
+            xlim((numpy.min(Hx)*(1-AxisMargin),numpy.max(Hx)*(1+AxisMargin)))
 
 
         fig.subplots_adjust(left=0.1,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
