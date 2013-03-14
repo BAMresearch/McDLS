@@ -47,6 +47,9 @@ Made possible with help from (amongst others):
 import scipy # For many important functions
 from scipy import optimize # For the leastsq optimization function
 import numpy # For arrays
+from numpy import (inf, array, isfinite, reshape, prod, shape, pi, diff, zeros,
+                  arange, size, sin, cos, sum, sqrt, linspace, logspace, log10,
+                  isnan, ndim)
 import os # Miscellaneous operating system interfaces
 import time # Timekeeping and timing of objects
 import sys # For printing of slightly more advanced messages to stdout
