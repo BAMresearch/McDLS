@@ -2,6 +2,7 @@
    sphinx-quickstart on Thu Mar 14 11:38:05 2013.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
+.. Find the reST syntax at http://sphinx-doc.org/rest.html
 
 Welcome to McSAS's documentation!
 =================================

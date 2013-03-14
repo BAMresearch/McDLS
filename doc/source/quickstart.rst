@@ -1,5 +1,4 @@
-.. Found the reST syntax at http://sphinx-doc.org/rest.html
-
+.. Find the reST syntax at http://sphinx-doc.org/rest.html
 
 ***********************
 McSAS Quick Usage guide

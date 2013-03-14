@@ -1,3 +1,5 @@
+.. Find the reST syntax at http://sphinx-doc.org/rest.html
+
 *************************
 Source Code Documentation
 *************************
