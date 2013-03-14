@@ -58,6 +58,7 @@ import pickle #for pickle_read and pickle_write
 #Object oriented variant:
 
 class McSAS(object):
+    """Core Monto-Carlo Small Angle Scattering calculations."""
     dataset=None #where Q, PSI, I and IERR is stored, original dataset
     fitdata=None #may be populated with a subset of the aforementioned dataset, limited to q-limits or psi limits and to positive I values alone
     parameters=None #where the fitting and binning settings are stored
