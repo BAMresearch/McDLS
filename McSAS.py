@@ -438,11 +438,19 @@ class McSAS(object):
         which bin and calculate the correct minimum required contribution accordingly.
         '''
         #get settings
-        Par=self.getpar()
-        for kw in Par:
-            exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        #Par=self.getpar()
+        #for kw in Par:
+        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
+        Ncontrib=self.getpar('Ncontrib')
+        Nreps=self.getpar('Nreps')
+        Rpfactor=self.getpar('Rpfactor')
+        Memsave=self.getpar('Memsave')
+        drhosqr=self.getpar('drhosqr')
         Rrep=self.getresult('Rrep')
+        Histbins=self.getpar('Histbins')
+        Histscale=self.getpar('Histscale')
+        Bounds=self.getpar('Bounds')
 
         #ov = zeros(shape(Rrep)) #observability
         Vf = zeros((Ncontrib,Nreps)) #volume fraction for each contribution
@@ -647,8 +655,6 @@ class McSAS(object):
     ################################### Monte-carlo procedure #################################
     ###########################################################################################
     def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False,Prior=[]):
-        
-        #def MCFit(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpfactor=1.5/3,Maxiter=1e5,Prior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,StartFromMin=False,OutputDetails=False,OutputIterations=False):
         '''
         Object-oriented and hopefully shape-flexible form of the MC procedure.
         '''
@@ -657,9 +663,18 @@ class McSAS(object):
         I=self.getdata('I')
         E=self.getdata('IERR')
         #load parameters
-        Par=self.getpar()
-        for kw in Par:
-            exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        #Par=self.getpar()
+        #for kw in Par:
+        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
+        Ncontrib=self.getpar('Ncontrib')
+        Bounds=self.getpar('Bounds')
+        Convcrit=self.getpar('Convcrit')
+        Rpfactor=self.getpar('Rpfactor')
+        Maxiter=self.getpar('Maxiter')
+        MaskNegI=self.getpar('MaskNegI')
+        StartFromMin=self.getpar('StartFromMin')
+        Memsave=self.getpar('Memsave')
+
 
         #find out how many values a shape is defined by:
         Randfunc=self.functions['RAND']
