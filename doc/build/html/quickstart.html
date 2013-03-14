@@ -1,0 +1,253 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>McSAS Quick Usage guide &mdash; McSAS v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="McSAS v1.0 documentation" href="index.html" />
+    <link rel="next" title="Source Code Documentation" href="code.html" />
+    <link rel="prev" title="Welcome to McSAS’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="code.html" title="Source Code Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to McSAS’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">McSAS v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="mcsas-quick-usage-guide">
+<h1>McSAS Quick Usage guide<a class="headerlink" href="#mcsas-quick-usage-guide" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This guide is intended as an aid to getting the first fits using McSAS. For comprehensive details of what goes on under the hood, please refer as a baseline to the paper. Additionally, the code is open source, and provides the best &#8220;documentation&#8221; of what actually takes place.</p>
+<p>When publishing results using this code, please be so kind as to cite the paper as:</p>
+<blockquote>
+<div>Pauw, B. R., Pedersen, J. S., Tardif, S., Takata, M. and Iversen, B. B.,
+J. Appl. Cryst. 46 (2013), <em>in press</em></div></blockquote>
+<p>This document assumes a modicum of proficiency with the Python language, to a level sufficient for  reading in a dataset.</p>
+<div class="section" id="changes-since-the-paper-include">
+<h3>Changes since the paper include:<a class="headerlink" href="#changes-since-the-paper-include" title="Permalink to this headline">¶</a></h3>
+<p>A replacement of <img class="math" src="_images/math/5888453da16c62e04da5dcd79e1f5072a0f4b55b.png" alt="p_c"/> by <img class="math" src="_images/math/7f61c933bfa8fe6423662c77c86e0476b2d3f847.png" alt="Rpfactor"/>, where <img class="math" src="_images/math/50427e23cdef4bd4e81da838d63685710eba5018.png" alt="Rpfactor = 1 - \frac{p_c}{6}"/>. Setting <img class="math" src="_images/math/9e6ad21945a231023b3d06f1ef1c385125dce3d8.png" alt="Rpfactor = \frac{1}{2}"/> will work in most cases.</p>
+</div>
+<div class="section" id="scope-of-the-code-capabilities">
+<h3>Scope of the code capabilities<a class="headerlink" href="#scope-of-the-code-capabilities" title="Permalink to this headline">¶</a></h3>
+<p>The McSAS code at the moment can:</p>
+<ol class="arabic simple">
+<li>Fit supplied data to a set of polydisperse spheres</li>
+<li>Plot the data and fit alongside the distribution</li>
+<li>Rebin the result</li>
+<li>Export the result to a semilcolon-delimited CSV file.</li>
+</ol>
+<p>These aspects will be discussed in that order in this document.</p>
+</div>
+</div>
+<div class="section" id="loading-the-python-functions">
+<h2>-1. Loading the Python functions<a class="headerlink" href="#loading-the-python-functions" title="Permalink to this headline">¶</a></h2>
+<p>Assuming you have a suitable Python prompt, such as provided by iPython from the Enthought
+Python Distribution, you can load the McSAS functions using:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nb">execfile</span><span class="p">(</span><span class="s">&#39;McSAS.py&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="loading-test-data">
+<h2>0. Loading test data<a class="headerlink" href="#loading-test-data" title="Permalink to this headline">¶</a></h2>
+<p>A set of test data has been included in the directory, with concatenated data from two measurements (measured over different angular ranges). The sample is a porous organic material. The uncertainty has been estimated as outlined in the paper.</p>
+<p>The dataset can be loaded using the pickle functions provided in McSAS:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">QIE</span> <span class="o">=</span> <span class="n">pickle_load</span><span class="p">(</span><span class="s">&#39;test_data.pydat&#39;</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">QIE</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span>
+<span class="n">I</span> <span class="o">=</span> <span class="n">QIE</span><span class="p">[</span><span class="mi">1</span><span class="p">,:]</span>
+<span class="n">E</span> <span class="o">=</span> <span class="n">QIE</span><span class="p">[</span><span class="mi">2</span><span class="p">,:]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fitting-a-dataset">
+<h2>1. Fitting a dataset<a class="headerlink" href="#fitting-a-dataset" title="Permalink to this headline">¶</a></h2>
+<p>It is assumed that a dataset has been loaded into Python, and that the 1D q-vector, accompanying 1D intensity and uncertainty (&#8220;error&#8221;, or standard deviation) is available as &#8220;q&#8221;, &#8220;I&#8221;, and &#8220;E&#8221;, respectively. For consistency throughout the calculation and its parameters, all length units are given in meters, which is particularly important if the measurement is done in absolute units, and retrieval of the actual volume fraction is required.</p>
+<p>This implies that &#8220;q&#8221; must have the units of <img class="math" src="_images/math/904ddd9447398868d4b0b07078056417ade8ad3b.png" alt="\left[ 1 \over m \right]"/> and &#8220;I&#8221; and &#8220;E&#8221; must have the units of <img class="math" src="_images/math/f94c2dad860b843aabbe6f6f05edd8e44fe8d6f4.png" alt="\left[ 1 \over {m \cdot sr} \right]"/>. Additionally, the optional size bounds are to be given in meters, and the scattering contrast, delta rho 2 squared, should be given in <img class="math" src="_images/math/904ddd9447398868d4b0b07078056417ade8ad3b.png" alt="\left[ 1 \over m \right]"/>.</p>
+<p>If, on the other hand, the intensity is in relative units, or if the size distribution can be in relative volume fraction, the units do not matter much. They should be consistent, but q can then be given in 1/nm, and the size bounds likewise in nm. The resulting distribution will then have the same units.</p>
+<p>The most straightforward way of fitting is by running:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Result</span> <span class="o">=</span> <span class="n">Analyze_1D</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">E</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which after a minute or so (or about five minutes for the provided extended dataset on an Intel i7 at 1.8 GHz (MacBook Air) will result in a dictionary called Result with all the fitting details in it.</p>
+</div>
+<div class="section" id="plotting-the-result">
+<h2>2. Plotting the result<a class="headerlink" href="#plotting-the-result" title="Permalink to this headline">¶</a></h2>
+<p>The result can be visualised using the built-in plotting function, which puts the data, its fit and the resulting size distribution alongside one another. This can be automatically started by using the option Plot=True in the Analyze_1D code, but can also be run separately. To plot, simply type:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">McPlot</span><span class="p">(</span><span class="n">q</span><span class="p">,</span><span class="n">I</span><span class="p">,</span><span class="n">E</span><span class="p">,</span><span class="n">Result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which should give you the plot shown in <em>test_data.pdf</em>:</p>
+<a class="reference external image-reference" href="_static/test_data.png"><img alt="_images/test_data.png" class="align-center" src="_images/test_data.png" style="width: 600px;" /></a>
+<p>The left-hand plot shows the data in black with error bars showing the uncertainty &#8220;E&#8221;, the MC fit in red, and a green line indicating the fitted background level. The width of the green line also serves to indicate the fitting limits in q, and the background value is furthermore indicated in the legend.</p>
+<p>The right-hand plot shows the resulting volume-weighted size histogram, with uncertainties on the bars, and the red dashed line indicating the minimum level required for each bin to contribute a measurable amount (i.e. more than the uncertainty) to the scattering pattern.</p>
+<p>As is clear from the vertical axis on that plot, the partial volume fractions are unrealistic if the scattering contrast has not been set. One may also want to rebin the plot in fewer bins to reduce the relative uncertainties on the bins.</p>
+</div>
+<div class="section" id="rebinning-the-result">
+<h2>3. Rebinning the result<a class="headerlink" href="#rebinning-the-result" title="Permalink to this headline">¶</a></h2>
+<p>These things can be achieved through rebinning of the result. The rebinning process takes similar arguments as Analyze_1D, and we can thus rebin and replot using (with empty line delimiting the for-loop):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">B</span> <span class="o">=</span> <span class="n">observability3</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">Rrep</span> <span class="o">=</span> <span class="n">Result</span><span class="p">[</span><span class="s">&#39;Rrep&#39;</span><span class="p">],</span> <span class="n">Rpfactor</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+                   <span class="n">Histbins</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="n">Histscale</span> <span class="o">=</span> <span class="s">&#39;log&#39;</span><span class="p">,</span> <span class="n">drhosqr</span> <span class="o">=</span> <span class="mf">1.0e29</span><span class="p">)</span>
+
+<span class="c">#copy all content of the result of observability3 to the output matrix</span>
+<span class="k">for</span> <span class="n">keyname</span> <span class="ow">in</span> <span class="n">B</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">Result</span><span class="p">[</span><span class="n">keyname</span><span class="p">]</span> <span class="o">=</span> <span class="n">B</span><span class="p">[</span><span class="n">keyname</span><span class="p">]</span>
+    <span class="n">McPlot</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">Result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This should give the following figure (as shown in <em>test_data_plot2.pdf</em>):</p>
+<a class="reference external image-reference" href="_static/test_data_plot2.png"><img alt="_images/test_data_plot2.png" class="align-center" src="_images/test_data_plot2.png" style="width: 600px;" /></a>
+<p>This plot shows more reasonable values for the relative volume fraction, the total volume fraction can be calculated from the 100 repetitions using:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Result</span><span class="p">[</span><span class="s">&#39;Vft&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>which should result in about 15%.</p>
+</div>
+<div class="section" id="everything-in-one-step">
+<h2>3.5 Everything in one step<a class="headerlink" href="#everything-in-one-step" title="Permalink to this headline">¶</a></h2>
+<p>If you have a reasonable idea about what you want to do:</p>
+<ol class="arabic simple">
+<li>fit to within a chi-squared of 5.</li>
+<li>Only 25 repetitions</li>
+<li>Radius size bounds of [1e-10,2e-8] (it is not recommended to use &#8216;0&#8217; as starting point especially when using log-scaled histogram bins, but also because such sized scatterers are unphysical)</li>
+<li>q-limits between 2e8 and 1e10 reciprocal meters (0.2 and 10 reciprocal nanometers or 0.02 and 1 reciprocal ångström)</li>
+<li>A scattering contrast of <img class="math" src="_images/math/1dbc89ac251d9f9800d09ab5394f96c111e94165.png" alt="5 \cdot 10^{29} m^{-2}"/></li>
+<li>80 bins, linearly scaled</li>
+<li>using 100 sphere contributions</li>
+</ol>
+<p>(there are more options but I am running out of ideas here:)
+Then you can do this in one step (with plotting) using:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Result</span> <span class="o">=</span> <span class="n">Analyze_1D</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">Convcrit</span> <span class="o">=</span> <span class="mf">5.</span><span class="p">,</span> <span class="n">Nreps</span> <span class="o">=</span> <span class="mi">25</span><span class="p">,</span>
+                    <span class="n">Bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e-10</span><span class="p">,</span> <span class="mf">2e-8</span><span class="p">],</span> <span class="n">qlims</span> <span class="o">=</span> <span class="p">[</span><span class="mf">2e8</span><span class="p">,</span> <span class="mf">1e10</span><span class="p">],</span>
+                    <span class="n">drhosqr</span> <span class="o">=</span> <span class="mf">5.0e29</span><span class="p">,</span> <span class="n">Histbins</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span>
+                    <span class="n">Histscale</span> <span class="o">=</span> <span class="s">&#39;lin&#39;</span><span class="p">,</span> <span class="n">Nsph</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">Plot</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which returns a plot that looks a little wonky (given the low convergence criterion restrictions (the higher Convcrit, the more relaxed the criterion). But is otherwise perfectly valid (<em>test_data_plot3.pdf</em>):</p>
+<a class="reference external image-reference" href="_static/test_data_plot3.png"><img alt="_images/test_data_plot3.png" class="align-center" src="_images/test_data_plot3.png" style="width: 600px;" /></a>
+</div>
+<div class="section" id="exporting-the-result">
+<h2>4. Exporting the result<a class="headerlink" href="#exporting-the-result" title="Permalink to this headline">¶</a></h2>
+<p>At this point it may be a good idea to get the histogram data out of python and into another plotting program. You can export whatever information you want, but to get a useful set of four columns indicating left bin edge, bin width, bin value (height) and bin uncertainty (standard deviation), you can use:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">McCSV</span><span class="p">(</span><span class="s">&#39;hist.csv&#39;</span><span class="p">,</span> <span class="n">Result</span><span class="p">[</span><span class="s">&#39;Hx&#39;</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="s">&#39;Hwidth&#39;</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="s">&#39;Hmean&#39;</span><span class="p">],</span> <span class="n">Result</span><span class="p">[</span><span class="s">&#39;Hstd&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Which writes just that to a file named <em>hist.csv</em>, semicolon delimited. It actually contains one more bin edge, which is the trailing edge and is superfluous.</p>
+</div>
+<div class="section" id="what-s-next">
+<h2>5. What&#8217;s next?<a class="headerlink" href="#what-s-next" title="Permalink to this headline">¶</a></h2>
+<p>If you have the ability and interest in improving the code, please consider joining the development effort, which will work on making the code object-oriented, including more shapes besides spheres, and adding slit-smearing options.</p>
+<p>If you have more questions that are not answered in either 1) the paper, 2) the code, and 3) this document, feel free to send me an e-mail which you can find on the <a class="reference external" href="http://lookingatnothing.com/">http://lookingatnothing.com/</a> weblog.</p>
+<p>Good luck!</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">McSAS Quick Usage guide</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li><a class="reference internal" href="#changes-since-the-paper-include">Changes since the paper include:</a></li>
+<li><a class="reference internal" href="#scope-of-the-code-capabilities">Scope of the code capabilities</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#loading-the-python-functions">-1. Loading the Python functions</a></li>
+<li><a class="reference internal" href="#loading-test-data">0. Loading test data</a></li>
+<li><a class="reference internal" href="#fitting-a-dataset">1. Fitting a dataset</a></li>
+<li><a class="reference internal" href="#plotting-the-result">2. Plotting the result</a></li>
+<li><a class="reference internal" href="#rebinning-the-result">3. Rebinning the result</a></li>
+<li><a class="reference internal" href="#everything-in-one-step">3.5 Everything in one step</a></li>
+<li><a class="reference internal" href="#exporting-the-result">4. Exporting the result</a></li>
+<li><a class="reference internal" href="#what-s-next">5. What&#8217;s next?</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to McSAS&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="code.html"
+                        title="next chapter">Source Code Documentation</a></p>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="code.html" title="Source Code Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to McSAS’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">McSAS v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Brian R. Pauw.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
