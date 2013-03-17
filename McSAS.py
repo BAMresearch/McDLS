@@ -42,6 +42,7 @@ Made possible with help from (amongst others):
     Samuel Tardif - Derivations (mostly observability) and checking of mathematics
     Jan Skov Pedersen - checking of mathematics
     Pawel Kwasniewski <kwasniew@esrf.fr> - Code cleanup and documentation
+    Ingo Bressler <ingo.bressler@bam.de> - Code cleanup, modification and documentation
 '''
 
 import scipy # For many important functions
@@ -369,9 +370,6 @@ class McSAS(object):
         I=self.getdata('I')
         E=self.getdata('IERR')
         #get settings
-        #Par=self.getpar()
-        #for kw in Par:
-        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         Priors=self.getpar('Priors')
         Prior=self.getpar('Prior')
         Ncontrib=self.getpar('Ncontrib')
@@ -437,9 +435,6 @@ class McSAS(object):
         which bin and calculate the correct minimum required contribution accordingly.
         '''
         #get settings
-        #Par=self.getpar()
-        #for kw in Par:
-        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
         Ncontrib=self.getpar('Ncontrib')
         Nreps=self.getpar('Nreps')
@@ -662,9 +657,6 @@ class McSAS(object):
         I=self.getdata('I')
         E=self.getdata('IERR')
         #load parameters
-        #Par=self.getpar()
-        #for kw in Par:
-        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         Ncontrib=self.getpar('Ncontrib')
         Bounds=self.getpar('Bounds')
         Convcrit=self.getpar('Convcrit')
@@ -1210,9 +1202,6 @@ class McSAS(object):
         #load parameters
         Histscale=self.getpar('Histscale')
         Histweight=self.getpar('Histweight')
-        #let's not do this:
-        #for kw in Par:
-        #    exec('{}=Par[kw]'.format(kw)) #this sets the parameters as external variables outside the dictionary Par
         #load result
         Result=self.getresult()
         #check how many result plots we need to generate: maximum three.
