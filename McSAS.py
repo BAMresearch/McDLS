@@ -3,8 +3,8 @@ This is a file with small programs for Monte-Carlo fitting of SAXS patterns. It 
 released under a Creative Commons CC-BY-SA license. Please cite as:
 
 Brian R. Pauw, 2012, http://arxiv.org/abs/1210.5304 arXiv:1210.5304. 
-    Also available open access at J. Appl. Cryst. 46, (2013) with doi: 
-        http://dx.doi.org/10.1107/S0021889813001295
+    Also available open access at J. Appl. Cryst. 46, (2013), pp. 365--371
+    with doi: http://dx.doi.org/10.1107/S0021889813001295
 
 Contents (updated 2013-01-16):
     *needs to be updated after finishing the OO variant**
@@ -68,7 +68,7 @@ class McSAS(object):
     calcdata=None #here values and matrices are stored used by the calculations.
 
     def __init__(self,**kwargs):
-        """intiialization function, input kwargs can be keyword-value pairs containing:
+        """intialization function, input kwargs can be keyword-value pairs containing:
         - 'Q' scattering vector in reciprocal meters
         - 'PSI' Azimuthal angle on the detector (not yet used until the 2D fitting is incorporated in this
         - 'I' scattering intensity
@@ -224,8 +224,6 @@ class McSAS(object):
 
         Plotting the data fit and histogram:
         McPlot(q,I,numpy.maximum(0.01*I,E),A)
-
-        Initial goal for this function is to have identical functionality as Analyze_1D in a more flexible framework.
         """
         #initialize
         self.dataset=dict() #where Q, PSI, I and IERR is stored, original dataset
@@ -389,8 +387,10 @@ class McSAS(object):
         bignow = time.time() #for time estimation and reporting
 
         #This is the loop that repeats the MC optimization Nreps times, after which we can calculate an uncertainty on the results.
+        priorsflag=False
         for nr in arange(0,Nreps):
-            if (Prior==[])and(Priors!=[]):
+            if ((Prior==[])and(Priors!=[]))or(priorsflag==True):
+                priorsflag=True #this flag needs to be set as prior will be set after the first pass
                 self.setpar(Prior=Priors[:,:,nr%size(Priors,2)])
             nt = 0 #keep track of how many failed attempts there have been 
             # do that MC thing! 
@@ -424,7 +424,7 @@ class McSAS(object):
             'Niter':numpy.mean(Niters)}) #average number of iterations for all repetitions
 
     ###########################################################################################
-    #################################### observability3 #######################################
+    ###################################### Histogram ##########################################
     ###########################################################################################
     def Histogram(self):
         '''
@@ -649,7 +649,7 @@ class McSAS(object):
     ###########################################################################################
     ################################### Monte-carlo procedure #################################
     ###########################################################################################
-    def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False,Prior=[]):
+    def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False):
         '''
         Object-oriented and hopefully shape-flexible form of the MC procedure.
         '''
@@ -666,6 +666,7 @@ class McSAS(object):
         MaskNegI=self.getpar('MaskNegI')
         StartFromMin=self.getpar('StartFromMin')
         Memsave=self.getpar('Memsave')
+        Prior=self.getpar('Prior')
 
 
         #find out how many values a shape is defined by:
@@ -1295,6 +1296,70 @@ class McSAS(object):
 
         fig.subplots_adjust(left=0.1,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
         
+    def Rangeinfo(self,ParameterRange=[0,inf],Parameter=0):
+        #calculates the total volume or number fraction of the MC result within a given range, and returns the total numer or volume fraction and its standard deviation over all nreps as well as the first four distribution moments: mean, variance, skewness and kurtosis (Pearson's definition)
+        #will use the "Histweight" parameter for determining whether to return the volume or number-weighted values.
+        #input arguments are: ParameterRange (the radius range in which the moments are to be calculated)
+        #Parameter: Which shape parameter the moments are to be calculated for (e.g. 0=width, 1=length, 2=orientation)
+        #returns a 4-by-2 array, with the values and their sample standard deviations over all Nreps
+        Rrep=self.getresult('Rrep')
+        Ncontrib=size(Rrep,0)
+        NRval=size(Rrep,1)
+        Nreps=size(Rrep,2)
+        Rpfactor=self.getpar('Rpfactor')
+        Memsave=self.getpar('Memsave')
+        drhosqr=self.getpar('drhosqr')
+        Histbins=self.getpar('Histbins')
+        Histscale=self.getpar('Histscale')
+        Histweight=self.getpar('Histweight')
+        Bounds=self.getpar('Bounds')
+        
+        #ov = zeros(shape(Rrep)) #observability
+        Vf = self.getresult('Vf') #volume fraction for each contribution
+        Nf = self.getresult('Nf') #number fraction for each contribution
+        Vft = self.getresult('Vft') #total volume fractions
+        Nft = self.getresult('Nft') #total number 
+        Screps = self.getresult('Screps') #Intensity scaling factors for matching to the experimental scattering pattern (Amplitude A and flat background term b, defined in the paper)
+
+        Val=zeros(Nreps) #total value
+        Mu=zeros(Nreps) #moments..
+        Var=zeros(Nreps) #moments..
+        Skw=zeros(Nreps) #moments..
+        Krt=zeros(Nreps) #moments..
+
+        #loop over each repetition
+        for ri in range(Nreps):
+            Rset = Rrep[:,Parameter,ri] #the single set of R for this calculation
+            validi=(Rset>numpy.min(ParameterRange))*(Rset<numpy.max(ParameterRange))
+            Rset=Rset[validi]
+            Vset = Vf[validi,ri] #compensated volume for each sphere in the set
+            Nset = Nf[validi,ri] #compensated volume for each sphere in the set
+
+            if Histweight=='volume':
+                Val[ri] = sum(Vset)
+                Mu[ri] = sum(Rset*Vset)/sum(Vset)
+                Var[ri] = sum( (Rset-Mu[ri])**2*Vset )/sum(Vset)
+                sigma=sqrt(abs(Var[ri]))
+                Skw[ri] = sum( (Rset-Mu[ri])**3*Vset )/(sum(Vset)*sigma**3)
+                Krt[ri] = sum( (Rset-Mu[ri])**4*Vset )/(sum(Vset)*sigma**4)
+            elif Histweight=='number':
+                Val[ri]=sum(Nset)
+                Mu[ri] = sum(Rset*Nset)/sum(Nset)
+                Var[ri] = sum( (Rset-Mu[ri])**2*Nset )/sum(Nset)
+                sigma=sqrt(abs(Var[ri]))
+                Skw[ri] = sum( (Rset-Mu[ri])**3*Nset )/(sum(Nset)*sigma**3)
+                Krt[ri] = sum( (Rset-Mu[ri])**4*Nset )/(sum(Nset)*sigma**4)
+            else:
+                print('Error in moment calculation, unrecognised Histweight value')
+                return None
+
+        return numpy.array([[numpy.mean(Val),numpy.std(Val,ddof=1)],
+                [numpy.mean(Mu),numpy.std(Mu,ddof=1)],
+                [numpy.mean(Var),numpy.std(Var,ddof=1)],
+                [numpy.mean(Skw),numpy.std(Skw,ddof=1)],
+                [numpy.mean(Krt),numpy.std(Krt,ddof=1)]])
+        
+
 #some quick pickle functions to make my life easier
 
 def pickle_read(filename):
