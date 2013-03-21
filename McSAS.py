@@ -149,34 +149,72 @@ class McSAS(object):
 
     Returns:
     -------
-    A : Output dictionary containing the following elements:
-        'Imean' : 1D array 
+    A : McSAS object with the following results stored in A.result. These are extracted
+        using A.getresult('Keyword',VariableNumber=0), where the VariableNumber indicates 
+        which shape parameter information is requested for (some information is only stored
+        in VariableNumber=0 (default))
+        Keyword is one of the following:
+        -------
+        'Imean' : 1D array (VariableNumber=0)
             The fitted intensity, given as the mean of all Nreps results.
-        'q' : 1D array
+        'q' : 1D array (VariableNumber=0)
             Corresponding q values (may be different than the input q if qlims was 
             used) 
-        'Istd' : array
+        'Istd' : array (VariableNumber=0)
             Standard deviation of the fitted I(q), calculated as the standard 
             deviation of all Nreps results.
-        'Hx' : array
-            Histogram bin left edge position
-        'Hmid' : array
-            Center positions for the size histogram bins
-        'Hwidth' : array
-            Histogram bin width
-        'Hmean' : array
-            Volume-weighted particle size distribution values for all Nreps results
-        'Hstd' : array
-            Standard deviations of the corresponding size distribution bins, calculated
-            from Nreps repetitions of the MCfit_sph() function
-        'Hy' : size (Histbins x Nreps) array
-            Volume-weighted particle size distribution values for each MC fit repetition
-        'Niter' : int
-            Average number of MC iterations required for convergence
-        'Rrep' : size (Nsph x Nreps) array
+        'Rrep' : size (Nsph x Nreps) array (VariableNumber=0)
             Collection of Nsph sphere radii fitted to best represent the provided I(q) data.
             Contains the results of each of Nreps iterations. This can be used for
             rebinning without having to re-optimize.
+        'Screps' : size (2 x Nreps) array (VariableNumber=0)
+            Scaling and background values for each repetition. Used to display background 
+            level in data and fit plot.
+
+        'VariableNumber' : integer
+            Shape parameter index. e.g. an ellipsoid has 3, width, height and orientation
+        'Hx' : array
+            Histogram bin left edge position (x-axis in histogram)
+        'Hmid' : array
+            Center positions for the size histogram bins (x-axis in histogram, used for errorbars)
+        'Hwidth' : array
+            Histogram bin width (x-axis in histogram, defines bar plot bar widths)
+        'Hmean' : array
+            Volume-weighted particle size distribution values for all Nreps results (y-axis bar height)
+        'Hnmean' : array
+            Number-weighted analogue of the above ``Hmean``
+        'Hy' : size (Histbins x Nreps) array
+            Volume-weighted particle size distribution bin values for each MC fit repetition 
+            (the mean of which is ``Hmean``, and the sample standard deviation of which is ``Hstd``)
+        'Hny' : size (Histbins x Nreps) array
+            Number-weighted particle size distribution bin values for each MC fit repetition
+        'Hstd' : array
+            Standard deviations of the corresponding volume-weighted size distribution bins, calculated
+            from Nreps repetitions of the MCfit_sph() function
+        'Hnstd' : array
+            Standard deviation for the number-weigthed distribution
+        'Vf' : size (Ncontrib x Nreps) array
+            Volume fractions for each of Ncontrib contributions 
+            in each of Nreps iterations
+        'Nf' : size (Ncontrib x Nreps) array
+            Number fraction for each contribution
+        'Vft' : size (Nreps) array
+            Total scatterer volume fraction for each of the Nreps iterations 
+        'Nft' : size (Nreps) array
+            Total number fraction 
+        'vfmin' : size (Nsph x Nreps) array
+            minimum required volume fraction for each contribution to become statistically
+            significant.
+        'nfmin' : size (Nsph x Nreps) array
+            number-weighted analogue to ``vfmin''
+        'vfminbins' : size (Hmid) array 
+            array with the minimum required volume fraction per bin to become statistically 
+            significant. Used to display minimum required level in histogram.
+        'nfminbins' : size (Hmid) array 
+            number-weighted analogue to ``vfminbins``
+        'Screps' : size (2 x Nreps) array
+            Scaling and background values for each repetition. Used to display background 
+            level in data and fit plot.
         'Vf' : size (Nsph x Nreps) array
             Volume fractions for each of Nsph spheres 
             in each of Nreps iterations
@@ -188,9 +226,7 @@ class McSAS(object):
         'vfminbins' : size (Hmid) array 
             array with the minimum required volume fraction per bin to become statistically 
             significant. Used to display minimum required level in histogram.
-        'Screps' : size (2 x Nreps) array
-            Scaling and background values for each repetition. Used to display background 
-            level in data and fit plot.
+
     """        
 
     dataset=None #where Q, PSI, I and IERR is stored, original dataset
@@ -202,7 +238,8 @@ class McSAS(object):
 
     def __init__(self,**kwargs):
         """
-        intialization function, input kwargs can be aforementioend parameter keyword-value pairs.
+        intialization function, takes keyword-value input parameters. 
+        input arguments can be one of the aforementioned parameter keyword-value pairs.
         This does the following::
             1. Initialises the variables to the right type
             2. Parses the input
@@ -344,11 +381,11 @@ class McSAS(object):
     def setfunctions(self,**kwargs):
         '''functions are defined here. 
         In particular here the following is specified:
-        -1. The parameter bounds estimation function 'BOUNDS'. Should be able to take input argument Bounds to update, should set the parameter bounds in self.parameter['Bounds']
-        0. The random number generation function 'RAND' This must take its parameters from self, and have an optional input argument specifying the number of sets to return (for MC initialization). It should return a set of Nsets-by-nvalues to be used directly in 'FF'
-        1. The Form-factor function 'FF'. If called, this should get the required information from self and a supplied Nsets-by-nvalues shape-specifying parameter array. It should return an Nsets-by-q array. Orientational averaging should be part of the form-factor function (as it is most efficiently calculated there), so several form factor functions can exist for non-spherical objects.
-        2. The shape volume calculation function 'VOL', which must be able to deal with input argument "Rpfactor", ranging from 0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets number of (Rpfactor-compensated)-volumes. 
-        3. The smearing function 'SMEAR'. Should take information from self, and an input Icalc, to output an Ismear of the same length.
+        1. The parameter bounds estimation function 'BOUNDS'. Should be able to take input argument Bounds to update, should set the parameter bounds in self.parameter['Bounds']
+        2. The random number generation function 'RAND' This must take its parameters from self, and have an optional input argument specifying the number of sets to return (for MC initialization). It should return a set of Nsets-by-nvalues to be used directly in 'FF'. This may be depreciated soon as is can be generated from within.
+        3. The Form-factor function 'FF'. If called, this should get the required information from self and a supplied Nsets-by-nvalues shape-specifying parameter array. It should return an Nsets-by-q array. Orientational averaging should be part of the form-factor function (as it is most efficiently calculated there), so several form factor functions can exist for non-spherical objects.
+        4. The shape volume calculation function 'VOL', which must be able to deal with input argument "Rpfactor", ranging from 0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets number of (Rpfactor-compensated)-volumes. 
+        5. The smearing function 'SMEAR'. Should take information from self, and an input Icalc, to output an Ismear of the same length.
 
         This function will actually cast the supplied function name into a function pointer.
         '''
@@ -361,6 +398,10 @@ class McSAS(object):
                     self.functions[kw]=getattr(self,kwargs[kw])
 
     def Analyse(self):
+        """
+        This is one of the main MC functions. This function runs the Monte Carlo optimisation a multitude (Nreps) of times
+        If convergence is not achieved, it will try again for a maximum of Maxntry attempts.
+        """
         #get data
         q=self.getdata('Q')
         I=self.getdata('I')
@@ -425,12 +466,61 @@ class McSAS(object):
     ###########################################################################################
     def Histogram(self):
         '''
-        Observability calculation for a series of spheres, over a range of q. 
-        Additional intensity and errors may be supplied for error-weighted observability. 
-        Intensity is used for determining the intesity scaling and background levels.
+        Histogram() will take the ``Rrep`` result resulting from the Analyse() function, calculate 
+        the corresponding volume- and number fractions for each contribution, as well as the 
+        minimum observability limits. It will subsequently bin the result across the range for 
+        histogramming purposes.
+
+        While the volume-weighted distribution will be in absolute units (provinding volume fractions
+        of material within a given size range), the number distributions have been normalized to 1.
         
-        Now with rebinning as well, so we can keep track of which contribution ends up in 
-        which bin and calculate the correct minimum required contribution accordingly.
+        Output: list of dictionaries, one dictionary per shape parameter:
+        -------
+        'VariableNumber' : integer
+            Shape parameter index. e.g. an ellipsoid has 3, width, height and orientation
+        'Hx' : array
+            Histogram bin left edge position (x-axis in histogram)
+        'Hmid' : array
+            Center positions for the size histogram bins (x-axis in histogram, used for errorbars)
+        'Hwidth' : array
+            Histogram bin width (x-axis in histogram, defines bar plot bar widths)
+        'Hmean' : array
+            Volume-weighted particle size distribution values for all Nreps results (y-axis bar height)
+        'Hnmean' : array
+            Number-weighted analogue of the above ``Hmean``
+        'Hy' : size (Histbins x Nreps) array
+            Volume-weighted particle size distribution bin values for each MC fit repetition 
+            (the mean of which is ``Hmean``, and the sample standard deviation of which is ``Hstd``)
+        'Hny' : size (Histbins x Nreps) array
+            Number-weighted particle size distribution bin values for each MC fit repetition
+        'Hstd' : array
+            Standard deviations of the corresponding volume-weighted size distribution bins, calculated
+            from Nreps repetitions of the MCfit_sph() function
+        'Hnstd' : array
+            Standard deviation for the number-weigthed distribution
+        'Vf' : size (Ncontrib x Nreps) array
+            Volume fractions for each of Ncontrib contributions 
+            in each of Nreps iterations
+        'Nf' : size (Ncontrib x Nreps) array
+            Number fraction for each contribution
+        'Vft' : size (Nreps) array
+            Total scatterer volume fraction for each of the Nreps iterations 
+        'Nft' : size (Nreps) array
+            Total number fraction 
+        'vfmin' : size (Nsph x Nreps) array
+            minimum required volume fraction for each contribution to become statistically
+            significant.
+        'nfmin' : size (Nsph x Nreps) array
+            number-weighted analogue to ``vfmin''
+        'vfminbins' : size (Hmid) array 
+            array with the minimum required volume fraction per bin to become statistically 
+            significant. Used to display minimum required level in histogram.
+        'nfminbins' : size (Hmid) array 
+            number-weighted analogue to ``vfminbins``
+        'Screps' : size (2 x Nreps) array
+            Scaling and background values for each repetition. Used to display background 
+            level in data and fit plot.
+
         '''
         #get settings
         #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
@@ -590,18 +680,33 @@ class McSAS(object):
 
     ######################################## end ###############################################
 
-    def CSVwrite(self,filename,*args):
+    def CSVwrite(self,filename,*args,**kwargs):
         '''
         This function writes a semicolon-separated csv file to [filename] containing an arbitrary number of output variables *args. in case of variable length columns, empty fields will contain ''.
 
-        Input arguments should be names of fields in "self.results". For example:
-        A.McCSV('hist.csv','Hx','Hwidth','Hmean','Hstd')
+        Optional last argument is a keyword-value argument: VarableNumber=[integer], indicating which shape parameter it is intended to draw upon. VariableNumber can also be a list or array of integers, of the same length as the number of output variables *args, in which case each output variable is matched with a shape parameter index. Default is zero
 
-        i.e. just stick on as many columns as you'd like. They will be flattened by default. a header with the names will be added.
+        Input arguments should be names of fields in "self.result". For example:
+        A.McCSV('hist.csv','Hx','Hwidth','Hmean','Hstd',VariableNumber=0)
+
+        i.e. just stick on as many columns as you'd like. They will be flattened by default. a header with the result keyword names will be added.
         
         existing files with the same filename will be overwritten by default. 
 
         '''
+        vna=zeros(len(args),dtype=int)
+        if 'VariableNumber' in kwargs:
+            vni=kwargs['VariableNumber']
+            if isinstance(vni,(list,ndarray)):
+                if len(vni)!=len(args):
+                    print('Error in CSVwrite, supplied list of variablenumbers does not have the length of 1 or the same length as the list of output variables.')
+                    return
+                for vi in range(len(args)):
+                    vna[vi]=vni[vi]
+            else:
+                #single integer value
+                vna=vna+vni
+                
         #uses sprintf rather than csv for flexibility
         ncol=len(args)
         #make format string used for every line, don't need this
@@ -612,7 +717,7 @@ class McSAS(object):
 
         inlist=list()
         for argi in range(len(args)):
-            inlist.append(self.getresult(args[argi]).flatten())
+            inlist.append(self.getresult(args[argi],VariableNumber=vna[argi]).flatten())
         #find out the longest row
         nrow=0
         for argi in range(len(args)):
@@ -648,7 +753,11 @@ class McSAS(object):
     ###########################################################################################
     def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False):
         '''
-        Object-oriented and hopefully shape-flexible form of the MC procedure.
+        Object-oriented, shape-flexible core of the Monte Carlo procedure. Takes optional arguments
+        'OutputI' : Returns the fitted intensity besides the result 
+        'OutputDetails' : Details of the fitting procedure, number of iterations and so on
+        'OutputIterations' : Returns the result on every successful iteration step, useful
+            for visualising the entire Monte Carlo optimisation procedure for presentations.
         '''
         #load dataset
         q=self.getdata('Q')
@@ -839,7 +948,9 @@ class McSAS(object):
     ######################################## end ###############################################
 
     def _Iopt(self,I0,I1,startval):
-        #intensity optimization function, returning values and reduced chi squared.
+        """
+        This function does not do anything yet, but is supposed to become the internal intensity fitting function. External functions ``Iopt`` and ``Iopt_v1`` are used instead.
+        """
         pass
 
         
@@ -878,6 +989,9 @@ class McSAS(object):
                 'SMEAR':self._passthrough} #none
 
     def random_uniform_ell(self,Nell=1):
+        """
+        Random number generator for generating uniformly-sampled size- and orientation parameters for ellipsoids.
+        """
         #get parameters from self
         Bounds=self.getpar('Bounds') 
         #generate Nsph random numbers
@@ -890,7 +1004,7 @@ class McSAS(object):
         return Rset
 
     def random_logR_ell(self,Nell=1):
-        "like uniform, but with a higher likelihood of sampling smaller sizes. May speed up some fitting procedures."
+        "Random number generator which behaves like its uniform counterpart, but with a higher likelihood of sampling smaller sizes. May speed up some fitting procedures."
         #get parameters from self
         Bounds=self.getpar('Bounds') 
         #generate Nsph random numbers
@@ -914,14 +1028,18 @@ class McSAS(object):
         return Rset
 
     def vol_ell(self,Rset,Rpfactor=[]):
-        '''calculates the volume of an ellipsoid, taking Rpfactor from input or preset parameters'''
+        '''
+        calculates the volume of an ellipsoid, taking Rpfactor from input or preset parameters
+        '''
         if Rpfactor==[]:
             Rpfactor=self.getpar('Rpfactor')
             
         return ((4.0/3*pi)*Rset[:,0]**(2*Rpfactor)*Rset[:,1]**(Rpfactor))[:,newaxis]
 
     def vol_sph(self,Rset,Rpfactor=[]):
-        '''calculates the volume of a sphere, taking Rpfactor from input or preset parameters'''
+        '''
+        calculates the volume of a sphere, taking Rpfactor from input or preset parameters
+        '''
         if Rpfactor==[]:
             Rpfactor=self.getpar('Rpfactor')
             
@@ -941,7 +1059,11 @@ class McSAS(object):
         return Fsph
 
     def FF_ell_2D(self,Rset=[],Q=[],PSI=[]):
-        "all 2D functions should be able to potentially take externally supplied Q and PSI vectors"
+        """
+        Calculates the form factor for oriented ellipsoids, normalized to 1 at Q=0.
+
+        **all 2D functions should be able to potentially take externally supplied Q and PSI vectors**
+        """
         #Rset is n-by-3. R1=Rset[:,0],R2=Rset[:,1],R3=Rset[:,2]
         #R1<R2, prolate ellipsoid (cigar-shaped), R1>R2, oblate ellipsoid (disk-shaped), rotation is offset from perfect orientation (psi-rot)
         d_to_r=1./360*2*pi #degrees to radians, forget the dot and get yourself into a non-floating point mess, even though pi is floating point...
@@ -986,7 +1108,7 @@ class McSAS(object):
         return In
 
     def reshape_fitdata(self):
-        '''This function ensures that q, I, PSI and E are in 1-by-n shape'''
+        '''This ensures that q, I, PSI and E are in 1-by-n shape'''
         for key in self.fitdata.keys():
             self.fitdata[key]=reshape(self.fitdata[key],(1,prod(shape(self.fitdata[key]))))
 
@@ -999,7 +1121,7 @@ class McSAS(object):
         
         validbools=isfinite(dataset['Q'])
         # Optional masking of negative intensity
-        if self.parameters['MaskNegI']:
+        if self.getpar('MaskNegI'):
             validbools=validbools*(I >= 0)
         if (qlims==[])and(psilims==[]):
             #q limits not set, simply copy dataset to fitdata
@@ -1009,9 +1131,12 @@ class McSAS(object):
         if (not(psilims==[])): #we assume here that we have a dataset ['PSI']
             validbools = validbools*(dataset['PSI']>numpy.min(psilims))&(dataset['PSI']<=numpy.max(psilims)) #excluding the lower q limit may prevent q=0 from appearing
 
-        #not so nice to do this outside of a proper function, but this is probably the only instance of setting this.
         for key in dataset.keys():
-            self.fitdata[key]=dataset[key][validbools]
+            dsk=dataset[key][validbools]
+            #hey, this works!:
+            self.setdata(**{key:dsk,'dataset':'fit'})
+            #old version was direct addressing, which is to be discouraged to encourage flexibility in data storage
+            #self.fitdata[key]=dataset[key][validbools]
 
         #self.fitdata=fitdata
         
@@ -1023,7 +1148,7 @@ class McSAS(object):
             return self.parameters[parname]
 
     def getdata(self,parname=[],dataset='fit'):
-        '''gets the values of a dataset, retrieves from fitdata (clipped) by default. If the original data is wanted, use "dataset='original" as kwarg. '''
+        '''gets the values of a dataset, retrieves from fitdata (clipped) by default. If the original data is wanted, use "dataset='original'" as kwarg. '''
         if (parname==[]):
             if (dataset=='fit'):
                 return self.fitdata
@@ -1072,14 +1197,28 @@ class McSAS(object):
 
     def setdata(self,**kwargs):
         '''
-        Sets the supplied data in the proper location.
+        Sets the supplied data in the proper location. Optional argument "dataset" can be set to "fit" or "original" to define which dataset is set. Default is "original"
         '''
         datasetlist=list(['Q','I','PSI','IERR']) #list of valid things
-        for kw in kwargs:
-            if kw in datasetlist:
-                self.dataset[kw]=kwargs[kw]
-            else:
-                pass #do not store non-dataset values.
+        if ('dataset' in kwargs):
+            dataset=kwargs['dataset'].lower()
+        else:
+            dataset='original'
+        if not ( dataset in ('fit','original')):
+            dataset='original'
+
+        if dataset=='original':
+            for kw in kwargs:
+                if kw in datasetlist:
+                    self.dataset[kw]=kwargs[kw]
+                else:
+                    pass #do not store non-dataset values.
+        else: #we want to store to fitdata: a clipped dataset
+            for kw in kwargs:
+                if kw in datasetlist:
+                    self.fitdata[kw]=kwargs[kw]
+                else:
+                    pass #do not store non-dataset values.
 
     def EllBounds_2D(self):
         '''
