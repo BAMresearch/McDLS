@@ -1,2 +1,4 @@
 *.pyc
 *.swp
+doc/build/doctrees/
+doc/build/html/.buildinfo
