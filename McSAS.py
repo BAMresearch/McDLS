@@ -582,10 +582,10 @@ class McSAS(object):
                 'vfmin':vfmin,
                 'Vf':Vf,
                 'Vft':Vft,
-                'nfminbins':vfminbins,
-                'nfmin':vfmin,
-                'Nf':Vf,
-                'Nft':Vft,
+                'nfminbins':nfminbins,
+                'nfmin':nfmin,
+                'Nf':Nf,
+                'Nft':Nft,
                 'Screps':Screps})
 
     ######################################## end ###############################################
@@ -1283,7 +1283,7 @@ class McSAS(object):
             R_ax[histi]=setaxis(R_ax[histi])
             #fill axes
             bar(Hx[0:-1],Hmean,width=Hwidth,color='orange',edgecolor='black',linewidth=1,zorder=2,label='MC size histogram')
-            plot(Hmid,vfminbins,'r--',lw=5,label='Minimum visibility limit',zorder=3)
+            plot(Hmid,vfminbins,'ro',ms=5,markeredgecolor='r',label='Minimum visibility limit',zorder=3)
             errorbar(Hmid,Hmean,Hstd,zorder=4,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=0,lw=2,solid_capstyle='round',solid_joinstyle='miter')
             legend(loc=1,fancybox=True,prop=textfont)
             title('Radius size histogram',fontproperties=textfont,size='x-large')
