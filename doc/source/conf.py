@@ -13,6 +13,31 @@
 
 import sys, os
 
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+# mock out the imports depend on C modules for readthedocs.org
+class Mock(object):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return Mock()
+
+    @classmethod
+    def __getattr__(cls, name):
+        if name in ('__file__', '__path__'):
+            return '/dev/null'
+        elif name[0] == name[0].upper():
+            mockType = type(name, (), {})
+            mockType.__module__ = __name__
+            return mockType
+        else:
+            return Mock()
+
+if on_rtd:
+    for mod_name in ('scipy', ):
+        sys.modules[mod_name] = Mock()
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -220,3 +245,5 @@ man_pages = [
     ('index', 'mcsas', u'McSAS Documentation',
      [u'Brian R. Pauw'], 1)
 ]
+
+# vim: set ts=4 sts=4 sw=4 tw=0:
