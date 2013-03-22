@@ -35,7 +35,7 @@ class Mock(object):
             return Mock()
 
 if on_rtd:
-    for mod_name in ('scipy', ):
+    for mod_name in ('scipy', 'numpy'):
         sys.modules[mod_name] = Mock()
 
 # If extensions (or modules to document with autodoc) are in another directory,
