@@ -1,61 +1,86 @@
 # -*- coding: utf-8 -*-
 # McSAS.py
+# Find the reST syntax at http://sphinx-doc.org/rest.html
 
-'''
-A class and supplementary functions for Monte-Carlo fitting of SAXS patterns. It is 
-released under a Creative Commons CC-BY-SA license. Please cite as:
+r'''
+A class and supplementary functions for Monte-Carlo fitting of SAXS patterns.
+It is released under a `Creative Commons CC-BY-SA license
+<http://creativecommons.org/licenses/by-sa/3.0/>`_.
+Please cite as::
 
-Brian R. Pauw et al., J. Appl. Cryst. 46, (2013), pp. 365--371
-    doi: http://dx.doi.org/10.1107/S0021889813001295
+    Brian R. Pauw et al., J. Appl. Cryst. 46, (2013), pp. 365--371
+        doi: http://dx.doi.org/10.1107/S0021889813001295
 
-This file defines the following classes and functions: 
-    - McSAS: class containing all the functions required to perform a Monte Carlo analysis
-        on small-angle scattering data.
-    - binning_array: Can be used to do n-by-n pixel binning of 2D detector images. The 
-        returned uncertainty is the larger of either the binned uncertainty or the sample
-        standard deviation in the bin.
-    - binning_1D: bins the data and propagates errors, or calculates errors if not initially 
-        provided
-    - binning_weighted_1D: Weighted binning, where the intensities of a pixel are divided 
-        between the two neighbouring bins depending on the distances to the centres. If 
-        error provided is empty, the standard deviation of the intensities in the bins are 
-        computed. 
-    - csqr: least-squares error to use with scipy.optimize.leastsq
-    - Iopt: Optimize the scaling factor and background level of modeled data vs. intensity
-    - csqr_v1: least-squares for data with known error, size of parameter-space not taken 
-        into account
-    - Iopt_v1: old intensity scaling factor optimisation, more robust but slower than Iopt
-    - pickle_read: Reads in pickled data from a file (by filename)
-    - pickle_write: write a block or dictionary to a file (by filename)
+Classes and Functions Defined in This File
+==========================================
+
+ - **McSAS**: class containing all the functions required to perform a
+   Monte Carlo analysis on small-angle scattering data.
+ - **binning_array**: Can be used to do n-by-n pixel binning of 2D detector
+   images. The returned uncertainty is the larger of either the binned
+   uncertainty or the sample standard deviation in the bin.
+ - **binning_1D**: bins the data and propagates errors, or calculates errors
+   if not initially provided
+ - **binning_weighted_1D**: Weighted binning, where the intensities of a
+   pixel are divided between the two neighbouring bins depending on the
+   distances to the centres. If error provided is empty, the standard
+   deviation of the intensities in the bins are computed.
+ - **csqr**: least-squares error to use with scipy.optimize.leastsq
+ - **Iopt**: Optimize the scaling factor and background level of modeled
+   data vs. intensity
+ - **csqr_v1**: least-squares for data with known error, size of
+   parameter-space not taken into account
+ - **Iopt_v1**: old intensity scaling factor optimisation, more robust but
+   slower than Iopt
+ - **pickle_read**: Reads in pickled data from a file (by filename)
+ - **pickle_write**: write a block or dictionary to a file (by filename)
     
-Made possible with help from (amongst others):
-    Samuel Tardif - Derivations (mostly observability) and checking of mathematics
-    Jan Skov Pedersen - checking of mathematics
-    Pawel Kwasniewski <kwasniew@esrf.fr> - Code cleanup and documentation
-    Ingo Bressler <ingo.bressler@bam.de> - Code cleanup, modification and documentation
+Made possible with help from (amongst others)
+=============================================
+
+ - | Samuel Tardif
+   | Derivations (mostly observability) and checking of mathematics
+ - | Jan Skov Pedersen
+   | checking of mathematics
+ - | Pawel Kwasniewski <kwasniew@esrf.fr>
+   | Code cleanup and documentation
+ - | Ingo Bressler <ingo.bressler@bam.de>
+   | Code cleanup, modification and documentation
+
+A Note on Units
+===============
+
+Internally, all length units are in meters, all angle units in degrees
+clockwise from top. *Intensity* is in
+:math:`\left[ 1 \over {m \cdot sr} \right]`,
+*q* in :math:`\left[ 1 \over m \right]`.
+The electron density contrast squared,
+*drhosqr* is in :math:`\left[ m^{-4} \right]`.
+Other units may be used, but if absolute units are supplied and absolute
+volume fractions required, meters are necessitated.
+
+Example Usage
+=============
 
 
-A note on units:
-===========================
-Internally, all length units are in meters, all angle units in degrees clockwise from 
-    top. Intensity is in 1/(m sr), q in 1/m. The electron density contrast squared,
-    ``drhosqr`` is in m^-4. Other units may be used, but if absolute units are supplied 
-    and absolute volume fractions required, meters are necessitated.
+*For detailed usage, please see the* :doc:`quickstart`
 
+Fitting a single dataset using all automatic and default parameters
+(may go wrong on poorly conditioned input, needs sensibly-spaced datapoints
+and good uncertainty estimates).
+The dataset is considered to consist of three variables *Q*, *I* and *IERR*::
 
+ McSAS(Q = Q, I = I, IERR = IERR, Plot = True)
 
-Example usage:
-===========================
-        *for detailed usage, see accompanying documentation*
+Optional parameters can be supplied in parameter-value pairs to finetune
+optimisation behaviour::
 
-Fitting a single dataset using all automatic and default parameters (may go wrong on 
-poorly conditioned input, needs sensibly-spaced datapoints and good uncertainty 
-estimates). The dataset is considered to consist of three variables: Q, I and IERR::
-    McSAS(Q=Q,I=I,IERR=IERR,Plot=True)
+ A = McSAS(Q = Q, I = I, IERR = numpy.maximum(0.01 * I, E),
+           Ncontrib = 200, Convcrit = 1,
+           Bounds = array([0.5e-9, 35e-9]),
+           Maxiter = 1e5, Histscale = 'log',
+           drhosqr = 1e30, Nreps = 100, Plot = True)
 
-Optional parameters can be supplied in parameter-value pairs to finetune optimisation 
-behaviour::
-    A=McSAS(Q=Q,I=I,IERR=numpy.maximum(0.01*I,E),Ncontrib=200,Convcrit=1,Bounds=array([0.5e-9,35e-9]),Maxiter=1e5,Histscale='log',drhosqr=1e30,Nreps=100,Plot=True)
 '''
 
 import scipy # For many important functions
@@ -70,166 +95,193 @@ import sys # For printing of slightly more advanced messages to stdout
 import pickle #for pickle_read and pickle_write
 
 class McSAS(object):
-    """
+    r"""
     Main class containing all functions required to do Monte Carlo fitting.
 
-    Input:
-    ------
-    McSAS required parameters::
-        - `Q`: a 1D or 2D array of q-values.
-        - `I`: a similarly sized array of corresponding intensity values
-        - `IERR`: a similarly sized array of corresponding intensity uncertainty values
-    McSAS optional parameters::
-        - `PSI` : 2D array 
-            detector angle values, only required for 2D pattern fitting.
-        - `Bounds` : list
-            Two-element vector or list indicating upper and lower size bounds of the 
-            particle radii used in the fitting procedure. If not provided, these will
-            be estimated as: Rmax=pi/qmin and Rmin=pi/qmax. units: m
-        - `Nsph` : int, default: 200
+    **Required input parameters:**
+
+        - *Q*: 1D or 2D array of q-values
+        - *I*: corresponding intensity values of the same shape
+        - *IERR*: corresponding intensity uncertainty values of the same shape
+
+    **Optional input parameters:**
+
+        - *PSI*: 2D array
+            Detector angle values, only required for 2D pattern fitting.
+        - *Bounds*: list
+            Two-element vector or list indicating upper and lower size
+            bounds of the particle radii used in the fitting procedure. If
+            not provided, these will be estimated as:
+            :math:`R_{max} = {pi \over q_{min}}` and
+            :math:`R_{min} = {pi \over q_{max}}`. Units in meter.
+        - *Nsph*: int, default: 200
             Number of spheres used for the MC simulation
-        - `Maxiter` : int, default: 1e5
-            Maximum number of iterations for the MCfit_sph() function
-        - `Rpfactor : float, default: 1.5/3
-            Parameter used to compensate the volume^2 scaling of each sphere 
-            contribution to the simulated I(q)
-        - `Nreps` : int, default: 100
-            Number of repetitions of the MC fit for determination of final histogram 
-            uncertainty.
-        - `qlims` : list, default: [0,inf]
-            Limits on the fitting range in q. units: m^-1
-        - `Histbins` : int, default: 50
+        - *Maxiter*: int, default: 1e5
+            Maximum number of iterations for the :py:func:`MCFit` function
+        - *Rpfactor*: float, default: :math:`1.5 \over 3`
+            Parameter used to compensate the :math:`volume^2` scaling of each
+            sphere contribution to the simulated I(q).
+        - *Nreps*: int, default: 100
+            Number of repetitions of the MC fit for determination of final
+            histogram uncertainty.
+        - *qlims*: list, default: [0, inf]
+            Limits on the fitting range in q.
+            Units in :math:`m^{-1}`
+        - *Histbins*: int, default: 50
             Number of bins used for the histogramming procedure.
-        - `Histscale` : string, default: 'log'
+        - *Histscale*: string, default: 'log'
             Can be set to 'log' for histogramming on a logarithmic size scale, 
             recommended for q- and/or size-ranges spanning more than a decade.
-        - `Histweight` : string, default: 'volume'
-            Can be set to 'number' to force plotting of number-weighted distributions
-            2013-03-19 issue remains that the observability in this case is incorrect.
-        - `drhosqr` : float, default: 1
-            Scattering contrast - when known it will be used to calculate the absolute
-            volume fraction of each contribution, units: m^-4
-        - `Convcrit` : float, default: 1
-            Convergence criterion for the least-squares fit. The fit converges once 
-            the normalized chi squared < Convcrit. If convergence is reached with 
-            Convcrit = 1, the model describes the data (on average) to within the 
-            uncertainty, and thus all information has been extracted from the 
-            scattering pattern.
-        - `StartFromMin` : bool, default: False
-            If set to False, the starting configuration is a set of spheres with radii
-            uniformly sampled between the given or estimated bounds.
-            If set to True, the starting configuration is a set of spheres with radii
-            set to the lower given or estimated Bound (if not zero). Practically, this
-            makes little difference and this feature might be depreciated.
-        - `Maxntry` : int, default: 5
-            If a single MC optimization fails to reach convergence within Maxiter, it
-            may just be due to bad luck. The Analyze_1D procedure will try to redo 
-            that MC optimization for a maximum of Maxntry tries before concluding that
-            it is not bad luck but bad input.
-        - `Plot` : Bool, default: False
-            If set to True, will generate a plot showing the data and fit, as well as
-            the resulting size histogram.
-        - `Memsave`: Bool, default: False
-            For 2D pattern fitting, or for fitting patterns with a very large number 
-            of datapoints or contributions, it may make sense to turn this option on 
-            in order for intensity generating functions not to take up much memory.
-            The cost for this is perhaps a 20-ish percent reduction in speed.
-        - `BOUNDS` : string
-            the McSAS function to use for calculating random number generator 
-            bounds based on input (f.ex. q and I). default: SphBounds
-        - `FF` : string
-            the McSAS function to use for calculating the form factors.
-            default: FF_sph_1D 
-        - `RAND` : string
-            the McSAS function to use for generating random numbers
-            default: random_uniform_sph
-        - `SMEAR` : string
-            the McSAS function to use for smearing of intensity
-            default: _passthrough
-        - `VOL` : string
-            the McSAS function to use for calculating the base object volume
-            default: vol_sph
+        - *Histweight*: string, default: 'volume'
+            | Can be set to 'number' to force plotting of number-weighted
+              distributions
+            | 2013-03-19 issue remains that the observability in this case is
+              incorrect.
+        - *drhosqr*: float, default: 1
+            Scattering contrast - when known it will be used to calculate the
+            absolute volume fraction of each contribution.
+            Units in :math:`m^{-4}`
+        - *Convcrit*: float, default: 1
+            Convergence criterion for the least-squares fit. The fit converges
+            once the :math:`normalized \chi^2 < Convcrit`. If convergence is
+            reached with `Convcrit == 1`, the model describes
+            the data (on average) to within the uncertainty, and thus all
+            information has been extracted from the scattering pattern.
+        - *StartFromMin*: bool, default: False
+            If set to False, the starting configuration is a set of spheres
+            with radii uniformly sampled between the given or estimated
+            bounds. If set to True, the starting configuration is a set of
+            spheres with radii set to the lower given or estimated Bound
+            (if not zero). Practically, this makes little difference and this
+            feature might be depreciated.
+        - *Maxntry*: int, default: 5
+            If a single MC optimization fails to reach convergence within
+            *Maxiter*, it may just be due to bad luck. The procedure will try
+            to redo that MC optimization for a maximum of *Maxntry* tries
+            before concluding that it is not bad luck but bad input.
+        - *Plot*: Bool, default: False
+            If set to True, will generate a plot showing the data and fit, as
+            well as the resulting size histogram.
+        - *Memsave*: Bool, default: False
+            For 2D pattern fitting, or for fitting patterns with a very large
+            number of datapoints or contributions, it may make sense to turn
+            this option on in order for intensity generating functions not to
+            take up much memory. The cost for this is perhaps a 20-ish percent
+            reduction in speed.
+        - *BOUNDS*: string
+            The McSAS function to use for calculating random number generator 
+            bounds based on input (f.ex. q and I).
 
-    Returns:
-    -------
-    A : McSAS object with the following results stored in A.result. These are extracted
-        using A.getresult('Keyword',VariableNumber=0), where the VariableNumber indicates 
-        which shape parameter information is requested for (some information is only stored
-        in VariableNumber=0 (default))
-        Keyword is one of the following:
-        -------
-        'Imean' : 1D array (VariableNumber=0)
+            default: :py:func:`SphBounds`
+        - *FF*: string
+            The McSAS function to use for calculating the form factors.
+
+            default: :py:func:`FF_sph_1D`
+        - *RAND*: string
+            the McSAS function to use for generating random numbers
+
+            default: :py:func:`random_uniform_sph`
+        - *SMEAR*: string
+            the McSAS function to use for smearing of intensity
+
+            default: :py:func:`_passthrough`
+        - *VOL*: string
+            the McSAS function to use for calculating the base object volume
+
+            default: :py:func:`vol_sph`
+
+    **Returns:**
+
+    A McSAS object with the following results stored in the *result* member
+    attribute. These can be extracted using
+    McSAS.getresult('Keyword',VariableNumber=0)
+    where the *VariableNumber* indicates which shape parameter information is
+    requested for
+    (some information is only stored in *VariableNumber = 0* (default)).
+
+    **Keyword** may be one of the following:
+
+        *Imean*: 1D array (*VariableNumber = 0*)
             The fitted intensity, given as the mean of all Nreps results.
-        'q' : 1D array (VariableNumber=0)
-            Corresponding q values (may be different than the input q if qlims was 
-            used) 
-        'Istd' : array (VariableNumber=0)
+        *q*: 1D array (*VariableNumber = 0*)
+            Corresponding q values
+            (may be different than the input q if *qlims* was used).
+        *Istd*: array (*VariableNumber = 0*)
             Standard deviation of the fitted I(q), calculated as the standard 
             deviation of all Nreps results.
-        'Rrep' : size (Nsph x Nreps) array (VariableNumber=0)
-            Collection of Nsph sphere radii fitted to best represent the provided I(q) data.
-            Contains the results of each of Nreps iterations. This can be used for
-            rebinning without having to re-optimize.
-        'Screps' : size (2 x Nreps) array (VariableNumber=0)
-            Scaling and background values for each repetition. Used to display background 
-            level in data and fit plot.
-
-        'VariableNumber' : integer
-            Shape parameter index. e.g. an ellipsoid has 3, width, height and orientation
-        'Hx' : array
-            Histogram bin left edge position (x-axis in histogram)
-        'Hmid' : array
-            Center positions for the size histogram bins (x-axis in histogram, used for errorbars)
-        'Hwidth' : array
-            Histogram bin width (x-axis in histogram, defines bar plot bar widths)
-        'Hmean' : array
-            Volume-weighted particle size distribution values for all Nreps results (y-axis bar height)
-        'Hnmean' : array
-            Number-weighted analogue of the above ``Hmean``
-        'Hy' : size (Histbins x Nreps) array
-            Volume-weighted particle size distribution bin values for each MC fit repetition 
-            (the mean of which is ``Hmean``, and the sample standard deviation of which is ``Hstd``)
-        'Hny' : size (Histbins x Nreps) array
-            Number-weighted particle size distribution bin values for each MC fit repetition
-        'Hstd' : array
-            Standard deviations of the corresponding volume-weighted size distribution bins, calculated
-            from Nreps repetitions of the MCfit_sph() function
-        'Hnstd' : array
-            Standard deviation for the number-weigthed distribution
-        'Vf' : size (Ncontrib x Nreps) array
-            Volume fractions for each of Ncontrib contributions 
-            in each of Nreps iterations
-        'Nf' : size (Ncontrib x Nreps) array
-            Number fraction for each contribution
-        'Vft' : size (Nreps) array
-            Total scatterer volume fraction for each of the Nreps iterations 
-        'Nft' : size (Nreps) array
-            Total number fraction 
-        'vfmin' : size (Nsph x Nreps) array
-            minimum required volume fraction for each contribution to become statistically
-            significant.
-        'nfmin' : size (Nsph x Nreps) array
-            number-weighted analogue to ``vfmin''
-        'vfminbins' : size (Hmid) array 
-            array with the minimum required volume fraction per bin to become statistically 
-            significant. Used to display minimum required level in histogram.
-        'nfminbins' : size (Hmid) array 
-            number-weighted analogue to ``vfminbins``
-        'Screps' : size (2 x Nreps) array
-            Scaling and background values for each repetition. Used to display background 
-            level in data and fit plot.
-        'Vf' : size (Nsph x Nreps) array
-            Volume fractions for each of Nsph spheres 
-            in each of Nreps iterations
-        'Vft' : size (Nreps) array
-            Total scatterer volume fraction for each of the Nreps iterations 
-        'vfmin' : size (Nsph x Nreps) array
-            minimum required volube fraction for each contribution to become statistically
-            significant.
-        'vfminbins' : size (Hmid) array 
-            array with the minimum required volume fraction per bin to become statistically 
-            significant. Used to display minimum required level in histogram.
-
+        *Rrep*: size array (Nsph x Nreps) (*VariableNumber = 0*)
+            Collection of Nsph sphere radii fitted to best represent the
+            provided I(q) data. Contains the results of each of *Nreps*
+            iterations. This can be used for rebinning without having to
+            re-optimize.
+        *Screps*: size array (2 x Nreps) (*VariableNumber = 0*)
+            Scaling and background values for each repetition.
+            Used to display background level in data and fit plot.
+        *VariableNumber*: int
+            Shape parameter index.
+            E.g. an ellipsoid has 3: width, height and orientation.
+        *Hx*: array
+            Histogram bin left edge position (x-axis in histogram).
+        *Hmid*: array
+            Center positions for the size histogram bins
+            (x-axis in histogram, used for errorbars).
+        *Hwidth*: array
+            Histogram bin width
+            (x-axis in histogram, defines bar plot bar widths).
+        *Hmean*: array
+            Volume-weighted particle size distribution values for
+            all Nreps results (y-axis bar height).
+        *Hnmean*: array
+            Number-weighted analogue of the above *Hmean*.
+        *Hy*: size array (Histbins x Nreps)
+            Volume-weighted particle size distribution bin values for
+            each MC fit repetition (the mean of which is *Hmean*, and the
+            sample standard deviation of which is *Hstd*).
+        *Hny*: size array (Histbins x Nreps)
+            Number-weighted particle size distribution bin values for
+            each MC fit repetition.
+        *Hstd*: array
+            Standard deviations of the corresponding volume-weighted size
+            distribution bins, calculated from *Nreps* repetitions of the
+            :py:func:`MCfit_sph`() function.
+        *Hnstd*: array
+            Standard deviation for the number-weigthed distribution.
+        *Vf*: size array (Ncontrib x Nreps)
+            Volume fractions for each of Ncontrib contributions in each of
+            *Nreps* iterations.
+        *Nf*: size array (Ncontrib x Nreps)
+            Number fraction for each contribution.
+        *Vft*: size array (Nreps)
+            Total scatterer volume fraction for each of the Nreps iterations.
+        *Nft*: size array (Nreps)
+            Total number fraction.
+        *vfmin*: size array (Nsph x Nreps)
+            Minimum required volume fraction for each contribution to become
+            statistically significant.
+        *nfmin*: size array (Nsph x Nreps)
+            Number-weighted analogue to *vfmin*.
+        *vfminbins*: size array (Hmid)
+            Array with the minimum required volume fraction per bin to become
+            statistically significant. Used to display minimum required level
+            in histogram.
+        *nfminbins*: size array (Hmid)
+            Number-weighted analogue to *vfminbins*.
+        *Screps*: size array (2 x Nreps)
+            Scaling and background values for each repetition. Used to display
+            background level in data and fit plot.
+        *Vf*: size array (Nsph x Nreps)
+            Volume fractions for each of *Nsph* spheres in each of *Nreps*
+            iterations.
+        *Vft*: size array (Nreps)
+            Total scatterer volume fraction for each of the *Nreps*
+            iterations.
+        *vfmin*: size array (Nsph x Nreps)
+            Minimum required volube fraction for each contribution to become
+            statistically significant.
+        *vfminbins*: size array (Hmid)
+            Array with the minimum required volume fraction per bin to become
+            statistically significant. Used to display minimum required level
+            in histogram.
     """        
 
     dataset=None #where Q, PSI, I and IERR is stored, original dataset
@@ -1020,6 +1072,8 @@ class McSAS(object):
         return Rset
 
     def random_uniform_sph(self,Nsph=1):
+        """Random number generator with uniform distribution for
+        the sphere form factor."""
         #get parameters from self
         Bounds=self.getpar('Bounds') 
         #generate Nsph random numbers
@@ -1107,11 +1161,11 @@ class McSAS(object):
         return Fell #this will be n-by-len(q) array
 
     def _passthrough(self,In):
-        '''a passthrough mechanism returning the input unchanged'''
+        """a passthrough mechanism returning the input unchanged"""
         return In
 
     def reshape_fitdata(self):
-        '''This ensures that q, I, PSI and E are in 1-by-n shape'''
+        """This ensures that q, I, PSI and E are in 1-by-n shape"""
         for key in self.fitdata.keys():
             self.fitdata[key]=reshape(self.fitdata[key],(1,prod(shape(self.fitdata[key]))))
 
@@ -1516,7 +1570,9 @@ def pickle_write(filename,DBlock):
     return
 
 def binning_array(Q,PSI,I,IERR,S=2):
-    "this function applies a simple S-by-S binning routine on images. Calculates new error based on old error superseded by standard deviation in a bin"
+    """This function applies a simple S-by-S binning routine on images.
+    It calculates new error based on old error superseded by standard
+    deviation in a bin."""
     def isodd(x):
         #checks if a value is even or odd
         return bool(x&1)
@@ -2046,10 +2102,15 @@ def Analyze_1D_Cylinder_RadiallyIsotropic(q,I,E,Bounds=[],Ncyl=[],Maxiter=[],Rpf
 
 def Icyl_InPlaneAverage_RandomSampling(q,psi=array([0.,90.]),nsamples='auto',R1=1.,R2=1.):
     """
-    calculates the in-plane average of a shape (rotational average, but only rotated around the beam axis, perpendicular to the detector plane).
-    This calculation works by uniform random number generation for q and psi, within the bounds dictated by the input. 
-    Set "nsamples" to a number of samples. 'auto' sounds cool but has not been implemented yet. 
-    input 'q' is supposed to be a vector of q values for which the intensity is requested
+    Calculates the in-plane average of a shape (rotational average, but only
+    rotated around the beam axis, perpendicular to the detector plane).
+    This calculation works by uniform random number generation for q and psi,
+    within the bounds dictated by the input.
+
+    | Set *nsamples* to a number of samples.
+    | *auto* sounds cool but has not been implemented yet.
+    | Input *q* is supposed to be a vector of *q* values
+      for which the intensity is requested.
     """
 
     Qs=numpy.random.uniform(low=numpy.min(abs(q)),high=numpy.max(abs(q)),size=nsamples)
@@ -2064,7 +2125,10 @@ def Icyl_InPlaneAverage_RandomSampling(q,psi=array([0.,90.]),nsamples='auto',R1=
 def Integrate_Shape_as_Spherical_Isotropic(q,psirange=numpy.array([0.1,360.1]),Func='',parameters=numpy.array([0]),psidiv=303,randfact=0):
     """
     Generate a 1D intensity of a spherically isotropic shape. 
-    This is identical to a fully rotationally isotropic averaged shape, for radially isotropic shapes, use Integrate_Shape_as_Radial_Isotropic, which averages the shape around the axis perpendicular to the detector.
+    This is identical to a fully rotationally isotropic averaged shape, for
+    radially isotropic shapes,
+    use :py:func:`Integrate_Shape_as_Radial_Isotropic` which averages the
+    shape around the axis perpendicular to the detector.
     """
     d_to_r=1./180*pi
     psi=linspace(numpy.min(psirange),numpy.max(psirange),psidiv)
@@ -2086,8 +2150,9 @@ def Integrate_Shape_as_Spherical_Isotropic(q,psirange=numpy.array([0.1,360.1]),F
 def Integrate_Shape_as_Radial_Isotropic(q,psirange=numpy.array([0.1,360.1]),Func='',parameters=numpy.array([0]),psidiv=303,randfact=0):
     """
     Generate a 1D intensity of a radially isotropic shape. 
-    This is not identical to a fully rotationally isotropic shape, but merely isotropic as if the shape 
-    is rotated around the axis perpendicular to the detector.
+    This is not identical to a fully rotationally isotropic shape, but merely
+    isotropic as if the shape is rotated around the axis perpendicular to the
+    detector.
     """
     psi=linspace(numpy.min(psirange),numpy.max(psirange),psidiv)
     Q=(q+0*psi[:,newaxis])
