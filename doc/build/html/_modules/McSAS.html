@@ -47,61 +47,60 @@
             
   <h1>Source code for McSAS</h1><div class="highlight"><pre>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">This is a file with small programs for Monte-Carlo fitting of SAXS patterns. It is </span>
+<span class="sd">A class and supplementary functions for Monte-Carlo fitting of SAXS patterns. It is </span>
 <span class="sd">released under a Creative Commons CC-BY-SA license. Please cite as:</span>
 
-<span class="sd">Brian R. Pauw, 2012, http://arxiv.org/abs/1210.5304 arXiv:1210.5304. </span>
-<span class="sd">    Also available open access at J. Appl. Cryst. 46, (2013) with doi: </span>
-<span class="sd">        http://dx.doi.org/10.1107/S0021889813001295</span>
+<span class="sd">Brian R. Pauw et al., J. Appl. Cryst. 46, (2013), pp. 365--371</span>
+<span class="sd">    doi: http://dx.doi.org/10.1107/S0021889813001295</span>
 
-<span class="sd">Test Function: :math:`\\frac{s}{\\sqrt{N}}`</span>
-
-<span class="sd">Another Test:</span>
-
-<span class="sd">.. math::</span>
-<span class="sd">   :nowrap:</span>
-
-<span class="sd">   \\begin{eqnarray}</span>
-<span class="sd">      y    &amp; = &amp; ax^2 + bx + c \\\\</span>
-<span class="sd">      f(x) &amp; = &amp; x^2 + 2xy + y^2</span>
-<span class="sd">   \\end{eqnarray}</span>
-
-<span class="sd">Contents (updated 2013-01-16):</span>
-<span class="sd">    *needs to be updated after finishing the OO variant**</span>
-<span class="sd">    Analyze_1D: A wrapper for the MC code which repeatedly runs the optimization and </span>
-<span class="sd">        computes the final volume-weighted sphere distribution.</span>
-<span class="sd">    FF_sph_1D: computes the rayleigh form factor for a sphere radius or array of sphere </span>
-<span class="sd">        radii</span>
-<span class="sd">    observability3: histogramming and uncertainty calculation for the Analyze_1D code.</span>
-<span class="sd">        also calculates the minimum number of required contributions and the volume </span>
-<span class="sd">        fractions in absolute units.</span>
-<span class="sd">    MCFit_sph: Monte-carlo fitting of the data to extract polydispersity assuming spheres, </span>
-<span class="sd">        by changing the radius of a fixed number of spheres</span>
-<span class="sd">    binning_1D: bins the data and propagates errors, or calculates errors if not initially </span>
+<span class="sd">This file defines the following classes and functions: </span>
+<span class="sd">    - McSAS: class containing all the functions required to perform a Monte Carlo analysis</span>
+<span class="sd">        on small-angle scattering data.</span>
+<span class="sd">    - binning_array: Can be used to do n-by-n pixel binning of 2D detector images. The </span>
+<span class="sd">        returned uncertainty is the larger of either the binned uncertainty or the sample</span>
+<span class="sd">        standard deviation in the bin.</span>
+<span class="sd">    - binning_1D: bins the data and propagates errors, or calculates errors if not initially </span>
 <span class="sd">        provided</span>
-<span class="sd">    binning_weighted_1D: Weighted binning, where the intensities of a pixel are divided </span>
+<span class="sd">    - binning_weighted_1D: Weighted binning, where the intensities of a pixel are divided </span>
 <span class="sd">        between the two neighbouring bins depending on the distances to the centres. If </span>
 <span class="sd">        error provided is empty, the standard deviation of the intensities in the bins are </span>
 <span class="sd">        computed. </span>
-<span class="sd">    McPlot: A procedure for generating a data-fit plot and size histogram based on </span>
-<span class="sd">        Analyze_1D&#39;s results</span>
-<span class="sd">    McCSV: Function to write an arbitrary number of semicolon-separated values to a file</span>
-<span class="sd">    FixBounds: Internal function for estimating minimum and maximum size bounds based on </span>
-<span class="sd">        q values.</span>
-<span class="sd">    csqr: least-squares error to use with scipy.optimize.leastsq</span>
-<span class="sd">    Iopt: Optimize the scaling factor and background level of modeled data vs. intensity</span>
-<span class="sd">    csqr_v1: least-squares for data with known error, size of parameter-space not taken </span>
+<span class="sd">    - csqr: least-squares error to use with scipy.optimize.leastsq</span>
+<span class="sd">    - Iopt: Optimize the scaling factor and background level of modeled data vs. intensity</span>
+<span class="sd">    - csqr_v1: least-squares for data with known error, size of parameter-space not taken </span>
 <span class="sd">        into account</span>
-<span class="sd">    Iopt_v1: old intensity scaling factor optimisation, more robust but slower than Iopt</span>
-<span class="sd">    pickle_read: Reads in pickled data from a file (by filename)</span>
-<span class="sd">    pickle_write: write a block or dictionary to a file (by filename)</span>
+<span class="sd">    - Iopt_v1: old intensity scaling factor optimisation, more robust but slower than Iopt</span>
+<span class="sd">    - pickle_read: Reads in pickled data from a file (by filename)</span>
+<span class="sd">    - pickle_write: write a block or dictionary to a file (by filename)</span>
 <span class="sd">    </span>
-<span class="sd">    (asterisk * indicates code to be depreciated)</span>
-
 <span class="sd">Made possible with help from (amongst others):</span>
 <span class="sd">    Samuel Tardif - Derivations (mostly observability) and checking of mathematics</span>
 <span class="sd">    Jan Skov Pedersen - checking of mathematics</span>
 <span class="sd">    Pawel Kwasniewski &lt;kwasniew@esrf.fr&gt; - Code cleanup and documentation</span>
+<span class="sd">    Ingo Bressler &lt;ingo.bressler@bam.de&gt; - Code cleanup, modification and documentation</span>
+
+
+<span class="sd">A note on units:</span>
+<span class="sd">===========================</span>
+<span class="sd">Internally, all length units are in meters, all angle units in degrees clockwise from </span>
+<span class="sd">    top. Intensity is in 1/(m sr), q in 1/m. The electron density contrast squared,</span>
+<span class="sd">    ``drhosqr`` is in m^-4. Other units may be used, but if absolute units are supplied </span>
+<span class="sd">    and absolute volume fractions required, meters are necessitated.</span>
+
+
+
+<span class="sd">Example usage:</span>
+<span class="sd">===========================</span>
+<span class="sd">        *for detailed usage, see accompanying documentation*</span>
+
+<span class="sd">Fitting a single dataset using all automatic and default parameters (may go wrong on </span>
+<span class="sd">poorly conditioned input, needs sensibly-spaced datapoints and good uncertainty </span>
+<span class="sd">estimates). The dataset is considered to consist of three variables: Q, I and IERR::</span>
+<span class="sd">    McSAS(Q=Q,I=I,IERR=IERR,Plot=True)</span>
+
+<span class="sd">Optional parameters can be supplied in parameter-value pairs to finetune optimisation </span>
+<span class="sd">behaviour::</span>
+<span class="sd">    A=McSAS(Q=Q,I=I,IERR=numpy.maximum(0.01*I,E),Ncontrib=200,Convcrit=1,Bounds=array([0.5e-9,35e-9]),Maxiter=1e5,Histscale=&#39;log&#39;,drhosqr=1e30,Nreps=100,Plot=True)</span>
 <span class="sd">&#39;&#39;&#39;</span>
 
 <span class="kn">import</span> <span class="nn">scipy</span> <span class="c"># For many important functions</span>
@@ -115,10 +114,133 @@
 <span class="kn">import</span> <span class="nn">sys</span> <span class="c"># For printing of slightly more advanced messages to stdout</span>
 <span class="kn">import</span> <span class="nn">pickle</span> <span class="c">#for pickle_read and pickle_write</span>
 
-<span class="c">#Object oriented variant:</span>
-
 <div class="viewcode-block" id="McSAS"><a class="viewcode-back" href="../code.html#McSAS.McSAS">[docs]</a><span class="k">class</span> <span class="nc">McSAS</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Core Monto-Carlo Small Angle Scattering calculations.&quot;&quot;&quot;</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main class containing all functions required to do Monte Carlo fitting.</span>
+
+<span class="sd">    Input:</span>
+<span class="sd">    ------</span>
+<span class="sd">    McSAS required parameters::</span>
+<span class="sd">        - `Q`: a 1D or 2D array of q-values.</span>
+<span class="sd">        - `I`: a similarly sized array of corresponding intensity values</span>
+<span class="sd">        - `IERR`: a similarly sized array of corresponding intensity uncertainty values</span>
+<span class="sd">    McSAS optional parameters::</span>
+<span class="sd">        - `PSI` : 2D array </span>
+<span class="sd">            detector angle values, only required for 2D pattern fitting.</span>
+<span class="sd">        - `Bounds` : list</span>
+<span class="sd">            Two-element vector or list indicating upper and lower size bounds of the </span>
+<span class="sd">            particle radii used in the fitting procedure. If not provided, these will</span>
+<span class="sd">            be estimated as: Rmax=pi/qmin and Rmin=pi/qmax. units: m</span>
+<span class="sd">        - `Nsph` : int, default: 200</span>
+<span class="sd">            Number of spheres used for the MC simulation</span>
+<span class="sd">        - `Maxiter` : int, default: 1e5</span>
+<span class="sd">            Maximum number of iterations for the MCfit_sph() function</span>
+<span class="sd">        - `Rpfactor : float, default: 1.5/3</span>
+<span class="sd">            Parameter used to compensate the volume^2 scaling of each sphere </span>
+<span class="sd">            contribution to the simulated I(q)</span>
+<span class="sd">        - `Nreps` : int, default: 100</span>
+<span class="sd">            Number of repetitions of the MC fit for determination of final histogram </span>
+<span class="sd">            uncertainty.</span>
+<span class="sd">        - `qlims` : list, default: [0,inf]</span>
+<span class="sd">            Limits on the fitting range in q. units: m^-1</span>
+<span class="sd">        - `Histbins` : int, default: 50</span>
+<span class="sd">            Number of bins used for the histogramming procedure.</span>
+<span class="sd">        - `Histscale` : string, default: &#39;log&#39;</span>
+<span class="sd">            Can be set to &#39;log&#39; for histogramming on a logarithmic size scale, </span>
+<span class="sd">            recommended for q- and/or size-ranges spanning more than a decade.</span>
+<span class="sd">        - `Histweight` : string, default: &#39;volume&#39;</span>
+<span class="sd">            Can be set to &#39;number&#39; to force plotting of number-weighted distributions</span>
+<span class="sd">            2013-03-19 issue remains that the observability in this case is incorrect.</span>
+<span class="sd">        - `drhosqr` : float, default: 1</span>
+<span class="sd">            Scattering contrast - when known it will be used to calculate the absolute</span>
+<span class="sd">            volume fraction of each contribution, units: m^-4</span>
+<span class="sd">        - `Convcrit` : float, default: 1</span>
+<span class="sd">            Convergence criterion for the least-squares fit. The fit converges once </span>
+<span class="sd">            the normalized chi squared &lt; Convcrit. If convergence is reached with </span>
+<span class="sd">            Convcrit = 1, the model describes the data (on average) to within the </span>
+<span class="sd">            uncertainty, and thus all information has been extracted from the </span>
+<span class="sd">            scattering pattern.</span>
+<span class="sd">        - `StartFromMin` : bool, default: False</span>
+<span class="sd">            If set to False, the starting configuration is a set of spheres with radii</span>
+<span class="sd">            uniformly sampled between the given or estimated bounds.</span>
+<span class="sd">            If set to True, the starting configuration is a set of spheres with radii</span>
+<span class="sd">            set to the lower given or estimated Bound (if not zero). Practically, this</span>
+<span class="sd">            makes little difference and this feature might be depreciated.</span>
+<span class="sd">        - `Maxntry` : int, default: 5</span>
+<span class="sd">            If a single MC optimization fails to reach convergence within Maxiter, it</span>
+<span class="sd">            may just be due to bad luck. The Analyze_1D procedure will try to redo </span>
+<span class="sd">            that MC optimization for a maximum of Maxntry tries before concluding that</span>
+<span class="sd">            it is not bad luck but bad input.</span>
+<span class="sd">        - `Plot` : Bool, default: False</span>
+<span class="sd">            If set to True, will generate a plot showing the data and fit, as well as</span>
+<span class="sd">            the resulting size histogram.</span>
+<span class="sd">        - `Memsave`: Bool, default: False</span>
+<span class="sd">            For 2D pattern fitting, or for fitting patterns with a very large number </span>
+<span class="sd">            of datapoints or contributions, it may make sense to turn this option on </span>
+<span class="sd">            in order for intensity generating functions not to take up much memory.</span>
+<span class="sd">            The cost for this is perhaps a 20-ish percent reduction in speed.</span>
+<span class="sd">        - `BOUNDS` : string</span>
+<span class="sd">            the McSAS function to use for calculating random number generator </span>
+<span class="sd">            bounds based on input (f.ex. q and I). default: SphBounds</span>
+<span class="sd">        - `FF` : string</span>
+<span class="sd">            the McSAS function to use for calculating the form factors.</span>
+<span class="sd">            default: FF_sph_1D </span>
+<span class="sd">        - `RAND` : string</span>
+<span class="sd">            the McSAS function to use for generating random numbers</span>
+<span class="sd">            default: random_uniform_sph</span>
+<span class="sd">        - `SMEAR` : string</span>
+<span class="sd">            the McSAS function to use for smearing of intensity</span>
+<span class="sd">            default: _passthrough</span>
+<span class="sd">        - `VOL` : string</span>
+<span class="sd">            the McSAS function to use for calculating the base object volume</span>
+<span class="sd">            default: vol_sph</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    -------</span>
+<span class="sd">    A : Output dictionary containing the following elements:</span>
+<span class="sd">        &#39;Imean&#39; : 1D array </span>
+<span class="sd">            The fitted intensity, given as the mean of all Nreps results.</span>
+<span class="sd">        &#39;q&#39; : 1D array</span>
+<span class="sd">            Corresponding q values (may be different than the input q if qlims was </span>
+<span class="sd">            used) </span>
+<span class="sd">        &#39;Istd&#39; : array</span>
+<span class="sd">            Standard deviation of the fitted I(q), calculated as the standard </span>
+<span class="sd">            deviation of all Nreps results.</span>
+<span class="sd">        &#39;Hx&#39; : array</span>
+<span class="sd">            Histogram bin left edge position</span>
+<span class="sd">        &#39;Hmid&#39; : array</span>
+<span class="sd">            Center positions for the size histogram bins</span>
+<span class="sd">        &#39;Hwidth&#39; : array</span>
+<span class="sd">            Histogram bin width</span>
+<span class="sd">        &#39;Hmean&#39; : array</span>
+<span class="sd">            Volume-weighted particle size distribution values for all Nreps results</span>
+<span class="sd">        &#39;Hstd&#39; : array</span>
+<span class="sd">            Standard deviations of the corresponding size distribution bins, calculated</span>
+<span class="sd">            from Nreps repetitions of the MCfit_sph() function</span>
+<span class="sd">        &#39;Hy&#39; : size (Histbins x Nreps) array</span>
+<span class="sd">            Volume-weighted particle size distribution values for each MC fit repetition</span>
+<span class="sd">        &#39;Niter&#39; : int</span>
+<span class="sd">            Average number of MC iterations required for convergence</span>
+<span class="sd">        &#39;Rrep&#39; : size (Nsph x Nreps) array</span>
+<span class="sd">            Collection of Nsph sphere radii fitted to best represent the provided I(q) data.</span>
+<span class="sd">            Contains the results of each of Nreps iterations. This can be used for</span>
+<span class="sd">            rebinning without having to re-optimize.</span>
+<span class="sd">        &#39;Vf&#39; : size (Nsph x Nreps) array</span>
+<span class="sd">            Volume fractions for each of Nsph spheres </span>
+<span class="sd">            in each of Nreps iterations</span>
+<span class="sd">        &#39;Vft&#39; : size (Nreps) array</span>
+<span class="sd">            Total scatterer volume fraction for each of the Nreps iterations </span>
+<span class="sd">        &#39;vfmin&#39; : size (Nsph x Nreps) array</span>
+<span class="sd">            minimum required volube fraction for each contribution to become statistically</span>
+<span class="sd">            significant.</span>
+<span class="sd">        &#39;vfminbins&#39; : size (Hmid) array </span>
+<span class="sd">            array with the minimum required volume fraction per bin to become statistically </span>
+<span class="sd">            significant. Used to display minimum required level in histogram.</span>
+<span class="sd">        &#39;Screps&#39; : size (2 x Nreps) array</span>
+<span class="sd">            Scaling and background values for each repetition. Used to display background </span>
+<span class="sd">            level in data and fit plot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>        
+
     <span class="n">dataset</span><span class="o">=</span><span class="bp">None</span> <span class="c">#where Q, PSI, I and IERR is stored, original dataset</span>
     <span class="n">fitdata</span><span class="o">=</span><span class="bp">None</span> <span class="c">#may be populated with a subset of the aforementioned dataset, limited to q-limits or psi limits and to positive I values alone</span>
     <span class="n">parameters</span><span class="o">=</span><span class="bp">None</span> <span class="c">#where the fitting and binning settings are stored</span>
@@ -127,164 +249,24 @@
     <span class="n">calcdata</span><span class="o">=</span><span class="bp">None</span> <span class="c">#here values and matrices are stored used by the calculations.</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;intiialization function, input kwargs can be keyword-value pairs containing:</span>
-<span class="sd">        - &#39;Q&#39; scattering vector in reciprocal meters</span>
-<span class="sd">        - &#39;PSI&#39; Azimuthal angle on the detector (not yet used until the 2D fitting is incorporated in this</span>
-<span class="sd">        - &#39;I&#39; scattering intensity</span>
-<span class="sd">        - &#39;IERR&#39; estimated standard deviation on the intensity</span>
-<span class="sd">        and other keyword-value pairs similar to those used for Analyze_1D</span>
-<span class="sd">        TODO: include those here.</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        intialization function, input kwargs can be aforementioend parameter keyword-value pairs.</span>
+<span class="sd">        This does the following::</span>
+<span class="sd">            1. Initialises the variables to the right type</span>
+<span class="sd">            2. Parses the input</span>
+<span class="sd">            3. Stores the supplied data twice, one original and one for fitting </span>
+<span class="sd">                (the latter of which may be clipped or otherwise adjusted)</span>
+<span class="sd">            4. Applies Q- and optional PSI- limits to the data</span>
+<span class="sd">            5. Reshapes fitdata to 1-by-n dimensions</span>
+<span class="sd">            6. Sets the function references</span>
+<span class="sd">            7. Calculates the shape parameter bounds if not supplied</span>
+<span class="sd">            8. Peforms simple checks on validity of input</span>
+<span class="sd">            9. Runs the Analyse() function which applies the MC fit multiple times</span>
+<span class="sd">            10. Runs the Histogram() procedure which processes the MC result </span>
+<span class="sd">            11. Optionally recalculates the resulting intensity in the same shape </span>
+<span class="sd">                as the original (for 2D datasets)</span>
+<span class="sd">            12. Optionally displays the results graphically.</span>
 
-<span class="sd">        This function runs the monte-carlo fit MCFit_sph() several times, and returns </span>
-<span class="sd">        bin centres, means, standard deviations and observability limits for the bins. </span>
-<span class="sd">        Eventually, this may also plot. The drhosqr value can be set to the contrast </span>
-<span class="sd">        (if known, approximately on the order of 6x10^30 m^-4) so a volume fraction </span>
-<span class="sd">        for each histogram bin is calculated.</span>
-<span class="sd">        Be aware that all length units are in meters, including those for q, I and </span>
-<span class="sd">        the scattering contrast.</span>
-
-<span class="sd">        Parameters:</span>
-<span class="sd">        -----------</span>
-<span class="sd">        Q : 1D array </span>
-<span class="sd">            q vector values, units: m^-1</span>
-<span class="sd">        PSI: 1D array</span>
-<span class="sd">            azimuthal angle of q on the detector, used for anisotropic scattering</span>
-<span class="sd">        I : 1D array </span>
-<span class="sd">            I(q) values, units: (m sr)^-1, size should be identical to q</span>
-<span class="sd">        IERR : 1D array</span>
-<span class="sd">            Uncertainty (one standard deviation) of the measured I(q) values, these </span>
-<span class="sd">            should only reflect the relative uncertainties, absolute uncertainty </span>
-<span class="sd">            contributions should be indicated on the final histogram in addition to </span>
-<span class="sd">            the relative uncertainty of the result. Size should be identical to q, </span>
-<span class="sd">            values should be positive and larger than zero</span>
-<span class="sd">        Bounds : list</span>
-<span class="sd">            Two-element vector or list indicating upper and lower size bounds of the </span>
-<span class="sd">            particle radii used in the fitting procedure. If not provided, these will</span>
-<span class="sd">            be estimated as: Rmax=pi/qmin and Rmin=pi/qmax. units: m</span>
-<span class="sd">        Nsph : int, default: 200</span>
-<span class="sd">            Number of spheres used for the MC simulation</span>
-<span class="sd">        Maxiter : int, default: 1e5</span>
-<span class="sd">            Maximum number of iterations for the MCfit_sph() function</span>
-<span class="sd">        Rpfactor : float, default: 1.5/3</span>
-<span class="sd">            Parameter used to compensate the volume^2 scaling of each sphere </span>
-<span class="sd">            contribution to the simulated I(q)</span>
-<span class="sd">        Nreps : int, default: 100</span>
-<span class="sd">            Number of repetitions of the MC fit for determination of final histogram </span>
-<span class="sd">            uncertainty.</span>
-<span class="sd">        qlims : list, default: [0,inf]</span>
-<span class="sd">            Limits on the fitting range in q. units: m^-1</span>
-<span class="sd">        Histbins : int, default: 50</span>
-<span class="sd">            Number of bins used for the histogramming procedure.</span>
-<span class="sd">        Histscale : string, default: &#39;log&#39;</span>
-<span class="sd">            Can be set to &#39;log&#39; for histogramming on a logarithmic size scale, </span>
-<span class="sd">            recommended for q- and/or size-ranges spanning more than a decade.</span>
-<span class="sd">        drhosqr : float, default: 1</span>
-<span class="sd">            Scattering contrast - when known it will be used to calculate the absolute</span>
-<span class="sd">            volume fraction of each contribution, units: m^-4</span>
-<span class="sd">        Convcrit : float, default: 1</span>
-<span class="sd">            Convergence criterion for the least-squares fit. The fit converges once </span>
-<span class="sd">            the normalized chi squared &lt; Convcrit. If convergence is reached with </span>
-<span class="sd">            Convcrit = 1, the model describes the data (on average) to within the </span>
-<span class="sd">            uncertainty, and thus all information has been extracted from the </span>
-<span class="sd">            scattering pattern.</span>
-<span class="sd">        StartFromMin : bool, default: False</span>
-<span class="sd">            If set to False, the starting configuration is a set of spheres with radii</span>
-<span class="sd">            uniformly sampled between the given or estimated bounds.</span>
-<span class="sd">            If set to True, the starting configuration is a set of spheres with radii</span>
-<span class="sd">            set to the lower given or estimated Bound (if not zero). Practically, this</span>
-<span class="sd">            makes little difference and this feature might be depreciated.</span>
-<span class="sd">        Maxntry : int, default: 5</span>
-<span class="sd">            If a single MC optimization fails to reach convergence within Maxiter, it</span>
-<span class="sd">            may just be due to bad luck. The Analyze_1D procedure will try to redo </span>
-<span class="sd">            that MC optimization for a maximum of Maxntry tries before concluding that</span>
-<span class="sd">            it is not bad luck but bad input.</span>
-<span class="sd">        Plot : Bool, default: False</span>
-<span class="sd">            If set to True, will generate a plot showing the data and fit, as well as</span>
-<span class="sd">            the resulting size histogram.</span>
-<span class="sd">        Memsave: Bool, default: False</span>
-<span class="sd">            For 2D pattern fitting, or for fitting patterns with a very large number </span>
-<span class="sd">            of datapoints or contributions, it may make sense to turn this option on </span>
-<span class="sd">            in order for intensity generating functions not to take up much memory.</span>
-<span class="sd">            The cost for this is perhaps a 20-ish percent reduction in speed.</span>
-<span class="sd">        BOUNDS : string</span>
-<span class="sd">            the McSAS function to use for calculating random number generator </span>
-<span class="sd">            bounds based on input (f.ex. q and I). default: SphBounds</span>
-<span class="sd">        FF : string</span>
-<span class="sd">            the McSAS function to use for calculating the form factors.</span>
-<span class="sd">            default: FF_sph_1D </span>
-<span class="sd">        RAND : string</span>
-<span class="sd">            the McSAS function to use for generating random numbers</span>
-<span class="sd">            default: random_uniform_sph</span>
-<span class="sd">        SMEAR : string</span>
-<span class="sd">            the McSAS function to use for smearing of intensity</span>
-<span class="sd">            default: _passthrough</span>
-<span class="sd">        VOL : string</span>
-<span class="sd">            the McSAS function to use for calculating the base object volume</span>
-<span class="sd">            default: vol_sph</span>
-
-
-<span class="sd">        Returns:</span>
-<span class="sd">        --------</span>
-<span class="sd">        A : Output dictionary containing the following elements:</span>
-<span class="sd">            &#39;Imean&#39; : 1D array </span>
-<span class="sd">                The fitted intensity, given as the mean of all Nreps results.</span>
-<span class="sd">            &#39;q&#39; : 1D array</span>
-<span class="sd">                Corresponding q values (may be different than the input q if qlims was </span>
-<span class="sd">                used) </span>
-<span class="sd">            &#39;Istd&#39; : array</span>
-<span class="sd">                Standard deviation of the fitted I(q), calculated as the standard </span>
-<span class="sd">                deviation of all Nreps results.</span>
-<span class="sd">            &#39;Hx&#39; : array</span>
-<span class="sd">                Histogram bin left edge position</span>
-<span class="sd">            &#39;Hmid&#39; : array</span>
-<span class="sd">                Center positions for the size histogram bins</span>
-<span class="sd">            &#39;Hwidth&#39; : array</span>
-<span class="sd">                Histogram bin width</span>
-<span class="sd">            &#39;Hmean&#39; : array</span>
-<span class="sd">                Volume-weighted particle size distribution values for all Nreps results</span>
-<span class="sd">            &#39;Hstd&#39; : array</span>
-<span class="sd">                Standard deviations of the corresponding size distribution bins, calculated</span>
-<span class="sd">                from Nreps repetitions of the MCfit_sph() function</span>
-<span class="sd">            &#39;Hy&#39; : size (Histbins x Nreps) array</span>
-<span class="sd">                Volume-weighted particle size distribution values for each MC fit repetition</span>
-<span class="sd">            &#39;Niter&#39; : int</span>
-<span class="sd">                Average number of MC iterations required for convergence</span>
-<span class="sd">            &#39;Rrep&#39; : size (Nsph x Nreps) array</span>
-<span class="sd">                Collection of Nsph sphere radii fitted to best represent the provided I(q) data.</span>
-<span class="sd">                Contains the results of each of Nreps iterations. This can be used for</span>
-<span class="sd">                rebinning without having to re-optimize.</span>
-<span class="sd">            &#39;Vf&#39; : size (Nsph x Nreps) array</span>
-<span class="sd">                Volume fractions for each of Nsph spheres </span>
-<span class="sd">                in each of Nreps iterations</span>
-<span class="sd">            &#39;Vft&#39; : size (Nreps) array</span>
-<span class="sd">                Total scatterer volume fraction for each of the Nreps iterations </span>
-<span class="sd">            &#39;vfmin&#39; : size (Nsph x Nreps) array</span>
-<span class="sd">                minimum required volube fraction for each contribution to become statistically</span>
-<span class="sd">                significant.</span>
-<span class="sd">            &#39;vfminbins&#39; : size (Hmid) array </span>
-<span class="sd">                array with the minimum required volume fraction per bin to become statistically </span>
-<span class="sd">                significant. Used to display minimum required level in histogram.</span>
-<span class="sd">            &#39;Screps&#39; : size (2 x Nreps) array</span>
-<span class="sd">                Scaling and background values for each repetition. Used to display background </span>
-<span class="sd">                level in data and fit plot.</span>
-
-
-<span class="sd">        See also:</span>
-<span class="sd">        ---------</span>
-<span class="sd">        MCfit_sph, observability3</span>
-
-<span class="sd">        Usage:</span>
-<span class="sd">        ------</span>
-<span class="sd">        *for detailed usage, see accompanying documentation*</span>
-<span class="sd">        To fit I(q):</span>
-<span class="sd">        A=McSAS(Q=q,I=I,IERR=numpy.maximum(0.01*I,E),Ncontrib=200,Convcrit=1,Bounds=array([pi/numpy.max(q),pi/numpy.min(q)]),Rpfactor=1.5/3,Maxiter=1e5,Histscale=&#39;lin&#39;,drhosqr=1,Nreps=100,Plot=True)</span>
-<span class="sd">        Or, simplified:</span>
-<span class="sd">        A=McSAS(Q=q,I=I,IERR=numpy.maximum(0.01*I,E))</span>
-
-<span class="sd">        Plotting the data fit and histogram:</span>
-<span class="sd">        McPlot(q,I,numpy.maximum(0.01*I,E),A)</span>
-
-<span class="sd">        Initial goal for this function is to have identical functionality as Analyze_1D in a more flexible framework.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c">#initialize</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">=</span><span class="nb">dict</span><span class="p">()</span> <span class="c">#where Q, PSI, I and IERR is stored, original dataset</span>
@@ -332,7 +314,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">Plot</span><span class="p">()</span>
 
 <div class="viewcode-block" id="McSAS.TwoDGenI"><a class="viewcode-back" href="../code.html#McSAS.McSAS.TwoDGenI">[docs]</a>    <span class="k">def</span> <span class="nf">TwoDGenI</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="s">&quot;this function is run after the histogram procedure for anisotropic images, and will calculate the MC fit intensity in imageform&quot;</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        this function is optionally run after the histogram procedure for anisotropic images, and will calculate the MC fit intensity in imageform</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">Result</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">()</span>
         <span class="c">#load original dataset</span>
         <span class="n">q</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getdata</span><span class="p">(</span><span class="s">&#39;Q&#39;</span><span class="p">,</span><span class="n">dataset</span><span class="o">=</span><span class="s">&#39;original&#39;</span><span class="p">)</span>
@@ -424,15 +408,12 @@
                     <span class="c">#make it into a function handle/pointer</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="n">kw</span><span class="p">]</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">kwargs</span><span class="p">[</span><span class="n">kw</span><span class="p">])</span>
 </div>
-    <span class="k">def</span> <span class="nf">Analyse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="McSAS.Analyse"><a class="viewcode-back" href="../code.html#McSAS.McSAS.Analyse">[docs]</a>    <span class="k">def</span> <span class="nf">Analyse</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c">#get data</span>
         <span class="n">q</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getdata</span><span class="p">(</span><span class="s">&#39;Q&#39;</span><span class="p">)</span>
         <span class="n">I</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getdata</span><span class="p">(</span><span class="s">&#39;I&#39;</span><span class="p">)</span>
         <span class="n">E</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getdata</span><span class="p">(</span><span class="s">&#39;IERR&#39;</span><span class="p">)</span>
         <span class="c">#get settings</span>
-        <span class="c">#Par=self.getpar()</span>
-        <span class="c">#for kw in Par:</span>
-        <span class="c">#    exec(&#39;{}=Par[kw]&#39;.format(kw)) #this sets the parameters as external variables outside the dictionary Par</span>
         <span class="n">Priors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Priors&#39;</span><span class="p">)</span>
         <span class="n">Prior</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Prior&#39;</span><span class="p">)</span>
         <span class="n">Ncontrib</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Ncontrib&#39;</span><span class="p">)</span>
@@ -451,8 +432,10 @@
         <span class="n">bignow</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="c">#for time estimation and reporting</span>
 
         <span class="c">#This is the loop that repeats the MC optimization Nreps times, after which we can calculate an uncertainty on the results.</span>
+        <span class="n">priorsflag</span><span class="o">=</span><span class="bp">False</span>
         <span class="k">for</span> <span class="n">nr</span> <span class="ow">in</span> <span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">Nreps</span><span class="p">):</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">Prior</span><span class="o">==</span><span class="p">[])</span><span class="ow">and</span><span class="p">(</span><span class="n">Priors</span><span class="o">!=</span><span class="p">[]):</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">Prior</span><span class="o">==</span><span class="p">[])</span><span class="ow">and</span><span class="p">(</span><span class="n">Priors</span><span class="o">!=</span><span class="p">[]))</span><span class="ow">or</span><span class="p">(</span><span class="n">priorsflag</span><span class="o">==</span><span class="bp">True</span><span class="p">):</span>
+                <span class="n">priorsflag</span><span class="o">=</span><span class="bp">True</span> <span class="c">#this flag needs to be set as prior will be set after the first pass</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">setpar</span><span class="p">(</span><span class="n">Prior</span><span class="o">=</span><span class="n">Priors</span><span class="p">[:,:,</span><span class="n">nr</span><span class="o">%</span><span class="n">size</span><span class="p">(</span><span class="n">Priors</span><span class="p">,</span><span class="mi">2</span><span class="p">)])</span>
             <span class="n">nt</span> <span class="o">=</span> <span class="mi">0</span> <span class="c">#keep track of how many failed attempts there have been </span>
             <span class="c"># do that MC thing! </span>
@@ -486,8 +469,8 @@
             <span class="s">&#39;Niter&#39;</span><span class="p">:</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Niters</span><span class="p">)})</span> <span class="c">#average number of iterations for all repetitions</span>
 
     <span class="c">###########################################################################################</span>
-    <span class="c">#################################### observability3 #######################################</span>
-    <span class="c">###########################################################################################</span>
+    <span class="c">###################################### Histogram ##########################################</span>
+    <span class="c">###########################################################################################</span></div>
 <div class="viewcode-block" id="McSAS.Histogram"><a class="viewcode-back" href="../code.html#McSAS.McSAS.Histogram">[docs]</a>    <span class="k">def</span> <span class="nf">Histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Observability calculation for a series of spheres, over a range of q. </span>
@@ -498,11 +481,16 @@
 <span class="sd">        which bin and calculate the correct minimum required contribution accordingly.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="c">#get settings</span>
-        <span class="n">Par</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">Par</span><span class="p">:</span>
-            <span class="k">exec</span><span class="p">(</span><span class="s">&#39;{}=Par[kw]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kw</span><span class="p">))</span> <span class="c">#this sets the parameters as external variables outside the dictionary Par</span>
         <span class="c">#set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.</span>
+        <span class="n">Ncontrib</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Ncontrib&#39;</span><span class="p">)</span>
+        <span class="n">Nreps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Nreps&#39;</span><span class="p">)</span>
+        <span class="n">Rpfactor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Rpfactor&#39;</span><span class="p">)</span>
+        <span class="n">Memsave</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Memsave&#39;</span><span class="p">)</span>
+        <span class="n">drhosqr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;drhosqr&#39;</span><span class="p">)</span>
         <span class="n">Rrep</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">(</span><span class="s">&#39;Rrep&#39;</span><span class="p">)</span>
+        <span class="n">Histbins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Histbins&#39;</span><span class="p">)</span>
+        <span class="n">Histscale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Histscale&#39;</span><span class="p">)</span>
+        <span class="n">Bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Bounds&#39;</span><span class="p">)</span>
 
         <span class="c">#ov = zeros(shape(Rrep)) #observability</span>
         <span class="n">Vf</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">((</span><span class="n">Ncontrib</span><span class="p">,</span><span class="n">Nreps</span><span class="p">))</span> <span class="c">#volume fraction for each contribution</span>
@@ -706,9 +694,7 @@
     <span class="c">###########################################################################################</span>
     <span class="c">################################### Monte-carlo procedure #################################</span>
     <span class="c">###########################################################################################</span></div>
-<div class="viewcode-block" id="McSAS.MCFit"><a class="viewcode-back" href="../code.html#McSAS.McSAS.MCFit">[docs]</a>    <span class="k">def</span> <span class="nf">MCFit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">OutputI</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span><span class="n">OutputDetails</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span><span class="n">OutputIterations</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span><span class="n">Prior</span><span class="o">=</span><span class="p">[]):</span>
-        
-        <span class="c">#def MCFit(q,I,E,Nsph=200,Bounds=[],Convcrit=1.,Rpfactor=1.5/3,Maxiter=1e5,Prior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,StartFromMin=False,OutputDetails=False,OutputIterations=False):</span>
+<div class="viewcode-block" id="McSAS.MCFit"><a class="viewcode-back" href="../code.html#McSAS.McSAS.MCFit">[docs]</a>    <span class="k">def</span> <span class="nf">MCFit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">OutputI</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span><span class="n">OutputDetails</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span><span class="n">OutputIterations</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Object-oriented and hopefully shape-flexible form of the MC procedure.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
@@ -717,9 +703,16 @@
         <span class="n">I</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getdata</span><span class="p">(</span><span class="s">&#39;I&#39;</span><span class="p">)</span>
         <span class="n">E</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getdata</span><span class="p">(</span><span class="s">&#39;IERR&#39;</span><span class="p">)</span>
         <span class="c">#load parameters</span>
-        <span class="n">Par</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">Par</span><span class="p">:</span>
-            <span class="k">exec</span><span class="p">(</span><span class="s">&#39;{}=Par[kw]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kw</span><span class="p">))</span> <span class="c">#this sets the parameters as external variables outside the dictionary Par</span>
+        <span class="n">Ncontrib</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Ncontrib&#39;</span><span class="p">)</span>
+        <span class="n">Bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Bounds&#39;</span><span class="p">)</span>
+        <span class="n">Convcrit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Convcrit&#39;</span><span class="p">)</span>
+        <span class="n">Rpfactor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Rpfactor&#39;</span><span class="p">)</span>
+        <span class="n">Maxiter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Maxiter&#39;</span><span class="p">)</span>
+        <span class="n">MaskNegI</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;MaskNegI&#39;</span><span class="p">)</span>
+        <span class="n">StartFromMin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;StartFromMin&#39;</span><span class="p">)</span>
+        <span class="n">Memsave</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Memsave&#39;</span><span class="p">)</span>
+        <span class="n">Prior</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Prior&#39;</span><span class="p">)</span>
+
 
         <span class="c">#find out how many values a shape is defined by:</span>
         <span class="n">Randfunc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">[</span><span class="s">&#39;RAND&#39;</span><span class="p">]</span>
@@ -932,7 +925,7 @@
                 <span class="s">&#39;VOL&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">vol_sph</span><span class="p">,</span>
                 <span class="s">&#39;SMEAR&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">_passthrough</span><span class="p">}</span> <span class="c">#none</span>
 </div>
-    <span class="k">def</span> <span class="nf">random_uniform_ell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Nell</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="McSAS.random_uniform_ell"><a class="viewcode-back" href="../code.html#McSAS.McSAS.random_uniform_ell">[docs]</a>    <span class="k">def</span> <span class="nf">random_uniform_ell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Nell</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="c">#get parameters from self</span>
         <span class="n">Bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Bounds&#39;</span><span class="p">)</span> 
         <span class="c">#generate Nsph random numbers</span>
@@ -943,7 +936,7 @@
 
         <span class="c">#output Nsph-by-3 array</span>
         <span class="k">return</span> <span class="n">Rset</span>
-
+</div>
 <div class="viewcode-block" id="McSAS.random_logR_ell"><a class="viewcode-back" href="../code.html#McSAS.McSAS.random_logR_ell">[docs]</a>    <span class="k">def</span> <span class="nf">random_logR_ell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Nell</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="s">&quot;like uniform, but with a higher likelihood of sampling smaller sizes. May speed up some fitting procedures.&quot;</span>
         <span class="c">#get parameters from self</span>
@@ -1256,9 +1249,6 @@
         <span class="c">#load parameters</span>
         <span class="n">Histscale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Histscale&#39;</span><span class="p">)</span>
         <span class="n">Histweight</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Histweight&#39;</span><span class="p">)</span>
-        <span class="c">#let&#39;s not do this:</span>
-        <span class="c">#for kw in Par:</span>
-        <span class="c">#    exec(&#39;{}=Par[kw]&#39;.format(kw)) #this sets the parameters as external variables outside the dictionary Par</span>
         <span class="c">#load result</span>
         <span class="n">Result</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">()</span>
         <span class="c">#check how many result plots we need to generate: maximum three.</span>
@@ -1350,9 +1340,73 @@
 
 
         <span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">left</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span><span class="n">bottom</span><span class="o">=</span><span class="mf">0.11</span><span class="p">,</span><span class="n">right</span><span class="o">=</span><span class="mf">0.96</span><span class="p">,</span><span class="n">top</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.23</span><span class="p">,</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.13</span><span class="p">)</span>
+        </div>
+    <span class="k">def</span> <span class="nf">Rangeinfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ParameterRange</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">inf</span><span class="p">],</span><span class="n">Parameter</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="c">#calculates the total volume or number fraction of the MC result within a given range, and returns the total numer or volume fraction and its standard deviation over all nreps as well as the first four distribution moments: mean, variance, skewness and kurtosis (Pearson&#39;s definition)</span>
+        <span class="c">#will use the &quot;Histweight&quot; parameter for determining whether to return the volume or number-weighted values.</span>
+        <span class="c">#input arguments are: ParameterRange (the radius range in which the moments are to be calculated)</span>
+        <span class="c">#Parameter: Which shape parameter the moments are to be calculated for (e.g. 0=width, 1=length, 2=orientation)</span>
+        <span class="c">#returns a 4-by-2 array, with the values and their sample standard deviations over all Nreps</span>
+        <span class="n">Rrep</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">(</span><span class="s">&#39;Rrep&#39;</span><span class="p">)</span>
+        <span class="n">Ncontrib</span><span class="o">=</span><span class="n">size</span><span class="p">(</span><span class="n">Rrep</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">NRval</span><span class="o">=</span><span class="n">size</span><span class="p">(</span><span class="n">Rrep</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">Nreps</span><span class="o">=</span><span class="n">size</span><span class="p">(</span><span class="n">Rrep</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">Rpfactor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Rpfactor&#39;</span><span class="p">)</span>
+        <span class="n">Memsave</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Memsave&#39;</span><span class="p">)</span>
+        <span class="n">drhosqr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;drhosqr&#39;</span><span class="p">)</span>
+        <span class="n">Histbins</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Histbins&#39;</span><span class="p">)</span>
+        <span class="n">Histscale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Histscale&#39;</span><span class="p">)</span>
+        <span class="n">Histweight</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Histweight&#39;</span><span class="p">)</span>
+        <span class="n">Bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">getpar</span><span class="p">(</span><span class="s">&#39;Bounds&#39;</span><span class="p">)</span>
         
+        <span class="c">#ov = zeros(shape(Rrep)) #observability</span>
+        <span class="n">Vf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">(</span><span class="s">&#39;Vf&#39;</span><span class="p">)</span> <span class="c">#volume fraction for each contribution</span>
+        <span class="n">Nf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">(</span><span class="s">&#39;Nf&#39;</span><span class="p">)</span> <span class="c">#number fraction for each contribution</span>
+        <span class="n">Vft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">(</span><span class="s">&#39;Vft&#39;</span><span class="p">)</span> <span class="c">#total volume fractions</span>
+        <span class="n">Nft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">(</span><span class="s">&#39;Nft&#39;</span><span class="p">)</span> <span class="c">#total number </span>
+        <span class="n">Screps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getresult</span><span class="p">(</span><span class="s">&#39;Screps&#39;</span><span class="p">)</span> <span class="c">#Intensity scaling factors for matching to the experimental scattering pattern (Amplitude A and flat background term b, defined in the paper)</span>
+
+        <span class="n">Val</span><span class="o">=</span><span class="n">zeros</span><span class="p">(</span><span class="n">Nreps</span><span class="p">)</span> <span class="c">#total value</span>
+        <span class="n">Mu</span><span class="o">=</span><span class="n">zeros</span><span class="p">(</span><span class="n">Nreps</span><span class="p">)</span> <span class="c">#moments..</span>
+        <span class="n">Var</span><span class="o">=</span><span class="n">zeros</span><span class="p">(</span><span class="n">Nreps</span><span class="p">)</span> <span class="c">#moments..</span>
+        <span class="n">Skw</span><span class="o">=</span><span class="n">zeros</span><span class="p">(</span><span class="n">Nreps</span><span class="p">)</span> <span class="c">#moments..</span>
+        <span class="n">Krt</span><span class="o">=</span><span class="n">zeros</span><span class="p">(</span><span class="n">Nreps</span><span class="p">)</span> <span class="c">#moments..</span>
+
+        <span class="c">#loop over each repetition</span>
+        <span class="k">for</span> <span class="n">ri</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nreps</span><span class="p">):</span>
+            <span class="n">Rset</span> <span class="o">=</span> <span class="n">Rrep</span><span class="p">[:,</span><span class="n">Parameter</span><span class="p">,</span><span class="n">ri</span><span class="p">]</span> <span class="c">#the single set of R for this calculation</span>
+            <span class="n">validi</span><span class="o">=</span><span class="p">(</span><span class="n">Rset</span><span class="o">&gt;</span><span class="n">numpy</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ParameterRange</span><span class="p">))</span><span class="o">*</span><span class="p">(</span><span class="n">Rset</span><span class="o">&lt;</span><span class="n">numpy</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">ParameterRange</span><span class="p">))</span>
+            <span class="n">Rset</span><span class="o">=</span><span class="n">Rset</span><span class="p">[</span><span class="n">validi</span><span class="p">]</span>
+            <span class="n">Vset</span> <span class="o">=</span> <span class="n">Vf</span><span class="p">[</span><span class="n">validi</span><span class="p">,</span><span class="n">ri</span><span class="p">]</span> <span class="c">#compensated volume for each sphere in the set</span>
+            <span class="n">Nset</span> <span class="o">=</span> <span class="n">Nf</span><span class="p">[</span><span class="n">validi</span><span class="p">,</span><span class="n">ri</span><span class="p">]</span> <span class="c">#compensated volume for each sphere in the set</span>
+
+            <span class="k">if</span> <span class="n">Histweight</span><span class="o">==</span><span class="s">&#39;volume&#39;</span><span class="p">:</span>
+                <span class="n">Val</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Vset</span><span class="p">)</span>
+                <span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Rset</span><span class="o">*</span><span class="n">Vset</span><span class="p">)</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="n">Vset</span><span class="p">)</span>
+                <span class="n">Var</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">Rset</span><span class="o">-</span><span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">Vset</span> <span class="p">)</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="n">Vset</span><span class="p">)</span>
+                <span class="n">sigma</span><span class="o">=</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">Var</span><span class="p">[</span><span class="n">ri</span><span class="p">]))</span>
+                <span class="n">Skw</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">Rset</span><span class="o">-</span><span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">])</span><span class="o">**</span><span class="mi">3</span><span class="o">*</span><span class="n">Vset</span> <span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">Vset</span><span class="p">)</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+                <span class="n">Krt</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">Rset</span><span class="o">-</span><span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">])</span><span class="o">**</span><span class="mi">4</span><span class="o">*</span><span class="n">Vset</span> <span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">Vset</span><span class="p">)</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">Histweight</span><span class="o">==</span><span class="s">&#39;number&#39;</span><span class="p">:</span>
+                <span class="n">Val</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">Nset</span><span class="p">)</span>
+                <span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">Rset</span><span class="o">*</span><span class="n">Nset</span><span class="p">)</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="n">Nset</span><span class="p">)</span>
+                <span class="n">Var</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">Rset</span><span class="o">-</span><span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">Nset</span> <span class="p">)</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="n">Nset</span><span class="p">)</span>
+                <span class="n">sigma</span><span class="o">=</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">Var</span><span class="p">[</span><span class="n">ri</span><span class="p">]))</span>
+                <span class="n">Skw</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">Rset</span><span class="o">-</span><span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">])</span><span class="o">**</span><span class="mi">3</span><span class="o">*</span><span class="n">Nset</span> <span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">Nset</span><span class="p">)</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+                <span class="n">Krt</span><span class="p">[</span><span class="n">ri</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">Rset</span><span class="o">-</span><span class="n">Mu</span><span class="p">[</span><span class="n">ri</span><span class="p">])</span><span class="o">**</span><span class="mi">4</span><span class="o">*</span><span class="n">Nset</span> <span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">Nset</span><span class="p">)</span><span class="o">*</span><span class="n">sigma</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&#39;Error in moment calculation, unrecognised Histweight value&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Val</span><span class="p">),</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">Val</span><span class="p">,</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Mu</span><span class="p">),</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">Mu</span><span class="p">,</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Var</span><span class="p">),</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">Var</span><span class="p">,</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Skw</span><span class="p">),</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">Skw</span><span class="p">,</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)],</span>
+                <span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">Krt</span><span class="p">),</span><span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">Krt</span><span class="p">,</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)]])</span>
+        
+
 <span class="c">#some quick pickle functions to make my life easier</span>
-</div></div>
+</div>
 <span class="k">def</span> <span class="nf">pickle_read</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
     <span class="c">#nargs can be 1-4, indicates number of output variables, if it is even possible to extract more from pickle</span>
     <span class="n">fh</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>

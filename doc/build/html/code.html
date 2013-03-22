@@ -53,65 +53,88 @@
             
   <div class="section" id="module-McSAS">
 <span id="source-code-documentation"></span><h1>Source Code Documentation<a class="headerlink" href="#module-McSAS" title="Permalink to this headline">¶</a></h1>
-<p>This is a file with small programs for Monte-Carlo fitting of SAXS patterns. It is 
+<p>A class and supplementary functions for Monte-Carlo fitting of SAXS patterns. It is 
 released under a Creative Commons CC-BY-SA license. Please cite as:</p>
 <dl class="docutils">
-<dt>Brian R. Pauw, 2012, <a class="reference external" href="http://arxiv.org/abs/1210.5304">http://arxiv.org/abs/1210.5304</a> arXiv:1210.5304. </dt>
-<dd><dl class="first last docutils">
-<dt>Also available open access at J. Appl. Cryst. 46, (2013) with doi: </dt>
-<dd><a class="reference external" href="http://dx.doi.org/10.1107/S0021889813001295">http://dx.doi.org/10.1107/S0021889813001295</a></dd>
-</dl>
+<dt>Brian R. Pauw et al., J. Appl. Cryst. 46, (2013), pp. 365&#8211;371</dt>
+<dd>doi: <a class="reference external" href="http://dx.doi.org/10.1107/S0021889813001295">http://dx.doi.org/10.1107/S0021889813001295</a></dd>
+<dt>This file defines the following classes and functions: </dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>McSAS: class containing all the functions required to perform a Monte Carlo analysis</dt>
+<dd><p class="first last">on small-angle scattering data.</p>
 </dd>
 </dl>
-<p>Test Function: <img class="math" src="_images/math/187833c8b55fe95b5cae55e14e1f277078eeaa46.png" alt="\frac{s}{\sqrt{N}}"/></p>
-<p>Another Test:</p>
-<div class="math">
-<p><img src="_images/math/d84ba705c2ffb6f8d84482db21a8a4408ed065f9.png" alt="\begin{eqnarray}
-   y    &amp; = &amp; ax^2 + bx + c \\
-   f(x) &amp; = &amp; x^2 + 2xy + y^2
-\end{eqnarray}" /></p>
-</div><dl class="docutils">
-<dt>Contents (updated 2013-01-16):</dt>
-<dd><p class="first"><em>needs to be updated after finishing the OO variant*</em>
-Analyze_1D: A wrapper for the MC code which repeatedly runs the optimization and</p>
-<blockquote>
-<div>computes the final volume-weighted sphere distribution.</div></blockquote>
-<dl class="docutils">
-<dt>FF_sph_1D: computes the rayleigh form factor for a sphere radius or array of sphere </dt>
-<dd>radii</dd>
-<dt>observability3: histogramming and uncertainty calculation for the Analyze_1D code.</dt>
-<dd>also calculates the minimum number of required contributions and the volume 
-fractions in absolute units.</dd>
-<dt>MCFit_sph: Monte-carlo fitting of the data to extract polydispersity assuming spheres, </dt>
-<dd>by changing the radius of a fixed number of spheres</dd>
-<dt>binning_1D: bins the data and propagates errors, or calculates errors if not initially </dt>
-<dd>provided</dd>
-<dt>binning_weighted_1D: Weighted binning, where the intensities of a pixel are divided </dt>
-<dd>between the two neighbouring bins depending on the distances to the centres. If 
-error provided is empty, the standard deviation of the intensities in the bins are 
-computed.</dd>
-<dt>McPlot: A procedure for generating a data-fit plot and size histogram based on </dt>
-<dd>Analyze_1D&#8217;s results</dd>
+</li>
+<li><dl class="first docutils">
+<dt>binning_array: Can be used to do n-by-n pixel binning of 2D detector images. The </dt>
+<dd><p class="first last">returned uncertainty is the larger of either the binned uncertainty or the sample
+standard deviation in the bin.</p>
+</dd>
 </dl>
-<p>McCSV: Function to write an arbitrary number of semicolon-separated values to a file
-FixBounds: Internal function for estimating minimum and maximum size bounds based on</p>
-<blockquote>
-<div>q values.</div></blockquote>
-<p>csqr: least-squares error to use with scipy.optimize.leastsq
-Iopt: Optimize the scaling factor and background level of modeled data vs. intensity
-csqr_v1: least-squares for data with known error, size of parameter-space not taken</p>
-<blockquote>
-<div>into account</div></blockquote>
-<p>Iopt_v1: old intensity scaling factor optimisation, more robust but slower than Iopt
-pickle_read: Reads in pickled data from a file (by filename)
-pickle_write: write a block or dictionary to a file (by filename)</p>
-<p class="last">(asterisk * indicates code to be depreciated)</p>
+</li>
+<li><dl class="first docutils">
+<dt>binning_1D: bins the data and propagates errors, or calculates errors if not initially </dt>
+<dd><p class="first last">provided</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>binning_weighted_1D: Weighted binning, where the intensities of a pixel are divided </dt>
+<dd><p class="first last">between the two neighbouring bins depending on the distances to the centres. If 
+error provided is empty, the standard deviation of the intensities in the bins are 
+computed.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">csqr: least-squares error to use with scipy.optimize.leastsq</p>
+</li>
+<li><p class="first">Iopt: Optimize the scaling factor and background level of modeled data vs. intensity</p>
+</li>
+<li><dl class="first docutils">
+<dt>csqr_v1: least-squares for data with known error, size of parameter-space not taken </dt>
+<dd><p class="first last">into account</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">Iopt_v1: old intensity scaling factor optimisation, more robust but slower than Iopt</p>
+</li>
+<li><p class="first">pickle_read: Reads in pickled data from a file (by filename)</p>
+</li>
+<li><p class="first">pickle_write: write a block or dictionary to a file (by filename)</p>
+</li>
+</ul>
 </dd>
 <dt>Made possible with help from (amongst others):</dt>
 <dd>Samuel Tardif - Derivations (mostly observability) and checking of mathematics
 Jan Skov Pedersen - checking of mathematics
-Pawel Kwasniewski &lt;<a class="reference external" href="mailto:kwasniew&#37;&#52;&#48;esrf&#46;fr">kwasniew<span>&#64;</span>esrf<span>&#46;</span>fr</a>&gt; - Code cleanup and documentation</dd>
+Pawel Kwasniewski &lt;<a class="reference external" href="mailto:kwasniew&#37;&#52;&#48;esrf&#46;fr">kwasniew<span>&#64;</span>esrf<span>&#46;</span>fr</a>&gt; - Code cleanup and documentation
+Ingo Bressler &lt;<a class="reference external" href="mailto:ingo&#46;bressler&#37;&#52;&#48;bam&#46;de">ingo<span>&#46;</span>bressler<span>&#64;</span>bam<span>&#46;</span>de</a>&gt; - Code cleanup, modification and documentation</dd>
 </dl>
+<div class="section" id="a-note-on-units">
+<h2>A note on units:<a class="headerlink" href="#a-note-on-units" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Internally, all length units are in meters, all angle units in degrees clockwise from </dt>
+<dd>top. Intensity is in 1/(m sr), q in 1/m. The electron density contrast squared,
+<tt class="docutils literal"><span class="pre">drhosqr</span></tt> is in m^-4. Other units may be used, but if absolute units are supplied 
+and absolute volume fractions required, meters are necessitated.</dd>
+</dl>
+</div>
+<div class="section" id="example-usage">
+<h2>Example usage:<a class="headerlink" href="#example-usage" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><em>for detailed usage, see accompanying documentation</em></div></blockquote>
+<p>Fitting a single dataset using all automatic and default parameters (may go wrong on 
+poorly conditioned input, needs sensibly-spaced datapoints and good uncertainty 
+estimates). The dataset is considered to consist of three variables: Q, I and IERR:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">McSAS</span><span class="p">(</span><span class="n">Q</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span><span class="n">I</span><span class="o">=</span><span class="n">I</span><span class="p">,</span><span class="n">IERR</span><span class="o">=</span><span class="n">IERR</span><span class="p">,</span><span class="n">Plot</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Optional parameters can be supplied in parameter-value pairs to finetune optimisation 
+behaviour:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">A</span><span class="o">=</span><span class="n">McSAS</span><span class="p">(</span><span class="n">Q</span><span class="o">=</span><span class="n">Q</span><span class="p">,</span><span class="n">I</span><span class="o">=</span><span class="n">I</span><span class="p">,</span><span class="n">IERR</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mf">0.01</span><span class="o">*</span><span class="n">I</span><span class="p">,</span><span class="n">E</span><span class="p">),</span><span class="n">Ncontrib</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span><span class="n">Convcrit</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">Bounds</span><span class="o">=</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5e-9</span><span class="p">,</span><span class="mf">35e-9</span><span class="p">]),</span><span class="n">Maxiter</span><span class="o">=</span><span class="mf">1e5</span><span class="p">,</span><span class="n">Histscale</span><span class="o">=</span><span class="s">&#39;log&#39;</span><span class="p">,</span><span class="n">drhosqr</span><span class="o">=</span><span class="mf">1e30</span><span class="p">,</span><span class="n">Nreps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">Plot</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="function">
 <dt id="McSAS.Icyl_InPlaneAverage_RandomSampling">
 <tt class="descclassname">McSAS.</tt><tt class="descname">Icyl_InPlaneAverage_RandomSampling</tt><big>(</big><em>q</em>, <em>psi=array([  0.</em>, <em>90.])</em>, <em>nsamples='auto'</em>, <em>R1=1.0</em>, <em>R2=1.0</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#Icyl_InPlaneAverage_RandomSampling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.Icyl_InPlaneAverage_RandomSampling" title="Permalink to this definition">¶</a></dt>
@@ -139,14 +162,270 @@ This is identical to a fully rotationally isotropic averaged shape, for radially
 <dl class="class">
 <dt id="McSAS.McSAS">
 <em class="property">class </em><tt class="descclassname">McSAS.</tt><tt class="descname">McSAS</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Core Monto-Carlo Small Angle Scattering calculations.</p>
+<dd><p>Main class containing all functions required to do Monte Carlo fitting.</p>
+<dl class="docutils">
+<dt>McSAS required parameters::</dt>
+<dd><ul class="first last simple">
+<li><cite>Q</cite>: a 1D or 2D array of q-values.</li>
+<li><cite>I</cite>: a similarly sized array of corresponding intensity values</li>
+<li><cite>IERR</cite>: a similarly sized array of corresponding intensity uncertainty values</li>
+</ul>
+</dd>
+<dt>McSAS optional parameters::</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt><cite>PSI</cite> <span class="classifier-delimiter">:</span> <span class="classifier">2D array </span></dt>
+<dd><p class="first last">detector angle values, only required for 2D pattern fitting.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Bounds</cite> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">Two-element vector or list indicating upper and lower size bounds of the 
+particle radii used in the fitting procedure. If not provided, these will
+be estimated as: Rmax=pi/qmin and Rmin=pi/qmax. units: m</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Nsph</cite> <span class="classifier-delimiter">:</span> <span class="classifier">int, default: 200</span></dt>
+<dd><p class="first last">Number of spheres used for the MC simulation</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Maxiter</cite> <span class="classifier-delimiter">:</span> <span class="classifier">int, default: 1e5</span></dt>
+<dd><p class="first last">Maximum number of iterations for the MCfit_sph() function</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><a href="#id1"><span class="problematic" id="id2">`</span></a>Rpfactor <span class="classifier-delimiter">:</span> <span class="classifier">float, default: 1.5/3</span></dt>
+<dd><p class="first last">Parameter used to compensate the volume^2 scaling of each sphere 
+contribution to the simulated I(q)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Nreps</cite> <span class="classifier-delimiter">:</span> <span class="classifier">int, default: 100</span></dt>
+<dd><p class="first last">Number of repetitions of the MC fit for determination of final histogram 
+uncertainty.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>qlims</cite> <span class="classifier-delimiter">:</span> <span class="classifier">list, default: [0,inf]</span></dt>
+<dd><p class="first last">Limits on the fitting range in q. units: m^-1</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Histbins</cite> <span class="classifier-delimiter">:</span> <span class="classifier">int, default: 50</span></dt>
+<dd><p class="first last">Number of bins used for the histogramming procedure.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Histscale</cite> <span class="classifier-delimiter">:</span> <span class="classifier">string, default: &#8216;log&#8217;</span></dt>
+<dd><p class="first last">Can be set to &#8216;log&#8217; for histogramming on a logarithmic size scale, 
+recommended for q- and/or size-ranges spanning more than a decade.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Histweight</cite> <span class="classifier-delimiter">:</span> <span class="classifier">string, default: &#8216;volume&#8217;</span></dt>
+<dd><p class="first last">Can be set to &#8216;number&#8217; to force plotting of number-weighted distributions
+2013-03-19 issue remains that the observability in this case is incorrect.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>drhosqr</cite> <span class="classifier-delimiter">:</span> <span class="classifier">float, default: 1</span></dt>
+<dd><p class="first last">Scattering contrast - when known it will be used to calculate the absolute
+volume fraction of each contribution, units: m^-4</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Convcrit</cite> <span class="classifier-delimiter">:</span> <span class="classifier">float, default: 1</span></dt>
+<dd><p class="first last">Convergence criterion for the least-squares fit. The fit converges once 
+the normalized chi squared &lt; Convcrit. If convergence is reached with 
+Convcrit = 1, the model describes the data (on average) to within the 
+uncertainty, and thus all information has been extracted from the 
+scattering pattern.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>StartFromMin</cite> <span class="classifier-delimiter">:</span> <span class="classifier">bool, default: False</span></dt>
+<dd><p class="first last">If set to False, the starting configuration is a set of spheres with radii
+uniformly sampled between the given or estimated bounds.
+If set to True, the starting configuration is a set of spheres with radii
+set to the lower given or estimated Bound (if not zero). Practically, this
+makes little difference and this feature might be depreciated.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Maxntry</cite> <span class="classifier-delimiter">:</span> <span class="classifier">int, default: 5</span></dt>
+<dd><p class="first last">If a single MC optimization fails to reach convergence within Maxiter, it
+may just be due to bad luck. The Analyze_1D procedure will try to redo 
+that MC optimization for a maximum of Maxntry tries before concluding that
+it is not bad luck but bad input.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Plot</cite> <span class="classifier-delimiter">:</span> <span class="classifier">Bool, default: False</span></dt>
+<dd><p class="first last">If set to True, will generate a plot showing the data and fit, as well as
+the resulting size histogram.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>Memsave</cite>: Bool, default: False</dt>
+<dd><p class="first last">For 2D pattern fitting, or for fitting patterns with a very large number 
+of datapoints or contributions, it may make sense to turn this option on 
+in order for intensity generating functions not to take up much memory.
+The cost for this is perhaps a 20-ish percent reduction in speed.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>BOUNDS</cite> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the McSAS function to use for calculating random number generator 
+bounds based on input (f.ex. q and I). default: SphBounds</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>FF</cite> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the McSAS function to use for calculating the form factors.
+default: FF_sph_1D</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>RAND</cite> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the McSAS function to use for generating random numbers
+default: random_uniform_sph</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>SMEAR</cite> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the McSAS function to use for smearing of intensity
+default: _passthrough</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><cite>VOL</cite> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">the McSAS function to use for calculating the base object volume
+default: vol_sph</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="docutils">
+<dt>A <span class="classifier-delimiter">:</span> <span class="classifier">McSAS object with the following results stored in A.result. These are extracted</span></dt>
+<dd><p class="first">using A.getresult(&#8216;Keyword&#8217;,VariableNumber=0), where the VariableNumber indicates 
+which shape parameter information is requested for (some information is only stored
+in VariableNumber=0 (default))
+Keyword is one of the following:
+&#8212;&#8212;-
+&#8216;Imean&#8217; : 1D array (VariableNumber=0)</p>
+<blockquote>
+<div>The fitted intensity, given as the mean of all Nreps results.</div></blockquote>
+<dl class="last docutils">
+<dt>&#8216;q&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">1D array (VariableNumber=0)</span></dt>
+<dd>Corresponding q values (may be different than the input q if qlims was 
+used)</dd>
+<dt>&#8216;Istd&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array (VariableNumber=0)</span></dt>
+<dd>Standard deviation of the fitted I(q), calculated as the standard 
+deviation of all Nreps results.</dd>
+<dt>&#8216;Rrep&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nsph x Nreps) array (VariableNumber=0)</span></dt>
+<dd>Collection of Nsph sphere radii fitted to best represent the provided I(q) data.
+Contains the results of each of Nreps iterations. This can be used for
+rebinning without having to re-optimize.</dd>
+<dt>&#8216;Screps&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (2 x Nreps) array (VariableNumber=0)</span></dt>
+<dd>Scaling and background values for each repetition. Used to display background 
+level in data and fit plot.</dd>
+<dt>&#8216;VariableNumber&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd>Shape parameter index. e.g. an ellipsoid has 3, width, height and orientation</dd>
+<dt>&#8216;Hx&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Histogram bin left edge position (x-axis in histogram)</dd>
+<dt>&#8216;Hmid&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Center positions for the size histogram bins (x-axis in histogram, used for errorbars)</dd>
+<dt>&#8216;Hwidth&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Histogram bin width (x-axis in histogram, defines bar plot bar widths)</dd>
+<dt>&#8216;Hmean&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Volume-weighted particle size distribution values for all Nreps results (y-axis bar height)</dd>
+<dt>&#8216;Hnmean&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Number-weighted analogue of the above <tt class="docutils literal"><span class="pre">Hmean</span></tt></dd>
+<dt>&#8216;Hy&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Histbins x Nreps) array</span></dt>
+<dd>Volume-weighted particle size distribution bin values for each MC fit repetition 
+(the mean of which is <tt class="docutils literal"><span class="pre">Hmean</span></tt>, and the sample standard deviation of which is <tt class="docutils literal"><span class="pre">Hstd</span></tt>)</dd>
+<dt>&#8216;Hny&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Histbins x Nreps) array</span></dt>
+<dd>Number-weighted particle size distribution bin values for each MC fit repetition</dd>
+<dt>&#8216;Hstd&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Standard deviations of the corresponding volume-weighted size distribution bins, calculated
+from Nreps repetitions of the MCfit_sph() function</dd>
+<dt>&#8216;Hnstd&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Standard deviation for the number-weigthed distribution</dd>
+<dt>&#8216;Vf&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Ncontrib x Nreps) array</span></dt>
+<dd>Volume fractions for each of Ncontrib contributions 
+in each of Nreps iterations</dd>
+<dt>&#8216;Nf&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Ncontrib x Nreps) array</span></dt>
+<dd>Number fraction for each contribution</dd>
+<dt>&#8216;Vft&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nreps) array</span></dt>
+<dd>Total scatterer volume fraction for each of the Nreps iterations</dd>
+<dt>&#8216;Nft&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nreps) array</span></dt>
+<dd>Total number fraction</dd>
+<dt>&#8216;vfmin&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nsph x Nreps) array</span></dt>
+<dd>minimum required volume fraction for each contribution to become statistically
+significant.</dd>
+<dt>&#8216;nfmin&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nsph x Nreps) array</span></dt>
+<dd>number-weighted analogue to <a href="#id3"><span class="problematic" id="id4">``</span></a>vfmin&#8217;&#8216;</dd>
+<dt>&#8216;vfminbins&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Hmid) array </span></dt>
+<dd>array with the minimum required volume fraction per bin to become statistically 
+significant. Used to display minimum required level in histogram.</dd>
+<dt>&#8216;nfminbins&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Hmid) array </span></dt>
+<dd>number-weighted analogue to <tt class="docutils literal"><span class="pre">vfminbins</span></tt></dd>
+<dt>&#8216;Screps&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (2 x Nreps) array</span></dt>
+<dd>Scaling and background values for each repetition. Used to display background 
+level in data and fit plot.</dd>
+<dt>&#8216;Vf&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nsph x Nreps) array</span></dt>
+<dd>Volume fractions for each of Nsph spheres 
+in each of Nreps iterations</dd>
+<dt>&#8216;Vft&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nreps) array</span></dt>
+<dd>Total scatterer volume fraction for each of the Nreps iterations</dd>
+<dt>&#8216;vfmin&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nsph x Nreps) array</span></dt>
+<dd>minimum required volube fraction for each contribution to become statistically
+significant.</dd>
+<dt>&#8216;vfminbins&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Hmid) array </span></dt>
+<dd>array with the minimum required volume fraction per bin to become statistically 
+significant. Used to display minimum required level in histogram.</dd>
+</dl>
+</dd>
+</dl>
+<dl class="method">
+<dt id="McSAS.McSAS.Analyse">
+<tt class="descname">Analyse</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.Analyse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.Analyse" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is one of the main MC functions. This function runs the Monte Carlo optimisation a multitude (Nreps) of times
+If convergence is not achieved, it will try again for a maximum of Maxntry attempts.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="McSAS.McSAS.CSVwrite">
-<tt class="descname">CSVwrite</tt><big>(</big><em>filename</em>, <em>*args</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.CSVwrite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.CSVwrite" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function writes a semicolon-separated csv file to [filename] containing an arbitrary number of output variables <a href="#id1"><span class="problematic" id="id2">*</span></a>args. in case of variable length columns, empty fields will contain &#8216;&#8217;.</p>
-<p>Input arguments should be names of fields in &#8220;self.results&#8221;. For example:
-A.McCSV(&#8216;hist.csv&#8217;,&#8217;Hx&#8217;,&#8217;Hwidth&#8217;,&#8217;Hmean&#8217;,&#8217;Hstd&#8217;)</p>
-<p>i.e. just stick on as many columns as you&#8217;d like. They will be flattened by default. a header with the names will be added.</p>
+<tt class="descname">CSVwrite</tt><big>(</big><em>filename</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.CSVwrite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.CSVwrite" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function writes a semicolon-separated csv file to [filename] containing an arbitrary number of output variables <a href="#id5"><span class="problematic" id="id6">*</span></a>args. in case of variable length columns, empty fields will contain &#8216;&#8217;.</p>
+<p>Optional last argument is a keyword-value argument: VarableNumber=[integer], indicating which shape parameter it is intended to draw upon. VariableNumber can also be a list or array of integers, of the same length as the number of output variables <a href="#id7"><span class="problematic" id="id8">*</span></a>args, in which case each output variable is matched with a shape parameter index. Default is zero</p>
+<p>Input arguments should be names of fields in &#8220;self.result&#8221;. For example:
+A.McCSV(&#8216;hist.csv&#8217;,&#8217;Hx&#8217;,&#8217;Hwidth&#8217;,&#8217;Hmean&#8217;,&#8217;Hstd&#8217;,VariableNumber=0)</p>
+<p>i.e. just stick on as many columns as you&#8217;d like. They will be flattened by default. a header with the result keyword names will be added.</p>
 <p>existing files with the same filename will be overwritten by default.</p>
 </dd></dl>
 
@@ -159,7 +438,8 @@ A.McCSV(&#8216;hist.csv&#8217;,&#8217;Hx&#8217;,&#8217;Hwidth&#8217;,&#8217;Hmea
 <dl class="method">
 <dt id="McSAS.McSAS.FF_ell_2D">
 <tt class="descname">FF_ell_2D</tt><big>(</big><em>Rset=</em><span class="optional">[</span><span class="optional">]</span>, <em>Q=</em><span class="optional">[</span><span class="optional">]</span>, <em>PSI=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.FF_ell_2D"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.FF_ell_2D" title="Permalink to this definition">¶</a></dt>
-<dd><p>all 2D functions should be able to potentially take externally supplied Q and PSI vectors</p>
+<dd><p>Calculates the form factor for oriented ellipsoids, normalized to 1 at Q=0.</p>
+<p><strong>all 2D functions should be able to potentially take externally supplied Q and PSI vectors</strong></p>
 </dd></dl>
 
 <dl class="method">
@@ -171,17 +451,69 @@ A.McCSV(&#8216;hist.csv&#8217;,&#8217;Hx&#8217;,&#8217;Hwidth&#8217;,&#8217;Hmea
 <dl class="method">
 <dt id="McSAS.McSAS.Histogram">
 <tt class="descname">Histogram</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.Histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.Histogram" title="Permalink to this definition">¶</a></dt>
-<dd><p>Observability calculation for a series of spheres, over a range of q. 
-Additional intensity and errors may be supplied for error-weighted observability. 
-Intensity is used for determining the intesity scaling and background levels.</p>
-<p>Now with rebinning as well, so we can keep track of which contribution ends up in 
-which bin and calculate the correct minimum required contribution accordingly.</p>
+<dd><p>Histogram() will take the <tt class="docutils literal"><span class="pre">Rrep</span></tt> result resulting from the Analyse() function, calculate 
+the corresponding volume- and number fractions for each contribution, as well as the 
+minimum observability limits. It will subsequently bin the result across the range for 
+histogramming purposes.</p>
+<p>While the volume-weighted distribution will be in absolute units (provinding volume fractions
+of material within a given size range), the number distributions have been normalized to 1.</p>
+<dl class="docutils">
+<dt>&#8216;VariableNumber&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">integer</span></dt>
+<dd>Shape parameter index. e.g. an ellipsoid has 3, width, height and orientation</dd>
+<dt>&#8216;Hx&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Histogram bin left edge position (x-axis in histogram)</dd>
+<dt>&#8216;Hmid&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Center positions for the size histogram bins (x-axis in histogram, used for errorbars)</dd>
+<dt>&#8216;Hwidth&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Histogram bin width (x-axis in histogram, defines bar plot bar widths)</dd>
+<dt>&#8216;Hmean&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Volume-weighted particle size distribution values for all Nreps results (y-axis bar height)</dd>
+<dt>&#8216;Hnmean&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Number-weighted analogue of the above <tt class="docutils literal"><span class="pre">Hmean</span></tt></dd>
+<dt>&#8216;Hy&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Histbins x Nreps) array</span></dt>
+<dd>Volume-weighted particle size distribution bin values for each MC fit repetition 
+(the mean of which is <tt class="docutils literal"><span class="pre">Hmean</span></tt>, and the sample standard deviation of which is <tt class="docutils literal"><span class="pre">Hstd</span></tt>)</dd>
+<dt>&#8216;Hny&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Histbins x Nreps) array</span></dt>
+<dd>Number-weighted particle size distribution bin values for each MC fit repetition</dd>
+<dt>&#8216;Hstd&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Standard deviations of the corresponding volume-weighted size distribution bins, calculated
+from Nreps repetitions of the MCfit_sph() function</dd>
+<dt>&#8216;Hnstd&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">array</span></dt>
+<dd>Standard deviation for the number-weigthed distribution</dd>
+<dt>&#8216;Vf&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Ncontrib x Nreps) array</span></dt>
+<dd>Volume fractions for each of Ncontrib contributions 
+in each of Nreps iterations</dd>
+<dt>&#8216;Nf&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Ncontrib x Nreps) array</span></dt>
+<dd>Number fraction for each contribution</dd>
+<dt>&#8216;Vft&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nreps) array</span></dt>
+<dd>Total scatterer volume fraction for each of the Nreps iterations</dd>
+<dt>&#8216;Nft&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nreps) array</span></dt>
+<dd>Total number fraction</dd>
+<dt>&#8216;vfmin&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nsph x Nreps) array</span></dt>
+<dd>minimum required volume fraction for each contribution to become statistically
+significant.</dd>
+<dt>&#8216;nfmin&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Nsph x Nreps) array</span></dt>
+<dd>number-weighted analogue to <a href="#id9"><span class="problematic" id="id10">``</span></a>vfmin&#8217;&#8216;</dd>
+<dt>&#8216;vfminbins&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Hmid) array </span></dt>
+<dd>array with the minimum required volume fraction per bin to become statistically 
+significant. Used to display minimum required level in histogram.</dd>
+<dt>&#8216;nfminbins&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (Hmid) array </span></dt>
+<dd>number-weighted analogue to <tt class="docutils literal"><span class="pre">vfminbins</span></tt></dd>
+<dt>&#8216;Screps&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">size (2 x Nreps) array</span></dt>
+<dd>Scaling and background values for each repetition. Used to display background 
+level in data and fit plot.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="McSAS.McSAS.MCFit">
-<tt class="descname">MCFit</tt><big>(</big><em>OutputI=False</em>, <em>OutputDetails=False</em>, <em>OutputIterations=False</em>, <em>Prior=</em><span class="optional">[</span><span class="optional">]</span><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.MCFit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.MCFit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Object-oriented and hopefully shape-flexible form of the MC procedure.</p>
+<tt class="descname">MCFit</tt><big>(</big><em>OutputI=False</em>, <em>OutputDetails=False</em>, <em>OutputIterations=False</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.MCFit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.MCFit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object-oriented, shape-flexible core of the Monte Carlo procedure. Takes optional arguments
+&#8216;OutputI&#8217; : Returns the fitted intensity besides the result 
+&#8216;OutputDetails&#8217; : Details of the fitting procedure, number of iterations and so on
+&#8216;OutputIterations&#8217; : Returns the result on every successful iteration step, useful</p>
+<blockquote>
+<div>for visualising the entire Monte Carlo optimisation procedure for presentations.</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -199,7 +531,7 @@ which bin and calculate the correct minimum required contribution accordingly.</
 <dl class="method">
 <dt id="McSAS.McSAS.TwoDGenI">
 <tt class="descname">TwoDGenI</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.TwoDGenI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.TwoDGenI" title="Permalink to this definition">¶</a></dt>
-<dd><p>this function is run after the histogram procedure for anisotropic images, and will calculate the MC fit intensity in imageform</p>
+<dd><p>this function is optionally run after the histogram procedure for anisotropic images, and will calculate the MC fit intensity in imageform</p>
 </dd></dl>
 
 <dl class="method">
@@ -217,7 +549,7 @@ which bin and calculate the correct minimum required contribution accordingly.</
 <dl class="method">
 <dt id="McSAS.McSAS.getdata">
 <tt class="descname">getdata</tt><big>(</big><em>parname=</em><span class="optional">[</span><span class="optional">]</span>, <em>dataset='fit'</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.getdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.getdata" title="Permalink to this definition">¶</a></dt>
-<dd><p>gets the values of a dataset, retrieves from fitdata (clipped) by default. If the original data is wanted, use &#8220;dataset=&#8217;original&#8221; as kwarg.</p>
+<dd><p>gets the values of a dataset, retrieves from fitdata (clipped) by default. If the original data is wanted, use &#8220;dataset=&#8217;original&#8217;&#8221; as kwarg.</p>
 </dd></dl>
 
 <dl class="method">
@@ -229,13 +561,19 @@ which bin and calculate the correct minimum required contribution accordingly.</
 <dl class="method">
 <dt id="McSAS.McSAS.random_logR_ell">
 <tt class="descname">random_logR_ell</tt><big>(</big><em>Nell=1</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.random_logR_ell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.random_logR_ell" title="Permalink to this definition">¶</a></dt>
-<dd><p>like uniform, but with a higher likelihood of sampling smaller sizes. May speed up some fitting procedures.</p>
+<dd><p>Random number generator which behaves like its uniform counterpart, but with a higher likelihood of sampling smaller sizes. May speed up some fitting procedures.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="McSAS.McSAS.random_uniform_ell">
+<tt class="descname">random_uniform_ell</tt><big>(</big><em>Nell=1</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.random_uniform_ell"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.random_uniform_ell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Random number generator for generating uniformly-sampled size- and orientation parameters for ellipsoids.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="McSAS.McSAS.reshape_fitdata">
 <tt class="descname">reshape_fitdata</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.reshape_fitdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.reshape_fitdata" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function ensures that q, I, PSI and E are in 1-by-n shape</p>
+<dd><p>This ensures that q, I, PSI and E are in 1-by-n shape</p>
 </dd></dl>
 
 <dl class="method">
@@ -247,7 +585,7 @@ which bin and calculate the correct minimum required contribution accordingly.</
 <dl class="method">
 <dt id="McSAS.McSAS.setdata">
 <tt class="descname">setdata</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.setdata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.setdata" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the supplied data in the proper location.</p>
+<dd><p>Sets the supplied data in the proper location. Optional argument &#8220;dataset&#8221; can be set to &#8220;fit&#8221; or &#8220;original&#8221; to define which dataset is set. Default is &#8220;original&#8221;</p>
 </dd></dl>
 
 <dl class="method">
@@ -255,11 +593,11 @@ which bin and calculate the correct minimum required contribution accordingly.</
 <tt class="descname">setfunctions</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/McSAS.html#McSAS.setfunctions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#McSAS.McSAS.setfunctions" title="Permalink to this definition">¶</a></dt>
 <dd><p>functions are defined here. 
 In particular here the following is specified:
--1. The parameter bounds estimation function &#8216;BOUNDS&#8217;. Should be able to take input argument Bounds to update, should set the parameter bounds in self.parameter[&#8216;Bounds&#8217;]
-0. The random number generation function &#8216;RAND&#8217; This must take its parameters from self, and have an optional input argument specifying the number of sets to return (for MC initialization). It should return a set of Nsets-by-nvalues to be used directly in &#8216;FF&#8217;
-1. The Form-factor function &#8216;FF&#8217;. If called, this should get the required information from self and a supplied Nsets-by-nvalues shape-specifying parameter array. It should return an Nsets-by-q array. Orientational averaging should be part of the form-factor function (as it is most efficiently calculated there), so several form factor functions can exist for non-spherical objects.
-2. The shape volume calculation function &#8216;VOL&#8217;, which must be able to deal with input argument &#8220;Rpfactor&#8221;, ranging from 0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets number of (Rpfactor-compensated)-volumes. 
-3. The smearing function &#8216;SMEAR&#8217;. Should take information from self, and an input Icalc, to output an Ismear of the same length.</p>
+1. The parameter bounds estimation function &#8216;BOUNDS&#8217;. Should be able to take input argument Bounds to update, should set the parameter bounds in self.parameter[&#8216;Bounds&#8217;]
+2. The random number generation function &#8216;RAND&#8217; This must take its parameters from self, and have an optional input argument specifying the number of sets to return (for MC initialization). It should return a set of Nsets-by-nvalues to be used directly in &#8216;FF&#8217;. This may be depreciated soon as is can be generated from within.
+3. The Form-factor function &#8216;FF&#8217;. If called, this should get the required information from self and a supplied Nsets-by-nvalues shape-specifying parameter array. It should return an Nsets-by-q array. Orientational averaging should be part of the form-factor function (as it is most efficiently calculated there), so several form factor functions can exist for non-spherical objects.
+4. The shape volume calculation function &#8216;VOL&#8217;, which must be able to deal with input argument &#8220;Rpfactor&#8221;, ranging from 0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets number of (Rpfactor-compensated)-volumes. 
+5. The smearing function &#8216;SMEAR&#8217;. Should take information from self, and an input Icalc, to output an Ismear of the same length.</p>
 <p>This function will actually cast the supplied function name into a function pointer.</p>
 </dd></dl>
 
@@ -297,6 +635,7 @@ If a supplied parameter is one of the function names, it is stored in the self.f
 </dd></dl>
 
 </div>
+</div>
 
 
           </div>
@@ -304,6 +643,15 @@ If a supplied parameter is one of the function names, it is stored in the self.f
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Source Code Documentation</a><ul>
+<li><a class="reference internal" href="#a-note-on-units">A note on units:</a></li>
+<li><a class="reference internal" href="#example-usage">Example usage:</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="quickstart.html"
                         title="previous chapter">McSAS Quick Usage guide</a></p>
