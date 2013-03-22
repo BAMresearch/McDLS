@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# McSAS.py
+
 '''
 A class and supplementary functions for Monte-Carlo fitting of SAXS patterns. It is 
 released under a Creative Commons CC-BY-SA license. Please cite as:
@@ -2253,3 +2256,5 @@ def observability(q,Rset,I=[],E=[],Rpfactor=3):
             ov[isi]=numpy.max(Iset[isi,:]/It)
             qm[isi]=q[numpy.argmax(Iset[isi,:]/It)]
     return ov,qm
+
+# vim: set ts=4 sts=4 sw=4 tw=0:
