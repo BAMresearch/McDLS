@@ -38,6 +38,21 @@ if on_rtd:
     for mod_name in ('scipy', 'numpy'):
         sys.modules[mod_name] = Mock()
 
+# set up the types of members to check for documentation
+members_to_watch = ['function', 'method'];
+
+def warn_undocumented_members(app, what, name, obj, options, lines):
+    if(what in members_to_watch and len(lines) == 0):
+        # warn to terminal during build
+        print "Warning: ", what, "is undocumented: ", name, "(%d)"% len(lines)
+        # or modify the docstring so the rendered output is highlights the omission
+        lines.append(".. Warning:: %s '%s' undocumented" % (what, name))
+
+def setup(app):
+    app.connect('autodoc-process-docstring', warn_undocumented_members);
+
+autodoc_default_flags = ['members', 'undoc-members' ]
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
