@@ -534,6 +534,18 @@ class McSAS(object):
         #output Nsph-by-3 array
         return Rset
 
+    def random_logR_sph(self,Nsph=1):
+        """Random number generator with logarithmic probabilistic sampling."""
+        #get parameters from self
+        Bounds=self.getpar('Bounds') 
+        #generate Nsph random numbers
+
+        Rset=10**(numpy.random.uniform(log10(numpy.min(Bounds)),log10(numpy.max(Bounds)),Nsph))
+        Rset=reshape(Rset,(prod(shape(Rset)),1))
+
+        #output Nsph-by-1 array
+        return Rset
+
     def random_uniform_sph(self,Nsph=1):
         """Random number generator with uniform distribution for
         the sphere form factor."""
