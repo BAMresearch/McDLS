@@ -31,17 +31,6 @@ Classes and Functions Defined in This File
    pixel are divided between the two neighbouring bins depending on the
    distances to the centres. If error provided is empty, the standard
    deviation of the intensities in the bins are computed.
- - :py:func:`csqr`:
-   least-squares error to use with scipy.optimize.leastsq
- - :py:func:`Iopt`:
-   Optimize the scaling factor and background level of modeled
-   data vs. intensity
- - :py:func:`csqr_v1`:
-   least-squares for data with known error, size of
-   parameter-space not taken into account
- - :py:func:`Iopt_v1`:
-   old intensity scaling factor optimisation, more robust but
-   slower than Iopt
  - :py:func:`pickle_read`:
    Reads in pickled data from a file (by filename)
  - :py:func:`pickle_write`:
@@ -146,10 +135,8 @@ class McSAS(object):
             Can be set to 'log' for histogramming on a logarithmic size scale, 
             recommended for q- and/or size-ranges spanning more than a decade.
         - *Histweight*: string, default: 'volume'
-            | Can be set to 'number' to force plotting of number-weighted
-              distributions
-            | 2013-03-19 issue remains that the observability in this case is
-              incorrect.
+            Can be set to 'number' to force plotting of number-weighted
+            distributions
         - *drhosqr*: float, default: 1
             Scattering contrast - when known it will be used to calculate the
             absolute volume fraction of each contribution.
@@ -184,23 +171,18 @@ class McSAS(object):
         - *BOUNDS*: string
             The McSAS function to use for calculating random number generator 
             bounds based on input (f.ex. q and I).
-
             default: :py:func:`SphBounds`
         - *FF*: string
             The McSAS function to use for calculating the form factors.
-
             default: :py:func:`FF_sph_1D`
         - *RAND*: string
             the McSAS function to use for generating random numbers
-
             default: :py:func:`random_uniform_sph`
         - *SMEAR*: string
             the McSAS function to use for smearing of intensity
-
             default: :py:func:`_passthrough`
         - *VOL*: string
             the McSAS function to use for calculating the base object volume
-
             default: :py:func:`vol_sph`
 
     **Returns:**
@@ -302,7 +284,6 @@ class McSAS(object):
     parameters=None #where the fitting and binning settings are stored
     result=None #where all the analysis results are stored, I do not think this needs separation after all into results of analysis and results of interpretation. However, this is a list of dicts, one per variable (as the method, especially for 2D analysis, can deal with more than one random values. analysis results are stored along with the histogrammed results of the first variable with index [0]:
     functions=None #where the used functions are defined, this is where shape changes, smearing, and various forms of integrations are placed.
-    calcdata=None #here values and matrices are stored used by the calculations.
 
     def __init__(self,**kwargs):
         """
@@ -332,11 +313,7 @@ class McSAS(object):
         self.parameters=dict() #where the fitting and binning settings are stored
         self.result=list() #where all the analysis results are stored, I do not think this needs separation after all into results of analysis and results of interpretation. However, this is a list of dicts, one per variable (as the method, especially for 2D analysis, can deal with more than one random values. analysis results are stored along with the histogrammed results of the first variable with index [0]:
         self.result.append(dict())
-        #self.analysisresult=dict() #The place where the raw analysis details are stored, along with qfit and Ifit.
-        #self.interpretresult=dict() #The place for the histogrammed data.
         self.functions=dict() #where the used functions are defined, this is where shape changes, smearing, and various forms of integrations are placed.
-        self.calcdata=dict() #here values and matrices are stored used by the calculations.
-        #self.handles=dict() #I don't think handles can be stored in a dict.
 
         #populate self with defaults
         self.set_defaults()
@@ -349,9 +326,9 @@ class McSAS(object):
         #reshape fitdata to the correct 1-by-n dimensions
         self.reshape_fitdata()
         #apply input settings for fitting, setting the required function definitions
-        self.setfunctions(**kwargs)
+        self.setfunction(**kwargs)
         #calculate parameter bounds and store
-        self.functions['BOUNDS']()
+        self.getfunction('BOUNDS')()
         #check and fix parameters where necessary
         self.check_parameters() #this is only a very simple function now in need of expansion
 
@@ -371,83 +348,108 @@ class McSAS(object):
             #Result=self.getresult()
             self.Plot()
 
-    def TwoDGenI(self):
+    ############################################################################
+    ##################### Pre-optimisation functions ###########################
+    ############################################################################
+    def _Iopt(self,I,Ic,E,Sc,ver=2,OutputI=False,Background=True):
         """
-        this function is optionally run after the histogram procedure for anisotropic images, and will calculate the MC fit intensity in imageform
-        """
-        Result=self.getresult()
-        #load original dataset
-        q=self.getdata('Q',dataset='original')
-        I=self.getdata('I',dataset='original')
-        E=self.getdata('IERR',dataset='original')
-        PSI=self.getdata('PSI',dataset='original')
-        #we need to recalculate the result in two dimensions
-        kansas=shape(q) #we will return to this shape
-        q=reshape(q,[1,-1]) #flatten
-        I=reshape(I,[1,-1]) #flatten
-        E=reshape(E,[1,-1]) #flatten
-        PSI=reshape(PSI,[1,-1]) #flatten
+        Optimizes the scaling and background factor to match Ic closest to I.
+        Returns an array with scaling factors. Input initial guess *Sc* has 
+        to be a two-element array with the scaling and background.
 
-        Randfunc=self.functions['RAND']
-        FFfunc=self.functions['FF']
-        VOLfunc=self.functions['VOL']
-        SMEARfunc=self.functions['SMEAR']
-        print 'Recalculating final result, this may take some time'
-        #for each result
-        Iave=zeros(shape(q))
-        Nreps=self.getpar('Nreps')
-        Rpfactor=self.getpar('Rpfactor')
-        qlims=self.getpar('qlims')
-        psilims=self.getpar('psilims')
-        Memsave=self.getpar('Memsave')
-        Ncontrib=self.getpar('Ncontrib')
-        Screps=self.getresult('Screps')
-        for nr in range(Nreps):
-            print 'regenerating set {} of {}'.format(nr,Nreps)
-            Rset=Result['Rrep'][:,:,nr]
-            #calculate their form factors
-            Vset=VOLfunc(Rset,Rpfactor)
-            #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
-            #calculate the intensities
-            if Memsave==False:
-                FFset = FFfunc(Rset,Q=q,PSI=PSI) #Form factors, all normalized to 1 at q=0.
-                # Calculate the intensities
-                Iset = FFset**2*(Vset+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
-                It = sum(Iset,0) # the total intensity of the scattering pattern
+        ** Required input arguments: **
+            - *I* : An array of "measured" intensities
+            - *Ic* : An array of intensities which should be scaled to match *I*
+            - *E* : An array of uncertainties to match *I*
+            - *Sc* : A 2-element array of initial guesses for scaling factor 
+                and background
+
+        ** Optional input arguments: **
+            - *ver*: can be set to 1 for old version, more robust but slow, 
+              default 2 for new version, 10x faster than version 1
+            - *OutputI*: returns the scaled intensity as third output argument,
+              default: False
+            - *Background*: enables a flat background contribution, 
+              default: True
+
+        Output: 
+            - *Sc*: a two-element array with intensity scaling factor and background
+            - *cval*: the reduced chi-squared value
+        """
+        def csqr(Sc,I,Ic,E):
+            """Least-squares error for use with scipy.optimize.leastsq"""
+            cs=(I-Sc[0]*Ic-Sc[1])/E
+            return cs
+        
+        def csqr_noBG(Sc,I,Ic,E):
+            """Least-squares error for use with scipy.optimize.leastsq, without background """
+            cs=(I-Sc[0]*Ic)/E
+            return cs
+
+        def csqr_v1(I,Ic,E):
+            """Least-squares for data with known error, size of parameter-space not taken into account."""
+            cs=sum(((I-Ic)/E)**2)/(size(I))
+            return cs
+
+        if ver==2:
+            """uses scipy.optimize.leastsqr"""
+            if Background:
+                Sc,success=scipy.optimize.leastsq(csqr,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
+                cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
             else:
-                FFset=FFfunc(Rset[0,:][newaxis,:],Q=q,PSI=PSI)
-                It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
-                for ri in arange(1,Ncontrib):
-                    #calculate their form factors
-                    FFset=FFfunc(Rset[ri,:][newaxis,:],Q=q,PSI=PSI)
-                    It=It+FFset**2*(Vset[ri]+0*FFset)**2 #a set of intensities
-            Vst=sum(Vset**2) # total volume squared
-            It=reshape(It,(1,-1)) # reshaped to match I and q
-            # Optimize the intensities and calculate convergence criterium
-            #SMEAR function goes here
-            It=SMEARfunc(It)
-            Iave=Iave+It*Screps[0,nr]+Screps[1,nr] #add to average
-        #print "Initial conval V1",Conval1
-        Iave=Iave/Nreps
-        #mask (lifted from clip_dataset)
-        validbools=isfinite(q)
-        # Optional masking of negative intensity
-        if self.getpar('MaskNegI'):
-            validbools=validbools*(I >= 0)
-        if (qlims==[])and(psilims==[]):
-            #q limits not set, simply copy dataset to fitdata
-            validbools=validbools
-        if (not(qlims==[])): #and qlims is implicitly set
-            validbools = validbools*(q>numpy.min(qlims))&(q<=numpy.max(qlims)) #excluding the lower q limit may prevent q=0 from appearing
-        if (not(psilims==[])): #we assume here that we have a dataset ['PSI']
-            validbools = validbools*(PSI>numpy.min(psilims))&(PSI<=numpy.max(psilims)) #excluding the lower q limit may prevent q=0 from appearing
-        Iave=Iave*validbools
-        #shape back to imageform
-        I2D=reshape(Iave,kansas)
-        self.setresult(I2D=I2D)
+                Sc,success=scipy.optimize.leastsq(csqr_noBG,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
+                Sc[1]=0.
+                cval=csqr_v1(I,Sc[0]*Ic,E)
+        else:
+            """using scipy.optimize.fmin"""
+            # Background can be set to False to just find the scaling factor.
+            if Background:
+                Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic+Sc[1],E),Sc,full_output=0, disp=0)
+                cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
+            else:
+                Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic,E),Sc,full_output=0, disp=0)
+                Sc[1]=0.
+                cval=csqr_v1(I,Sc[0]*Ic,E)
+        if OutputI:
+            return Sc,cval,Sc[0]*Ic+Sc[1]
+        else:
+            return Sc,cval
 
-    
-    def setfunctions(self,**kwargs):
+    def set_defaults(self):
+        """
+        Populates the default parameter settings
+        """
+        #fieldnames
+        #fnames=list(['Bounds','Ncontrib','Maxiter','Rpfactor','Nreps','qlims','psilims','Histbins','Histscale','drhosqr','Convcrit','StartFromMin','Maxntry'])
+        self.parameters={
+                'Bounds':[],
+                'Ncontrib':200,
+                'Maxiter':1e5,
+                'Rpfactor':0.5,
+                'Nreps':100,
+                'qlims':[],
+                'psilims':[],
+                'Priors':[], #of shape Rrep, to be used as initial guess for Analyse function, Analyse will pass on a Prior to MCFit.
+                'Prior':[], #of shape Rset, to be used as initial guess for MCFit function
+                'Histbins':50,
+                'Histscale':'log',
+                'Histweight':'volume', #can be set to "volume" or "number"
+                'drhosqr':1,
+                'Convcrit':1.,
+                'StartFromMin':False,
+                'Maxntry':5,
+                'MaskNegI':False,
+                'Memsave':False,
+                'Plot':False}
+
+        self.functions={
+                'BOUNDS':self.SphBounds, #this function has to give a vector the size of the number of variables *2 (lower and upper)
+                'RAND':self.random_uniform_sph,
+                'FF':self.FF_sph_1D, #1D spheres
+                'VOL':self.vol_sph,
+                'SMEAR':self._passthrough} #none
+
+    def setfunction(self,**kwargs):
         """Defines functions. In particular the following are specified:
 
         - The parameter bounds estimation function *BOUNDS*. Should be able
@@ -486,625 +488,20 @@ class McSAS(object):
                     #make it into a function handle/pointer
                     self.functions[kw]=getattr(self,kwargs[kw])
 
-    def Analyse(self):
-        """This function runs the Monte Carlo optimisation a multitude
-        (*Nreps*) of times. If convergence is not achieved, it will try again
-        for a maximum of *Maxntry* attempts.
-        """
-        #get data
-        q=self.getdata('Q')
-        I=self.getdata('I')
-        E=self.getdata('IERR')
-        #get settings
-        Priors=self.getpar('Priors')
-        Prior=self.getpar('Prior')
-        Ncontrib=self.getpar('Ncontrib')
-        Nreps=self.getpar('Nreps')
-        Convcrit=self.getpar('Convcrit')
-        Maxntry=self.getpar('Maxntry')
-        #find out how many values a shape is defined by:
-        testR=self.functions['RAND']()
-        NRval=prod(shape((testR)))
-
-        Rrep = zeros([Ncontrib,NRval,Nreps]) 
-        #DEBUG:
-        #print 'Rrep: {}'.format(shape(Rrep))
-        Niters = zeros([Nreps])
-        Irep = zeros([1,prod(shape(I)),Nreps])
-        bignow = time.time() #for time estimation and reporting
-
-        #This is the loop that repeats the MC optimization Nreps times, after which we can calculate an uncertainty on the results.
-        priorsflag=False
-        for nr in arange(0,Nreps):
-            if ((Prior==[])and(Priors!=[]))or(priorsflag==True):
-                priorsflag=True #this flag needs to be set as prior will be set after the first pass
-                self.setpar(Prior=Priors[:,:,nr%size(Priors,2)])
-            nt = 0 #keep track of how many failed attempts there have been 
-            # do that MC thing! 
-            ConVal=inf
-            while ConVal>Convcrit:
-                #retry in the case we were unlucky in reaching convergence within Maxiter.
-                nt+=1
-                Rrep[:,:,nr],Irep[:,:,nr],ConVal,Details = self.MCFit(OutputI=True,OutputDetails=True)
-                if nt>Maxntry:
-                    #this is not a coincidence. We have now tried Maxntry+2 times
-                    print "could not reach optimization criterion within {0} attempts, exiting...".format(Maxntry+2)
-                    return
-            Niters[nr] = Details['Niter'] #keep track of how many iterations were needed to reach convergence
-
-            biglap = time.time() #time management
-            # in minutes:
-            tottime = (biglap-bignow)/60. #total elapsed time
-            avetime = (tottime/(nr+1)) #average time per MC optimization
-            remtime = (avetime*Nreps-tottime) #estimated remaining time
-            print "\t*finished optimization number {0} of {1} \r\n\t*total elapsed time: {2} minutes \r\n\t*average time per optimization {3} minutes \r\n\t*total time remaining {4} minutes".format(nr+1,Nreps,tottime,avetime,remtime)
-        
-        #at this point, all MC optimizations have been completed and we can process all Nreps results.
-        Imean = numpy.mean(Irep,axis=2) #mean fitted intensity
-        Istd = numpy.std(Irep,axis=2) #standard deviation on the fitted intensity, usually not plotted for clarity
-        # store in output dict
-        self.setresult(**{
-            'Rrep':Rrep,
-            'Imean':Imean,
-            'Istd':Istd,
-            'Qfit':q,# can be obtained from self.fitdata 
-            'Niter':numpy.mean(Niters)}) #average number of iterations for all repetitions
-
-    ###########################################################################################
-    ###################################### Histogram ##########################################
-    ###########################################################################################
-    def Histogram(self):
-        """
-        Takes the *Rrep* result from the :py:meth:`McSAS.Analyse` function
-        and calculates the corresponding volume- and number fractions for each
-        contribution as well as the minimum observability limits. It will
-        subsequently bin the result across the range for histogramming purposes.
-
-        While the volume-weighted distribution will be in absolute units
-        (providing volume fractions of material within a given size range),
-        the number distributions have been normalized to 1.
-        
-        Output a list of dictionaries with one dictionary per shape parameter:
-
-            *VariableNumber*: int
-                Shape parameter index. e.g. an ellipsoid has 3:
-                width, height and orientation
-            *Hx*: array
-                Histogram bin left edge position (x-axis in histogram)
-            *Hmid*: array
-                Center positions for the size histogram bins
-                (x-axis in histogram, used for errorbars)
-            *Hwidth*: array
-                Histogram bin width (x-axis in histogram,
-                defines bar plot bar widths)
-            *Hmean*: array
-                Volume-weighted particle size distribution values for
-                all *Nreps* results (y-axis bar height)
-            *Hnmean*: array
-                Number-weighted analogue of the above *Hmean*
-            *Hy*: size (Histbins x Nreps) array
-                Volume-weighted particle size distribution bin values for each
-                MC fit repetition (the mean of which is *Hmean*, and the sample
-                standard deviation of which is *Hstd*)
-            *Hny*: size (Histbins x Nreps) array
-                Number-weighted particle size distribution bin values
-                for each MC fit repetition
-            *Hstd*: array
-                Standard deviations of the corresponding volume-weighted size
-                distribution bins, calculated from *Nreps* repetitions of the
-                MCfit_sph() function
-            *Hnstd*: array
-                Standard deviation for the number-weigthed distribution
-            *Vf*: size (Ncontrib x Nreps) array
-                Volume fractions for each of Ncontrib contributions 
-                in each of Nreps iterations
-            *Nf*: size (Ncontrib x Nreps) array
-                Number fraction for each contribution
-            *Vft*: size (Nreps) array
-                Total scatterer volume fraction for each of the *Nreps*
-                iterations
-            *Nft*: size (Nreps) array
-                Total number fraction 
-            *vfmin*: size (Nsph x Nreps) array
-                minimum required volume fraction for each contribution to
-                become statistically significant.
-            *nfmin*: size (Nsph x Nreps) array
-                number-weighted analogue to *vfmin*
-            *vfminbins*: size (Hmid) array 
-                array with the minimum required volume fraction per bin to
-                become statistically significant. Used to display minimum
-                required level in histogram.
-            *nfminbins*: size (Hmid) array
-                number-weighted analogue to *vfminbins*
-            *Screps*: size (2 x Nreps) array
-                Scaling and background values for each repetition. Used to
-                display background level in data and fit plot.
-        """
-        #get settings
-        #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
-        Ncontrib=self.getpar('Ncontrib')
-        Nreps=self.getpar('Nreps')
-        Rpfactor=self.getpar('Rpfactor')
-        Memsave=self.getpar('Memsave')
-        drhosqr=self.getpar('drhosqr')
-        Rrep=self.getresult('Rrep')
-        Histbins=self.getpar('Histbins')
-        Histscale=self.getpar('Histscale')
-        Bounds=self.getpar('Bounds')
-
-        #ov = zeros(shape(Rrep)) #observability
-        Vf = zeros((Ncontrib,Nreps)) #volume fraction for each contribution
-        Nf = zeros((Ncontrib,Nreps)) #number fraction for each contribution
-        qm = zeros((Ncontrib,Nreps)) #volume fraction for each contribution
-        vfmin = zeros((Ncontrib,Nreps)) #volume fraction for each contribution
-        nfmin = zeros((Ncontrib,Nreps)) #number fraction for each contribution
-        Vft = zeros([Nreps]) #total volume fractions
-        Nft = zeros([Nreps]) #total number 
-        Screps = zeros([2,Nreps]) #Intensity scaling factors for matching to the experimental scattering pattern (Amplitude A and flat background term b, defined in the paper)
-
-        #functions!
-        Randfunc=self.functions['RAND']
-        FFfunc=self.functions['FF']
-        VOLfunc=self.functions['VOL']
-        SMEARfunc=self.functions['SMEAR']
-
-        #data!
-        q=self.getdata('Q')
-        I=self.getdata('I')
-        E=self.getdata('IERR')
-
-        #loop over each repetition
-        for ri in range(Nreps):
-            Rset = Rrep[:,:,ri] #the single set of R for this calculation
-            Vset = VOLfunc(Rset,Rpfactor) #compensated volume for each sphere in the set
-            if Memsave==False:
-                FFset = FFfunc(Rset) #Form factors, all normalized to 1 at q=0.
-                # Calculate the intensities
-                Iset = FFset**2*(Vset+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
-                It = sum(Iset,0) # the total intensity of the scattering pattern
-            else:
-                FFset=FFfunc(Rset[0,:][newaxis,:])
-                It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
-                for Rr in arange(1,Ncontrib):
-                    #calculate their form factors
-                    FFset=FFfunc(Rset[Rr,:][newaxis,:])
-                    It=It+FFset**2*(Vset[Rr]+0*FFset)**2 #a set of intensities
-
-            Vst = sum(Vset**2) # total compensated volume squared 
-            It=reshape(It,(1,prod(shape(It))))
-            It=SMEARfunc(It)
-            
-            # Now for each sphere, calculate its volume fraction (p_c compensated):
-            Vsa=VOLfunc(Rset,Rpfactor) #compensated volume for each sphere in the set Vsa = 4./3*pi*Rset**(3*Rpfactor)
-            # And the real particle volume:
-            Vpa=VOLfunc(Rset,Rpfactor=1.) #compensated volume for each sphere in the set Vsa = 4./3*pi*Rset**(3*Rpfactor)
-
-            Sci = numpy.max(I)/numpy.max(It) #initial guess for the scaling factor.
-            Bgi = numpy.min(I)
-            Sc,Cv = Iopt(I,It,E,[Sci,Bgi]) #optimize scaling and background for this repetition
-            Screps[:,ri]=Sc #scaling and background for this repetition.
-            Vf[:,ri] = (Sc[0]*Vsa**2/(Vpa*drhosqr)).flatten() # a set of volume fractions
-            Vft[ri] = sum(Vf[:,ri]) # total volume 
-            Nf[:,ri] = Vf[:,ri]/(Vpa.flatten()) #
-            Nft[ri] = sum(Nf[:,ri]) # total number
-            for isi in range(Ncontrib): #For each sphere
-                #ov[isi,ri] = (Iset[isi,:]/(It)).max() #calculate the observability (the maximum contribution for that sphere to the total scattering pattern) NOTE: no need to compensate for p_c here, we work with volume fraction later which is compensated by default. additionally, we actually do not use this value.
-                if Memsave:
-                    FFset=FFfunc(Rset[isi,:][newaxis,:])
-                    Ir=FFset**2*(Vset[isi]+0*FFset)**2
-                    qmi = numpy.argmax(Ir.flatten()/It.flatten()) #determine where this maximum observability is of contribution isi (index)
-                    qm[isi,ri] = q[0,qmi] #point where the contribution of isi is maximum
-                    vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Ir))
-                    nfmin[isi,ri] = vfmin[isi,ri]/Vpa[isi]
-                else:
-                    qmi = numpy.argmax(Iset[isi,:].flatten()/It.flatten()) #determine where this maximum observability is of contribution isi (index)
-                    qm[isi,ri] = q[0,qmi] #point where the contribution of isi is maximum
-                    vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Iset[isi,:]))
-                    nfmin[isi,ri] = vfmin[isi,ri]/Vpa[isi]
-                #close approximation:
-                #vfmin[isi,ri] = (E[qmi]*Vf[isi,ri]/(Sc[0]*Iset[isi,qmi]))
-                #or more precice but slower:
-            Nf[:,ri]=Nf[:,ri]/Nft[ri]
-            nfmin[:,ri]=nfmin[:,ri]/Nft[ri]
-
-        #now we histogram over each variable
-        #for each variable parameter we define, we need to histogram separately. 
-        for vari in range(prod(shape(Histbins))):
-            # Now bin whilst keeping track of which contribution ends up in which bin:
-            #set bin edge locations
-            if Histscale[vari] == 'lin':
-                Hx = linspace(Bounds[0+2*vari],Bounds[1+2*vari],Histbins[vari]+1) #Hx contains the Histbins+1 bin edges, or class limits.
-            else:
-                Hx = 10**(linspace(log10(Bounds[0+2*vari]),log10(Bounds[1+2*vari]),Histbins[vari]+1))
-            Hy = zeros([Histbins[vari],Nreps]) #total volume fraction contribution in a bin
-            Hny = zeros([Histbins[vari],Nreps]) #total number fraction contribution in a bin
-            vfminbin = zeros([Histbins[vari],Nreps]) #minimum required number of contributions /in a bin/ to make a measurable impact
-            nfminbin = zeros([Histbins[vari],Nreps]) #minimum required number of contributions /in a bin/ to make a measurable impact
-            Hmid = zeros(Histbins[vari])
-            vfminbins = zeros(Histbins[vari])
-            nfminbins = zeros(Histbins[vari])
-
-            for ri in range(Nreps):
-                
-                Rset = Rrep[:,vari,ri] #the single set of R for this calculation
-
-                for bini in range(Histbins[vari]):
-                    findi = ((Rset>=Hx[bini])*(Rset<Hx[bini+1])) #indexing which contributions fall into the radius bin
-                    #print 'findi: {} Vf: {}'.format(shape(findi),shape(Vf))
-                    #findi = findi[:,0]
-                    Hy[bini,ri] = sum(Vf[findi,ri]) #y contains the volume fraction for that radius bin
-                    Hny[bini,ri] = sum(Nf[findi,ri]) #y contains the volume fraction for that radius bin
-                    if sum(findi)==0:
-                        vfminbin[bini,ri] = 0
-                        nfminbin[bini,ri] = 0
-                    else:
-                        vfminbin[bini,ri] = numpy.max(vfmin[findi,ri])
-                        vfminbin[bini,ri] = numpy.mean(vfmin[findi,ri])
-                        nfminbin[bini,ri] = numpy.max(nfmin[findi,ri])
-                        nfminbin[bini,ri] = numpy.mean(nfmin[findi,ri])
-                    if isnan(Hy[bini,ri]):
-                        Hy[bini,ri] = 0.
-                        Hny[bini,ri] = 0.
-            for bini in range(Histbins[vari]):
-                Hmid[bini] = numpy.mean(Hx[bini:bini+2])
-                vb = vfminbin[bini,:]
-                vfminbins[bini] = numpy.max(vb[vb<inf])
-                nb = nfminbin[bini,:]
-                nfminbins[bini] = numpy.max(nb[vb<inf])
-            Hmean = numpy.mean(Hy,axis=1)
-            Hnmean = numpy.mean(Hny,axis=1)
-            Hstd = numpy.std(Hy,axis=1)
-            Hnstd = numpy.std(Hny,axis=1)
-            self.setresult(**{
-                'VariableNumber':vari, #this line will place the results in the dict at self.results[vari]
-                'Hx':Hx,
-                'Hmid':Hmid,
-                'Hwidth':diff(Hx),
-                'Hy':Hy,
-                'Hny':Hny,
-                'Hmean':Hmean,
-                'Hstd':Hstd,
-                'Hnmean':Hnmean,
-                'Hnstd':Hnstd,
-                'vfminbins':vfminbins,
-                'vfmin':vfmin,
-                'Vf':Vf,
-                'Vft':Vft,
-                'nfminbins':nfminbins,
-                'nfmin':nfmin,
-                'Nf':Nf,
-                'Nft':Nft,
-                'Screps':Screps})
-
-    ######################################## end ###############################################
-
-    def CSVwrite(self,filename,*args,**kwargs):
-        """
-        This function writes a semicolon-separated csv file to [filename]
-        containing an arbitrary number of output variables *\*args*. in case of
-        variable length columns, empty fields will contain ''.
-
-        Optional last argument is a keyword-value argument:
-        VarableNumber=[integer], indicating which shape parameter it is
-        intended to draw upon. VariableNumber can also be a list or array
-        of integers, of the same length as the number of output variables
-        *\*args* in which case each output variable is matched with a shape
-        parameter index. Default is zero.
-
-        Input arguments should be names of fields in *self.result*.
-        For example::
-
-            A.McCSV('hist.csv', 'Hx', 'Hwidth', 'Hmean', 'Hstd',
-                    VariableNumber = 0)
-
-        I.e. just stick on as many columns as you'd like. They will be
-        flattened by default. A header with the result keyword names will be
-        added.
-        
-        Existing files with the same filename will be overwritten by default.
-        """
-        vna=zeros(len(args),dtype=int)
-        if 'VariableNumber' in kwargs:
-            vni=kwargs['VariableNumber']
-            if isinstance(vni,(list,ndarray)):
-                if len(vni)!=len(args):
-                    print('Error in CSVwrite, supplied list of variablenumbers does not have the length of 1 or the same length as the list of output variables.')
-                    return
-                for vi in range(len(args)):
-                    vna[vi]=vni[vi]
-            else:
-                #single integer value
-                vna=vna+vni
-                
-        #uses sprintf rather than csv for flexibility
-        ncol=len(args)
-        #make format string used for every line, don't need this
-        #linestr=''
-        #for coli in range(ncol):
-        #    linestr=linestr+'{'+'};'
-        #linestr=linestr[0:-1]+'\n' #strip the last semicolon, add a newline
-
-        inlist=list()
-        for argi in range(len(args)):
-            inlist.append(self.getresult(args[argi],VariableNumber=vna[argi]).flatten())
-        #find out the longest row
-        nrow=0
-        for argi in range(len(args)):
-            nrow=numpy.max((nrow,len(inlist[argi])))
-
-        #now we can open the file:
-        fh=open(filename,'w')
-        emptyfields=0
-        #write header:
-        linestr=''
-        for coli in range(ncol):
-            linestr=linestr+'{};'.format(args[coli])
-        linestr=linestr[0:-1]+'\n'    
-        fh.write(linestr)
-        for rowi in range(nrow):
-            linestr=''
-            for coli in range(ncol):
-                #print 'rowi {} coli {} len(args[coli]) {}'.format(rowi,coli,len(args[coli]))
-                if len(inlist[coli])<=rowi: #we ran out of numbers for this arg
-                    linestr=linestr+';' #add empty field
-                    emptyfields+=1
-                else:
-                    linestr=linestr+'{};'.format(inlist[coli][rowi])
-            linestr=linestr[0:-1]+'\n'
-
-            fh.write(linestr)
-
-        fh.close()
-        print '{} lines written with {} columns per line, and {} empty fields'.format(rowi,ncol,emptyfields)
-
-    ###########################################################################################
-    ################################### Monte-carlo procedure #################################
-    ###########################################################################################
-    def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False):
-        """
-        Object-oriented, shape-flexible core of the Monte Carlo procedure.
-        Takes optional arguments:
-
-        *OutputI*:
-            Returns the fitted intensity besides the result
-
-        *OutputDetails*:
-            Details of the fitting procedure, number of iterations and so on
-
-        *OutputIterations*:
-            Returns the result on every successful iteration step, useful for
-            visualising the entire Monte Carlo optimisation procedure for
-            presentations.
-        """
-        #load dataset
-        q=self.getdata('Q')
-        I=self.getdata('I')
-        E=self.getdata('IERR')
-        #load parameters
-        Ncontrib=self.getpar('Ncontrib')
-        Bounds=self.getpar('Bounds')
-        Convcrit=self.getpar('Convcrit')
-        Rpfactor=self.getpar('Rpfactor')
-        Maxiter=self.getpar('Maxiter')
-        MaskNegI=self.getpar('MaskNegI')
-        StartFromMin=self.getpar('StartFromMin')
-        Memsave=self.getpar('Memsave')
-        Prior=self.getpar('Prior')
-
-
-        #find out how many values a shape is defined by:
-        Randfunc=self.functions['RAND']
-        FFfunc=self.functions['FF']
-        VOLfunc=self.functions['VOL']
-        SMEARfunc=self.functions['SMEAR']
-        testR=Randfunc()
-        NRval=prod(shape(testR))
-
-        Rset=numpy.zeros((Ncontrib,NRval))
-
-
-        # Intialise variables
-        FFset = []
-        Vset = []
-        Niter = 0
-        Conval = inf
-        Details = dict()
-        Ri = 0 #index of sphere to change. We'll sequentially change spheres, which is perfectly random since they are in random order.
-        
-        #generate initial set of spheres
-        if size(Prior)==0:
-            if StartFromMin:
-                for Rvi in range(NRval): #minimum bound for each value
-                    if numpy.min(Bounds[Rvi:Rvi+2])==0:
-                        mb=pi/numpy.max(q)
-                    else:
-                        mb=numpy.min(Bounds[Rvi:Rvi+2])
-                    Rset[:,Rvi]=numpy.ones(Ncontrib)[:]*mb/2.
-            else:
-                Rset=Randfunc(Ncontrib)
-        elif (size(Prior,0)!=0)&(size(Ncontrib)==0):
-            Ncontrib=size(Prior,0)
-            Rset=Prior
-        elif size(Prior,0)==Ncontrib:
-            Rset=Prior
-        elif size(Prior,0)<Ncontrib:
-            print "size of prior is smaller than Ncontrib. duplicating random prior values"
-            #while size(Prior)<Nsph:
-            Addi=numpy.random.randint(size(Prior,0),size=Ncontrib-size(Prior,0))
-            Rset=concatenate((Prior,Prior[Addi,:]))
-            print "size now:", size(Rset)
-        elif size(Prior,0)>Ncontrib:
-            print "Size of prior is larger than Ncontrib. removing random prior values"
-            Remi=numpy.random.randint(size(Prior,0),size=Ncontrib) #remaining choices
-            Rset=Prior[Remi,:]
-            print "size now:", size(Rset,0)
-        
-        if Memsave==False:
-            #calculate their form factors
-            FFset=FFfunc(Rset)
-            Vset=VOLfunc(Rset,Rpfactor)
-            #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
-            #calculate the intensities
-            Iset=FFset**2*(Vset+0*FFset)**2 #a set of intensities
-            Vst=sum(Vset**2) # total volume squared
-            It=sum(Iset,0) # the total intensity - eq. (1)
-            It=reshape(It,(1,prod(shape(It)))) # reshaped to match I and q
+    def getfunction(self,fname=None):
+        '''
+        returns the function handle or all handles (if no function name supplied).
+        function name can be one of the following
+        '''
+        fname=fname.upper()
+        if not fname in self.functions.keys():
+            print "Unknown function identifier {}".format(fname)
+            return None
+        if fname==None:
+            return self.functions
         else:
-            #calculate intensity in memory saving mode:
-            #calculate volume for entire set, this does not take much space   
-            Vset=VOLfunc(Rset,Rpfactor)
+            return self.functions[fname]
 
-            FFset=FFfunc(Rset[0,:][newaxis,:])
-            It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
-            for ri in arange(1,Ncontrib):
-                #calculate their form factors
-                FFset=FFfunc(Rset[ri,:][newaxis,:])
-                It=It+FFset**2*(Vset[ri]+0*FFset)**2 #a set of intensities
-            Vst=sum(Vset**2) # total volume squared
-            It=reshape(It,(1,prod(shape(It)))) # reshaped to match I and q
-
-        # Optimize the intensities and calculate convergence criterium
-        #SMEAR function goes here
-        It=SMEARfunc(It)
-        Sci = numpy.max(I)/numpy.max(It) #initial guess for the scaling factor.
-        Bgi = numpy.min(I)
-        Sc,Conval1=Iopt_v1(I,It/Vst,E,[Sci,Bgi]) # V1 is more robust w.r.t. a poor initial guess
-        Sc,Conval=Iopt(I,It/Vst,E,Sc) # reoptimize with V2, there might be a slight discrepancy in the residual definitions of V1 and V2 which would prevent optimization.
-        #print "Initial conval V1",Conval1
-        print "Initial Chi-squared value",Conval
-
-        if OutputIterations:
-            # Output each iteration, starting with number 0. Iterations will be stored 
-            # in Details['Itersph'], Details['IterIfit'], Details['IterConval'], 
-            # Details['IterSc'] and Details['IterPriorUnaccepted'] listing the 
-            # unaccepted number of moves before the recorded accepted move.
-            Details['Itersph']=Rset[:,newaxis] #new iterations will (have to) be appended to this, cannot be zero-padded due to size constraints
-            Details['IterIfit']=(It/Vst*Sc[0]+Sc[1])[:,newaxis] #ibid.
-            Details['IterConVal']=Conval[newaxis]
-            Details['IterSc']=Sc[:,newaxis]
-            Details['IterPriorUnaccepted']=numpy.array(0)[newaxis]
-
-        #start the MC procedure
-        Now=time.time()
-        Nmoves=0 #tracking the number of moves
-        Nnotaccepted=0
-        while (Conval>Convcrit) &(Niter<Maxiter):
-            Rt=Randfunc()
-            Ft=FFfunc(Rt)
-            Vtt=VOLfunc(Rt,Rpfactor)
-            Itt=(Ft**2*Vtt**2)
-            # Calculate new total intensity
-            if Memsave==False:
-                Itest=(It-Iset[Ri,:]+Itt) # we do subtractions and additions, which give us another factor 2 improvement in speed over summation and is much more scalable
-            else:
-                Fo=FFfunc(Rset[Ri,:][newaxis,:])
-                Io=(Fo**2*Vset[Ri]**2)
-                Itest=(It-Io+Itt)
-
-            #SMEAR function goes here
-            Itest=SMEARfunc(Itest)
-            Vstest = (sqrt(Vst)-Vset[Ri])**2+Vtt**2
-            # optimize intensity and calculate convergence criterium
-            Sct,Convalt = Iopt(I,Itest/Vstest,E,Sc) # using version two here for a >10 times speed improvement
-            # test if the radius change is an improvement:
-            if Convalt<Conval: # it's better
-                if Memsave:
-                    Rset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itest,Vtt,Vstest,Sct,Convalt)
-                else:
-                    Rset[Ri,:],Iset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itt,Itest,Vtt,Vstest,Sct,Convalt)
-                print "Improvement in iteration number %i, Chi-squared value %f of %f\r" %(Niter,Conval,Convcrit),
-                Nmoves+=1
-                if OutputIterations:
-                    # output each iteration, starting with number 0. 
-                    # Iterations will be stored in Details['Itersph'], Details['IterIfit'], 
-                    # Details['IterConval'], Details['IterSc'] and 
-                    # Details['IterPriorUnaccepted'] listing the unaccepted 
-                    # number of moves before the recorded accepted move.
-                    Details['Itersph']=concatenate((Details['Itersph'],Rset[:,:,newaxis]),axis=1) #new iterations will (have to) be appended to this, cannot be zero-padded due to size constraints
-                    Details['IterIfit']=concatenate((Details['IterIfit'],(Itest/Vstest*Sct[0]+Sct[1])[:,newaxis]),axis=1) #ibid.
-                    Details['IterConVal']=concatenate((Details['IterConVal'],numpy.array(Convalt)[newaxis]))
-                    Details['IterSc']=concatenate((Details['IterSc'],Sct[:,newaxis]),axis=1)
-                    Details['IterPriorUnaccepted']=concatenate((Details['IterPriorUnaccepted'],numpy.array(Nnotaccepted)[newaxis]))
-                Nnotaccepted=-1
-            # else nothing to do
-            Ri+=1 # move to next sphere in list
-            Ri=Ri%(Ncontrib) # loop if last sphere
-            Nnotaccepted+=1 # number of non-accepted moves, resets to zero after accepted move.
-            Niter+=1 # add one to the iteration number           
-        if Niter>=Maxiter:
-            print "exited due to max. number of iterations (%i) reached" %(Niter)
-        else:
-            print "Normal exit"
-        print "Number of iterations per second",Niter/(time.time()-Now+0.001) #the +0.001 seems necessary to prevent a divide by zero error on some Windows systems.   
-        print "Number of valid moves",Nmoves
-        print "final Chi-squared value %f" %(Conval)
-        Details['Niter']=Niter
-        Details['Nmoves']=Nmoves
-        Details['elapsed']=(time.time()-Now+0.001)
-
-        #Ifinal=sum(Iset,0)/sum(Vset**2)
-        Ifinal=It/sum(Vset**2)
-        Ifinal=reshape(Ifinal,(1,prod(shape(Ifinal))))
-        #SMEAR function goes here
-        Ifinal=SMEARfunc(Ifinal)
-        Sc,Conval=Iopt(I,Ifinal,E,Sc)    
-        if OutputI:
-            if OutputDetails:
-                #DEBUG:
-                #print 'Rset: {}, I: {}, Conval: {}'.format(shape(Rset),shape((Ifinal*Sc[0]+Sc[1])),shape(Conval))
-
-                return Rset,(Ifinal*Sc[0]+Sc[1]),Conval,Details
-            else:
-                return Rset,(Ifinal*Sc[0]+Sc[1]),Conval
-        else:
-            if OutputDetails:
-                return Rset,Conval,Details # ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
-            else:
-                return Rset,Conval # ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
-
-    ######################################## end ###############################################
-
-    def _Iopt(self,I0,I1,startval):
-        """This function does not do anything yet, but is supposed to become
-        the internal intensity fitting function.
-        External functions ``Iopt`` and ``Iopt_v1`` are used instead.
-        """
-        pass
-
-        
-    def set_defaults(self):
-        """
-        Populates the default parameter settings
-        """
-        #fieldnames
-        #fnames=list(['Bounds','Ncontrib','Maxiter','Rpfactor','Nreps','qlims','psilims','Histbins','Histscale','drhosqr','Convcrit','StartFromMin','Maxntry'])
-        self.parameters={
-                'Bounds':[],
-                'Ncontrib':200,
-                'Maxiter':1e5,
-                'Rpfactor':0.5,
-                'Nreps':100,
-                'qlims':[],
-                'psilims':[],
-                'Priors':[], #of shape Rrep, to be used as initial guess for Analyse function, Analyse will pass on a Prior to MCFit.
-                'Prior':[], #of shape Rset, to be used as initial guess for MCFit function
-                'Histbins':50,
-                'Histscale':'log',
-                'Histweight':'volume', #can be set to "volume" or "number"
-                'drhosqr':1,
-                'Convcrit':1.,
-                'StartFromMin':False,
-                'Maxntry':5,
-                'MaskNegI':False,
-                'Memsave':False,
-                'Plot':False}
-
-        self.functions={
-                'BOUNDS':self.SphBounds, #this function has to give a vector the size of the number of variables *2 (lower and upper)
-                'RAND':self.random_uniform_sph,
-                'FF':self.FF_sph_1D, #1D spheres
-                'VOL':self.vol_sph,
-                'SMEAR':self._passthrough} #none
 
     def random_uniform_ell(self,Nell=1):
         """Random number generator for generating uniformly-sampled
@@ -1409,7 +806,8 @@ class McSAS(object):
         with n values, where n is the number of parameters specifying
         a shape.
         """
-        testR=self.functions['RAND']()
+        #testR=self.functions['RAND']()
+        testR=self.getfunction('RAND')()
         NRval=prod(shape(testR))
         Histbins=self.getpar('Histbins')
         if not(isinstance(Histbins,list)): #meaning it will be a string
@@ -1435,6 +833,662 @@ class McSAS(object):
             while len(Histscale)<NRval:
                 Histscale.append(Histscale[0])
             self.setpar(Histscale=Histscale)
+
+    ##########################################################################
+    ####################### optimisation functions ###########################
+    ##########################################################################
+
+    def Analyse(self):
+        """This function runs the Monte Carlo optimisation a multitude
+        (*Nreps*) of times. If convergence is not achieved, it will try again
+        for a maximum of *Maxntry* attempts.
+        """
+        #get data
+        q=self.getdata('Q')
+        I=self.getdata('I')
+        E=self.getdata('IERR')
+        #get settings
+        Priors=self.getpar('Priors')
+        Prior=self.getpar('Prior')
+        Ncontrib=self.getpar('Ncontrib')
+        Nreps=self.getpar('Nreps')
+        Convcrit=self.getpar('Convcrit')
+        Maxntry=self.getpar('Maxntry')
+        #find out how many values a shape is defined by:
+        #testR=self.functions['RAND']()
+        testR=self.getfunction('RAND')()
+        NRval=prod(shape((testR)))
+
+        Rrep = zeros([Ncontrib,NRval,Nreps]) 
+        #DEBUG:
+        #print 'Rrep: {}'.format(shape(Rrep))
+        Niters = zeros([Nreps])
+        Irep = zeros([1,prod(shape(I)),Nreps])
+        bignow = time.time() #for time estimation and reporting
+
+        #This is the loop that repeats the MC optimization Nreps times, after which we can calculate an uncertainty on the results.
+        priorsflag=False
+        for nr in arange(0,Nreps):
+            if ((Prior==[])and(Priors!=[]))or(priorsflag==True):
+                priorsflag=True #this flag needs to be set as prior will be set after the first pass
+                self.setpar(Prior=Priors[:,:,nr%size(Priors,2)])
+            nt = 0 #keep track of how many failed attempts there have been 
+            # do that MC thing! 
+            ConVal=inf
+            while ConVal>Convcrit:
+                #retry in the case we were unlucky in reaching convergence within Maxiter.
+                nt+=1
+                Rrep[:,:,nr],Irep[:,:,nr],ConVal,Details = self.MCFit(OutputI=True,OutputDetails=True)
+                if nt>Maxntry:
+                    #this is not a coincidence. We have now tried Maxntry+2 times
+                    print "could not reach optimization criterion within {0} attempts, exiting...".format(Maxntry+2)
+                    return
+            Niters[nr] = Details['Niter'] #keep track of how many iterations were needed to reach convergence
+
+            biglap = time.time() #time management
+            # in minutes:
+            tottime = (biglap-bignow)/60. #total elapsed time
+            avetime = (tottime/(nr+1)) #average time per MC optimization
+            remtime = (avetime*Nreps-tottime) #estimated remaining time
+            print "\t*finished optimization number {0} of {1} \r\n\t*total elapsed time: {2} minutes \r\n\t*average time per optimization {3} minutes \r\n\t*total time remaining {4} minutes".format(nr+1,Nreps,tottime,avetime,remtime)
+        
+        #at this point, all MC optimizations have been completed and we can process all Nreps results.
+        Imean = numpy.mean(Irep,axis=2) #mean fitted intensity
+        Istd = numpy.std(Irep,axis=2) #standard deviation on the fitted intensity, usually not plotted for clarity
+        # store in output dict
+        self.setresult(**{
+            'Rrep':Rrep,
+            'Imean':Imean,
+            'Istd':Istd,
+            'Qfit':q,# can be obtained from self.fitdata 
+            'Niter':numpy.mean(Niters)}) #average number of iterations for all repetitions
+
+    def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False):
+        """
+        Object-oriented, shape-flexible core of the Monte Carlo procedure.
+        Takes optional arguments:
+
+        *OutputI*:
+            Returns the fitted intensity besides the result
+
+        *OutputDetails*:
+            Details of the fitting procedure, number of iterations and so on
+
+        *OutputIterations*:
+            Returns the result on every successful iteration step, useful for
+            visualising the entire Monte Carlo optimisation procedure for
+            presentations.
+        """
+        #load dataset
+        q=self.getdata('Q')
+        I=self.getdata('I')
+        E=self.getdata('IERR')
+        #load parameters
+        Ncontrib=self.getpar('Ncontrib')
+        Bounds=self.getpar('Bounds')
+        Convcrit=self.getpar('Convcrit')
+        Rpfactor=self.getpar('Rpfactor')
+        Maxiter=self.getpar('Maxiter')
+        MaskNegI=self.getpar('MaskNegI')
+        StartFromMin=self.getpar('StartFromMin')
+        Memsave=self.getpar('Memsave')
+        Prior=self.getpar('Prior')
+
+
+        #find out how many values a shape is defined by:
+        Randfunc=self.getfunction('RAND')
+        FFfunc=self.getfunction('FF')
+        VOLfunc=self.getfunction('VOL')
+        SMEARfunc=self.getfunction('SMEAR')
+        testR=Randfunc()
+        NRval=prod(shape(testR))
+
+        Rset=numpy.zeros((Ncontrib,NRval))
+
+
+        # Intialise variables
+        FFset = []
+        Vset = []
+        Niter = 0
+        Conval = inf
+        Details = dict()
+        Ri = 0 #index of sphere to change. We'll sequentially change spheres, which is perfectly random since they are in random order.
+        
+        #generate initial set of spheres
+        if size(Prior)==0:
+            if StartFromMin:
+                for Rvi in range(NRval): #minimum bound for each value
+                    if numpy.min(Bounds[Rvi:Rvi+2])==0:
+                        mb=pi/numpy.max(q)
+                    else:
+                        mb=numpy.min(Bounds[Rvi:Rvi+2])
+                    Rset[:,Rvi]=numpy.ones(Ncontrib)[:]*mb/2.
+            else:
+                Rset=Randfunc(Ncontrib)
+        elif (size(Prior,0)!=0)&(size(Ncontrib)==0):
+            Ncontrib=size(Prior,0)
+            Rset=Prior
+        elif size(Prior,0)==Ncontrib:
+            Rset=Prior
+        elif size(Prior,0)<Ncontrib:
+            print "size of prior is smaller than Ncontrib. duplicating random prior values"
+            #while size(Prior)<Nsph:
+            Addi=numpy.random.randint(size(Prior,0),size=Ncontrib-size(Prior,0))
+            Rset=concatenate((Prior,Prior[Addi,:]))
+            print "size now:", size(Rset)
+        elif size(Prior,0)>Ncontrib:
+            print "Size of prior is larger than Ncontrib. removing random prior values"
+            Remi=numpy.random.randint(size(Prior,0),size=Ncontrib) #remaining choices
+            Rset=Prior[Remi,:]
+            print "size now:", size(Rset,0)
+        
+        if Memsave==False:
+            #calculate their form factors
+            FFset=FFfunc(Rset)
+            Vset=VOLfunc(Rset,Rpfactor)
+            #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
+            #calculate the intensities
+            Iset=FFset**2*(Vset+0*FFset)**2 #a set of intensities
+            Vst=sum(Vset**2) # total volume squared
+            It=sum(Iset,0) # the total intensity - eq. (1)
+            It=reshape(It,(1,prod(shape(It)))) # reshaped to match I and q
+        else:
+            #calculate intensity in memory saving mode:
+            #calculate volume for entire set, this does not take much space   
+            Vset=VOLfunc(Rset,Rpfactor)
+
+            FFset=FFfunc(Rset[0,:][newaxis,:])
+            It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
+            for ri in arange(1,Ncontrib):
+                #calculate their form factors
+                FFset=FFfunc(Rset[ri,:][newaxis,:])
+                It=It+FFset**2*(Vset[ri]+0*FFset)**2 #a set of intensities
+            Vst=sum(Vset**2) # total volume squared
+            It=reshape(It,(1,prod(shape(It)))) # reshaped to match I and q
+
+        # Optimize the intensities and calculate convergence criterium
+        #SMEAR function goes here
+        It=SMEARfunc(It)
+        Sci = numpy.max(I)/numpy.max(It) #initial guess for the scaling factor.
+        Bgi = numpy.min(I)
+        Sc,Conval=self._Iopt(I,It/Vst,E,numpy.array([Sci,Bgi]),ver=1) 
+        Sc,Conval=self._Iopt(I,It/Vst,E,Sc) # reoptimize with V2, there might be a slight discrepancy in the residual definitions of V1 and V2 which would prevent optimization.
+        #print "Initial conval V1",Conval1
+        print "Initial Chi-squared value",Conval
+
+        if OutputIterations:
+            # Output each iteration, starting with number 0. Iterations will be stored 
+            # in Details['Itersph'], Details['IterIfit'], Details['IterConval'], 
+            # Details['IterSc'] and Details['IterPriorUnaccepted'] listing the 
+            # unaccepted number of moves before the recorded accepted move.
+            Details['Itersph']=Rset[:,newaxis] #new iterations will (have to) be appended to this, cannot be zero-padded due to size constraints
+            Details['IterIfit']=(It/Vst*Sc[0]+Sc[1])[:,newaxis] #ibid.
+            Details['IterConVal']=Conval[newaxis]
+            Details['IterSc']=Sc[:,newaxis]
+            Details['IterPriorUnaccepted']=numpy.array(0)[newaxis]
+
+        #start the MC procedure
+        Now=time.time()
+        Nmoves=0 #tracking the number of moves
+        Nnotaccepted=0
+        while (Conval>Convcrit) &(Niter<Maxiter):
+            Rt=Randfunc()
+            Ft=FFfunc(Rt)
+            Vtt=VOLfunc(Rt,Rpfactor)
+            Itt=(Ft**2*Vtt**2)
+            # Calculate new total intensity
+            if Memsave==False:
+                Itest=(It-Iset[Ri,:]+Itt) # we do subtractions and additions, which give us another factor 2 improvement in speed over summation and is much more scalable
+            else:
+                Fo=FFfunc(Rset[Ri,:][newaxis,:])
+                Io=(Fo**2*Vset[Ri]**2)
+                Itest=(It-Io+Itt)
+
+            #SMEAR function goes here
+            Itest=SMEARfunc(Itest)
+            Vstest = (sqrt(Vst)-Vset[Ri])**2+Vtt**2
+            # optimize intensity and calculate convergence criterium
+            Sct,Convalt = self._Iopt(I,Itest/Vstest,E,Sc) # using version two here for a >10 times speed improvement
+            # test if the radius change is an improvement:
+            if Convalt<Conval: # it's better
+                if Memsave:
+                    Rset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itest,Vtt,Vstest,Sct,Convalt)
+                else:
+                    Rset[Ri,:],Iset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(Rt,Itt,Itest,Vtt,Vstest,Sct,Convalt)
+                print "Improvement in iteration number %i, Chi-squared value %f of %f\r" %(Niter,Conval,Convcrit),
+                Nmoves+=1
+                if OutputIterations:
+                    # output each iteration, starting with number 0. 
+                    # Iterations will be stored in Details['Itersph'], Details['IterIfit'], 
+                    # Details['IterConval'], Details['IterSc'] and 
+                    # Details['IterPriorUnaccepted'] listing the unaccepted 
+                    # number of moves before the recorded accepted move.
+                    Details['Itersph']=concatenate((Details['Itersph'],Rset[:,:,newaxis]),axis=1) #new iterations will (have to) be appended to this, cannot be zero-padded due to size constraints
+                    Details['IterIfit']=concatenate((Details['IterIfit'],(Itest/Vstest*Sct[0]+Sct[1])[:,newaxis]),axis=1) #ibid.
+                    Details['IterConVal']=concatenate((Details['IterConVal'],numpy.array(Convalt)[newaxis]))
+                    Details['IterSc']=concatenate((Details['IterSc'],Sct[:,newaxis]),axis=1)
+                    Details['IterPriorUnaccepted']=concatenate((Details['IterPriorUnaccepted'],numpy.array(Nnotaccepted)[newaxis]))
+                Nnotaccepted=-1
+            # else nothing to do
+            Ri+=1 # move to next sphere in list
+            Ri=Ri%(Ncontrib) # loop if last sphere
+            Nnotaccepted+=1 # number of non-accepted moves, resets to zero after accepted move.
+            Niter+=1 # add one to the iteration number           
+        if Niter>=Maxiter:
+            print "exited due to max. number of iterations (%i) reached" %(Niter)
+        else:
+            print "Normal exit"
+        print "Number of iterations per second",Niter/(time.time()-Now+0.001) #the +0.001 seems necessary to prevent a divide by zero error on some Windows systems.   
+        print "Number of valid moves",Nmoves
+        print "final Chi-squared value %f" %(Conval)
+        Details['Niter']=Niter
+        Details['Nmoves']=Nmoves
+        Details['elapsed']=(time.time()-Now+0.001)
+
+        #Ifinal=sum(Iset,0)/sum(Vset**2)
+        Ifinal=It/sum(Vset**2)
+        Ifinal=reshape(Ifinal,(1,prod(shape(Ifinal))))
+        #SMEAR function goes here
+        Ifinal=SMEARfunc(Ifinal)
+        Sc,Conval=self._Iopt(I,Ifinal,E,Sc)    
+        if OutputI:
+            if OutputDetails:
+                #DEBUG:
+                #print 'Rset: {}, I: {}, Conval: {}'.format(shape(Rset),shape((Ifinal*Sc[0]+Sc[1])),shape(Conval))
+
+                return Rset,(Ifinal*Sc[0]+Sc[1]),Conval,Details
+            else:
+                return Rset,(Ifinal*Sc[0]+Sc[1]),Conval
+        else:
+            if OutputDetails:
+                return Rset,Conval,Details # ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
+            else:
+                return Rset,Conval # ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
+
+    ############################################################################
+    #################### Post-optimisation functions ###########################
+    ############################################################################
+
+    def Histogram(self):
+        """
+        Takes the *Rrep* result from the :py:meth:`McSAS.Analyse` function
+        and calculates the corresponding volume- and number fractions for each
+        contribution as well as the minimum observability limits. It will
+        subsequently bin the result across the range for histogramming purposes.
+
+        While the volume-weighted distribution will be in absolute units
+        (providing volume fractions of material within a given size range),
+        the number distributions have been normalized to 1.
+        
+        Output a list of dictionaries with one dictionary per shape parameter:
+
+            *VariableNumber*: int
+                Shape parameter index. e.g. an ellipsoid has 3:
+                width, height and orientation
+            *Hx*: array
+                Histogram bin left edge position (x-axis in histogram)
+            *Hmid*: array
+                Center positions for the size histogram bins
+                (x-axis in histogram, used for errorbars)
+            *Hwidth*: array
+                Histogram bin width (x-axis in histogram,
+                defines bar plot bar widths)
+            *Hmean*: array
+                Volume-weighted particle size distribution values for
+                all *Nreps* results (y-axis bar height)
+            *Hnmean*: array
+                Number-weighted analogue of the above *Hmean*
+            *Hy*: size (Histbins x Nreps) array
+                Volume-weighted particle size distribution bin values for each
+                MC fit repetition (the mean of which is *Hmean*, and the sample
+                standard deviation of which is *Hstd*)
+            *Hny*: size (Histbins x Nreps) array
+                Number-weighted particle size distribution bin values
+                for each MC fit repetition
+            *Hstd*: array
+                Standard deviations of the corresponding volume-weighted size
+                distribution bins, calculated from *Nreps* repetitions of the
+                MCfit_sph() function
+            *Hnstd*: array
+                Standard deviation for the number-weigthed distribution
+            *Vf*: size (Ncontrib x Nreps) array
+                Volume fractions for each of Ncontrib contributions 
+                in each of Nreps iterations
+            *Nf*: size (Ncontrib x Nreps) array
+                Number fraction for each contribution
+            *Vft*: size (Nreps) array
+                Total scatterer volume fraction for each of the *Nreps*
+                iterations
+            *Nft*: size (Nreps) array
+                Total number fraction 
+            *vfmin*: size (Nsph x Nreps) array
+                minimum required volume fraction for each contribution to
+                become statistically significant.
+            *nfmin*: size (Nsph x Nreps) array
+                number-weighted analogue to *vfmin*
+            *vfminbins*: size (Hmid) array 
+                array with the minimum required volume fraction per bin to
+                become statistically significant. Used to display minimum
+                required level in histogram.
+            *nfminbins*: size (Hmid) array
+                number-weighted analogue to *vfminbins*
+            *Screps*: size (2 x Nreps) array
+                Scaling and background values for each repetition. Used to
+                display background level in data and fit plot.
+        """
+        #get settings
+        #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
+        Ncontrib=self.getpar('Ncontrib')
+        Nreps=self.getpar('Nreps')
+        Rpfactor=self.getpar('Rpfactor')
+        Memsave=self.getpar('Memsave')
+        drhosqr=self.getpar('drhosqr')
+        Rrep=self.getresult('Rrep')
+        Histbins=self.getpar('Histbins')
+        Histscale=self.getpar('Histscale')
+        Bounds=self.getpar('Bounds')
+
+        #ov = zeros(shape(Rrep)) #observability
+        Vf = zeros((Ncontrib,Nreps)) #volume fraction for each contribution
+        Nf = zeros((Ncontrib,Nreps)) #number fraction for each contribution
+        qm = zeros((Ncontrib,Nreps)) #volume fraction for each contribution
+        vfmin = zeros((Ncontrib,Nreps)) #volume fraction for each contribution
+        nfmin = zeros((Ncontrib,Nreps)) #number fraction for each contribution
+        Vft = zeros([Nreps]) #total volume fractions
+        Nft = zeros([Nreps]) #total number 
+        Screps = zeros([2,Nreps]) #Intensity scaling factors for matching to the experimental scattering pattern (Amplitude A and flat background term b, defined in the paper)
+
+        #functions!
+        Randfunc=self.getfunction('RAND')
+        FFfunc=self.getfunction('FF')
+        VOLfunc=self.getfunction('VOL')
+        SMEARfunc=self.getfunction('SMEAR')
+
+        #data!
+        q=self.getdata('Q')
+        I=self.getdata('I')
+        E=self.getdata('IERR')
+
+        #loop over each repetition
+        for ri in range(Nreps):
+            Rset = Rrep[:,:,ri] #the single set of R for this calculation
+
+
+
+
+            Vset = VOLfunc(Rset,Rpfactor) #compensated volume for each sphere in the set
+            if Memsave==False:
+                FFset = FFfunc(Rset) #Form factors, all normalized to 1 at q=0.
+                # Calculate the intensities
+                Iset = FFset**2*(Vset+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
+                It = sum(Iset,0) # the total intensity of the scattering pattern
+            else:
+                FFset=FFfunc(Rset[0,:][newaxis,:])
+                It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
+                for Rr in arange(1,Ncontrib):
+                    #calculate their form factors
+                    FFset=FFfunc(Rset[Rr,:][newaxis,:])
+                    It=It+FFset**2*(Vset[Rr]+0*FFset)**2 #a set of intensities
+
+            Vst = sum(Vset**2) # total compensated volume squared 
+            It=reshape(It,(1,prod(shape(It))))
+            It=SMEARfunc(It)
+            
+            # Now for each sphere, calculate its volume fraction (p_c compensated):
+            Vsa=VOLfunc(Rset,Rpfactor) #compensated volume for each sphere in the set Vsa = 4./3*pi*Rset**(3*Rpfactor)
+            # And the real particle volume:
+            Vpa=VOLfunc(Rset,Rpfactor=1.) #compensated volume for each sphere in the set Vsa = 4./3*pi*Rset**(3*Rpfactor)
+
+            Sci = numpy.max(I)/numpy.max(It) #initial guess for the scaling factor.
+            Bgi = numpy.min(I)
+            Sc,Cv = self._Iopt(I,It,E,[Sci,Bgi]) #optimize scaling and background for this repetition
+            Screps[:,ri]=Sc #scaling and background for this repetition.
+            Vf[:,ri] = (Sc[0]*Vsa**2/(Vpa*drhosqr)).flatten() # a set of volume fractions
+            Vft[ri] = sum(Vf[:,ri]) # total volume 
+            Nf[:,ri] = Vf[:,ri]/(Vpa.flatten()) #
+            Nft[ri] = sum(Nf[:,ri]) # total number
+            for isi in range(Ncontrib): #For each sphere
+                #ov[isi,ri] = (Iset[isi,:]/(It)).max() #calculate the observability (the maximum contribution for that sphere to the total scattering pattern) NOTE: no need to compensate for p_c here, we work with volume fraction later which is compensated by default. additionally, we actually do not use this value.
+                if Memsave:
+                    FFset=FFfunc(Rset[isi,:][newaxis,:])
+                    Ir=FFset**2*(Vset[isi]+0*FFset)**2
+                    qmi = numpy.argmax(Ir.flatten()/It.flatten()) #determine where this maximum observability is of contribution isi (index)
+                    qm[isi,ri] = q[0,qmi] #point where the contribution of isi is maximum
+                    vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Ir))
+                    nfmin[isi,ri] = vfmin[isi,ri]/Vpa[isi]
+                else:
+                    qmi = numpy.argmax(Iset[isi,:].flatten()/It.flatten()) #determine where this maximum observability is of contribution isi (index)
+                    qm[isi,ri] = q[0,qmi] #point where the contribution of isi is maximum
+                    vfmin[isi,ri] = numpy.min(E*Vf[isi,ri]/(Sc[0]*Iset[isi,:]))
+                    nfmin[isi,ri] = vfmin[isi,ri]/Vpa[isi]
+                #close approximation:
+                #vfmin[isi,ri] = (E[qmi]*Vf[isi,ri]/(Sc[0]*Iset[isi,qmi]))
+                #or more precice but slower:
+            Nf[:,ri]=Nf[:,ri]/Nft[ri]
+            nfmin[:,ri]=nfmin[:,ri]/Nft[ri]
+
+        #now we histogram over each variable
+        #for each variable parameter we define, we need to histogram separately. 
+        for vari in range(prod(shape(Histbins))):
+            # Now bin whilst keeping track of which contribution ends up in which bin:
+            #set bin edge locations
+            if Histscale[vari] == 'lin':
+                Hx = linspace(Bounds[0+2*vari],Bounds[1+2*vari],Histbins[vari]+1) #Hx contains the Histbins+1 bin edges, or class limits.
+            else:
+                Hx = 10**(linspace(log10(Bounds[0+2*vari]),log10(Bounds[1+2*vari]),Histbins[vari]+1))
+            Hy = zeros([Histbins[vari],Nreps]) #total volume fraction contribution in a bin
+            Hny = zeros([Histbins[vari],Nreps]) #total number fraction contribution in a bin
+            vfminbin = zeros([Histbins[vari],Nreps]) #minimum required number of contributions /in a bin/ to make a measurable impact
+            nfminbin = zeros([Histbins[vari],Nreps]) #minimum required number of contributions /in a bin/ to make a measurable impact
+            Hmid = zeros(Histbins[vari])
+            vfminbins = zeros(Histbins[vari])
+            nfminbins = zeros(Histbins[vari])
+
+            for ri in range(Nreps):
+                
+                Rset = Rrep[:,vari,ri] #the single set of R for this calculation
+
+                for bini in range(Histbins[vari]):
+                    findi = ((Rset>=Hx[bini])*(Rset<Hx[bini+1])) #indexing which contributions fall into the radius bin
+                    #print 'findi: {} Vf: {}'.format(shape(findi),shape(Vf))
+                    #findi = findi[:,0]
+                    Hy[bini,ri] = sum(Vf[findi,ri]) #y contains the volume fraction for that radius bin
+                    Hny[bini,ri] = sum(Nf[findi,ri]) #y contains the volume fraction for that radius bin
+                    if sum(findi)==0:
+                        vfminbin[bini,ri] = 0
+                        nfminbin[bini,ri] = 0
+                    else:
+                        vfminbin[bini,ri] = numpy.max(vfmin[findi,ri])
+                        vfminbin[bini,ri] = numpy.mean(vfmin[findi,ri])
+                        nfminbin[bini,ri] = numpy.max(nfmin[findi,ri])
+                        nfminbin[bini,ri] = numpy.mean(nfmin[findi,ri])
+                    if isnan(Hy[bini,ri]):
+                        Hy[bini,ri] = 0.
+                        Hny[bini,ri] = 0.
+            for bini in range(Histbins[vari]):
+                Hmid[bini] = numpy.mean(Hx[bini:bini+2])
+                vb = vfminbin[bini,:]
+                vfminbins[bini] = numpy.max(vb[vb<inf])
+                nb = nfminbin[bini,:]
+                nfminbins[bini] = numpy.max(nb[vb<inf])
+            Hmean = numpy.mean(Hy,axis=1)
+            Hnmean = numpy.mean(Hny,axis=1)
+            Hstd = numpy.std(Hy,axis=1)
+            Hnstd = numpy.std(Hny,axis=1)
+            self.setresult(**{
+                'VariableNumber':vari, #this line will place the results in the dict at self.results[vari]
+                'Hx':Hx,
+                'Hmid':Hmid,
+                'Hwidth':diff(Hx),
+                'Hy':Hy,
+                'Hny':Hny,
+                'Hmean':Hmean,
+                'Hstd':Hstd,
+                'Hnmean':Hnmean,
+                'Hnstd':Hnstd,
+                'vfminbins':vfminbins,
+                'vfmin':vfmin,
+                'Vf':Vf,
+                'Vft':Vft,
+                'nfminbins':nfminbins,
+                'nfmin':nfmin,
+                'Nf':Nf,
+                'Nft':Nft,
+                'Screps':Screps})
+
+    def TwoDGenI(self):
+        """
+        this function is optionally run after the histogram procedure for anisotropic images, and will calculate the MC fit intensity in imageform
+        """
+        Result=self.getresult()
+        #load original dataset
+        q=self.getdata('Q',dataset='original')
+        I=self.getdata('I',dataset='original')
+        E=self.getdata('IERR',dataset='original')
+        PSI=self.getdata('PSI',dataset='original')
+        #we need to recalculate the result in two dimensions
+        kansas=shape(q) #we will return to this shape
+        q=reshape(q,[1,-1]) #flatten
+        I=reshape(I,[1,-1]) #flatten
+        E=reshape(E,[1,-1]) #flatten
+        PSI=reshape(PSI,[1,-1]) #flatten
+
+        Randfunc=self.getfunction('RAND')
+        FFfunc=self.getfunction('FF')
+        VOLfunc=self.getfunction('VOL')
+        SMEARfunc=self.getfunction('SMEAR')
+        print 'Recalculating final result, this may take some time'
+        #for each result
+        Iave=zeros(shape(q))
+        Nreps=self.getpar('Nreps')
+        Rpfactor=self.getpar('Rpfactor')
+        qlims=self.getpar('qlims')
+        psilims=self.getpar('psilims')
+        Memsave=self.getpar('Memsave')
+        Ncontrib=self.getpar('Ncontrib')
+        Screps=self.getresult('Screps')
+        for nr in range(Nreps):
+            print 'regenerating set {} of {}'.format(nr,Nreps)
+            Rset=Result['Rrep'][:,:,nr]
+            #calculate their form factors
+            Vset=VOLfunc(Rset,Rpfactor)
+            #Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
+            #calculate the intensities
+            if Memsave==False:
+                FFset = FFfunc(Rset,Q=q,PSI=PSI) #Form factors, all normalized to 1 at q=0.
+                # Calculate the intensities
+                Iset = FFset**2*(Vset+0*FFset)**2 # Intensity for each contribution as used in the MC calculation
+                It = sum(Iset,0) # the total intensity of the scattering pattern
+            else:
+                FFset=FFfunc(Rset[0,:][newaxis,:],Q=q,PSI=PSI)
+                It=FFset**2*(Vset[0]+0*FFset)**2 #a set of intensities
+                for ri in arange(1,Ncontrib):
+                    #calculate their form factors
+                    FFset=FFfunc(Rset[ri,:][newaxis,:],Q=q,PSI=PSI)
+                    It=It+FFset**2*(Vset[ri]+0*FFset)**2 #a set of intensities
+            Vst=sum(Vset**2) # total volume squared
+            It=reshape(It,(1,-1)) # reshaped to match I and q
+            # Optimize the intensities and calculate convergence criterium
+            #SMEAR function goes here
+            It=SMEARfunc(It)
+            Iave=Iave+It*Screps[0,nr]+Screps[1,nr] #add to average
+        #print "Initial conval V1",Conval1
+        Iave=Iave/Nreps
+        #mask (lifted from clip_dataset)
+        validbools=isfinite(q)
+        # Optional masking of negative intensity
+        if self.getpar('MaskNegI'):
+            validbools=validbools*(I >= 0)
+        if (qlims==[])and(psilims==[]):
+            #q limits not set, simply copy dataset to fitdata
+            validbools=validbools
+        if (not(qlims==[])): #and qlims is implicitly set
+            validbools = validbools*(q>numpy.min(qlims))&(q<=numpy.max(qlims)) #excluding the lower q limit may prevent q=0 from appearing
+        if (not(psilims==[])): #we assume here that we have a dataset ['PSI']
+            validbools = validbools*(PSI>numpy.min(psilims))&(PSI<=numpy.max(psilims)) #excluding the lower q limit may prevent q=0 from appearing
+        Iave=Iave*validbools
+        #shape back to imageform
+        I2D=reshape(Iave,kansas)
+        self.setresult(I2D=I2D)
+
+    def CSVwrite(self,filename,*args,**kwargs):
+        """
+        This function writes a semicolon-separated csv file to [filename]
+        containing an arbitrary number of output variables *\*args*. in case of
+        variable length columns, empty fields will contain ''.
+
+        Optional last argument is a keyword-value argument:
+        VarableNumber=[integer], indicating which shape parameter it is
+        intended to draw upon. VariableNumber can also be a list or array
+        of integers, of the same length as the number of output variables
+        *\*args* in which case each output variable is matched with a shape
+        parameter index. Default is zero.
+
+        Input arguments should be names of fields in *self.result*.
+        For example::
+
+            A.McCSV('hist.csv', 'Hx', 'Hwidth', 'Hmean', 'Hstd',
+                    VariableNumber = 0)
+
+        I.e. just stick on as many columns as you'd like. They will be
+        flattened by default. A header with the result keyword names will be
+        added.
+        
+        Existing files with the same filename will be overwritten by default.
+        """
+        vna=zeros(len(args),dtype=int)
+        if 'VariableNumber' in kwargs:
+            vni=kwargs['VariableNumber']
+            if isinstance(vni,(list,ndarray)):
+                if len(vni)!=len(args):
+                    print('Error in CSVwrite, supplied list of variablenumbers does not have the length of 1 or the same length as the list of output variables.')
+                    return
+                for vi in range(len(args)):
+                    vna[vi]=vni[vi]
+            else:
+                #single integer value
+                vna=vna+vni
+                
+        #uses sprintf rather than csv for flexibility
+        ncol=len(args)
+        #make format string used for every line, don't need this
+        #linestr=''
+        #for coli in range(ncol):
+        #    linestr=linestr+'{'+'};'
+        #linestr=linestr[0:-1]+'\n' #strip the last semicolon, add a newline
+
+        inlist=list()
+        for argi in range(len(args)):
+            inlist.append(self.getresult(args[argi],VariableNumber=vna[argi]).flatten())
+        #find out the longest row
+        nrow=0
+        for argi in range(len(args)):
+            nrow=numpy.max((nrow,len(inlist[argi])))
+
+        #now we can open the file:
+        fh=open(filename,'w')
+        emptyfields=0
+        #write header:
+        linestr=''
+        for coli in range(ncol):
+            linestr=linestr+'{};'.format(args[coli])
+        linestr=linestr[0:-1]+'\n'    
+        fh.write(linestr)
+        for rowi in range(nrow):
+            linestr=''
+            for coli in range(ncol):
+                #print 'rowi {} coli {} len(args[coli]) {}'.format(rowi,coli,len(args[coli]))
+                if len(inlist[coli])<=rowi: #we ran out of numbers for this arg
+                    linestr=linestr+';' #add empty field
+                    emptyfields+=1
+                else:
+                    linestr=linestr+'{};'.format(inlist[coli][rowi])
+            linestr=linestr[0:-1]+'\n'
+
+            fh.write(linestr)
+
+        fh.close()
+        print '{} lines written with {} columns per line, and {} empty fields'.format(rowi,ncol,emptyfields)
 
     def Plot(self,AxisMargin=0.3):
         """
@@ -1655,6 +1709,8 @@ class McSAS(object):
                 [numpy.mean(Krt),numpy.std(Krt,ddof=1)]])
         
 
+########################## END McSAS OBJECT ############################
+
 #some quick pickle functions to make my life easier
 
 def pickle_read(filename):
@@ -1872,614 +1928,59 @@ def binning_weighted_1D(q,I,E=[],Nbins=200,Stats='SE'):
         
     
 ##general functions
-def csqr(Sc,I,Ic,E):
-    """Least-squares error for use with scipy.optimize.leastsq"""
-    cs=(I-Sc[0]*Ic-Sc[1])/E
-    #print "Size E",size(E)
-    #print "Sc: %f, %f" %(Sc[0],Sc[1])
-    return cs
-
-def Iopt(I,Ic,E,Sc,OutputI=False):
-    """Optimizes the scaling and background factor to match Ic closest to I.
-    Returns an array with scaling factors. Input Sc has to be a two-element
-    array with the scaling and background.
-
-    New version, using leastsq and csqr, speed improvement of over
-    a factor of 10 w.r.t. V1's use in the MC algorithm
-    """
-    # initial guesses. No bounds at the moment are applied,
-    # except that the intensity scaling has to be positive.
-    Sc,success=scipy.optimize.leastsq(csqr,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
-    #print "Sc: %f, %f" %(Sc[0],Sc[1])
-    cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
-    if OutputI:
-        return Sc,cval,Sc[0]*Ic+Sc[1]
-    else:
-        return Sc,cval
-
-def csqr_v1(I,Ic,E):
-    """Least-squares for data with known error,
-    size of parameter-space not taken into account."""
-    cs=sum(((I-Ic)/E)**2)/(size(I))
-    return cs
-
-def Iopt_v1(I,Ic,E,Sc,OutputI=False,Background=True):
-    """Optimizes the scaling and background factor to match Ic closest to I.
-    Returns an array with scaling factors. Input Sc has to be a two-element
-    array with the scaling and background.
-
-    Old version, using fmin and csqr_v1.
-    """
-    # initial guesses. No bounds at the moment are applied,
-    # except that the intensity scaling has to be positive.
-    # Background can be set to False to just find the scaling factor.
-    if Background:
-        Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic+Sc[1],E),Sc,full_output=0, disp=0)
-        cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
-    else:
-        Sc[1]=0.
-        Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic,E),Sc,full_output=0, disp=0)
-        Sc[1]=0.
-        cval=csqr_v1(I,Sc[0]*Ic,E)
-    if OutputI:
-        return Sc,cval,Sc[0]*Ic+Sc[1]
-    else:
-        return Sc,cval
+#def csqr(Sc,I,Ic,E):
+#    """Least-squares error for use with scipy.optimize.leastsq"""
+#    cs=(I-Sc[0]*Ic-Sc[1])/E
+#    #print "Size E",size(E)
+#    #print "Sc: %f, %f" %(Sc[0],Sc[1])
+#    return cs
 #
-#########################################DEAD CODE?################################################
+#def Iopt(I,Ic,E,Sc,OutputI=False):
+#    """Optimizes the scaling and background factor to match Ic closest to I.
+#    Returns an array with scaling factors. Input Sc has to be a two-element
+#    array with the scaling and background.
+#
+#    New version, using leastsq and csqr, speed improvement of over
+#    a factor of 10 w.r.t. V1's use in the MC algorithm
+#    """
+#    # initial guesses. No bounds at the moment are applied,
+#    # except that the intensity scaling has to be positive.
+#    Sc,success=scipy.optimize.leastsq(csqr,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
+#    #print "Sc: %f, %f" %(Sc[0],Sc[1])
+#    cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
+#    if OutputI:
+#        return Sc,cval,Sc[0]*Ic+Sc[1]
+#    else:
+#        return Sc,cval
+#
+#def csqr_v1(I,Ic,E):
+#    """Least-squares for data with known error,
+#    size of parameter-space not taken into account."""
+#    cs=sum(((I-Ic)/E)**2)/(size(I))
+#    return cs
+#
+#def Iopt_v1(I,Ic,E,Sc,OutputI=False,Background=True):
+#    """Optimizes the scaling and background factor to match Ic closest to I.
+#    Returns an array with scaling factors. Input Sc has to be a two-element
+#    array with the scaling and background.
+#
+#    Old version, using fmin and csqr_v1.
+#    """
+#    # initial guesses. No bounds at the moment are applied,
+#    # except that the intensity scaling has to be positive.
+#    # Background can be set to False to just find the scaling factor.
+#    if Background:
+#        Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic+Sc[1],E),Sc,full_output=0, disp=0)
+#        cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
+#    else:
+#        Sc[1]=0.
+#        Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic,E),Sc,full_output=0, disp=0)
+#        Sc[1]=0.
+#        cval=csqr_v1(I,Sc[0]*Ic,E)
+#    if OutputI:
+#        return Sc,cval,Sc[0]*Ic+Sc[1]
+#    else:
+#        return Sc,cval
 
-#older code, may need to be updated before it can or should be used again.
-
-#Monte-carlo procedure for cylinders
-def MCFit_cyl_RadialIsotropic(q,I,E,Ncyl=200,Bounds=[],Convcrit=1,Rpfactor=1.,Maxiter=1e5,R1Prior=[],R2Prior=[],Oprior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,R2IsAspect=False,OutputDetails=False):
-    """Bound has to be a 4-element vector, with bounds for R1, R2.
-    Rewrite of the monte-carlo method previously implemented in Matlab.
-    Simpler form, but open source might mean slight improvements.
-    """
-    #initialise parameters
-    #Convcrit=1 #reasonable value for poisson weighting. any lower than this and we would be fitting noise
-    #OutputI can be set to True only if MaskNeg is not True
-    Weighting='Poisson' #only one implemented
-    Method='Randmove' #only one implemented
-    if MaskNegI==True:
-        OutputI=False
-    if (size(Qlimits)==0): #no q-limits supplied
-        Qlimits=numpy.min(q)
-    if (size(Qlimits)==1): #only lower q limit supplied
-        if isinstance(Qlimits,int): #integer supplied, removing a number of values
-            Qlimits=q[Qlimits]
-        Qlimits=append(Qlimits,numpy.max(q))
-    if size(Qlimits)==2: #make sure they are in the right order
-        if isinstance(Qlimits[0],int): #integer supplied, removing a number of values
-            Qlimits[0]=q[Qlimits[0]]
-        if isinstance(Qlimits[1],int): #integer supplied, removing a number of values
-            Qlimits[1]=q[Qlimits[1]]
-        Qlimits=numpy.array([numpy.min(Qlimits),numpy.max(Qlimits)])
-    #apply limits
-    I=I[(q>=Qlimits[0])&(q<=Qlimits[1])]
-    E=E[(q>=Qlimits[0])&(q<=Qlimits[1])]
-    q=q[(q>=Qlimits[0])&(q<=Qlimits[1])]
-    #optional masking of negative intensity
-    if MaskNegI==True:
-        q=q[I>=0]
-        E=E[I>=0]
-        I=I[I>=0]
-        
-    if size(Bounds)==0: #if the bounds are not supplied, make a good guess
-        Bounds[0:2]=array([pi/numpy.max(q),pi/numpy.min(q)]) #reasonable, but not necessarily correct, parameters
-        Bounds[2:4]=Bounds[0:2]
-        print 'Bounds not provided, so set related to minimum and maximum q. Lower and upper bounds are {0} and {1} for R1 as well as R2'.format(Bounds[0],Bounds[1])
-
-    #Rpower=2 #squared results in most reasonable end result. none=3, linear=2.5, squared=2, cubed=1.5, fourth=1. This reduces the volume dependency in the calculation leading to quicker convergence
-    #Maxiter=1e6
-
-    #intialise variables
-    FFsqrset=[]
-    Vset=[]
-    Niter=0
-    Conval=inf
-    Ri=0 #index of sphere to change. We'll sequentially change spheres, which is perfectly random since they are in random order.
-    
-    #generate initial set of spheres
-    if size(R1Prior)==0:
-        R1set=numpy.random.uniform(numpy.min(Bounds[0:2]),numpy.max(Bounds[0:2]),Ncyl)
-        R2set=numpy.random.uniform(numpy.min(Bounds[2:4]),numpy.max(Bounds[2:4]),Ncyl)
-        Oset=numpy.random.uniform(numpy.min(Bounds[4:6]),numpy.max(Bounds[4:6]),Ncyl)
-    elif (size(R1Prior)!=0)&(size(Ncyl)==0):
-        Ncyl=size(R1Prior)
-        R1set=R1Prior
-        R2set=R2Prior
-        Oset=OPrior
-    elif size(R1Prior)==Ncyl:
-        R1set=R1Prior
-        R2set=R2Prior
-        Oset=OPrior
-    elif size(R1Prior)<Ncyl:
-        print "size of prior is smaller than Ncyl. duplicating random prior values"
-        #while size(Prior)<Nsph:
-        Addi=numpy.random.randint(size(R1Prior),size=Ncyl-size(R1Prior))
-        R1set=concatenate((R1Prior,R1Prior[Addi]))
-        R2set=concatenate((R2Prior,R2Prior[Addi]))
-        Oset=concatenate((OPrior,OPrior[Addi]))
-        print "size now:", size(R1set)
-    elif size(R1Prior)>Ncyl:
-        print "Size of prior is larger than Ncyl. removing random prior values"
-        Remi=numpy.random.randint(size(R1Prior),size=Ncyl) #remaining choices
-        R1set=R1Prior[Remi]
-        R2set=R2Prior[Remi]
-        Oset=OPrior[Remi]
-        print "size now:", size(R1set)
-    
-    Arange=array(range(Ncyl)) #indices to array values, we'll need this later for some logical indexing operations
-
-    #calculate their form factors
-    #FFset=FF_sph_1D(q,Rset)
-    FFsqrset=zeros((size(R1set),size(q)))
-    print "Generating initial set of cylinders..."
-    now=time.time()
-    for Ri in range(size(R1set)):
-        if R2IsAspect:
-            FFsqrset[Ri,:]=Integrate_Shape_as_Radial_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1set[Ri],R2set[Ri]*R1set[Ri],Oset[Ri]]))
-        else:
-            FFsqrset[Ri,:]=Integrate_Shape_as_Radial_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1set[Ri],R2set[Ri],Oset[Ri]]))
-    print "average time (s) per cylinder: {0}".format((time.time()-now)/size(R1set))
-
-    if R2IsAspect:
-        Vset=pi*R1set**(2*Rpfactor)*2*(R2set*R1set)**(Rpfactor)
-    else:
-        Vset=pi*R1set**(2*Rpfactor)*2*R2set**(Rpfactor)
-    #calculate the intensities
-    Iset=FFsqrset*(Vset[:,newaxis]+0*FFsqrset)**2 #a set of intensities
-    Vst=sum(Vset**2) #total volume squared
-    It=sum(Iset,0) #the total intensity
-    #optimize the intensities and calculate convergence criterium
-    Sc,Conval1=Iopt_v1(I,It/Vst,E,[1,1]) #V1 is more robust w.r.t. a poor initial guess
-    Sc,Conval=Iopt(I,It/Vst,E,Sc) #reoptimize with V2, there might be a slight discrepancy in the residual definitions of V1 and V2 which would prevent optimization.
-    #print "Initial conval V1",Conval1
-    print "Initial conval V2",Conval
-    #start the MC procedure
-    Now=time.time()
-    Nmoves=0 #tracking the number of moves
-    while (Conval>Convcrit) &(Niter<Maxiter):
-        R1t=numpy.random.uniform(numpy.min(Bounds[0:2]),numpy.max(Bounds[0:2]),1)
-        R2t=numpy.random.uniform(numpy.min(Bounds[2:4]),numpy.max(Bounds[2:4]),1)
-        Ot=numpy.random.uniform(numpy.min(Bounds[4:6]),numpy.max(Bounds[4:6]),1)
-        if R2IsAspect:
-            Fst=Integrate_Shape_as_Radial_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1t,R2t*R1t,Ot]))
-            Vtt=pi*R1t**(2*Rpfactor)*2*(R1t*R2t)**(Rpfactor)
-        else:
-            Fst=Integrate_Shape_as_Radial_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1t,R2t,Ot]))
-            Vtt=pi*R1t**(2*Rpfactor)*2*R2t**(Rpfactor)
-        Itt=(Fst*Vtt**2)
-        #calculate new total intensity
-        Itest=(It-Iset[Ri,:]+Itt) #we do subtractions and additions, which give us another factor 2 improvement in speed over summation and is much more scalable
-        Vstest=(sqrt(Vst)-Vset[Ri])**2+Vtt**2
-        #optimize intensity and calculate convergence criterium
-        Sct,Convalt=Iopt(I,Itest/Vstest,E,Sc)#using version two here for a >10 times speed improvement
-        #test if the radius change is an improvement:
-        if Convalt<Conval: #it's better
-            R1set[Ri],R2set[Ri],Oset[Ri],Iset[Ri,:],It,Vset[Ri],Vst,Sc,Conval=(R1t,R2t,Ot,Itt,Itest,Vtt,Vstest,Sct,Convalt)
-            print "Improvement in iteration number %i, convergence value %f of %f\r" %(Niter,Conval,Convcrit),
-            Nmoves+=1
-        #else nothing to do
-        Ri+=1 #move to next sphere in list
-        Ri=Ri%(Ncyl) #loop if last sphere
-        Niter+=1 #add one to the iteration number           
-    if Niter>=Maxiter:
-        print "exited due to max. number of iterations (%i) reached" %(Niter)
-    else:
-        print "Normal exit"
-    print "Number of iterations per second",Niter/(time.time()-Now+0.001)
-    print "Number of valid moves",Nmoves
-    print "final convergence value %f" %(Conval)
-    Ifinal=sum(Iset,0)/sum(Vset**2)
-    Sc,Conval=Iopt(I,Ifinal,E,Sc)    
-    Details=dict()
-    Details['Niter']=Niter
-    Details['Nmoves']=Nmoves
-    Details['elapsed']=(time.time()-Now+0.001)
-
-    if OutputI:
-        if OutputDetails:
-            return R1set,R2set,Oset,(Ifinal*Sc[0]+Sc[1]),Conval,Details
-        else:
-            return R1set,R2set,Oset,(Ifinal*Sc[0]+Sc[1]),Conval
-    else:
-        if OutputDetails:
-            return R1set,R2set,Oset,Conval,Details #ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
-        else:
-            return R1set,R2set,Oset,Conval #ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
-
-def Analyze_1D_Cylinder_RadiallyIsotropic(q,I,E,Bounds=[],Ncyl=[],Maxiter=[],Rpfactor=1.,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='log',drhosqr=1,Convcrit=1.,Maxntry=7,R2IsAspect=False):
-    """Runs the monte-carlo fit several times, and returns bin centres, means,
-    standard deviations and observability limits for the bins. Eventually,
-    this may also plot. The *drhosqr* value can be set to the contrast
-    (if known) so a volume fraction for each histogram bin is calculated.
-    
-    Rpower = 3 when Rpfactor = 1
-    Rpower = 3*Rpfactor
-    
-    For volume weighting: Rpfactor = :math:`1.5 \over 3`
-    """
-    if Histscale=='lin':
-        Hx1 = linspace(Bounds[0],Bounds[1],Histbins+1)
-        if R2IsAspect:
-            Hx2 = linspace(Bounds[2]*Bounds[0],Bounds[3]*Bounds[1],Histbins+1)
-        else:
-            Hx2 = linspace(Bounds[2],Bounds[3],Histbins+1)
-    else:
-        Hx1 = 10**(linspace(log10(Bounds[0]),log10(Bounds[1]),Histbins+1))
-        if R2IsAspect:
-            Hx2 = 10**(linspace(log10(Bounds[2]*Bounds[0]),log10(Bounds[3]*Bounds[1]),Histbins+1))
-        else:
-            Hx2 = 10**(linspace(log10(Bounds[2]),log10(Bounds[3]),Histbins+1))
-    #Rmc,ConVal = MCFit_sph(q,I,E,Bounds=Bounds,Nsph=Nsph,Maxiter=Maxiter,Rpower=Rpower)
-    #if ConVal>1:
-    #    print "test optimisation not converging to below 1! fix first, then ask again"
-    #    return
-
-    #q and psi limits
-    validbools = (q>=qlims[0])&(q<=qlims[1])
-    I = I[validbools]
-    if size(E)!=0:
-        E = E[validbools]
-    q = q[validbools]
-
-    R1rep = zeros([Ncyl,Nreps])
-    R2rep=zeros([Ncyl,Nreps])
-    Orep=zeros([Ncyl,Nreps])
-    Vf=zeros([Ncyl,Nreps])
-    Vft=zeros([Nreps])
-    #Rrep[:,0]=Rmc
-    Hy1=zeros([Histbins,Nreps])
-    Hy2=zeros([Histbins,Nreps])
-    #Hr=hist(Rmc,Hx,normed=True,weights=1/Rmc**((3-Rpower)*2))
-    #Hy[:,0]=Hr[0]
-    Irep=zeros([len(I),Nreps])
-    #try optimizing Nreps times
-    bignow=time.time()
-    Niters=zeros([Nreps])
-
-    for nr in arange(0,Nreps):
-        nt=0
-        #do the thing!
-        R1rep[:,nr],R2rep[:,nr],Orep[:,nr],Irep[:,nr],ConVal,Details=MCFit_cyl_RadialIsotropic(q,I,E,Ncyl=Ncyl,Bounds=Bounds,Convcrit=Convcrit,Rpfactor=Rpfactor,Maxiter=Maxiter,OutputI=True,R2IsAspect=R2IsAspect,OutputDetails=True)
-        #if the optimization fails, perhaps it was an uncommon failure, so we retry max 10 times to get convergence.
-        while ConVal>Convcrit:
-            nt+=1
-            R1rep[:,nr],R2rep[:,nr],Orep[:,nr],Irep[:,nr],ConVal,Details=MCFit_cyl_RadialIsotropic(q,I,E,Ncyl=Ncyl,Bounds=Bounds,Convcrit=Convcrit,Rpfactor=Rpfactor,Maxiter=Maxiter,OutputI=True,R2IsAspect=R2IsAspect,OutputDetails=True)
-            if nt>Maxntry:
-                print "could not reach optimization criterion within {0} attempts, exiting...".format(Maxntry+2)
-                return
-
-        Niters[nr]=Details['Niter']
-        #absolute intensity calculation-->
-        #calculate volume contribution
-        if R2IsAspect:
-            Vsa=pi*R1rep[:,nr]**(2*Rpfactor)*2*(R1rep[:,nr]*R2rep[:,nr])**(Rpfactor)
-            #real particle volume:
-            Vpa=pi*R1rep[:,nr]**(2)*2*(R1rep[:,nr]*R2rep[:,nr])
-        else:
-            Vsa=pi*R1rep[:,nr]**(2*Rpfactor)*2*R2rep[:,nr]**(Rpfactor)
-            #real particle volume:
-            Vpa=pi*R1rep[:,nr]**(2)*2*R2rep[:,nr]
-        #calculate intensities without scaling:
-
-        FFsqrset=zeros((size(R1rep[:,nr]),size(q)))
-        print "Generating intensity of set of cylinders..."
-        now=time.time()
-        for Ri in range(size(R1rep[:,nr])):
-            if R2IsAspect:
-                FFsqrset[Ri,:]=Integrate_Shape_as_Radial_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1rep[Ri,nr],R1rep[Ri,nr]*R2rep[Ri,nr],Orep[Ri,nr]]))
-            else:
-                FFsqrset[Ri,:]=Integrate_Shape_as_Radial_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1rep[Ri,nr],R2rep[Ri,nr],Orep[Ri,nr]]))
-        #calculate the intensities
-        Ics=FFsqrset*(Vsa[:,newaxis]+0*FFsqrset)**2 #a set of intensities
-        Icyls=sum(Ics,0) #the total intensity
-
-        #determine scaling factor for each contribution:
-        Sci=numpy.max(I)/numpy.max(Icyls)
-        Sc,Cv=Iopt(I,Icyls,E,[Sci,1])
-        print "Scaling: {0}, background {1}".format(Sc[0],Sc[1])
-        #now for each sphere, calculate its volume fraction:
-        sR=size(R1rep,0)
-        Vf[:,nr]=Sc[0]*Vsa**2/(Vpa*drhosqr) #a set of intensities
-        Vft[nr]=sum(Vf[:,nr]) #total volume squared
-        print "Calculating volfrac for this iteration: {0}".format(Vft[nr])
-        #<-- absolute intensity calculation
-        #Hr1=hist(R1rep[:,nr],Hx1,normed=False,weights=Vf[:,nr])
-        Hr1=numpy.histogram(R1rep[:,nr],Hx1,density=False,weights=Vf[:,nr])
-        #Hr2=hist(R2rep[:,nr],Hx2,normed=False,weights=Vf[:,nr])
-        Hr2=numpy.histogram(R2rep[:,nr],Hx2,density=False,weights=Vf[:,nr])
-        #old, non-volume fraction: Hr=hist(Rrep[:,nr],Hx,normed=False,weights=1/Rrep[:,nr]**((3-Rpower)*2))
-        Hy1[:,nr]=Hr1[0]
-        Hy2[:,nr]=Hr2[0]
-        biglap=time.time()
-        #in minutes:
-        tottime=(biglap-bignow)/60.
-        avetime=(tottime/(nr+1))
-        remtime=(avetime*Nreps-tottime)
-        print "\t*finished optimization number {0} of {1} \r\n\t*total elapsed time: {2} minutes \r\n\t*average time per optimization {3} minutes \r\n\t*total time remaining {4} minutes".format(nr+1,Nreps,tottime,avetime,remtime)
-
-    Imean=numpy.mean(Irep,axis=1)
-    Istd=numpy.std(Irep,axis=1)
-    H1mid,H2mid=zeros(Histbins),zeros(Histbins)
-    for bini in range(Histbins):
-        H1mid[bini]=numpy.mean(Hx1[bini:bini+2])
-        H2mid[bini]=numpy.mean(Hx2[bini:bini+2])
-    H1mean=numpy.mean(Hy1,axis=1)
-    H2mean=numpy.mean(Hy2,axis=1)
-    H1std=numpy.std(Hy1,axis=1)
-    H2std=numpy.std(Hy2,axis=1)
-    obs,qmo=observability(q,H1mid)
-    iobs=1/obs/obs[-1]*H1mean[-1] #normalize inverse observability to amount in the last bin
-
-
-    #store in output dict
-    A=dict()
-    A['H1width']=diff(Hx1)
-    A['H1mid']=H1mid
-    A['H1mean']=H1mean
-    A['H1std']=H1std
-    A['R1rep']=R1rep
-    A['Hy1']=Hy1
-
-    A['H2width']=diff(Hx2)
-    A['H2mid']=H2mid
-    A['H2mean']=H2mean
-    A['H2std']=H2std
-    A['R2rep']=R2rep
-    A['Hy2']=Hy2
-
-    A['iobs']=iobs
-    A['Imean']=Imean
-    A['Istd']=Istd
-    A['Vf']=Vf
-    A['Vft']=Vft
-    A['q']=q
-
-    A['Niter']=numpy.mean(Niters)
-
-    return A
-
-def Icyl_InPlaneAverage_RandomSampling(q,psi=array([0.,90.]),nsamples='auto',R1=1.,R2=1.):
-    """
-    Calculates the in-plane average of a shape (rotational average, but only
-    rotated around the beam axis, perpendicular to the detector plane).
-    This calculation works by uniform random number generation for q and psi,
-    within the bounds dictated by the input.
-
-    | Set *nsamples* to a number of samples.
-    | *auto* sounds cool but has not been implemented yet.
-    | Input *q* is supposed to be a vector of *q* values
-      for which the intensity is requested.
-    """
-
-    Qs=numpy.random.uniform(low=numpy.min(abs(q)),high=numpy.max(abs(q)),size=nsamples)
-    PSIs=numpy.random.uniform(low=numpy.min(abs(psi)),high=numpy.max(abs(psi)),size=nsamples)
-    Is=Icyl_2D(Qs,PSIs,R1,R2)
-
-    qbin,Ibin,SEbin=binning_weighted_1D(Qs,Is,Nbins=q,Stats='SE')
-    return qbin,Ibin,SEbin
-    #this is not really an efficient way of doing it, requires many points
-
-
-def Integrate_Shape_as_Spherical_Isotropic(q,psirange=numpy.array([0.1,360.1]),Func='',parameters=numpy.array([0]),psidiv=303,randfact=0):
-    """
-    Generate a 1D intensity of a spherically isotropic shape. 
-    This is identical to a fully rotationally isotropic averaged shape, for
-    radially isotropic shapes,
-    use :py:func:`Integrate_Shape_as_Radial_Isotropic` which averages the
-    shape around the axis perpendicular to the detector.
-    """
-    d_to_r=1./180*pi
-    psi=linspace(numpy.min(psirange),numpy.max(psirange),psidiv)
-    Q=(q+0*psi[:,newaxis])
-    PSI=(0*q+psi[:,newaxis])
-    if randfact>0:
-        PSI=PSI+numpy.random.uniform(high=diff(psirange)/(randfact*psidiv),size=shape(PSI))
-    if Func=='FF_ell_2D':
-        FFc=FF_ell_2D(Q,PSI,parameters[0],parameters[1],rot=parameters[2])
-        FFcsqr=numpy.mean(FFc**2*abs(sin(PSI*d_to_r)),axis=0)
-        #FFcsqr=1/diff(psirange)*numpy.trapz(FFc**2,axis=0,x=psi)
-        return FFcsqr
-    elif Func=='FF_cyl_2D':
-        FFc=FF_cyl_2D(Q,PSI,parameters[0],parameters[1],rot=parameters[2])
-        FFcsqr=numpy.mean(FFc**2*abs(sin(PSI*d_to_r)),axis=0)
-        #FFcsqr=1/diff(psirange)*numpy.trapz(FFc**2,axis=0,x=psi)
-        return FFcsqr
-
-def Integrate_Shape_as_Radial_Isotropic(q,psirange=numpy.array([0.1,360.1]),Func='',parameters=numpy.array([0]),psidiv=303,randfact=0):
-    """
-    Generate a 1D intensity of a radially isotropic shape. 
-    This is not identical to a fully rotationally isotropic shape, but merely
-    isotropic as if the shape is rotated around the axis perpendicular to the
-    detector.
-    """
-    psi=linspace(numpy.min(psirange),numpy.max(psirange),psidiv)
-    Q=(q+0*psi[:,newaxis])
-    PSI=(0*q+psi[:,newaxis])
-    if randfact>0:
-        PSI=PSI+numpy.random.uniform(high=diff(psirange)/(randfact*psidiv),size=shape(PSI))
-    if Func=='FF_cyl_2D':
-        FFc=FF_cyl_2D(Q,PSI,parameters[0],parameters[1],rot=parameters[2])
-        FFcsqr=numpy.mean(FFc**2,axis=0)
-        #FFcsqr=1/diff(psirange)*numpy.trapz(FFc**2,axis=0,x=psi)
-        return FFcsqr
-    elif Func=='Icyl_2D':
-        Ic=Icyl_2D(Q,PSI,parameters=parameters)
-        Ic=numpy.mean(Ic,axis=0)
-        return Ic
-
-def Icyl_2D(Q,PSI,R1cyl=0,R2cyl=0,parameters=''):
-    """Calculates the scattering intensity of a cylinder with radius *R1cyl*
-    and height 2 \* *R2cyl*.
-    """
-    if parameters!='':
-        R1cyl=parameters[0]
-        R2cyl=parameters[1]
-        rot=parameters[2]
-    PSIr=(PSI-rot)/180*pi
-    qRsina=Q*R1cyl*sin(PSIr)
-    qLcosa=Q*R2cyl*cos(PSIr)
-    FF=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )
-    Vc=pi*R1cyl**2*2*R2cyl
-    return abs(FF)**2 * Vc**2
-
-def FF_ell_2D(q,psi,R1,R2,rot):
-    """Ellipsiodal form factor.
-
-    *R1* < *R2*
-        prolate ellipsoid (cigar-shaped)
-    *R1* > *R2*
-        oblate ellipsoid (disk-shaped)
-
-    Rotation is offset from perfect orientation (psi-rot)
-    """
-    d_to_r=1./360*2*pi #degrees to radians, forget the dot and get yourself into a non-floating point mess, even though pi is floating point...
-    if size(R1)==1:
-        sda=sin((psi-rot)*d_to_r)
-        cda=cos((psi-rot)*d_to_r)
-        r=sqrt(R1**2*sda**2+R2**2*cda**2)
-        qr=q*r
-        Fell=3*(sin(qr)-qr*cos(qr))/(qr**3)
-    else: #calculate a series
-        if len(q)==1: #one-dimensional q and psi, add another dimension
-            q=q[:,newaxis]
-            psi=psi[:,newaxis]
-        Fell=zeros([size(q,0),size(q,1),size(R1)])
-        for Ri in range(size(R1)):
-            sda=sin((psi-rot[Ri])*d_to_r)
-            cda=cos((psi-rot[Ri])*d_to_r)
-            r=sqrt(R1[Ri]**2*sda**2+R2[Ri]**2*cda**2)
-            qr=q*r
-            Fell[:,:,Ri]=3*(sin(qr)-qr*cos(qr))/(qr**3)
-
-    return Fell #this will be a three-dimensional result for ranges of Ri, and one- to two-dimensional for single radii sets
-    
-def FF_cyl_2D(Q,PSI,R1,R2,rot=0.):
-    """Cylinder form factor.
-    Rotation is offset from perfect orientation (psi-rot).
-    """
-    d_to_r=1./180*pi #degrees to radians, forget the dot and get yourself into a non-floating point mess, even though pi is floating point...
-    if size(R1)==1:
-        PSIr=(PSI-rot)*d_to_r
-        qRsina=Q*R1*sin(PSIr)
-        qLcosa=Q*R2*cos(PSIr)
-        Fcyl=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )
-    else: #calculate a series
-        if ndim(q)==1: #one-dimensional q and psi, add another dimension
-            Q=Q[:,newaxis]
-            PSI=PSI[:,newaxis]
-        Fell=zeros([size(Q,0),size(Q,1),size(R1)])
-        for Ri in range(size(R1)):
-            PSIr=(PSI-rot[Ri])*d_to_r
-            qRsina=Q*R1[Ri]*sin(PSIr)
-            qLcosa=Q*R2[Ri]*cos(PSIr)
-            Fcyl[:,:,Ri]=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )
-
-    return Fcyl #this will be a three-dimensional result for ranges of Ri, and one- to two-dimensional for single radii sets
-
-#dead code, may be deleted.
-    
-#useful, but not in this set of functions:
-
-def Icyl_1D_SphericallyIsotropic(q,R1set=[],R2set=[],OBounds=numpy.array([0,0.01]),Rpfactor=1.,R2IsAspect=False):
-    """Generates intensity of a set of randomly oriented cylinders with radius
-    *R1set* and length 2 \* *R2set*"""
-        
-    #intialise variables
-    FFsqrset=[]
-    Vset=[]
-    
-    Ncyl=len(R1set)
-    #generate set of spheres
-    Oset=numpy.random.uniform(numpy.min(OBounds),numpy.max(OBounds),Ncyl)
-
-    #calculate their form factors
-    #FFset=FF_sph_1D(q,Rset)
-    FFsqrset=zeros((size(R1set),size(q)))
-    print "Generating initial set of cylinders..."
-    now=time.time()
-    for Ri in range(size(R1set)):
-        if R2IsAspect:
-            FFsqrset[Ri,:]=Integrate_Shape_as_Spherical_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1set[Ri],R2set[Ri]*R1set[Ri],Oset[Ri]]))
-        else:
-            FFsqrset[Ri,:]=Integrate_Shape_as_Spherical_Isotropic(q,Func='FF_cyl_2D',parameters=numpy.array([R1set[Ri],R2set[Ri],Oset[Ri]]))
-    print "average time (s) per cylinder: {0}".format((time.time()-now)/size(R1set))
-
-    if R2IsAspect:
-        Vset=pi*R1set**(2*Rpfactor)*2*(R2set*R1set)**(Rpfactor)
-    else:
-        Vset=pi*R1set**(2*Rpfactor)*2*R2set**(Rpfactor)
-    #calculate the intensities
-    Iset=FFsqrset*(Vset[:,newaxis]+0*FFsqrset)**2 #a set of intensities
-    It=sum(Iset,0) #the total intensity
-    return It
-
-def Iell_1D_SphericallyIsotropic(q,R1set=[],R2set=[],OBounds=numpy.array([0,0.01]),Rpfactor=1.,R2IsAspect=False):
-    """Generates intensity of a set of randomly oriented cylinders with radius
-    *R1set* and length 2 \* *R2set*.
-    """
-    #intialise variables
-    FFsqrset=[]
-    Vset=[]
-    
-    Nell=len(R1set)
-    #generate set of spheres
-    Oset=numpy.random.uniform(numpy.min(OBounds),numpy.max(OBounds),Nell)
-
-    #calculate their form factors
-    #FFset=FF_sph_1D(q,Rset)
-    FFsqrset=zeros((size(R1set),size(q)))
-    print "Generating initial set of ellipsoids..."
-    now=time.time()
-    for Ri in range(size(R1set)):
-        if R2IsAspect:
-            FFsqrset[Ri,:]=Integrate_Shape_as_Spherical_Isotropic(q,Func='FF_ell_2D',parameters=numpy.array([R1set[Ri],R2set[Ri]*R1set[Ri],Oset[Ri]]))
-        else:
-            FFsqrset[Ri,:]=Integrate_Shape_as_Spherical_Isotropic(q,Func='FF_ell_2D',parameters=numpy.array([R1set[Ri],R2set[Ri],Oset[Ri]]))
-    print "average time (s) per cylinder: {0}".format((time.time()-now)/size(R1set))
-
-    if R2IsAspect:
-        Vset=4./3*pi*R1set**(2*Rpfactor)*(R2set*R1set)**(Rpfactor)
-    else:
-        Vset=4./3*pi*R1set**(2*Rpfactor)*R2set**(Rpfactor)
-    #calculate the intensities
-    Iset=FFsqrset*(Vset[:,newaxis]+0*FFsqrset)**2 #a set of intensities
-    Vst=sum(Vset**2) #total volume squared
-    It=sum(Iset,0) #the total intensity
-    return It
-
-def observability(q,Rset,I=[],E=[],Rpfactor=3):
-    """Observability calculation for a series of spheres, over a range of q.
-    Additional intensity and errors may be supplied for error-weighted
-    observability. Intensity is used for determining the intesity scaling and
-    background levels.
-    """
-    FFset=FF_sph_1D(q,Rset)
-    Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
-    #calculate the intensities
-    Iset=FFset**2*(Vset[:,newaxis]+0*FFset)**2 #a set of intensities
-    Vst=sum(Vset**2) #total volume squared
-    It=sum(Iset,0) #the total intensity
-    #optimize the intensities and calculate convergence criterium
-    ov=zeros(size(Rset))
-    qm=zeros(size(Rset))
-    if (size(I)==size(E))&(size(I)!=0):
-        Sc,Conval1=Iopt_v1(I,It/Vst,E,[1,1]) #V1 is more robust w.r.t. a poor initial guess
-        Sc,Conval=Iopt(I,It/Vst,E,Sc) #reoptimize with V2, there might be a slight discrepancy in the residual definitions of V1 and V2 which would prevent optimization.
-        print "Conval V1",Conval1
-        print "Conval V2",Conval
-        print Sc
-        for isi in range(size(Iset,0)):
-            ov[isi]=sum(Sc[0]*Iset[isi,:]/(size(I)*E))
-            #ov[isi]=numpy.max(Iset[isi,:]/(size(I)*Sc[0]*E))
-            qm[isi]=q[numpy.argmax(Sc[0]*Iset[isi,:]/(size(I)*E))]
-    else:
-        for isi in range(size(Iset,0)):
-            ov[isi]=numpy.max(Iset[isi,:]/It)
-            qm[isi]=q[numpy.argmax(Iset[isi,:]/It)]
-    return ov,qm
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
