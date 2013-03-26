@@ -2,7 +2,9 @@
 # McSAS.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
-r'''
+r"""
+Overview
+========
 A class and supplementary functions for Monte-Carlo fitting of SAXS patterns.
 It is released under a `Creative Commons CC-BY-SA license
 <http://creativecommons.org/licenses/by-sa/3.0/>`_.
@@ -12,31 +14,41 @@ Please cite as::
         doi: http://dx.doi.org/10.1107/S0021889813001295
 
 Classes and Functions Defined in This File
-==========================================
+------------------------------------------
 
- - **McSAS**: class containing all the functions required to perform a
+ - :py:class:`McSAS() <McSAS.McSAS>`:
+   A class containing all the functions required to perform a
    Monte Carlo analysis on small-angle scattering data.
- - **binning_array**: Can be used to do n-by-n pixel binning of 2D detector
+ - :py:func:`binning_array`:
+   Can be used to do n-by-n pixel binning of 2D detector
    images. The returned uncertainty is the larger of either the binned
    uncertainty or the sample standard deviation in the bin.
- - **binning_1D**: bins the data and propagates errors, or calculates errors
+ - :py:func:`binning_1D`:
+   bins the data and propagates errors, or calculates errors
    if not initially provided
- - **binning_weighted_1D**: Weighted binning, where the intensities of a
+ - :py:func:`binning_weighted_1D`:
+   Weighted binning, where the intensities of a
    pixel are divided between the two neighbouring bins depending on the
    distances to the centres. If error provided is empty, the standard
    deviation of the intensities in the bins are computed.
- - **csqr**: least-squares error to use with scipy.optimize.leastsq
- - **Iopt**: Optimize the scaling factor and background level of modeled
+ - :py:func:`csqr`:
+   least-squares error to use with scipy.optimize.leastsq
+ - :py:func:`Iopt`:
+   Optimize the scaling factor and background level of modeled
    data vs. intensity
- - **csqr_v1**: least-squares for data with known error, size of
+ - :py:func:`csqr_v1`:
+   least-squares for data with known error, size of
    parameter-space not taken into account
- - **Iopt_v1**: old intensity scaling factor optimisation, more robust but
+ - :py:func:`Iopt_v1`:
+   old intensity scaling factor optimisation, more robust but
    slower than Iopt
- - **pickle_read**: Reads in pickled data from a file (by filename)
- - **pickle_write**: write a block or dictionary to a file (by filename)
+ - :py:func:`pickle_read`:
+   Reads in pickled data from a file (by filename)
+ - :py:func:`pickle_write`:
+   write a block or dictionary to a file (by filename)
     
 Made possible with help from (amongst others)
-=============================================
+---------------------------------------------
 
  - | Samuel Tardif
    | Derivations (mostly observability) and checking of mathematics
@@ -48,7 +60,7 @@ Made possible with help from (amongst others)
    | Code cleanup, modification and documentation
 
 A Note on Units
-===============
+---------------
 
 Internally, all length units are in meters, all angle units in degrees
 clockwise from top. *Intensity* is in
@@ -60,8 +72,7 @@ Other units may be used, but if absolute units are supplied and absolute
 volume fractions required, meters are necessitated.
 
 Example Usage
-=============
-
+-------------
 
 *For detailed usage, please see the* :doc:`quickstart`
 
@@ -81,7 +92,9 @@ optimisation behaviour::
            Maxiter = 1e5, Histscale = 'log',
            drhosqr = 1e30, Nreps = 100, Plot = True)
 
-'''
+Module Documentation
+====================
+"""
 
 import scipy # For many important functions
 from scipy import optimize # For the leastsq optimization function
@@ -243,7 +256,7 @@ class McSAS(object):
         *Hstd*: array
             Standard deviations of the corresponding volume-weighted size
             distribution bins, calculated from *Nreps* repetitions of the
-            :py:func:`MCfit_sph`() function.
+            :py:meth:`McSAS.MCfit_sph` function.
         *Hnstd*: array
             Standard deviation for the number-weigthed distribution.
         *Vf*: size array (Ncontrib x Nreps)
@@ -282,7 +295,7 @@ class McSAS(object):
             Array with the minimum required volume fraction per bin to become
             statistically significant. Used to display minimum required level
             in histogram.
-    """        
+    """
 
     dataset=None #where Q, PSI, I and IERR is stored, original dataset
     fitdata=None #may be populated with a subset of the aforementioned dataset, limited to q-limits or psi limits and to positive I values alone
@@ -293,9 +306,10 @@ class McSAS(object):
 
     def __init__(self,**kwargs):
         """
-        intialization function, takes keyword-value input parameters. 
-        input arguments can be one of the aforementioned parameter keyword-value pairs.
-        This does the following::
+        The constructor, takes keyword-value input parameters. They can be
+        one of the aforementioned parameter keyword-value pairs.
+        This does the following:
+
             1. Initialises the variables to the right type
             2. Parses the input
             3. Stores the supplied data twice, one original and one for fitting 
@@ -434,16 +448,36 @@ class McSAS(object):
 
     
     def setfunctions(self,**kwargs):
-        '''functions are defined here. 
-        In particular here the following is specified:
-        1. The parameter bounds estimation function 'BOUNDS'. Should be able to take input argument Bounds to update, should set the parameter bounds in self.parameter['Bounds']
-        2. The random number generation function 'RAND' This must take its parameters from self, and have an optional input argument specifying the number of sets to return (for MC initialization). It should return a set of Nsets-by-nvalues to be used directly in 'FF'. This may be depreciated soon as is can be generated from within.
-        3. The Form-factor function 'FF'. If called, this should get the required information from self and a supplied Nsets-by-nvalues shape-specifying parameter array. It should return an Nsets-by-q array. Orientational averaging should be part of the form-factor function (as it is most efficiently calculated there), so several form factor functions can exist for non-spherical objects.
-        4. The shape volume calculation function 'VOL', which must be able to deal with input argument "Rpfactor", ranging from 0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets number of (Rpfactor-compensated)-volumes. 
-        5. The smearing function 'SMEAR'. Should take information from self, and an input Icalc, to output an Ismear of the same length.
+        """Defines functions. In particular the following are specified:
 
-        This function will actually cast the supplied function name into a function pointer.
-        '''
+        - The parameter bounds estimation function *BOUNDS*. Should be able
+          to take input argument Bounds to update, should set the parameter
+          bounds in ``self.parameter['Bounds']``
+
+        - The random number generation function *RAND* This must take its
+          parameters from self, and have an optional input argument specifying
+          the number of sets to return (for MC initialization). It should
+          return a set of Nsets-by-nvalues to be used directly in *FF*. This
+          may be depreciated soon as is can be generated from within.
+
+        - The Form-factor function *FF*. If called, this should get the
+          required information from self and a supplied Nsets-by-nvalues
+          shape-specifying parameter array. It should return an Nsets-by-q
+          array. Orientational averaging should be part of the form-factor
+          function (as it is most efficiently calculated there), so several
+          form factor functions can exist for non-spherical objects.
+
+        - The shape volume calculation function *VOL*, which must be able to
+          deal with input argument *Rpfactor*, ranging from 0 to 1. Should
+          accept an Nsets-by-nvalues array returning an Nsets number of
+          (Rpfactor-compensated)-volumes. 
+
+        - The smearing function *SMEAR*. Should take information from self
+          and an input Icalc, to output an Ismear of the same length.
+
+        This function will actually use the supplied function name as function
+        reference.
+        """
         for kw in kwargs:
             if kw in self.functions.keys():
                 if callable(kwargs[kw]):
@@ -453,9 +487,9 @@ class McSAS(object):
                     self.functions[kw]=getattr(self,kwargs[kw])
 
     def Analyse(self):
-        """
-        This is one of the main MC functions. This function runs the Monte Carlo optimisation a multitude (Nreps) of times
-        If convergence is not achieved, it will try again for a maximum of Maxntry attempts.
+        """This function runs the Monte Carlo optimisation a multitude
+        (*Nreps*) of times. If convergence is not achieved, it will try again
+        for a maximum of *Maxntry* attempts.
         """
         #get data
         q=self.getdata('Q')
@@ -520,63 +554,72 @@ class McSAS(object):
     ###################################### Histogram ##########################################
     ###########################################################################################
     def Histogram(self):
-        '''
-        Histogram() will take the ``Rrep`` result resulting from the Analyse() function, calculate 
-        the corresponding volume- and number fractions for each contribution, as well as the 
-        minimum observability limits. It will subsequently bin the result across the range for 
-        histogramming purposes.
+        """
+        Takes the *Rrep* result from the :py:meth:`McSAS.Analyse` function
+        and calculates the corresponding volume- and number fractions for each
+        contribution as well as the minimum observability limits. It will
+        subsequently bin the result across the range for histogramming purposes.
 
-        While the volume-weighted distribution will be in absolute units (provinding volume fractions
-        of material within a given size range), the number distributions have been normalized to 1.
+        While the volume-weighted distribution will be in absolute units
+        (providing volume fractions of material within a given size range),
+        the number distributions have been normalized to 1.
         
-        Output: list of dictionaries, one dictionary per shape parameter:
-        -------
-        'VariableNumber' : integer
-            Shape parameter index. e.g. an ellipsoid has 3, width, height and orientation
-        'Hx' : array
-            Histogram bin left edge position (x-axis in histogram)
-        'Hmid' : array
-            Center positions for the size histogram bins (x-axis in histogram, used for errorbars)
-        'Hwidth' : array
-            Histogram bin width (x-axis in histogram, defines bar plot bar widths)
-        'Hmean' : array
-            Volume-weighted particle size distribution values for all Nreps results (y-axis bar height)
-        'Hnmean' : array
-            Number-weighted analogue of the above ``Hmean``
-        'Hy' : size (Histbins x Nreps) array
-            Volume-weighted particle size distribution bin values for each MC fit repetition 
-            (the mean of which is ``Hmean``, and the sample standard deviation of which is ``Hstd``)
-        'Hny' : size (Histbins x Nreps) array
-            Number-weighted particle size distribution bin values for each MC fit repetition
-        'Hstd' : array
-            Standard deviations of the corresponding volume-weighted size distribution bins, calculated
-            from Nreps repetitions of the MCfit_sph() function
-        'Hnstd' : array
-            Standard deviation for the number-weigthed distribution
-        'Vf' : size (Ncontrib x Nreps) array
-            Volume fractions for each of Ncontrib contributions 
-            in each of Nreps iterations
-        'Nf' : size (Ncontrib x Nreps) array
-            Number fraction for each contribution
-        'Vft' : size (Nreps) array
-            Total scatterer volume fraction for each of the Nreps iterations 
-        'Nft' : size (Nreps) array
-            Total number fraction 
-        'vfmin' : size (Nsph x Nreps) array
-            minimum required volume fraction for each contribution to become statistically
-            significant.
-        'nfmin' : size (Nsph x Nreps) array
-            number-weighted analogue to ``vfmin''
-        'vfminbins' : size (Hmid) array 
-            array with the minimum required volume fraction per bin to become statistically 
-            significant. Used to display minimum required level in histogram.
-        'nfminbins' : size (Hmid) array 
-            number-weighted analogue to ``vfminbins``
-        'Screps' : size (2 x Nreps) array
-            Scaling and background values for each repetition. Used to display background 
-            level in data and fit plot.
+        Output a list of dictionaries with one dictionary per shape parameter:
 
-        '''
+            *VariableNumber*: int
+                Shape parameter index. e.g. an ellipsoid has 3:
+                width, height and orientation
+            *Hx*: array
+                Histogram bin left edge position (x-axis in histogram)
+            *Hmid*: array
+                Center positions for the size histogram bins
+                (x-axis in histogram, used for errorbars)
+            *Hwidth*: array
+                Histogram bin width (x-axis in histogram,
+                defines bar plot bar widths)
+            *Hmean*: array
+                Volume-weighted particle size distribution values for
+                all *Nreps* results (y-axis bar height)
+            *Hnmean*: array
+                Number-weighted analogue of the above *Hmean*
+            *Hy*: size (Histbins x Nreps) array
+                Volume-weighted particle size distribution bin values for each
+                MC fit repetition (the mean of which is *Hmean*, and the sample
+                standard deviation of which is *Hstd*)
+            *Hny*: size (Histbins x Nreps) array
+                Number-weighted particle size distribution bin values
+                for each MC fit repetition
+            *Hstd*: array
+                Standard deviations of the corresponding volume-weighted size
+                distribution bins, calculated from *Nreps* repetitions of the
+                MCfit_sph() function
+            *Hnstd*: array
+                Standard deviation for the number-weigthed distribution
+            *Vf*: size (Ncontrib x Nreps) array
+                Volume fractions for each of Ncontrib contributions 
+                in each of Nreps iterations
+            *Nf*: size (Ncontrib x Nreps) array
+                Number fraction for each contribution
+            *Vft*: size (Nreps) array
+                Total scatterer volume fraction for each of the *Nreps*
+                iterations
+            *Nft*: size (Nreps) array
+                Total number fraction 
+            *vfmin*: size (Nsph x Nreps) array
+                minimum required volume fraction for each contribution to
+                become statistically significant.
+            *nfmin*: size (Nsph x Nreps) array
+                number-weighted analogue to *vfmin*
+            *vfminbins*: size (Hmid) array 
+                array with the minimum required volume fraction per bin to
+                become statistically significant. Used to display minimum
+                required level in histogram.
+            *nfminbins*: size (Hmid) array
+                number-weighted analogue to *vfminbins*
+            *Screps*: size (2 x Nreps) array
+                Scaling and background values for each repetition. Used to
+                display background level in data and fit plot.
+        """
         #get settings
         #set the bin edges for our radius bins either based on a linear division or on a logarithmic division of radii.
         Ncontrib=self.getpar('Ncontrib')
@@ -736,19 +779,30 @@ class McSAS(object):
     ######################################## end ###############################################
 
     def CSVwrite(self,filename,*args,**kwargs):
-        '''
-        This function writes a semicolon-separated csv file to [filename] containing an arbitrary number of output variables *args. in case of variable length columns, empty fields will contain ''.
+        """
+        This function writes a semicolon-separated csv file to [filename]
+        containing an arbitrary number of output variables *\*args*. in case of
+        variable length columns, empty fields will contain ''.
 
-        Optional last argument is a keyword-value argument: VarableNumber=[integer], indicating which shape parameter it is intended to draw upon. VariableNumber can also be a list or array of integers, of the same length as the number of output variables *args, in which case each output variable is matched with a shape parameter index. Default is zero
+        Optional last argument is a keyword-value argument:
+        VarableNumber=[integer], indicating which shape parameter it is
+        intended to draw upon. VariableNumber can also be a list or array
+        of integers, of the same length as the number of output variables
+        *\*args* in which case each output variable is matched with a shape
+        parameter index. Default is zero.
 
-        Input arguments should be names of fields in "self.result". For example:
-        A.McCSV('hist.csv','Hx','Hwidth','Hmean','Hstd',VariableNumber=0)
+        Input arguments should be names of fields in *self.result*.
+        For example::
 
-        i.e. just stick on as many columns as you'd like. They will be flattened by default. a header with the result keyword names will be added.
+            A.McCSV('hist.csv', 'Hx', 'Hwidth', 'Hmean', 'Hstd',
+                    VariableNumber = 0)
+
+        I.e. just stick on as many columns as you'd like. They will be
+        flattened by default. A header with the result keyword names will be
+        added.
         
-        existing files with the same filename will be overwritten by default. 
-
-        '''
+        Existing files with the same filename will be overwritten by default.
+        """
         vna=zeros(len(args),dtype=int)
         if 'VariableNumber' in kwargs:
             vni=kwargs['VariableNumber']
@@ -807,13 +861,21 @@ class McSAS(object):
     ################################### Monte-carlo procedure #################################
     ###########################################################################################
     def MCFit(self,OutputI=False,OutputDetails=False,OutputIterations=False):
-        '''
-        Object-oriented, shape-flexible core of the Monte Carlo procedure. Takes optional arguments
-        'OutputI' : Returns the fitted intensity besides the result 
-        'OutputDetails' : Details of the fitting procedure, number of iterations and so on
-        'OutputIterations' : Returns the result on every successful iteration step, useful
-            for visualising the entire Monte Carlo optimisation procedure for presentations.
-        '''
+        """
+        Object-oriented, shape-flexible core of the Monte Carlo procedure.
+        Takes optional arguments:
+
+        *OutputI*:
+            Returns the fitted intensity besides the result
+
+        *OutputDetails*:
+            Details of the fitting procedure, number of iterations and so on
+
+        *OutputIterations*:
+            Returns the result on every successful iteration step, useful for
+            visualising the entire Monte Carlo optimisation procedure for
+            presentations.
+        """
         #load dataset
         q=self.getdata('Q')
         I=self.getdata('I')
@@ -1003,8 +1065,9 @@ class McSAS(object):
     ######################################## end ###############################################
 
     def _Iopt(self,I0,I1,startval):
-        """
-        This function does not do anything yet, but is supposed to become the internal intensity fitting function. External functions ``Iopt`` and ``Iopt_v1`` are used instead.
+        """This function does not do anything yet, but is supposed to become
+        the internal intensity fitting function.
+        External functions ``Iopt`` and ``Iopt_v1`` are used instead.
         """
         pass
 
@@ -1044,8 +1107,8 @@ class McSAS(object):
                 'SMEAR':self._passthrough} #none
 
     def random_uniform_ell(self,Nell=1):
-        """
-        Random number generator for generating uniformly-sampled size- and orientation parameters for ellipsoids.
+        """Random number generator for generating uniformly-sampled
+        size- and orientation parameters for ellipsoids.
         """
         #get parameters from self
         Bounds=self.getpar('Bounds') 
@@ -1059,7 +1122,10 @@ class McSAS(object):
         return Rset
 
     def random_logR_ell(self,Nell=1):
-        "Random number generator which behaves like its uniform counterpart, but with a higher likelihood of sampling smaller sizes. May speed up some fitting procedures."
+        """Random number generator which behaves like its uniform counterpart,
+        but with a higher likelihood of sampling smaller sizes.
+        May speed up some fitting procedures.
+        """
         #get parameters from self
         Bounds=self.getpar('Bounds') 
         #generate Nsph random numbers
@@ -1085,27 +1151,26 @@ class McSAS(object):
         return Rset
 
     def vol_ell(self,Rset,Rpfactor=[]):
-        '''
-        calculates the volume of an ellipsoid, taking Rpfactor from input or preset parameters
-        '''
+        """Calculates the volume of an ellipsoid, taking Rpfactor from input
+        or preset parameters.
+        """
         if Rpfactor==[]:
             Rpfactor=self.getpar('Rpfactor')
             
         return ((4.0/3*pi)*Rset[:,0]**(2*Rpfactor)*Rset[:,1]**(Rpfactor))[:,newaxis]
 
     def vol_sph(self,Rset,Rpfactor=[]):
-        '''
-        calculates the volume of a sphere, taking Rpfactor from input or preset parameters
-        '''
+        """Calculates the volume of a sphere, taking Rpfactor from input
+        or preset parameters.
+        """
         if Rpfactor==[]:
             Rpfactor=self.getpar('Rpfactor')
             
         return (4.0/3*pi)*Rset**(3*Rpfactor)
 
     def FF_sph_1D(self,Rset):
-        '''
-        Calculate the Rayleigh function for a sphere
-        '''
+        """Calculate the Rayleigh function for a sphere.
+        """
         q=self.getdata('Q')
         if size(Rset,0)>1: # multimensional matrices required, input Rsph has to be Nsph-by-1. q has to be 1-by-N
             qR=(q+0*Rset)*(Rset+0*q)
@@ -1116,10 +1181,11 @@ class McSAS(object):
         return Fsph
 
     def FF_ell_2D(self,Rset=[],Q=[],PSI=[]):
-        """
-        Calculates the form factor for oriented ellipsoids, normalized to 1 at Q=0.
+        """Calculates the form factor for oriented ellipsoids,
+        normalized to 1 at Q=0.
 
-        **all 2D functions should be able to potentially take externally supplied Q and PSI vectors**
+        **Note**: All 2D functions should be able to potentially take
+        externally supplied Q and PSI vectors.
         """
         #Rset is n-by-3. R1=Rset[:,0],R2=Rset[:,1],R3=Rset[:,2]
         #R1<R2, prolate ellipsoid (cigar-shaped), R1>R2, oblate ellipsoid (disk-shaped), rotation is offset from perfect orientation (psi-rot)
@@ -1161,7 +1227,7 @@ class McSAS(object):
         return Fell #this will be n-by-len(q) array
 
     def _passthrough(self,In):
-        """a passthrough mechanism returning the input unchanged"""
+        """A passthrough mechanism returning the input unchanged"""
         return In
 
     def reshape_fitdata(self):
@@ -1170,8 +1236,10 @@ class McSAS(object):
             self.fitdata[key]=reshape(self.fitdata[key],(1,prod(shape(self.fitdata[key]))))
 
     def clip_dataset(self):
-        '''if q and/or psi limits are supplied in self.parameters, clips the dataset to within the supplied limits. Copies data to self.fitdata if no limits are set.'''
-
+        """If q and/or psi limits are supplied in self.parameters,
+        clips the dataset to within the supplied limits. Copies data to
+        self.fitdata if no limits are set.
+        """
         qlims=self.getpar('qlims')
         psilims=self.getpar('psilims')
         dataset=self.getdata(dataset='original')
@@ -1198,14 +1266,19 @@ class McSAS(object):
         #self.fitdata=fitdata
         
     def getpar(self,parname=[]):
-        '''gets the value of a parameter, so simple it is probably superfluous'''
+        """Gets the value of a parameter, so simple it is probably
+        superfluous.
+        """
         if parname==[]:
             return self.parameters
         else:
             return self.parameters[parname]
 
     def getdata(self,parname=[],dataset='fit'):
-        '''gets the values of a dataset, retrieves from fitdata (clipped) by default. If the original data is wanted, use "dataset='original'" as kwarg. '''
+        """Gets the values of a dataset, retrieves from fitdata (clipped)
+        by default. If the original data is wanted,
+        use ``dataset = 'original'`` as *\*\*kwarg*.
+        """
         if (parname==[]):
             if (dataset=='fit'):
                 return self.fitdata
@@ -1218,15 +1291,19 @@ class McSAS(object):
                 return self.dataset[parname]
 
     def getresult(self,parname=[],VariableNumber=0):
+        """Returns the specified entry from common result container."""
         if parname==[]:
             return self.result[VariableNumber]
         else:
             return self.result[VariableNumber][parname]
 
     def setresult(self,**kwargs):
-        '''
-        Sets the supplied keyword-value pairs to the result. These can be arbitrary. Varnum is the sequence number of the variable for which data is stored. Default is set to 0, which is where the output of the MC routine is put before histogramming. The Histogramming procedure may populate more variables if so needed.
-        '''
+        """Sets the supplied keyword-value pairs to the result. These can be
+        arbitrary. Varnum is the sequence number of the variable for which
+        data is stored. Default is set to 0, which is where the output of the
+        MC routine is put before histogramming. The Histogramming procedure
+        may populate more variables if so needed.
+        """
         if 'VariableNumber' in kwargs.keys():
             varnum=kwargs['VariableNumber']
         else:
@@ -1242,10 +1319,11 @@ class McSAS(object):
             rdict[kw]=kwargs[kw]
 
     def setpar(self,**kwargs):
-        '''
-        Sets the supplied parameters given in keyword-value pairs for known setting keywords (unknown key-value pairs are skipped)
-        If a supplied parameter is one of the function names, it is stored in the self.functions dict.
-        '''
+        """Sets the supplied parameters given in keyword-value pairs for known
+        setting keywords (unknown key-value pairs are skipped).
+        If a supplied parameter is one of the function names, it is stored in
+        the self.functions dict.
+        """
         for kw in kwargs:
             if kw in self.parameters.keys():
                 self.parameters[kw]=kwargs[kw]
@@ -1253,9 +1331,10 @@ class McSAS(object):
                 pass #no need to store unknown keywords.
 
     def setdata(self,**kwargs):
-        '''
-        Sets the supplied data in the proper location. Optional argument "dataset" can be set to "fit" or "original" to define which dataset is set. Default is "original"
-        '''
+        """Sets the supplied data in the proper location. Optional argument
+        *dataset* can be set to ``fit`` or ``original`` to define which
+        dataset is set. Default is ``original``.
+        """
         datasetlist=list(['Q','I','PSI','IERR']) #list of valid things
         if ('dataset' in kwargs):
             dataset=kwargs['dataset'].lower()
@@ -1278,9 +1357,11 @@ class McSAS(object):
                     pass #do not store non-dataset values.
 
     def EllBounds_2D(self):
-        '''
-        This function will take the q and psi input bounds and outputs properly formatted two-element size bounds for ellipsoids. Ellipsoids are defined by their equatorial radius, meridional radius and axis misalignment (default -45 to 45 degrees in PSI).
-        '''
+        """This function will take the q and psi input bounds and outputs
+        properly formatted two-element size bounds for ellipsoids. Ellipsoids
+        are defined by their equatorial radius, meridional radius and axis
+        misalignment (default -45 to 45 degrees in PSI).
+        """
         Bounds=self.getpar('Bounds')
         q=self.getdata('Q')
         qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
@@ -1298,9 +1379,9 @@ class McSAS(object):
         self.setpar(Bounds=Bounds)
 
     def SphBounds(self):
-        '''
-        This function will take the q and input bounds and outputs properly formatted two-element size bounds.
-        '''
+        """This function will take the q and input bounds and outputs properly
+        formatted two-element size bounds.
+        """
         Bounds=self.getpar('Bounds')
         q=self.getdata('Q')
         qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
@@ -1321,9 +1402,13 @@ class McSAS(object):
         self.setpar(Bounds=Bounds)
 
     def check_parameters(self):
-        '''in here we can place checks for the parameters, for example to make sure histbins is defined for all, or to check if all parameters fall within their limits'''
-        #for now, all I need is a check that Histbins is a 1D vector with n values, where n is the number of parameters specifying a shape. 
-
+        """Checks for the parameters, for example to make sure
+        histbins is defined for all, or to check if all parameters fall
+        within their limits.
+        For now, all I need is a check that Histbins is a 1D vector
+        with n values, where n is the number of parameters specifying
+        a shape.
+        """
         testR=self.functions['RAND']()
         NRval=prod(shape(testR))
         Histbins=self.getpar('Histbins')
@@ -1352,9 +1437,12 @@ class McSAS(object):
             self.setpar(Histscale=Histscale)
 
     def Plot(self,AxisMargin=0.3):
-        '''
-        This function plots the output of the Monte-Carlo procedure in two windows, with the left window the measured signal versus the fitted intensity (on double-log scale), and the righthand window the size distribution
-        '''
+        """
+        This function plots the output of the Monte-Carlo procedure in two
+        windows, with the left window the measured signal versus the fitted
+        intensity (on double-log scale), and the righthand window the size
+        distribution.
+        """
         import matplotlib.font_manager as fm
         def setaxis(ah):
             import matplotlib.font_manager as fm
@@ -1490,11 +1578,25 @@ class McSAS(object):
         fig.subplots_adjust(left=0.1,bottom=0.11,right=0.96,top=0.95,wspace=0.23,hspace=0.13)
         
     def Rangeinfo(self,ParameterRange=[0,inf],Parameter=0):
-        #calculates the total volume or number fraction of the MC result within a given range, and returns the total numer or volume fraction and its standard deviation over all nreps as well as the first four distribution moments: mean, variance, skewness and kurtosis (Pearson's definition)
-        #will use the "Histweight" parameter for determining whether to return the volume or number-weighted values.
-        #input arguments are: ParameterRange (the radius range in which the moments are to be calculated)
-        #Parameter: Which shape parameter the moments are to be calculated for (e.g. 0=width, 1=length, 2=orientation)
-        #returns a 4-by-2 array, with the values and their sample standard deviations over all Nreps
+        """Calculates the total volume or number fraction of the MC result
+        within a given range, and returns the total numer or volume fraction
+        and its standard deviation over all nreps as well as the first four
+        distribution moments: mean, variance, skewness and kurtosis
+        (Pearson's definition).
+        Will use the *Histweight* parameter for determining whether to return
+        the volume or number-weighted values.
+
+        Input arguments are:
+
+            *ParameterRange*
+              The radius range in which the moments are to be calculated
+            *Parameter*
+              Which shape parameter the moments are to be calculated for
+              (e.g. 0 = width, 1 = length, 2 = orientation)
+
+        Returns a 4-by-2 array, with the values and their sample standard
+        deviations over all *Nreps*.
+        """
         Rrep=self.getresult('Rrep')
         Ncontrib=size(Rrep,0)
         NRval=size(Rrep,1)
@@ -1556,14 +1658,15 @@ class McSAS(object):
 #some quick pickle functions to make my life easier
 
 def pickle_read(filename):
-    #nargs can be 1-4, indicates number of output variables, if it is even possible to extract more from pickle
+    """*\*args* can be 1-4, indicates number of output variables.
+    If it is even possible to extract more from pickle."""
     fh=open(filename)
     O=pickle.load(fh)
     fh.close()
     return O
 
 def pickle_write(filename,DBlock):
-    #writes DBlock to a file
+    """Writes DBlock to a file."""
     fh=open(filename,'w')
     pickle.dump(DBlock,fh)
     fh.close()
@@ -1605,8 +1708,11 @@ def binning_array(Q,PSI,I,IERR,S=2):
     return ddo
 
 def binning_1D(q,I,E=[],Nbins=200,Stats='STD'):
-    #python implementation of an unweighted binning routine. The intensities are sorted across bins of equal size. If error provided is empty, the standard deviation of the intensities in the bins are computed.
-    #let's make sure the input is consistent
+    """An unweighted binning routine.
+    The intensities are sorted across bins of equal size.
+    If error provided is empty, the standard deviation of the intensities in
+    the bins are computed."""
+    # Let's make sure the input is consistent
     if size(q)!=size(I):
         print "Incompatible sizes of q and I"
         return
@@ -1669,12 +1775,28 @@ def binning_1D(q,I,E=[],Nbins=200,Stats='STD'):
     return qbin_centres,Ibin,SEbin
 
 def binning_weighted_1D(q,I,E=[],Nbins=200,Stats='SE'):
-    #USAGE: qbin,Ibin,Ebin=binning_weighted_1D(q,I,E=[],Nbins=200,Stats='SE'):
-    #python implementation of the binning routine written in Matlab. The intensities are divided across the q-range in bins of equal size. The intensities of a pixel are divided between the two neighbouring bins depending on the distances to the centres. If error provided is empty, the standard deviation of the intensities in the bins are computed.
-    #optional input arguments:
-    #   Nbins: integer indicating the number of bins to divide the intensity over. Alternatively, this can be an array of equidistant bin centres. If you go this route, depending on the range, not all intensity may be counted.
-    #   Stats: can be set to 'auto'. This takes the maximum error between supplied Poisson statistics error-based errors or the standard error. 
-    #Written by Brian R. Pauw, 2011, released under BSD open source license.
+    """Implementation of the binning routine written in Matlab.
+    The intensities are divided across the q-range in bins of equal size.
+    The intensities of a pixel are divided between the two neighbouring bins
+    depending on the distances to the centres. If error provided is empty,
+    the standard deviation of the intensities in the bins are computed.
+
+    **Usage**::
+
+        qbin, Ibin, Ebin = binning_weighted_1D(q, I, E = [],
+                                               Nbins = 200, Stats = 'SE')
+
+    **Optional input arguments**:
+
+    *Nbins*: integer indicating the number of bins to divide the intensity
+        over. Alternatively, this can be an array of equidistant bin centres.
+        If you go this route, depending on the range, not all intensity may be
+        counted.
+    *Stats*: Can be set to 'auto'. This takes the maximum error between
+        supplied Poisson statistics error-based errors or the standard error.
+
+    Written by Brian R. Pauw, 2011, released under BSD open source license.
+    """
     #let's make sure the input is consistent
     if size(q)!=size(I):
         print "Incompatible lengths of q and I, q must be of the same number of elements as I"
@@ -1751,16 +1873,22 @@ def binning_weighted_1D(q,I,E=[],Nbins=200,Stats='SE'):
     
 ##general functions
 def csqr(Sc,I,Ic,E):
-    #least-squares error for use with scipy.optimize.leastsq
+    """Least-squares error for use with scipy.optimize.leastsq"""
     cs=(I-Sc[0]*Ic-Sc[1])/E
     #print "Size E",size(E)
     #print "Sc: %f, %f" %(Sc[0],Sc[1])
     return cs
 
 def Iopt(I,Ic,E,Sc,OutputI=False):
-    #new version, using leastsq and csqr, speed improvement of over a factor of 10 w.r.t. V1's use in the MC algorithm
-    #optimizes the scaling and background factor to match Ic closest to I. returns an array with scaling factors. Input Sc has to be a two-element array wiht the scaling and background   
-    #initial guesses. No bounds at the moment are applied, except that the intensity scaling has to be positive.
+    """Optimizes the scaling and background factor to match Ic closest to I.
+    Returns an array with scaling factors. Input Sc has to be a two-element
+    array with the scaling and background.
+
+    New version, using leastsq and csqr, speed improvement of over
+    a factor of 10 w.r.t. V1's use in the MC algorithm
+    """
+    # initial guesses. No bounds at the moment are applied,
+    # except that the intensity scaling has to be positive.
     Sc,success=scipy.optimize.leastsq(csqr,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
     #print "Sc: %f, %f" %(Sc[0],Sc[1])
     cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
@@ -1770,15 +1898,21 @@ def Iopt(I,Ic,E,Sc,OutputI=False):
         return Sc,cval
 
 def csqr_v1(I,Ic,E):
-    #least-squares for data with known error, size of parameter-space not taken into account
+    """Least-squares for data with known error,
+    size of parameter-space not taken into account."""
     cs=sum(((I-Ic)/E)**2)/(size(I))
     return cs
-#
+
 def Iopt_v1(I,Ic,E,Sc,OutputI=False,Background=True):
-    #old version, using fmin and csqr_v1
-    #optimizes the scaling and background factor to match Ic closest to I. returns an array with scaling factors. Input Sc has to be a two-element array wiht the scaling and background   
-    #initial guesses. No bounds at the moment are applied, except that the intensity scaling has to be positive.
-    #Background can be set to False to just find the scaling factor.
+    """Optimizes the scaling and background factor to match Ic closest to I.
+    Returns an array with scaling factors. Input Sc has to be a two-element
+    array with the scaling and background.
+
+    Old version, using fmin and csqr_v1.
+    """
+    # initial guesses. No bounds at the moment are applied,
+    # except that the intensity scaling has to be positive.
+    # Background can be set to False to just find the scaling factor.
     if Background:
         Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic+Sc[1],E),Sc,full_output=0, disp=0)
         cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
@@ -1798,8 +1932,10 @@ def Iopt_v1(I,Ic,E,Sc,OutputI=False,Background=True):
 
 #Monte-carlo procedure for cylinders
 def MCFit_cyl_RadialIsotropic(q,I,E,Ncyl=200,Bounds=[],Convcrit=1,Rpfactor=1.,Maxiter=1e5,R1Prior=[],R2Prior=[],Oprior=[],Qlimits=numpy.array([]),MaskNegI=False,OutputI=False,R2IsAspect=False,OutputDetails=False):
-    #Bound has to be a 4-element vector, with bounds for R1, R2
-    #rewrite of the monte-carlo method previously implemented in Matlab. Simpler form, but open source might mean slight improvements.
+    """Bound has to be a 4-element vector, with bounds for R1, R2.
+    Rewrite of the monte-carlo method previously implemented in Matlab.
+    Simpler form, but open source might mean slight improvements.
+    """
     #initialise parameters
     #Convcrit=1 #reasonable value for poisson weighting. any lower than this and we would be fitting noise
     #OutputI can be set to True only if MaskNeg is not True
@@ -1955,10 +2091,16 @@ def MCFit_cyl_RadialIsotropic(q,I,E,Ncyl=200,Bounds=[],Convcrit=1,Rpfactor=1.,Ma
             return R1set,R2set,Oset,Conval #ifinal cannot be output with variable length intensity outputs (in case of masked negative intensities or q limits)
 
 def Analyze_1D_Cylinder_RadiallyIsotropic(q,I,E,Bounds=[],Ncyl=[],Maxiter=[],Rpfactor=1.,Nreps=100,qlims=[0,inf],Histbins=50,Histscale='log',drhosqr=1,Convcrit=1.,Maxntry=7,R2IsAspect=False):
-    #this function runs the monte-carlo fit several times, and returns bin centres, means, standard deviations and observability limits for the bins. Eventually, this may also plot. The drhosqr value can be set to the contrast (if known) so a volume fraction for each histogram bin is calculated.
-    #Rpower = 3 when Rpfactor = 1. Rpower = 3*Rpfactor
-    #for volume weighting, Rpfactor = 1.5/3
-    #Rpower = Rpfactor*3
+    """Runs the monte-carlo fit several times, and returns bin centres, means,
+    standard deviations and observability limits for the bins. Eventually,
+    this may also plot. The *drhosqr* value can be set to the contrast
+    (if known) so a volume fraction for each histogram bin is calculated.
+    
+    Rpower = 3 when Rpfactor = 1
+    Rpower = 3*Rpfactor
+    
+    For volume weighting: Rpfactor = :math:`1.5 \over 3`
+    """
     if Histscale=='lin':
         Hx1 = linspace(Bounds[0],Bounds[1],Histbins+1)
         if R2IsAspect:
@@ -2170,7 +2312,9 @@ def Integrate_Shape_as_Radial_Isotropic(q,psirange=numpy.array([0.1,360.1]),Func
         return Ic
 
 def Icyl_2D(Q,PSI,R1cyl=0,R2cyl=0,parameters=''):
-    #This function calculates the scattering intensity of a cylinder with radius R1cyl and height 2*R2cyl
+    """Calculates the scattering intensity of a cylinder with radius *R1cyl*
+    and height 2 \* *R2cyl*.
+    """
     if parameters!='':
         R1cyl=parameters[0]
         R2cyl=parameters[1]
@@ -2183,7 +2327,15 @@ def Icyl_2D(Q,PSI,R1cyl=0,R2cyl=0,parameters=''):
     return abs(FF)**2 * Vc**2
 
 def FF_ell_2D(q,psi,R1,R2,rot):
-    #R1<R2, prolate ellipsoid (cigar-shaped), R1>R2, oblate ellipsoid (disk-shaped), rotation is offset from perfect orientation (psi-rot)
+    """Ellipsiodal form factor.
+
+    *R1* < *R2*
+        prolate ellipsoid (cigar-shaped)
+    *R1* > *R2*
+        oblate ellipsoid (disk-shaped)
+
+    Rotation is offset from perfect orientation (psi-rot)
+    """
     d_to_r=1./360*2*pi #degrees to radians, forget the dot and get yourself into a non-floating point mess, even though pi is floating point...
     if size(R1)==1:
         sda=sin((psi-rot)*d_to_r)
@@ -2206,7 +2358,9 @@ def FF_ell_2D(q,psi,R1,R2,rot):
     return Fell #this will be a three-dimensional result for ranges of Ri, and one- to two-dimensional for single radii sets
     
 def FF_cyl_2D(Q,PSI,R1,R2,rot=0.):
-    #Cylinder form factor, rotation is offset from perfect orientation (psi-rot)
+    """Cylinder form factor.
+    Rotation is offset from perfect orientation (psi-rot).
+    """
     d_to_r=1./180*pi #degrees to radians, forget the dot and get yourself into a non-floating point mess, even though pi is floating point...
     if size(R1)==1:
         PSIr=(PSI-rot)*d_to_r
@@ -2231,7 +2385,8 @@ def FF_cyl_2D(Q,PSI,R1,R2,rot=0.):
 #useful, but not in this set of functions:
 
 def Icyl_1D_SphericallyIsotropic(q,R1set=[],R2set=[],OBounds=numpy.array([0,0.01]),Rpfactor=1.,R2IsAspect=False):
-    #generates intensity of a set of randomly oriented cylinders with radius R1set and length R2set*2.
+    """Generates intensity of a set of randomly oriented cylinders with radius
+    *R1set* and length 2 \* *R2set*"""
         
     #intialise variables
     FFsqrset=[]
@@ -2263,8 +2418,9 @@ def Icyl_1D_SphericallyIsotropic(q,R1set=[],R2set=[],OBounds=numpy.array([0,0.01
     return It
 
 def Iell_1D_SphericallyIsotropic(q,R1set=[],R2set=[],OBounds=numpy.array([0,0.01]),Rpfactor=1.,R2IsAspect=False):
-    #generates intensity of a set of randomly oriented cylinders with radius R1set and length R2set*2.
-        
+    """Generates intensity of a set of randomly oriented cylinders with radius
+    *R1set* and length 2 \* *R2set*.
+    """
     #intialise variables
     FFsqrset=[]
     Vset=[]
@@ -2296,7 +2452,11 @@ def Iell_1D_SphericallyIsotropic(q,R1set=[],R2set=[],OBounds=numpy.array([0,0.01
     return It
 
 def observability(q,Rset,I=[],E=[],Rpfactor=3):
-    #observability calculation for a series of spheres, over a range of q. Additional intensity and errors may be supplied for error-weighted observability. Intensity is used for determining the intesity scaling and background levels.
+    """Observability calculation for a series of spheres, over a range of q.
+    Additional intensity and errors may be supplied for error-weighted
+    observability. Intensity is used for determining the intesity scaling and
+    background levels.
+    """
     FFset=FF_sph_1D(q,Rset)
     Vset=(4.0/3*pi)*Rset**(3*Rpfactor)
     #calculate the intensities
