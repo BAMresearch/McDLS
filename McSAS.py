@@ -351,70 +351,6 @@ class McSAS(object):
     ############################################################################
     ##################### Pre-optimisation functions ###########################
     ############################################################################
-    def _Iopt(self,I,Ic,E,Sc,ver=2,OutputI=False,Background=True):
-        """
-        Optimizes the scaling and background factor to match Ic closest to I.
-        Returns an array with scaling factors. Input initial guess *Sc* has 
-        to be a two-element array with the scaling and background.
-
-        ** Required input arguments: **
-            - *I* : An array of "measured" intensities
-            - *Ic* : An array of intensities which should be scaled to match *I*
-            - *E* : An array of uncertainties to match *I*
-            - *Sc* : A 2-element array of initial guesses for scaling factor 
-                and background
-
-        ** Optional input arguments: **
-            - *ver*: can be set to 1 for old version, more robust but slow, 
-              default 2 for new version, 10x faster than version 1
-            - *OutputI*: returns the scaled intensity as third output argument,
-              default: False
-            - *Background*: enables a flat background contribution, 
-              default: True
-
-        Output: 
-            - *Sc*: a two-element array with intensity scaling factor and background
-            - *cval*: the reduced chi-squared value
-        """
-        def csqr(Sc,I,Ic,E):
-            """Least-squares error for use with scipy.optimize.leastsq"""
-            cs=(I-Sc[0]*Ic-Sc[1])/E
-            return cs
-        
-        def csqr_noBG(Sc,I,Ic,E):
-            """Least-squares error for use with scipy.optimize.leastsq, without background """
-            cs=(I-Sc[0]*Ic)/E
-            return cs
-
-        def csqr_v1(I,Ic,E):
-            """Least-squares for data with known error, size of parameter-space not taken into account."""
-            cs=sum(((I-Ic)/E)**2)/(size(I))
-            return cs
-
-        if ver==2:
-            """uses scipy.optimize.leastsqr"""
-            if Background:
-                Sc,success=scipy.optimize.leastsq(csqr,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
-                cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
-            else:
-                Sc,success=scipy.optimize.leastsq(csqr_noBG,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
-                Sc[1]=0.
-                cval=csqr_v1(I,Sc[0]*Ic,E)
-        else:
-            """using scipy.optimize.fmin"""
-            # Background can be set to False to just find the scaling factor.
-            if Background:
-                Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic+Sc[1],E),Sc,full_output=0, disp=0)
-                cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
-            else:
-                Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic,E),Sc,full_output=0, disp=0)
-                Sc[1]=0.
-                cval=csqr_v1(I,Sc[0]*Ic,E)
-        if OutputI:
-            return Sc,cval,Sc[0]*Ic+Sc[1]
-        else:
-            return Sc,cval
-
     def set_defaults(self):
         """
         Populates the default parameter settings
@@ -439,6 +375,7 @@ class McSAS(object):
                 'StartFromMin':False,
                 'Maxntry':5,
                 'MaskNegI':False,
+                'MaskZeroI':False,
                 'Memsave':False,
                 'Plot':False}
 
@@ -503,6 +440,281 @@ class McSAS(object):
             return self.functions[fname]
 
 
+
+    def reshape_fitdata(self):
+        """This ensures that q, I, PSI and E are in 1-by-n shape"""
+        for key in self.fitdata.keys():
+            self.fitdata[key]=reshape(self.fitdata[key],(1,prod(shape(self.fitdata[key]))))
+
+    def clip_dataset(self):
+        """If q and/or psi limits are supplied in self.parameters,
+        clips the dataset to within the supplied limits. Copies data to
+        self.fitdata if no limits are set.
+        """
+        qlims=self.getpar('qlims')
+        psilims=self.getpar('psilims')
+        dataset=self.getdata(dataset='original')
+        
+        validbools=isfinite(dataset['Q'])
+        # Optional masking of negative intensity
+        if self.getpar('MaskNegI'):
+            validbools=validbools*(dataset['I'] >= 0)
+        if self.getpar('MaskZeroI'):
+            validbools=validbools*(dataset['I'] != 0)
+        if (qlims==[])and(psilims==[]):
+            #q limits not set, simply copy dataset to fitdata
+            validbools=validbools
+        if (not(qlims==[])): #and qlims is implicitly set
+            validbools = validbools*(dataset['Q']>numpy.min(qlims))&(dataset['Q']<=numpy.max(qlims)) #excluding the lower q limit may prevent q=0 from appearing
+        if (not(psilims==[])): #we assume here that we have a dataset ['PSI']
+            validbools = validbools*(dataset['PSI']>numpy.min(psilims))&(dataset['PSI']<=numpy.max(psilims)) #excluding the lower q limit may prevent q=0 from appearing
+
+        for key in dataset.keys():
+            dsk=dataset[key][validbools]
+            #hey, this works!:
+            self.setdata(**{key:dsk,'dataset':'fit'})
+            #old version was direct addressing, which is to be discouraged to encourage flexibility in data storage
+            #self.fitdata[key]=dataset[key][validbools]
+
+        #self.fitdata=fitdata
+        
+    def getpar(self,parname=[]):
+        """Gets the value of a parameter, so simple it is probably
+        superfluous.
+        """
+        if parname==[]:
+            return self.parameters
+        else:
+            return self.parameters[parname]
+
+    def getdata(self,parname=[],dataset='fit'):
+        """Gets the values of a dataset, retrieves from fitdata (clipped)
+        by default. If the original data is wanted,
+        use ``dataset = 'original'`` as *\*\*kwarg*.
+        """
+        if (parname==[]):
+            if (dataset=='fit'):
+                return self.fitdata
+            else: 
+                return self.dataset
+        else:
+            if (parname in self.fitdata.keys())and(dataset=='fit'):
+                return self.fitdata[parname]
+            else:
+                return self.dataset[parname]
+
+    def getresult(self,parname=[],VariableNumber=0):
+        """Returns the specified entry from common result container."""
+        if parname==[]:
+            return self.result[VariableNumber]
+        else:
+            return self.result[VariableNumber][parname]
+
+    def setresult(self,**kwargs):
+        """Sets the supplied keyword-value pairs to the result. These can be
+        arbitrary. Varnum is the sequence number of the variable for which
+        data is stored. Default is set to 0, which is where the output of the
+        MC routine is put before histogramming. The Histogramming procedure
+        may populate more variables if so needed.
+        """
+        if 'VariableNumber' in kwargs.keys():
+            varnum=kwargs['VariableNumber']
+        else:
+            varnum=0
+
+        while len(self.result)<(varnum+1):
+            #make sure there is a dictionary in the location we want to save the result
+            self.result.append(dict())
+        
+        rdict=self.result[varnum]
+
+        for kw in kwargs:
+            rdict[kw]=kwargs[kw]
+
+    def setpar(self,**kwargs):
+        """Sets the supplied parameters given in keyword-value pairs for known
+        setting keywords (unknown key-value pairs are skipped).
+        If a supplied parameter is one of the function names, it is stored in
+        the self.functions dict.
+        """
+        for kw in kwargs:
+            if kw in self.parameters.keys():
+                self.parameters[kw]=kwargs[kw]
+            else:
+                pass #no need to store unknown keywords.
+
+    def setdata(self,**kwargs):
+        """Sets the supplied data in the proper location. Optional argument
+        *dataset* can be set to ``fit`` or ``original`` to define which
+        dataset is set. Default is ``original``.
+        """
+        datasetlist=list(['Q','I','PSI','IERR']) #list of valid things
+        if ('dataset' in kwargs):
+            dataset=kwargs['dataset'].lower()
+        else:
+            dataset='original'
+        if not ( dataset in ('fit','original')):
+            dataset='original'
+
+        if dataset=='original':
+            for kw in kwargs:
+                if kw in datasetlist:
+                    self.dataset[kw]=kwargs[kw]
+                else:
+                    pass #do not store non-dataset values.
+        else: #we want to store to fitdata: a clipped dataset
+            for kw in kwargs:
+                if kw in datasetlist:
+                    self.fitdata[kw]=kwargs[kw]
+                else:
+                    pass #do not store non-dataset values.
+
+    def check_parameters(self):
+        """Checks for the parameters, for example to make sure
+        histbins is defined for all, or to check if all parameters fall
+        within their limits.
+        For now, all I need is a check that Histbins is a 1D vector
+        with n values, where n is the number of parameters specifying
+        a shape.
+        """
+        #testR=self.functions['RAND']()
+        testR=self.getfunction('RAND')()
+        NRval=prod(shape(testR))
+        Histbins=self.getpar('Histbins')
+        if not(isinstance(Histbins,list)): #meaning it will be a string
+            HB=list()
+            for ri in range(NRval):
+                HB.append(int(Histbins))
+            self.setpar(Histbins=HB)
+        elif len(Histbins)<NRval:
+            #histbins is a list but not of the right length
+            while len(Histscale)<NRval:
+                Histbins.append(Histbins[0])
+            self.setpar(Histbins=Histbins)
+        #now check histscale
+        Histscale=self.getpar('Histscale')
+        if not(isinstance(Histscale,list)): #meaning it will be a string
+            HS=list()
+            for ri in range(NRval):
+                HS.append(Histscale) #repeat until we have enough
+            #replace histscale
+            self.setpar(Histscale=HS)
+        elif len(Histscale)<NRval:
+            #histscale is a list but not of the right length
+            while len(Histscale)<NRval:
+                Histscale.append(Histscale[0])
+            self.setpar(Histscale=Histscale)
+
+    def _Iopt(self,I,Ic,E,Sc,ver=2,OutputI=False,Background=True):
+        """
+        Optimizes the scaling and background factor to match Ic closest to I.
+        Returns an array with scaling factors. Input initial guess *Sc* has 
+        to be a two-element array with the scaling and background.
+
+        ** Required input arguments: **
+            - *I* : An array of "measured" intensities
+            - *Ic* : An array of intensities which should be scaled to match *I*
+            - *E* : An array of uncertainties to match *I*
+            - *Sc* : A 2-element array of initial guesses for scaling factor 
+                and background
+
+        ** Optional input arguments: **
+            - *ver*: can be set to 1 for old version, more robust but slow, 
+              default 2 for new version, 10x faster than version 1
+            - *OutputI*: returns the scaled intensity as third output argument,
+              default: False
+            - *Background*: enables a flat background contribution, 
+              default: True
+
+        Output: 
+            - *Sc*: a two-element array with intensity scaling factor and background
+            - *cval*: the reduced chi-squared value
+        """
+        def csqr(Sc,I,Ic,E):
+            """Least-squares error for use with scipy.optimize.leastsq"""
+            cs=(I-Sc[0]*Ic-Sc[1])/E
+            return cs
+        
+        def csqr_noBG(Sc,I,Ic,E):
+            """Least-squares error for use with scipy.optimize.leastsq, without background """
+            cs=(I-Sc[0]*Ic)/E
+            return cs
+
+        def csqr_v1(I,Ic,E):
+            """Least-squares for data with known error, size of parameter-space not taken into account."""
+            cs=sum(((I-Ic)/E)**2)/(size(I))
+            return cs
+
+        if ver==2:
+            """uses scipy.optimize.leastsqr"""
+            if Background:
+                Sc,success=scipy.optimize.leastsq(csqr,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
+                cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
+            else:
+                Sc,success=scipy.optimize.leastsq(csqr_noBG,Sc,args=(I.flatten(),Ic.flatten(),E.flatten()),full_output=0)
+                Sc[1]=0.
+                cval=csqr_v1(I,Sc[0]*Ic,E)
+        else:
+            """using scipy.optimize.fmin"""
+            # Background can be set to False to just find the scaling factor.
+            if Background:
+                Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic+Sc[1],E),Sc,full_output=0, disp=0)
+                cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
+            else:
+                Sc=scipy.optimize.fmin(lambda Sc: csqr_v1(I,Sc[0]*Ic,E),Sc,full_output=0, disp=0)
+                Sc[1]=0.
+                cval=csqr_v1(I,Sc[0]*Ic,E)
+        if OutputI:
+            return Sc,cval,Sc[0]*Ic+Sc[1]
+        else:
+            return Sc,cval
+
+    ######################## Shape functions ######################
+    def EllBounds_2D(self):
+        """This function will take the q and psi input bounds and outputs
+        properly formatted two-element size bounds for ellipsoids. Ellipsoids
+        are defined by their equatorial radius, meridional radius and axis
+        misalignment (default -45 to 45 degrees in PSI).
+        """
+        Bounds=self.getpar('Bounds')
+        q=self.getdata('Q')
+        qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
+        if len(Bounds)==0:
+            print 'Bounds not provided, so set related to minimum q or minimum q step and maximum q. Lower and upper bounds are {0} and {1}'.format(qBounds[0],qBounds[1])
+            Bounds=numpy.array([qBounds[0],qBounds[1],qBounds[0],qBounds[1],-45,45])
+        elif len(Bounds)==6:
+            pass
+            #print 'Bounds provided, set to {} and {}'.format(Bounds[0],Bounds[1])
+        else:
+            print 'Wrong number of Bounds provided, defaulting to {} and {} for radii, -45, 45 for misalignment'.format(qBounds[0],qBounds[1])
+            Bounds=numpy.array([qBounds[0],qBounds[1],qBounds[0],qBounds[1],-45,45])
+        Bounds=numpy.array([numpy.min(Bounds[0:2]),numpy.max(Bounds[0:2]),numpy.min(Bounds[2:4]),numpy.max(Bounds[2:4]),numpy.min(Bounds[4:6]),numpy.max(Bounds[4:6])])
+
+        self.setpar(Bounds=Bounds)
+
+    def SphBounds(self):
+        """This function will take the q and input bounds and outputs properly
+        formatted two-element size bounds.
+        """
+        Bounds=self.getpar('Bounds')
+        q=self.getdata('Q')
+        qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
+        if len(Bounds)==0:
+            print 'Bounds not provided, so set related to minimum q or minimum q step and maximum q. Lower and upper bounds are {0} and {1}'.format(qBounds[0],qBounds[1])
+            Bounds=qBounds
+        elif len(Bounds)==1:
+            print 'Only one bound provided, assuming it denotes the maximum. Lower and upper bounds are set to {0} and {1}'.format(qBounds[0],Bounds[1])
+            Bounds=numpy.array([qBounds[0],Bounds])
+        elif len(Bounds)==2:
+            pass
+            #print 'Bounds provided, set to {} and {}'.format(Bounds[0],Bounds[1])
+        else:
+            print 'Wrong number of Bounds provided, defaulting to {} and {}'.format(qBounds[0],qBounds[1])
+            Bounds=qbounds
+        Bounds=numpy.array([numpy.min(Bounds),numpy.max(Bounds)])
+
+        self.setpar(Bounds=Bounds)
+
     def random_uniform_ell(self,Nell=1):
         """Random number generator for generating uniformly-sampled
         size- and orientation parameters for ellipsoids.
@@ -529,6 +741,40 @@ class McSAS(object):
         Rset=zeros((Nell,3))
         Rset[:,0]=10**(numpy.random.uniform(log10(numpy.min(Bounds[0])),log10(numpy.max(Bounds[1])),Nell))
         Rset[:,1]=10**(numpy.random.uniform(log10(numpy.min(Bounds[2])),log10(numpy.max(Bounds[3])),Nell))
+        Rset[:,2]=numpy.random.uniform(numpy.min(Bounds[4]),numpy.max(Bounds[5]),Nell)
+
+        #output Nsph-by-3 array
+        return Rset
+
+    def random_logR_oblate_ell(self,Nell=1):
+        """Random number generator which behaves like its uniform counterpart,
+        but with a higher likelihood of sampling smaller sizes.
+        May speed up some fitting procedures.
+        """
+        #get parameters from self
+        Bounds=self.getpar('Bounds') 
+        #generate Nsph random numbers
+        Rset=zeros((Nell,3))
+        Rset[:,0]=10**(numpy.random.uniform(log10(numpy.min(Bounds[0])),log10(numpy.max(Bounds[1])),Nell))
+        for Ni in range(Nell):
+            Rset[Ni,1]=10**(numpy.random.uniform(log10(numpy.min(Bounds[2])),log10(numpy.minimum(Bounds[3],Rset[Ni,0])),1))
+        Rset[:,2]=numpy.random.uniform(numpy.min(Bounds[4]),numpy.max(Bounds[5]),Nell)
+
+        #output Nsph-by-3 array
+        return Rset
+
+    def random_logR_prolate_ell(self,Nell=1):
+        """Random number generator which behaves like its uniform counterpart,
+        but with a higher likelihood of sampling smaller sizes.
+        May speed up some fitting procedures.
+        """
+        #get parameters from self
+        Bounds=self.getpar('Bounds') 
+        #generate Nsph random numbers
+        Rset=zeros((Nell,3))
+        Rset[:,0]=10**(numpy.random.uniform(log10(numpy.min(Bounds[0])),log10(numpy.max(Bounds[1])),Nell))
+        for Ni in range(Nell):
+            Rset[Ni,1]=10**(numpy.random.uniform(log10(numpy.maximum(Rset[Ni,0],Bounds[2])),log10(Bounds[3]),1))
         Rset[:,2]=numpy.random.uniform(numpy.min(Bounds[4]),numpy.max(Bounds[5]),Nell)
 
         #output Nsph-by-3 array
@@ -639,212 +885,6 @@ class McSAS(object):
         """A passthrough mechanism returning the input unchanged"""
         return In
 
-    def reshape_fitdata(self):
-        """This ensures that q, I, PSI and E are in 1-by-n shape"""
-        for key in self.fitdata.keys():
-            self.fitdata[key]=reshape(self.fitdata[key],(1,prod(shape(self.fitdata[key]))))
-
-    def clip_dataset(self):
-        """If q and/or psi limits are supplied in self.parameters,
-        clips the dataset to within the supplied limits. Copies data to
-        self.fitdata if no limits are set.
-        """
-        qlims=self.getpar('qlims')
-        psilims=self.getpar('psilims')
-        dataset=self.getdata(dataset='original')
-        
-        validbools=isfinite(dataset['Q'])
-        # Optional masking of negative intensity
-        if self.getpar('MaskNegI'):
-            validbools=validbools*(I >= 0)
-        if (qlims==[])and(psilims==[]):
-            #q limits not set, simply copy dataset to fitdata
-            validbools=validbools
-        if (not(qlims==[])): #and qlims is implicitly set
-            validbools = validbools*(dataset['Q']>numpy.min(qlims))&(dataset['Q']<=numpy.max(qlims)) #excluding the lower q limit may prevent q=0 from appearing
-        if (not(psilims==[])): #we assume here that we have a dataset ['PSI']
-            validbools = validbools*(dataset['PSI']>numpy.min(psilims))&(dataset['PSI']<=numpy.max(psilims)) #excluding the lower q limit may prevent q=0 from appearing
-
-        for key in dataset.keys():
-            dsk=dataset[key][validbools]
-            #hey, this works!:
-            self.setdata(**{key:dsk,'dataset':'fit'})
-            #old version was direct addressing, which is to be discouraged to encourage flexibility in data storage
-            #self.fitdata[key]=dataset[key][validbools]
-
-        #self.fitdata=fitdata
-        
-    def getpar(self,parname=[]):
-        """Gets the value of a parameter, so simple it is probably
-        superfluous.
-        """
-        if parname==[]:
-            return self.parameters
-        else:
-            return self.parameters[parname]
-
-    def getdata(self,parname=[],dataset='fit'):
-        """Gets the values of a dataset, retrieves from fitdata (clipped)
-        by default. If the original data is wanted,
-        use ``dataset = 'original'`` as *\*\*kwarg*.
-        """
-        if (parname==[]):
-            if (dataset=='fit'):
-                return self.fitdata
-            else: 
-                return self.dataset
-        else:
-            if (parname in self.fitdata.keys())and(dataset=='fit'):
-                return self.fitdata[parname]
-            else:
-                return self.dataset[parname]
-
-    def getresult(self,parname=[],VariableNumber=0):
-        """Returns the specified entry from common result container."""
-        if parname==[]:
-            return self.result[VariableNumber]
-        else:
-            return self.result[VariableNumber][parname]
-
-    def setresult(self,**kwargs):
-        """Sets the supplied keyword-value pairs to the result. These can be
-        arbitrary. Varnum is the sequence number of the variable for which
-        data is stored. Default is set to 0, which is where the output of the
-        MC routine is put before histogramming. The Histogramming procedure
-        may populate more variables if so needed.
-        """
-        if 'VariableNumber' in kwargs.keys():
-            varnum=kwargs['VariableNumber']
-        else:
-            varnum=0
-
-        while len(self.result)<(varnum+1):
-            #make sure there is a dictionary in the location we want to save the result
-            self.result.append(dict())
-        
-        rdict=self.result[varnum]
-
-        for kw in kwargs:
-            rdict[kw]=kwargs[kw]
-
-    def setpar(self,**kwargs):
-        """Sets the supplied parameters given in keyword-value pairs for known
-        setting keywords (unknown key-value pairs are skipped).
-        If a supplied parameter is one of the function names, it is stored in
-        the self.functions dict.
-        """
-        for kw in kwargs:
-            if kw in self.parameters.keys():
-                self.parameters[kw]=kwargs[kw]
-            else:
-                pass #no need to store unknown keywords.
-
-    def setdata(self,**kwargs):
-        """Sets the supplied data in the proper location. Optional argument
-        *dataset* can be set to ``fit`` or ``original`` to define which
-        dataset is set. Default is ``original``.
-        """
-        datasetlist=list(['Q','I','PSI','IERR']) #list of valid things
-        if ('dataset' in kwargs):
-            dataset=kwargs['dataset'].lower()
-        else:
-            dataset='original'
-        if not ( dataset in ('fit','original')):
-            dataset='original'
-
-        if dataset=='original':
-            for kw in kwargs:
-                if kw in datasetlist:
-                    self.dataset[kw]=kwargs[kw]
-                else:
-                    pass #do not store non-dataset values.
-        else: #we want to store to fitdata: a clipped dataset
-            for kw in kwargs:
-                if kw in datasetlist:
-                    self.fitdata[kw]=kwargs[kw]
-                else:
-                    pass #do not store non-dataset values.
-
-    def EllBounds_2D(self):
-        """This function will take the q and psi input bounds and outputs
-        properly formatted two-element size bounds for ellipsoids. Ellipsoids
-        are defined by their equatorial radius, meridional radius and axis
-        misalignment (default -45 to 45 degrees in PSI).
-        """
-        Bounds=self.getpar('Bounds')
-        q=self.getdata('Q')
-        qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
-        if len(Bounds)==0:
-            print 'Bounds not provided, so set related to minimum q or minimum q step and maximum q. Lower and upper bounds are {0} and {1}'.format(qBounds[0],qBounds[1])
-            Bounds=numpy.array([qBounds[0],qBounds[1],qBounds[0],qBounds[1],-45,45])
-        elif len(Bounds)==6:
-            pass
-            #print 'Bounds provided, set to {} and {}'.format(Bounds[0],Bounds[1])
-        else:
-            print 'Wrong number of Bounds provided, defaulting to {} and {} for radii, -45, 45 for misalignment'.format(qBounds[0],qBounds[1])
-            Bounds=numpy.array([qBounds[0],qBounds[1],qBounds[0],qBounds[1],-45,45])
-        Bounds=numpy.array([numpy.min(Bounds[0:2]),numpy.max(Bounds[0:2]),numpy.min(Bounds[2:4]),numpy.max(Bounds[2:4]),numpy.min(Bounds[4:6]),numpy.max(Bounds[4:6])])
-
-        self.setpar(Bounds=Bounds)
-
-    def SphBounds(self):
-        """This function will take the q and input bounds and outputs properly
-        formatted two-element size bounds.
-        """
-        Bounds=self.getpar('Bounds')
-        q=self.getdata('Q')
-        qBounds = array([pi/numpy.max(q),pi/numpy.min((abs(numpy.min(q)),abs(numpy.min(diff(q)))))]) # reasonable, but not necessarily correct, parameters
-        if len(Bounds)==0:
-            print 'Bounds not provided, so set related to minimum q or minimum q step and maximum q. Lower and upper bounds are {0} and {1}'.format(qBounds[0],qBounds[1])
-            Bounds=qBounds
-        elif len(Bounds)==1:
-            print 'Only one bound provided, assuming it denotes the maximum. Lower and upper bounds are set to {0} and {1}'.format(qBounds[0],Bounds[1])
-            Bounds=numpy.array([qBounds[0],Bounds])
-        elif len(Bounds)==2:
-            pass
-            #print 'Bounds provided, set to {} and {}'.format(Bounds[0],Bounds[1])
-        else:
-            print 'Wrong number of Bounds provided, defaulting to {} and {}'.format(qBounds[0],qBounds[1])
-            Bounds=qbounds
-        Bounds=numpy.array([numpy.min(Bounds),numpy.max(Bounds)])
-
-        self.setpar(Bounds=Bounds)
-
-    def check_parameters(self):
-        """Checks for the parameters, for example to make sure
-        histbins is defined for all, or to check if all parameters fall
-        within their limits.
-        For now, all I need is a check that Histbins is a 1D vector
-        with n values, where n is the number of parameters specifying
-        a shape.
-        """
-        #testR=self.functions['RAND']()
-        testR=self.getfunction('RAND')()
-        NRval=prod(shape(testR))
-        Histbins=self.getpar('Histbins')
-        if not(isinstance(Histbins,list)): #meaning it will be a string
-            HB=list()
-            for ri in range(NRval):
-                HB.append(int(Histbins))
-            self.setpar(Histbins=HB)
-        elif len(Histbins)<NRval:
-            #histbins is a list but not of the right length
-            while len(Histscale)<NRval:
-                Histbins.append(Histbins[0])
-            self.setpar(Histbins=Histbins)
-        #now check histscale
-        Histscale=self.getpar('Histscale')
-        if not(isinstance(Histscale,list)): #meaning it will be a string
-            HS=list()
-            for ri in range(NRval):
-                HS.append(Histscale) #repeat until we have enough
-            #replace histscale
-            self.setpar(Histscale=HS)
-        elif len(Histscale)<NRval:
-            #histscale is a list but not of the right length
-            while len(Histscale)<NRval:
-                Histscale.append(Histscale[0])
-            self.setpar(Histscale=Histscale)
 
     ##########################################################################
     ####################### optimisation functions ###########################
@@ -942,6 +982,7 @@ class McSAS(object):
         Rpfactor=self.getpar('Rpfactor')
         Maxiter=self.getpar('Maxiter')
         MaskNegI=self.getpar('MaskNegI')
+        MaskZeroI=self.getpar('MaskZeroI')
         StartFromMin=self.getpar('StartFromMin')
         Memsave=self.getpar('Memsave')
         Prior=self.getpar('Prior')
@@ -1411,6 +1452,8 @@ class McSAS(object):
         # Optional masking of negative intensity
         if self.getpar('MaskNegI'):
             validbools=validbools*(I >= 0)
+        if self.getpar('MaskZeroI'):
+            validbools=validbools*(I != 0)
         if (qlims==[])and(psilims==[]):
             #q limits not set, simply copy dataset to fitdata
             validbools=validbools
@@ -1594,7 +1637,7 @@ class McSAS(object):
             q_ax=setaxis(q_ax)
             colorbar()
         else:
-            q_ax=fig.add_subplot(1,(nhists+1),1,axisbg=(.95,.95,.95),xlim=(numpy.min(q)*(1-AxisMargin),numpy.max(q)*(1+AxisMargin)),ylim=(numpy.min(I)*(1-AxisMargin),numpy.max(I)*(1+AxisMargin)),xscale='log',yscale='log',xlabel='q, 1/m',ylabel='I, 1/(m sr)')
+            q_ax=fig.add_subplot(1,(nhists+1),1,axisbg=(.95,.95,.95),xlim=(numpy.min(q)*(1-AxisMargin),numpy.max(q)*(1+AxisMargin)),ylim=(numpy.min(I[I!=0])*(1-AxisMargin),numpy.max(I)*(1+AxisMargin)),xscale='log',yscale='log',xlabel='q, 1/m',ylabel='I, 1/(m sr)')
             q_ax=setaxis(q_ax)
             errorbar(q,I,E,zorder=2,fmt='k.',ecolor='k',elinewidth=2,capsize=4,ms=5,label='Measured intensity',lw=2,solid_capstyle='round',solid_joinstyle='miter')
             grid(lw=2,color='black',alpha=.5,dashes=[1,6],dash_capstyle='round',zorder=-1)
