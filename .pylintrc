@@ -3,9 +3,6 @@
 # in Java code or several libraries such as PyQt, etc.
 
 [BASIC]
-# Regular expression which should only match correct module names
-module-rgx=(([a-z][a-z0-9]*)|([A-Z][a-zA-Z0-9]+))$
-
 # Regular expression which should only match correct class names
 class-rgx=[A-Z][a-zA-Z0-9]+$
 
