@@ -25,7 +25,7 @@ FILES="McSAS.py"
 # put local not staged changes aside
 git stash -q --keep-index
 
-eval "pylint --rcfile=.pylintrc $FILES"
+eval "./run_pylint.sh"
 ret_code=$?
 
 # restore local changes not staged yet
