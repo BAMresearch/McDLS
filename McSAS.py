@@ -56,7 +56,7 @@ clockwise from top. *Intensity* is in
 :math:`\left[ 1 \over {m \cdot sr} \right]`,
 *q* in :math:`\left[ 1 \over m \right]`.
 The electron density contrast squared,
-*drhosqr* is in :math:`\left[ m^{-4} \right]`.
+*DeltaRhoSquared* is in :math:`\left[ m^{-4} \right]`.
 Other units may be used, but if absolute units are supplied and absolute
 volume fractions required, meters are necessitated.
 
@@ -68,18 +68,18 @@ Example Usage
 Fitting a single Dataset using all automatic and default Parameters
 (may go wrong on poorly conditioned input, needs sensibly-spaced datapoints
 and good uncertainty estimates).
-The Dataset is considered to consist of three variables *Q*, *I* and *IERR*::
+The Dataset is considered to consist of three variables *Q*, *I* and *IError*::
 
- McSAS(Q = Q, I = I, IERR = IERR, Plot = True)
+ McSAS(Q = Q, I = I, IError = IError, Plot = True)
 
 Optional Parameters can be supplied in parameter-value pairs to finetune
 optimisation behaviour::
 
- A = McSAS(Q = Q, I = I, IERR = numpy.maximum(0.01 * I, E),
-           Ncontrib = 200, Convcrit = 1,
-           Bounds = array([0.5e-9, 35e-9]),
-           Maxiter = 1e5, Histscale = 'log',
-           drhosqr = 1e30, Nreps = 100, Plot = True)
+ A = McSAS(Q = Q, I = I, IError = numpy.maximum(0.01 * I, E),
+           Contributions = 200, ConvergenceCriterion = 1,
+           ContributionParameterBounds = array([0.5e-9, 35e-9]),
+           MaximumIterations = 1e5, HistogramXScale = 'log',
+           DeltaRhoSquared = 1e30, Repetitions = 100, Plot = True)
 
 Module Documentation
 ====================
@@ -104,65 +104,65 @@ class McSAS(object):
 
         - *Q*: 1D or 2D array of q-values
         - *I*: corresponding intensity values of the same shape
-        - *IERR*: corresponding intensity uncertainty values of the same shape
+        - *IError*: corresponding intensity uncertainty values of the same shape
 
     **Optional input Parameters:**
 
-        - *PSI*: 2D array
+        - *Psi*: 2D array
             Detector angle values, only required for 2D pattern fitting.
-        - *Bounds*: list
+        - *ContributionParameterBounds*: list
             Two-element vector or list indicating upper and lower size
             bounds of the particle radii used in the fitting procedure. If
             not provided, these will be estimated as:
             :math:`R_{max} = {pi \over q_{min}}` and
             :math:`R_{min} = {pi \over q_{max}}`. Units in meter.
-        - *Ncontrib*: int, default: 200
+        - *Contributions*: int, default: 200
             Number of spheres used for the MC simulation
-        - *Maxiter*: int, default: 1e5
+        - *MaximumIterations*: int, default: 1e5
             Maximum number of iterations for the :py:func:`MCFit` function
-        - *Rpfactor*: float, default: :math:`1.5 \over 3`
+        - *PowerCompensationFactor*: float, default: :math:`1.5 \over 3`
             Parameter used to compensate the :math:`volume^2` scaling of each
             sphere contribution to the simulated I(q).
-        - *Nreps*: int, default: 100
+        - *Repetitions*: int, default: 100
             Number of repetitions of the MC fit for determination of final
             histogram uncertainty.
-        - *qlims*: list, default: [0, inf]
+        - *QBounds*: list, default: [0, inf]
             Limits on the fitting range in q.
             Units in :math:`m^{-1}`
-        - *Histbins*: int, default: 50
+        - *HistogramBins*: int, default: 50
             Number of bins used for the histogramming procedure.
-        - *Histscale*: string, default: 'log'
+        - *HistogramXScale*: string, default: 'log'
             Can be set to 'log' for histogramming on a logarithmic size scale,
             recommended for q- and/or size-ranges spanning more than a decade.
-        - *Histweight*: string, default: 'volume'
+        - *HistogramWeighting*: string, default: 'volume'
             Can be set to 'number' to force plotting of number-weighted
             distributions
-        - *drhosqr*: float, default: 1
+        - *DeltaRhoSquared*: float, default: 1
             Scattering contrast - when known it will be used to calculate the
             absolute volume fraction of each contribution.
             Units in :math:`m^{-4}`
-        - *Convcrit*: float, default: 1
+        - *ConvergenceCriterion*: float, default: 1
             Convergence criterion for the least-squares fit. The fit converges
-            once the :math:`normalized \chi^2 < Convcrit`. If convergence is
-            reached with `Convcrit == 1`, the model describes
+            once the :math:`normalized \chi^2 < ConvergenceCriterion`. If convergence is
+            reached with `ConvergenceCriterion == 1`, the model describes
             the data (on average) to within the uncertainty, and thus all
             information has been extracted from the scattering pattern.
-        - *StartFromMin*: bool, default: False
+        - *StartFromMinimum*: bool, default: False
             If set to False, the starting configuration is a set of spheres
             with radii uniformly sampled between the given or estimated
             bounds. If set to True, the starting configuration is a set of
             spheres with radii set to the lower given or estimated Bound
             (if not zero). Practically, this makes little difference and this
             feature might be depreciated.
-        - *Maxntry*: int, default: 5
+        - *MaximumRetries*: int, default: 5
             If a single MC optimization fails to reach convergence within
-            *Maxiter*, it may just be due to bad luck. The procedure will try
-            to redo that MC optimization for a maximum of *Maxntry* tries
+            *MaximumIterations*, it may just be due to bad luck. The procedure will try
+            to redo that MC optimization for a maximum of *MaximumRetries* tries
             before concluding that it is not bad luck but bad input.
         - *Plot*: Bool, default: False
             If set to True, will generate a plot showing the data and fit, as
             well as the Resulting size histogram.
-        - *Memsave*: Bool, default: False
+        - *LowMemoryFootprint*: Bool, default: False
             For 2D pattern fitting, or for fitting patterns with a very large
             number of datapoints or contributions, it may make sense to turn
             this option on in order for intensity generating functions not to
@@ -171,7 +171,7 @@ class McSAS(object):
         - *BOUNDS*: string
             The McSAS function to use for calculating random number generator
             bounds based on input (f.ex. q and I).
-            default: :py:func:`SphBounds`
+            default: :py:func:`SphereBounds`
         - *FF*: string
             The McSAS function to use for calculating the form factors.
             default: :py:func:`FF_sph_1D`
@@ -196,84 +196,84 @@ class McSAS(object):
 
     **Keyword** may be one of the following:
 
-        *Imean*: 1D array (*VariableNumber = 0*)
-            The fitted intensity, given as the mean of all Nreps Results.
-        *q*: 1D array (*VariableNumber = 0*)
+        *FitIntensityMean*: 1D array (*VariableNumber = 0*)
+            The fitted intensity, given as the mean of all Repetitions Results.
+        *FitQ*: 1D array (*VariableNumber = 0*)
             Corresponding q values
-            (may be different than the input q if *qlims* was used).
-        *Istd*: array (*VariableNumber = 0*)
+            (may be different than the input q if *QBounds* was used).
+        *FitIntensityStd*: array (*VariableNumber = 0*)
             Standard deviation of the fitted I(q), calculated as the standard 
-            deviation of all Nreps Results.
-        *Rrep*: size array (Ncontrib x Nreps) (*VariableNumber = 0*)
-            Collection of Ncontrib contributions fitted to best represent the
-            provided I(q) data. Contains the Results of each of *Nreps*
+            deviation of all Repetitions Results.
+        *Rrep*: size array (Contributions x Repetitions) (*VariableNumber = 0*)
+            Collection of Contributions contributions fitted to best represent the
+            provided I(q) data. Contains the Results of each of *Repetitions*
             iterations. This can be used for rebinning without having to
             re-optimize.
-        *Screps*: size array (2 x Nreps) (*VariableNumber = 0*)
+        *ScalingFactors*: size array (2 x Repetitions) (*VariableNumber = 0*)
             Scaling and background values for each repetition.
             Used to display background level in data and fit plot.
         *VariableNumber*: int
             Shape parameter index.
             E.g. an ellipsoid has 3: width, height and orientation.
-        *Hx*: array
+        *HistogramXLowerEdge*: array
             Histogram bin left edge position (x-axis in histogram).
-        *Hmid*: array
+        *HistogramXMean*: array
             Center positions for the size histogram bins
             (x-axis in histogram, used for errorbars).
-        *Hwidth*: array
+        *HistogramXWidth*: array
             Histogram bin width
             (x-axis in histogram, defines bar plot bar widths).
-        *Hmean*: array
+        *VolumeHistogramYMean*: array
             Volume-weighted particle size distribution values for
-            all Nreps Results (y-axis bar height).
-        *Hnmean*: array
-            Number-weighted analogue of the above *Hmean*.
-        *Hy*: size array (Histbins x Nreps)
+            all Repetitions Results (y-axis bar height).
+        *NumberHistogramYMean*: array
+            Number-weighted analogue of the above *VolumeHistogramYMean*.
+        *VolumeHistogramRepetitionsY*: size array (HistogramBins x Repetitions)
             Volume-weighted particle size distribution bin values for
-            each MC fit repetition (the mean of which is *Hmean*, and the
-            sample standard deviation of which is *Hstd*).
-        *Hny*: size array (Histbins x Nreps)
+            each MC fit repetition (the mean of which is *VolumeHistogramYMean*, and the
+            sample standard deviation of which is *VolumeHistogramYStd*).
+        *NumberHistogramRepetitionsY*: size array (HistogramBins x Repetitions)
             Number-weighted particle size distribution bin values for
             each MC fit repetition.
-        *Hstd*: array
+        *VolumeHistogramYStd*: array
             Standard deviations of the corresponding volume-weighted size
-            distribution bins, calculated from *Nreps* repetitions of the
+            distribution bins, calculated from *Repetitions* repetitions of the
             :py:meth:`McSAS.MCfit_sph` function.
-        *Hnstd*: array
+        *NumberHistogramYStd*: array
             Standard deviation for the number-weigthed distribution.
-        *Vf*: size array (Ncontrib x Nreps)
-            Volume fractions for each of Ncontrib contributions in each of
-            *Nreps* iterations.
-        *Nf*: size array (Ncontrib x Nreps)
+        *VolumeFraction*: size array (Contributions x Repetitions)
+            Volume fractions for each of Contributions contributions in each of
+            *Repetitions* iterations.
+        *NumberFraction*: size array (Contributions x Repetitions)
             Number fraction for each contribution.
-        *Vft*: size array (Nreps)
-            Total scatterer volume fraction for each of the Nreps iterations.
-        *Nft*: size array (Nreps)
+        *TotalVolumeFraction*: size array (Repetitions)
+            Total scatterer volume fraction for each of the Repetitions iterations.
+        *TotalNumberFraction*: size array (Repetitions)
             Total number fraction.
-        *vfmin*: size array (Ncontrib x Nreps)
+        *MinimumRequiredVolume*: size array (Contributions x Repetitions)
             Minimum required volume fraction for each contribution to become
             statistically significant.
-        *nfmin*: size array (Ncontrib x Nreps)
-            Number-weighted analogue to *vfmin*.
-        *vfminbins*: size array (Hmid)
+        *MinimumRequiredNumber*: size array (Contributions x Repetitions)
+            Number-weighted analogue to *MinimumRequiredVolume*.
+        *VolumeHistogramMinimumRequired*: size array (HistogramXMean)
             Array with the minimum required volume fraction per bin to become
             statistically significant. Used to display minimum required level
             in histogram.
-        *nfminbins*: size array (Hmid)
-            Number-weighted analogue to *vfminbins*.
-        *Screps*: size array (2 x Nreps)
+        *NumberHistogramMinimumRequired*: size array (HistogramXMean)
+            Number-weighted analogue to *VolumeHistogramMinimumRequired*.
+        *ScalingFactors*: size array (2 x Repetitions)
             Scaling and background values for each repetition. Used to display
             background level in data and fit plot.
-        *Vf*: size array (Ncontrib x Nreps)
-            Volume fractions for each of *Ncontrib* spheres in each of *Nreps*
+        *VolumeFraction*: size array (Contributions x Repetitions)
+            Volume fractions for each of *Contributions* spheres in each of *Repetitions*
             iterations.
-        *Vft*: size array (Nreps)
-            Total scatterer volume fraction for each of the *Nreps*
+        *TotalVolumeFraction*: size array (Repetitions)
+            Total scatterer volume fraction for each of the *Repetitions*
             iterations.
-        *vfmin*: size array (Ncontrib x Nreps)
+        *MinimumRequiredVolume*: size array (Contributions x Repetitions)
             Minimum required volube fraction for each contribution to become
             statistically significant.
-        *vfminbins*: size array (Hmid)
+        *VolumeHistogramMinimumRequired*: size array (HistogramXMean)
             Array with the minimum required volume fraction per bin to become
             statistically significant. Used to display minimum required level
             in histogram.
@@ -281,7 +281,7 @@ class McSAS(object):
     **Internal Variables**
     
     :py:attr:`self.Dataset`
-        Where Q, PSI, I and IERR is stored, original Dataset.
+        Where Q, Psi, I and IError is stored, original Dataset.
     :py:attr:`self.FitData`
         May be populated with a subset of the aforementioned Dataset, limited
         to q-limits or psi limits and to positive I values alone.
@@ -298,8 +298,6 @@ class McSAS(object):
         Where the used functions are defined, this is where shape changes,
         smearing, and various forms of integrations are placed.
 
-    :py:attr:`self.`
-    :py:attr:`self.`
     """
 
     Dataset = None
@@ -318,7 +316,7 @@ class McSAS(object):
             2. Parses the input
             3. Stores the supplied data twice, one original and one for fitting
                 (the latter of which may be clipped or otherwise adjusted)
-            4. Applies Q- and optional PSI- limits to the data
+            4. Applies Q- and optional Psi- limits to the data
             5. Reshapes FitData to 1-by-n dimensions
             6. Sets the function references
             7. Calculates the shape parameter bounds if not supplied
@@ -380,37 +378,37 @@ class McSAS(object):
         Populates the default parameter settings
         """
         # field names
-        # fnames = list(['Bounds', 'Ncontrib', 'Maxiter', 'Rpfactor', 'Nreps',
-        #                'qlims', 'psilims', 'Histbins', 'Histscale',
-        #                'drhosqr', 'Convcrit', 'StartFromMin', 'Maxntry'])
+        # fnames = list(['ContributionParameterBounds', 'Contributions', 'MaximumIterations', 'PowerCompensationFactor', 'Repetitions',
+        #                'QBounds', 'PsiBounds', 'HistogramBins', 'HistogramXScale',
+        #                'DeltaRhoSquared', 'ConvergenceCriterion', 'StartFromMinimum', 'MaximumRetries'])
         self.Parameters = {
-            'Bounds': [],
-            'Ncontrib': 200,
-            'Maxiter': 1e5,
-            'Rpfactor': 0.5,
-            'Nreps': 100,
-            'qlims': [],
-            'psilims': [],
+            'ContributionParameterBounds': [],
+            'Contributions': 200,
+            'MaximumIterations': 1e5,
+            'PowerCompensationFactor': 0.5,
+            'Repetitions': 100,
+            'QBounds': [],
+            'PsiBounds': [],
             'Priors': [], # of shape Rrep, to be used as initial guess for
                           # Analyse function, Analyse will pass on a Prior
                           # to MCFit.
             'Prior': [], # of shape Rset, to be used as initial guess for
                          # MCFit function
-            'Histbins': 50,
-            'Histscale': 'log',
-            'Histweight': 'volume', # can be set to "volume" or "number"
-            'drhosqr': 1,
-            'Convcrit': 1.,
-            'StartFromMin': False,
-            'Maxntry': 5,
-            'MaskNegI': False,
+            'HistogramBins': 50,
+            'HistogramXScale': 'log',
+            'HistogramWeighting': 'volume', # can be set to "volume" or "number"
+            'DeltaRhoSquared': 1,
+            'ConvergenceCriterion': 1.,
+            'StartFromMinimum': False,
+            'MaximumRetries': 5,
+            'MaskNegativeI': False,
             'MaskZeroI': False,
-            'Memsave': False,
+            'LowMemoryFootprint': False,
             'Plot': False
         }
 
         self.Functions = {
-            'BOUNDS': self.SphBounds, # this function has to give a vector
+            'BOUNDS': self.SphereBounds, # this function has to give a vector
                                       # the size of the number of
                                       # variables *2 (lower and upper)
             'RAND': self.random_uniform_sph,
@@ -423,8 +421,8 @@ class McSAS(object):
         """Defines Functions. In particular the following are specified:
 
         - The parameter bounds estimation function *BOUNDS*. Should be able
-          to take input argument Bounds to update, should set the parameter
-          bounds in ``self.parameter['Bounds']``
+          to take input argument ContributionParameterBounds to update, should set the parameter
+          bounds in ``self.parameter['ContributionParameterBounds']``
 
         - The random number generation function *RAND* This must take its
           Parameters from self, and have an optional input argument specifying
@@ -440,9 +438,9 @@ class McSAS(object):
           form factor Functions can exist for non-spherical objects.
 
         - The shape volume calculation function *VOL*, which must be able to
-          deal with input argument *Rpfactor*, ranging from 0 to 1. Should
+          deal with input argument *PowerCompensationFactor*, ranging from 0 to 1. Should
           accept an Nsets-by-nvalues array returning an Nsets number of
-          (Rpfactor-compensated)-volumes. 
+          (PowerCompensationFactor-compensated)-volumes. 
 
         - The smearing function *SMEAR*. Should take information from self
           and an input Icalc, to output an Ismear of the same length.
@@ -476,7 +474,7 @@ class McSAS(object):
 
 
     def ReshapeFitdata(self):
-        """This ensures that q, I, PSI and E are in 1-by-n shape."""
+        """This ensures that q, I, Psi and E are in 1-by-n shape."""
         for key in self.FitData.keys():
             self.FitData[key] = reshape(self.FitData[key],
                                         (1, prod(shape(self.FitData[key]))))
@@ -486,36 +484,36 @@ class McSAS(object):
         clips the Dataset to within the supplied limits. Copies data to
         :py:attr:`self.FitData` if no limits are set.
         """
-        qlims = self.GetParameter('qlims')
-        psilims = self.GetParameter('psilims')
+        QBounds = self.GetParameter('QBounds')
+        PsiBounds = self.GetParameter('PsiBounds')
         Dataset = self.GetData(Dataset = 'original')
         
-        validbools = isfinite(Dataset['Q'])
+        ValidIndices = isfinite(Dataset['Q'])
         # Optional masking of negative intensity
-        if self.GetParameter('MaskNegI'):
-            validbools = validbools * (Dataset['I'] >= 0)
+        if self.GetParameter('MaskNegativeI'):
+            ValidIndices = ValidIndices * (Dataset['I'] >= 0)
         if self.GetParameter('MaskZeroI'):
-            validbools = validbools * (Dataset['I'] != 0)
-        if (qlims == []) and (psilims == []):
+            ValidIndices = ValidIndices * (Dataset['I'] != 0)
+        if (QBounds == []) and (PsiBounds == []):
             # q limits not set, simply copy Dataset to FitData
-            validbools = validbools
-        if (not(qlims == [])): # and qlims is implicitly set
+            ValidIndices = ValidIndices
+        if (not(QBounds == [])): # and QBounds is implicitly set
             # excluding the lower q limit may prevent q = 0 from appearing
-            validbools = validbools * ((Dataset['Q'] >  numpy.min(qlims)) &
-                                       (Dataset['Q'] <= numpy.max(qlims)))
-        if (not(psilims==[])):
-            # we assume here that we have a Dataset ['PSI']
+            ValidIndices = ValidIndices * ((Dataset['Q'] >  numpy.min(QBounds)) &
+                                       (Dataset['Q'] <= numpy.max(QBounds)))
+        if (not(PsiBounds==[])):
+            # we assume here that we have a Dataset ['Psi']
             # excluding the lower q limit may prevent q = 0 from appearing
-            validbools = validbools * ((Dataset['PSI'] >  numpy.min(psilims)) &
-                                       (Dataset['PSI'] <= numpy.max(psilims)))
+            ValidIndices = ValidIndices * ((Dataset['Psi'] >  numpy.min(PsiBounds)) &
+                                       (Dataset['Psi'] <= numpy.max(PsiBounds)))
 
         for key in Dataset.keys():
-            dsk = Dataset[key][validbools]
+            dsk = Dataset[key][ValidIndices]
             # hey, this works!:
             self.SetData(**{ key: dsk, 'Dataset': 'fit' })
             # old version was direct addressing, which is to be discouraged to
             # encourage flexibility in data storage
-            # self.FitData[key] = Dataset[key][validbools]
+            # self.FitData[key] = Dataset[key][ValidIndices]
 
         # self.FitData = FitData
         
@@ -590,7 +588,7 @@ class McSAS(object):
         *Dataset* can be set to ``fit`` or ``original`` to define which
         Dataset is set. Default is ``original``.
         """
-        Datasetlist = list(['Q', 'I', 'PSI', 'IERR']) # list of valid things
+        Datasetlist = list(['Q', 'I', 'Psi', 'IError']) # list of valid things
         if ('Dataset' in kwargs):
             Dataset = kwargs['Dataset'].lower()
         else:
@@ -615,37 +613,37 @@ class McSAS(object):
         """Checks for the Parameters, for example to make sure
         histbins is defined for all, or to check if all Parameters fall
         within their limits.
-        For now, all I need is a check that Histbins is a 1D vector
+        For now, all I need is a check that HistogramBins is a 1D vector
         with n values, where n is the number of Parameters specifying
         a shape.
         """
         # testR = self.Functions['RAND']()
         testR = self.GetFunction('RAND')()
-        NRval = prod(shape(testR))
-        Histbins = self.GetParameter('Histbins')
-        if not(isinstance(Histbins, list)): # meaning it will be a string
+        VariablesPerShape = prod(shape(testR))
+        HistogramBins = self.GetParameter('HistogramBins')
+        if not(isinstance(HistogramBins, list)): # meaning it will be a string
             HB = list()
-            for ri in range(NRval):
-                HB.append(int(Histbins))
-            self.SetParameter(Histbins = HB)
-        elif len(Histbins) < NRval:
+            for ri in range(VariablesPerShape):
+                HB.append(int(HistogramBins))
+            self.SetParameter(HistogramBins = HB)
+        elif len(HistogramBins) < VariablesPerShape:
             # histbins is a list but not of the right length
-            while len(Histscale) < NRval:
-                Histbins.append(Histbins[0])
-            self.SetParameter(Histbins = Histbins)
+            while len(HistogramXScale) < VariablesPerShape:
+                HistogramBins.append(HistogramBins[0])
+            self.SetParameter(HistogramBins = HistogramBins)
         # now check histscale
-        Histscale = self.GetParameter('Histscale')
-        if not(isinstance(Histscale, list)): # meaning it will be a string
+        HistogramXScale = self.GetParameter('HistogramXScale')
+        if not(isinstance(HistogramXScale, list)): # meaning it will be a string
             HS = list()
-            for ri in range(NRval):
-                HS.append(Histscale) # repeat until we have enough
+            for ri in range(VariablesPerShape):
+                HS.append(HistogramXScale) # repeat until we have enough
             # replace histscale
-            self.SetParameter(Histscale = HS)
-        elif len(Histscale) < NRval:
+            self.SetParameter(HistogramXScale = HS)
+        elif len(HistogramXScale) < VariablesPerShape:
             # histscale is a list but not of the right length
-            while len(Histscale) < NRval:
-                Histscale.append(Histscale[0])
-            self.SetParameter(Histscale = Histscale)
+            while len(HistogramXScale) < VariablesPerShape:
+                HistogramXScale.append(HistogramXScale[0])
+            self.SetParameter(HistogramXScale = HistogramXScale)
 
     def _Iopt(self, I, Ic, E, Sc, ver = 2,
               OutputI = False, Background = True):
@@ -727,87 +725,96 @@ class McSAS(object):
             return Sc, cval
 
     ######################## Shape Functions ######################
-    def EllBounds_2D(self):
+    def EllContributionParameterBounds_2D(self):
         """This function will take the q and psi input bounds and outputs
         properly formatted two-element size bounds for ellipsoids. Ellipsoids
         are defined by their equatorial radius, meridional radius and axis
-        misalignment (default -45 to 45 degrees in PSI).
+        misalignment (default -45 to 45 degrees in Psi).
         """
-        Bounds = self.GetParameter('Bounds')
+        ContributionParameterBounds = self.GetParameter('ContributionParameterBounds')
         q = self.GetData('Q')
         # reasonable, but not necessarily correct, Parameters
-        qBounds = array([pi / numpy.max(q),
+        QBounds = array([pi / numpy.max(q),
                          pi / numpy.min((abs(numpy.min(q)),
                                        abs(numpy.min(diff(q)))))])
-        if len(Bounds) == 0:
-            print "Bounds not provided, so set related to minimum q or " \
+        if len(ContributionParameterBounds) == 0:
+            print "ContributionParameterBounds not provided, so set related to minimum q or " \
                   "minimum q step and maximum q. Lower and upper bounds " \
-                  "are {0} and {1}".format(qBounds[0], qBounds[1])
-            Bounds = numpy.array([qBounds[0], qBounds[1],
-                                  qBounds[0], qBounds[1],
+                  "are {0} and {1}".format(QBounds[0], QBounds[1])
+            ContributionParameterBounds = numpy.array([QBounds[0], QBounds[1],
+                                  QBounds[0], QBounds[1],
                                   -45, 45])
-        elif len(Bounds) == 6:
+        elif len(ContributionParameterBounds) == 6:
             pass
-            #print 'Bounds provided, set to {} and {}'.format(
-            #    Bounds[0], Bounds[1])
+            #print 'ContributionParameterBounds provided, set to {} and {}'.format(
+            #    ContributionParameterBounds[0], ContributionParameterBounds[1])
         else:
-            print "Wrong number of Bounds provided, defaulting to {}" \
+            print "Wrong number of ContributionParameterBounds provided, defaulting to {}" \
                   "and {} for radii, -45, 45 for misalignment" \
-                  .format(qBounds[0], qBounds[1])
-            Bounds = numpy.array([qBounds[0], qBounds[1],
-                                  qBounds[0], qBounds[1],
+                  .format(QBounds[0], QBounds[1])
+            ContributionParameterBounds = numpy.array([QBounds[0], QBounds[1],
+                                  QBounds[0], QBounds[1],
                                   -45, 45])
-        Bounds = numpy.array([numpy.min(Bounds[0:2]), numpy.max(Bounds[0:2]),
-                              numpy.min(Bounds[2:4]), numpy.max(Bounds[2:4]),
-                              numpy.min(Bounds[4:6]), numpy.max(Bounds[4:6])])
+        ContributionParameterBounds = numpy.array([numpy.min(ContributionParameterBounds[0:2]), numpy.max(ContributionParameterBounds[0:2]),
+                              numpy.min(ContributionParameterBounds[2:4]), numpy.max(ContributionParameterBounds[2:4]),
+                              numpy.min(ContributionParameterBounds[4:6]), numpy.max(ContributionParameterBounds[4:6])])
 
-        self.SetParameter(Bounds = Bounds)
+        self.SetParameter(ContributionParameterBounds = 
+                ContributionParameterBounds)
 
-    def SphBounds(self):
+    def SphereBounds(self):
         """This function will take the q and input bounds and outputs properly
         formatted two-element size bounds.
         """
-        Bounds = self.GetParameter('Bounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
         q = self.GetData('Q')
         # reasonable, but not necessarily correct, Parameters
-        qBounds = array([pi/numpy.max(q),
+        QBounds = array([pi/numpy.max(q),
                          pi/numpy.min((abs(numpy.min(q)),
                                        abs(numpy.min(diff(q)))))])
-        if len(Bounds) == 0:
-            print "Bounds not provided, so set related to minimum q or "\
-                  "minimum q step and maximum q. Lower and upper bounds "\
-                  "are {0} and {1}".format(qBounds[0], qBounds[1])
-            Bounds = qBounds
-        elif len(Bounds) == 1:
+        if len(ContributionParameterBounds) == 0:
+            print "ContributionParameterBounds not provided, so set related "\
+                    "to minimum q or minimum q step and maximum q. Lower and "\
+                    "upper bounds are {0} and {1}"\
+                    .format(QBounds[0], QBounds[1])
+            ContributionParameterBounds = QBounds
+        elif len(ContributionParameterBounds) == 1:
             print "Only one bound provided, assuming it denotes the maximum."\
                   " Lower and upper bounds are set to {0} and {1}"\
-                  .format(qBounds[0], Bounds[1])
-            Bounds = numpy.array([qBounds[0], Bounds])
-        elif len(Bounds) == 2:
+                  .format(QBounds[0], ContributionParameterBounds[1])
+            ContributionParameterBounds = \
+                    numpy.array([QBounds[0], ContributionParameterBounds])
+        elif len(ContributionParameterBounds) == 2:
             pass
-            # print 'Bounds provided, set to {} and {}'\
-            #        .format(Bounds[0],Bounds[1])
         else:
-            print "Wrong number of Bounds provided, defaulting to {} and {}"\
-                  .format(qBounds[0], qBounds[1])
-            Bounds = qbounds
-        Bounds = numpy.array([numpy.min(Bounds), numpy.max(Bounds)])
-        self.SetParameter(Bounds = Bounds)
+            print "Wrong number of ContributionParameterBounds provided, "\
+                    "defaulting to {} and {}".format(QBounds[0], QBounds[1])
+            ContributionParameterBounds = qbounds
+        ContributionParameterBounds = numpy.array(
+                [numpy.min(ContributionParameterBounds), 
+                    numpy.max(ContributionParameterBounds)])
+        self.SetParameter(ContributionParameterBounds = 
+                ContributionParameterBounds)
 
     def random_uniform_ell(self, Nell = 1):
         """Random number generator for generating uniformly-sampled
         size- and orientation Parameters for ellipsoids.
         """
         # get Parameters from self
-        Bounds = self.GetParameter('Bounds') 
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds') 
         # generate Nsph random numbers
         Rset = zeros((Nell, 3))
-        Rset[:, 0] = numpy.random.uniform(numpy.min(Bounds[0]),
-                                          numpy.max(Bounds[1]), Nell)
-        Rset[:, 1] = numpy.random.uniform(numpy.min(Bounds[2]),
-                                          numpy.max(Bounds[3]), Nell)
-        Rset[:, 2] = numpy.random.uniform(numpy.min(Bounds[4]),
-                                          numpy.max(Bounds[5]), Nell)
+        Rset[:, 0] = numpy.random.uniform(
+                numpy.min(ContributionParameterBounds[0]),
+                numpy.max(ContributionParameterBounds[1]), Nell)
+        Rset[:, 1] = numpy.random.uniform(
+                numpy.min(ContributionParameterBounds[2]),
+                numpy.max(ContributionParameterBounds[3]), Nell)
+        Rset[:, 2] = numpy.random.uniform(
+                numpy.min(ContributionParameterBounds[4]),
+                numpy.max(ContributionParameterBounds[5]), Nell)
         # output Nsph-by-3 array
         return Rset
 
@@ -817,17 +824,19 @@ class McSAS(object):
         May speed up some fitting procedures.
         """
         #get Parameters from self
-        Bounds = self.GetParameter('Bounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
         #generate Nsph random numbers
         Rset = zeros((Nell, 3))
-        Rset[:, 0] = 10**(numpy.random.uniform(log10(numpy.min(Bounds[0])),
-                                               log10(numpy.max(Bounds[1])),
-                                               Nell))
-        Rset[:, 1] = 10**(numpy.random.uniform(log10(numpy.min(Bounds[2])),
-                                               log10(numpy.max(Bounds[3])),
-                                               Nell))
-        Rset[:, 2] = numpy.random.uniform(numpy.min(Bounds[4]),
-                                          numpy.max(Bounds[5]), Nell)
+        Rset[:, 0] = 10**(numpy.random.uniform(
+            log10(numpy.min(ContributionParameterBounds[0])),
+            log10(numpy.max(ContributionParameterBounds[1])), Nell))
+        Rset[:, 1] = 10**(numpy.random.uniform(
+            log10(numpy.min(ContributionParameterBounds[2])), 
+            log10(numpy.max(ContributionParameterBounds[3])), Nell))
+        Rset[:, 2] = numpy.random.uniform(
+                numpy.min(ContributionParameterBounds[4]),
+                numpy.max(ContributionParameterBounds[5]), Nell)
         # output Nsph-by-3 array
         return Rset
 
@@ -837,19 +846,21 @@ class McSAS(object):
         May speed up some fitting procedures.
         """
         # get Parameters from self
-        Bounds = self.GetParameter('Bounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
         # generate Nsph random numbers
         Rset = zeros((Nell, 3))
-        Rset[:, 0] = 10**(numpy.random.uniform(log10(numpy.min(Bounds[0])),
-                                               log10(numpy.max(Bounds[1])),
-                                               Nell))
+        Rset[:, 0] = 10**(numpy.random.uniform(
+            log10(numpy.min(ContributionParameterBounds[0])),
+            log10(numpy.max(ContributionParameterBounds[1])), Nell))
         for Ni in range(Nell):
             Rset[Ni, 1] = 10**(numpy.random.uniform(
-                                    log10(numpy.min(Bounds[2])),
-                                    log10(numpy.minimum(Bounds[3],
-                                                        Rset[Ni,0])), 1))
-        Rset[:,2]=numpy.random.uniform(numpy.min(Bounds[4]),
-                                       numpy.max(Bounds[5]), Nell)
+                log10(numpy.min(ContributionParameterBounds[2])),
+                log10(numpy.minimum(ContributionParameterBounds[3],
+                    Rset[Ni,0])), 1))
+        Rset[:,2]=numpy.random.uniform(
+                numpy.min(ContributionParameterBounds[4]),
+                numpy.max(ContributionParameterBounds[5]), Nell)
         # output Nsph-by-3 array
         return Rset
 
@@ -859,28 +870,35 @@ class McSAS(object):
         May speed up some fitting procedures.
         """
         # get Parameters from self
-        Bounds = self.GetParameter('Bounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
         # generate Nsph random numbers
         Rset = zeros((Nell, 3))
         Rset[:, 0] = 10**(numpy.random.uniform(
-                            log10(numpy.min(Bounds[0])),
-                            log10(numpy.max(Bounds[1])), Nell))
+                            log10(numpy.min(ContributionParameterBounds[0])),
+                            log10(numpy.max(ContributionParameterBounds[1])), 
+                            Nell))
         for Ni in range(Nell):
-            Rset[Ni, 1] = 10**(numpy.random.uniform(
-                                log10(numpy.maximum(Rset[Ni, 0], Bounds[2])),
-                                log10(Bounds[3]), 1))
-        Rset[:, 2] = numpy.random.uniform(numpy.min(Bounds[4]),
-                                          numpy.max(Bounds[5]), Nell)
+            Rset[Ni, 1] = \
+                    10**(numpy.random.uniform(
+                        log10(numpy.maximum(Rset[Ni, 0], 
+                            ContributionParameterBounds[2])), 
+                        log10(ContributionParameterBounds[3]), 1))
+        Rset[:, 2] = \
+                numpy.random.uniform(numpy.min(ContributionParameterBounds[4]),
+                        numpy.max(ContributionParameterBounds[5]), Nell)
         # output Nsph-by-3 array
         return Rset
 
     def random_logR_sph(self, Nsph = 1):
         """Random number generator with logarithmic probabilistic sampling."""
         # get Parameters from self
-        Bounds = self.GetParameter('Bounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
         # generate Nsph random numbers
-        Rset = 10**(numpy.random.uniform(log10(numpy.min(Bounds)),
-                                         log10(numpy.max(Bounds)), Nsph))
+        Rset = 10**(numpy.random.uniform(
+            log10(numpy.min(ContributionParameterBounds)),
+            log10(numpy.max(ContributionParameterBounds)), Nsph))
         Rset = reshape(Rset, (prod(shape(Rset)), 1))
         # output Nsph-by-1 array
         return Rset
@@ -889,30 +907,34 @@ class McSAS(object):
         """Random number generator with uniform distribution for
         the sphere form factor."""
         # get Parameters from self
-        Bounds = self.GetParameter('Bounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
         # generate Nsph random numbers
-        Rset = numpy.random.uniform(numpy.min(Bounds),
-                                    numpy.max(Bounds), Nsph)
+        Rset = numpy.random.uniform(numpy.min(ContributionParameterBounds),
+                                    numpy.max(ContributionParameterBounds), 
+                                    Nsph)
         Rset = reshape(Rset, (prod(shape(Rset)), 1))
         # output Nsph-by-1 array
         return Rset
 
-    def vol_ell(self, Rset, Rpfactor = []):
-        """Calculates the volume of an ellipsoid, taking Rpfactor from input
-        or preset Parameters.
+    def vol_ell(self, Rset, PowerCompensationFactor = []):
+        """Calculates the volume of an ellipsoid, taking 
+        PowerCompensationFactor from input or preset Parameters.
         """
-        if Rpfactor == []:
-            Rpfactor = self.GetParameter('Rpfactor')
-        return ((4.0/3*pi) * Rset[:, 0]**(2*Rpfactor) * Rset[:, 1]**(Rpfactor)
-                )[:, newaxis]
+        if PowerCompensationFactor == []:
+            PowerCompensationFactor = \
+                    self.GetParameter('PowerCompensationFactor')
+        return ((4.0/3*pi) * Rset[:, 0]**(2*PowerCompensationFactor) * 
+                Rset[:, 1]**(PowerCompensationFactor))[:, newaxis]
 
-    def vol_sph(self, Rset, Rpfactor = []):
-        """Calculates the volume of a sphere, taking Rpfactor from input
-        or preset Parameters.
+    def vol_sph(self, Rset, PowerCompensationFactor = []):
+        """Calculates the volume of a sphere, taking PowerCompensationFactor 
+        from input or preset Parameters.
         """
-        if Rpfactor == []:
-            Rpfactor = self.GetParameter('Rpfactor')
-        return (4.0/3*pi) * Rset**(3*Rpfactor)
+        if PowerCompensationFactor == []:
+            PowerCompensationFactor = \
+                    self.GetParameter('PowerCompensationFactor')
+        return (4.0/3*pi) * Rset**(3*PowerCompensationFactor)
 
     def FF_sph_1D(self, Rset):
         """Calculate the Rayleigh function for a sphere.
@@ -928,7 +950,7 @@ class McSAS(object):
         Fsph = 3 * (sin(qR) - qR * cos(qR)) / (qR**3)
         return Fsph
 
-    def FF_ell_2D(self, Rset = [], Q = [], PSI = []):
+    def FF_ell_2D(self, Rset = [], Q = [], Psi = []):
         """Calculates the form factor for oriented ellipsoids,
         normalized to 1 at Q = 0.
 
@@ -946,18 +968,18 @@ class McSAS(object):
         Rotation is offset from perfect orientation (psi-rot)
 
         **Note**: All 2D Functions should be able to potentially take
-        externally supplied Q and PSI vectors.
+        externally supplied Q and Psi vectors.
         """
         # degrees to radians, forget the dot and get yourself into a
         # non-floating point mess, even though pi is floating point ...
         d_to_r = 1. / 360 * 2 * pi
         if Q == []:
             q = self.GetData('Q')     # 1-by-N
-            psi = self.GetData('PSI') # 1-by-N
+            psi = self.GetData('Psi') # 1-by-N
         else:
             # externally supplied data
             q = Q
-            psi = PSI
+            psi = Psi
         R1, R2, rot = Rset[:, 0], Rset[:, 1], Rset[:, 2]
         NR = prod(shape(R1))
         if NR == 1:
@@ -999,35 +1021,35 @@ class McSAS(object):
 
     def Analyse(self):
         """This function runs the Monte Carlo optimisation a multitude
-        (*Nreps*) of times. If convergence is not achieved, it will try again
-        for a maximum of *Maxntry* attempts.
+        (*Repetitions*) of times. If convergence is not achieved, it will try 
+        again for a maximum of *MaximumRetries* attempts.
         """
         # get data
-        q = self.GetData('Q')
+        FitQ = self.GetData('Q')
         I = self.GetData('I')
-        E = self.GetData('IERR')
+        E = self.GetData('IError')
         # get settings
         Priors = self.GetParameter('Priors')
         Prior = self.GetParameter('Prior')
-        Ncontrib = self.GetParameter('Ncontrib')
-        Nreps = self.GetParameter('Nreps')
-        Convcrit = self.GetParameter('Convcrit')
-        Maxntry = self.GetParameter('Maxntry')
+        Contributions = self.GetParameter('Contributions')
+        Repetitions = self.GetParameter('Repetitions')
+        ConvergenceCriterion = self.GetParameter('ConvergenceCriterion')
+        MaximumRetries = self.GetParameter('MaximumRetries')
         # find out how many values a shape is defined by:
         # testR = self.Functions['RAND']()
         testR = self.GetFunction('RAND')()
-        NRval = prod(shape((testR)))
-        Rrep = zeros([Ncontrib, NRval, Nreps])
+        VariablesPerShape = prod(shape((testR)))
+        Rrep = zeros([Contributions, VariablesPerShape, Repetitions])
         # DEBUG:
         # print 'Rrep: {}'.format(shape(Rrep))
-        Niters = zeros([Nreps])
-        Irep = zeros([1, prod(shape(I)), Nreps])
+        Niters = zeros([Repetitions])
+        Irep = zeros([1, prod(shape(I)), Repetitions])
         bignow = time.time() # for time estimation and reporting
 
-        # This is the loop that repeats the MC optimization Nreps times,
+        # This is the loop that repeats the MC optimization Repetitions times,
         # after which we can calculate an uncertainty on the Results.
         priorsflag = False
-        for nr in arange(0, Nreps):
+        for nr in arange(0, Repetitions):
             if ((Prior == []) and (Priors != [])) or (priorsflag == True):
                 # this flag needs to be set as prior will be set after
                 # the first pass
@@ -1037,17 +1059,17 @@ class McSAS(object):
             nt = 0
             # do that MC thing! 
             ConVal = inf
-            while ConVal > Convcrit:
+            while ConVal > ConvergenceCriterion:
                 # retry in the case we were unlucky in reaching
-                # convergence within Maxiter.
+                # convergence within MaximumIterations.
                 nt += 1
                 Rrep[:, :, nr], Irep[:, :, nr], ConVal, Details = \
                         self.MCFit(OutputI = True, OutputDetails = True)
-                if nt > Maxntry:
+                if nt > MaximumRetries:
                     # this is not a coincidence.
-                    # We have now tried Maxntry+2 times
+                    # We have now tried MaximumRetries+2 times
                     print "could not reach optimization criterion within "\
-                          "{0} attempts, exiting...".format(Maxntry+2)
+                          "{0} attempts, exiting...".format(MaximumRetries+2)
                     return
             # keep track of how many iterations were needed to reach converg.
             Niters[nr] = Details['Niter']
@@ -1056,25 +1078,25 @@ class McSAS(object):
             # in minutes:
             tottime = (biglap-bignow)/60. # total elapsed time
             avetime = (tottime/ (nr+1)) # average time per MC optimization
-            remtime = (avetime*Nreps - tottime) # estimated remaining time
+            remtime = (avetime*Repetitions - tottime) # est. remaining time
             print "\t*finished optimization number {0} of {1} \r\n"\
                   "\t*total elapsed time: {2} minutes \r\n"\
                   "\t*average time per optimization {3} minutes \r\n"\
                   "\t*total time remaining {4} minutes"\
-                  .format(nr+1, Nreps, tottime, avetime, remtime)
+                  .format(nr+1, Repetitions, tottime, avetime, remtime)
         
         # at this point, all MC optimizations have been completed and
-        # we can process all Nreps Results.
-        Imean = numpy.mean(Irep, axis = 2) # mean fitted intensity
+        # we can process all Repetitions Results.
+        FitIntensityMean = numpy.mean(Irep, axis = 2) # mean fitted intensity
         # standard deviation on the fitted intensity,
         # usually not plotted for clarity
-        Istd = numpy.std(Irep, axis = 2)
+        FitIntensityStd = numpy.std(Irep, axis = 2)
         # store in output dict
         self.SetResult(**{
             'Rrep': Rrep,
-            'Imean': Imean,
-            'Istd': Istd,
-            'Qfit': q, # can be obtained from self.FitData 
+            'FitIntensityMean': FitIntensityMean,
+            'FitIntensityStd': FitIntensityStd,
+            'FitQ': FitQ, # can be obtained from self.FitData 
             #average number of iterations for all repetitions
             'Niter': numpy.mean(Niters)})
 
@@ -1098,17 +1120,18 @@ class McSAS(object):
         # load Dataset
         q = self.GetData('Q')
         I = self.GetData('I')
-        E = self.GetData('IERR')
+        E = self.GetData('IError')
         # load Parameters
-        Ncontrib = self.GetParameter('Ncontrib')
-        Bounds = self.GetParameter('Bounds')
-        Convcrit = self.GetParameter('Convcrit')
-        Rpfactor = self.GetParameter('Rpfactor')
-        Maxiter = self.GetParameter('Maxiter')
-        MaskNegI = self.GetParameter('MaskNegI')
+        Contributions = self.GetParameter('Contributions')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
+        ConvergenceCriterion = self.GetParameter('ConvergenceCriterion')
+        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
+        MaximumIterations = self.GetParameter('MaximumIterations')
+        MaskNegativeI = self.GetParameter('MaskNegativeI')
         MaskZeroI = self.GetParameter('MaskZeroI')
-        StartFromMin = self.GetParameter('StartFromMin')
-        Memsave = self.GetParameter('Memsave')
+        StartFromMinimum = self.GetParameter('StartFromMinimum')
+        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
         Prior = self.GetParameter('Prior')
 
         # find out how many values a shape is defined by:
@@ -1117,9 +1140,9 @@ class McSAS(object):
         VOLfunc = self.GetFunction('VOL')
         SMEARfunc = self.GetFunction('SMEAR')
         testR = Randfunc()
-        NRval = prod(shape(testR))
+        VariablesPerShape = prod(shape(testR))
 
-        Rset = numpy.zeros((Ncontrib, NRval))
+        Rset = numpy.zeros((Contributions, VariablesPerShape))
 
         # Intialise variables
         FFset = []
@@ -1133,41 +1156,41 @@ class McSAS(object):
         
         # generate initial set of spheres
         if size(Prior) == 0:
-            if StartFromMin:
-                for Rvi in range(NRval): # minimum bound for each value
-                    if numpy.min(Bounds[Rvi:Rvi+2]) == 0:
+            if StartFromMinimum:
+                for Rvi in range(VariablesPerShape): # minimum bound for each 
+                    if numpy.min(ContributionParameterBounds[Rvi:Rvi+2]) == 0:
                         mb = pi/numpy.max(q)
                     else:
-                        mb = numpy.min(Bounds[Rvi:Rvi+2])
-                    Rset[:, Rvi] = numpy.ones(Ncontrib)[:]*mb/2.
+                        mb = numpy.min(ContributionParameterBounds[Rvi:Rvi+2])
+                    Rset[:, Rvi] = numpy.ones(Contributions)[:]*mb/2.
             else:
-                Rset = Randfunc(Ncontrib)
-        elif (size(Prior,0) != 0) & (size(Ncontrib) == 0):
-            Ncontrib = size(Prior, 0)
+                Rset = Randfunc(Contributions)
+        elif (size(Prior,0) != 0) & (size(Contributions) == 0):
+            Contributions = size(Prior, 0)
             Rset = Prior
-        elif size(Prior, 0) == Ncontrib:
+        elif size(Prior, 0) == Contributions:
             Rset = Prior
-        elif size(Prior, 0) < Ncontrib:
-            print "size of prior is smaller than Ncontrib. "\
+        elif size(Prior, 0) < Contributions:
+            print "size of prior is smaller than Contributions. "\
                   "duplicating random prior values"
             # while size(Prior) < Nsph:
             Addi = numpy.random.randint(size(Prior,0),
-                        size = Ncontrib - size(Prior,0))
+                        size = Contributions - size(Prior,0))
             Rset = concatenate((Prior, Prior[Addi, :]))
             print "size now:", size(Rset)
-        elif size(Prior, 0) > Ncontrib:
-            print "Size of prior is larger than Ncontrib. "\
+        elif size(Prior, 0) > Contributions:
+            print "Size of prior is larger than Contributions. "\
                   "removing random prior values"
             # remaining choices
-            Remi = numpy.random.randint(size(Prior, 0), size = Ncontrib)
+            Remi = numpy.random.randint(size(Prior, 0), size = Contributions)
             Rset = Prior[Remi, :]
             print "size now:", size(Rset, 0)
         
-        if Memsave == False:
+        if LowMemoryFootprint == False:
             # calculate their form factors
             FFset = FFfunc(Rset)
-            Vset = VOLfunc(Rset, Rpfactor)
-            # Vset = (4.0/3*pi) * Rset**(3*Rpfactor)
+            Vset = VOLfunc(Rset, PowerCompensationFactor)
+            # Vset = (4.0/3*pi) * Rset**(3*PowerCompensationFactor)
             # calculate the intensities
             Iset = FFset**2 * (Vset + 0*FFset)**2 # a set of intensities
             Vst = sum(Vset**2) # total volume squared
@@ -1176,11 +1199,11 @@ class McSAS(object):
         else:
             # calculate intensity in memory saving mode:
             # calculate volume for entire set, this does not take much space   
-            Vset = VOLfunc(Rset, Rpfactor)
+            Vset = VOLfunc(Rset, PowerCompensationFactor)
 
             FFset = FFfunc(Rset[0, :][newaxis, :])
             It = FFset**2 * (Vset[0] + 0*FFset)**2 # a set of intensities
-            for ri in arange(1, Ncontrib):
+            for ri in arange(1, Contributions):
                 # calculate their form factors
                 FFset = FFfunc(Rset[ri, :][newaxis, :])
                 # a set of intensities
@@ -1220,13 +1243,13 @@ class McSAS(object):
         Now = time.time()
         Nmoves = 0 # tracking the number of moves
         Nnotaccepted = 0
-        while (Conval > Convcrit) & (Niter < Maxiter):
+        while (Conval > ConvergenceCriterion) & (Niter < MaximumIterations):
             Rt = Randfunc()
             Ft = FFfunc(Rt)
-            Vtt = VOLfunc(Rt, Rpfactor)
+            Vtt = VOLfunc(Rt, PowerCompensationFactor)
             Itt = (Ft**2 * Vtt**2)
             # Calculate new total intensity
-            if Memsave == False:
+            if LowMemoryFootprint == False:
                 # we do subtractions and additions, which give us another
                 # factor 2 improvement in speed over summation and is much
                 # more scalable
@@ -1244,7 +1267,7 @@ class McSAS(object):
             Sct, Convalt = self._Iopt(I, Itest/Vstest, E, Sc)
             # test if the radius change is an improvement:
             if Convalt < Conval: # it's better
-                if Memsave:
+                if LowMemoryFootprint:
                     Rset[Ri, :], It, Vset[Ri], Vst, Sc, Conval = \
                             (Rt, Itest, Vtt, Vstest, Sct, Convalt)
                 else:
@@ -1252,7 +1275,7 @@ class McSAS(object):
                             (Rt, Itt, Itest, Vtt, Vstest, Sct, Convalt)
                 print "Improvement in iteration number {0}, "\
                       "Chi-squared value {1:f} of {2:f}\r".format(
-                              Niter, Conval, Convcrit),
+                              Niter, Conval, ConvergenceCriterion),
                 Nmoves += 1
                 if OutputIterations:
                     # output each iteration, starting with number 0. 
@@ -1282,11 +1305,11 @@ class McSAS(object):
                 Nnotaccepted = -1
             # else nothing to do
             Ri += 1 # move to next sphere in list
-            Ri = Ri % (Ncontrib) # loop if last sphere
+            Ri = Ri % (Contributions) # loop if last sphere
             # number of non-accepted moves, resets to zero after accepted move
             Nnotaccepted += 1
             Niter += 1 # add one to the iteration number           
-        if Niter >= Maxiter:
+        if Niter >= MaximumIterations:
             print "exited due to max. number of iterations ({0}) "\
                   "reached".format(Niter)
         else:
@@ -1344,82 +1367,82 @@ class McSAS(object):
             *VariableNumber*: int
                 Shape parameter index. e.g. an ellipsoid has 3:
                 width, height and orientation
-            *Hx*: array
+            *HistogramXLowerEdge*: array
                 Histogram bin left edge position (x-axis in histogram)
-            *Hmid*: array
+            *HistogramXMean*: array
                 Center positions for the size histogram bins
                 (x-axis in histogram, used for errorbars)
-            *Hwidth*: array
+            *HistogramXWidth*: array
                 Histogram bin width (x-axis in histogram,
                 defines bar plot bar widths)
-            *Hmean*: array
+            *VolumeHistogramYMean*: array
                 Volume-weighted particle size distribution values for
-                all *Nreps* Results (y-axis bar height)
-            *Hnmean*: array
-                Number-weighted analogue of the above *Hmean*
-            *Hy*: size (Histbins x Nreps) array
+                all *Repetitions* Results (y-axis bar height)
+            *NumberHistogramYMean*: array
+                Number-weighted analogue of the above *VolumeHistogramYMean*
+            *VolumeHistogramRepetitionsY*: size (HistogramBins x Repetitions) array
                 Volume-weighted particle size distribution bin values for each
-                MC fit repetition (the mean of which is *Hmean*, and the sample
-                standard deviation of which is *Hstd*)
-            *Hny*: size (Histbins x Nreps) array
+                MC fit repetition (the mean of which is *VolumeHistogramYMean*, and the sample
+                standard deviation of which is *VolumeHistogramYStd*)
+            *NumberHistogramRepetitionsY*: size (HistogramBins x Repetitions) array
                 Number-weighted particle size distribution bin values
                 for each MC fit repetition
-            *Hstd*: array
+            *VolumeHistogramYStd*: array
                 Standard deviations of the corresponding volume-weighted size
-                distribution bins, calculated from *Nreps* repetitions of the
+                distribution bins, calculated from *Repetitions* repetitions of the
                 MCfit_sph() function
-            *Hnstd*: array
+            *NumberHistogramYStd*: array
                 Standard deviation for the number-weigthed distribution
-            *Vf*: size (Ncontrib x Nreps) array
-                Volume fractions for each of Ncontrib contributions 
-                in each of Nreps iterations
-            *Nf*: size (Ncontrib x Nreps) array
+            *VolumeFraction*: size (Contributions x Repetitions) array
+                Volume fractions for each of Contributions contributions 
+                in each of Repetitions iterations
+            *NumberFraction*: size (Contributions x Repetitions) array
                 Number fraction for each contribution
-            *Vft*: size (Nreps) array
-                Total scatterer volume fraction for each of the *Nreps*
+            *TotalVolumeFraction*: size (Repetitions) array
+                Total scatterer volume fraction for each of the *Repetitions*
                 iterations
-            *Nft*: size (Nreps) array
+            *TotalNumberFraction*: size (Repetitions) array
                 Total number fraction 
-            *vfmin*: size (Nsph x Nreps) array
+            *MinimumRequiredVolume*: size (Nsph x Repetitions) array
                 minimum required volume fraction for each contribution to
                 become statistically significant.
-            *nfmin*: size (Nsph x Nreps) array
-                number-weighted analogue to *vfmin*
-            *vfminbins*: size (Hmid) array 
+            *MinimumRequiredNumber*: size (Nsph x Repetitions) array
+                number-weighted analogue to *MinimumRequiredVolume*
+            *VolumeHistogramMinimumRequired*: size (HistogramXMean) array 
                 array with the minimum required volume fraction per bin to
                 become statistically significant. Used to display minimum
                 required level in histogram.
-            *nfminbins*: size (Hmid) array
-                number-weighted analogue to *vfminbins*
-            *Screps*: size (2 x Nreps) array
+            *NumberHistogramMinimumRequired*: size (HistogramXMean) array
+                number-weighted analogue to *VolumeHistogramMinimumRequired*
+            *ScalingFactors*: size (2 x Repetitions) array
                 Scaling and background values for each repetition. Used to
                 display background level in data and fit plot.
         """
         # get settings
         # set the bin edges for our radius bins either based on a linear
         # division or on a logarithmic division of radii.
-        Ncontrib = self.GetParameter('Ncontrib')
-        Nreps = self.GetParameter('Nreps')
-        Rpfactor = self.GetParameter('Rpfactor')
-        Memsave = self.GetParameter('Memsave')
-        drhosqr = self.GetParameter('drhosqr')
+        Contributions = self.GetParameter('Contributions')
+        Repetitions = self.GetParameter('Repetitions')
+        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
+        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
+        DeltaRhoSquared = self.GetParameter('DeltaRhoSquared')
         Rrep = self.GetResult('Rrep')
-        Histbins = self.GetParameter('Histbins')
-        Histscale = self.GetParameter('Histscale')
-        Bounds = self.GetParameter('Bounds')
+        HistogramBins = self.GetParameter('HistogramBins')
+        HistogramXScale = self.GetParameter('HistogramXScale')
+        ContributionParameterBounds = self.GetParameter('ContributionParameterBounds')
 
         # ov = zeros(shape(Rrep)) # observability
-        Vf = zeros((Ncontrib, Nreps)) # volume fraction for each contribution
-        Nf = zeros((Ncontrib, Nreps)) # number fraction for each contribution
-        qm = zeros((Ncontrib, Nreps)) # volume fraction for each contribution
-        vfmin = zeros((Ncontrib, Nreps)) # volume frac. for each contribution
-        nfmin = zeros((Ncontrib, Nreps)) # number frac. for each contribution
-        Vft = zeros([Nreps]) # total volume fractions
-        Nft = zeros([Nreps]) # total number 
+        VolumeFraction = zeros((Contributions, Repetitions)) # volume fraction for each contribution
+        NumberFraction = zeros((Contributions, Repetitions)) # number fraction for each contribution
+        qm = zeros((Contributions, Repetitions)) # volume fraction for each contribution
+        MinimumRequiredVolume = zeros((Contributions, Repetitions)) # volume frac. for each contribution
+        MinimumRequiredNumber = zeros((Contributions, Repetitions)) # number frac. for each contribution
+        TotalVolumeFraction = zeros([Repetitions]) # total volume fractions
+        TotalNumberFraction = zeros([Repetitions]) # total number 
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
-        Screps = zeros([2, Nreps])
+        ScalingFactors = zeros([2, Repetitions])
 
         # Functions!
         Randfunc = self.GetFunction('RAND')
@@ -1430,14 +1453,14 @@ class McSAS(object):
         # data!
         q = self.GetData('Q')
         I = self.GetData('I')
-        E = self.GetData('IERR')
+        E = self.GetData('IError')
 
         # loop over each repetition
-        for ri in range(Nreps):
+        for ri in range(Repetitions):
             Rset = Rrep[:, :, ri] # the single set of R for this calculation
             # compensated volume for each sphere in the set
-            Vset = VOLfunc(Rset, Rpfactor)
-            if Memsave == False:
+            Vset = VOLfunc(Rset, PowerCompensationFactor)
+            if LowMemoryFootprint == False:
                 # Form factors, all normalized to 1 at q=0.
                 FFset = FFfunc(Rset)
                 # Calculate the intensities
@@ -1447,7 +1470,7 @@ class McSAS(object):
             else:
                 FFset = FFfunc(Rset[0, :][newaxis, :])
                 It = FFset**2 * (Vset[0] + 0*FFset)**2 # a set of intensities
-                for Rr in arange(1, Ncontrib):
+                for Rr in arange(1, Contributions):
                     # calculate their form factors
                     FFset = FFfunc(Rset[Rr, :][newaxis, :])
                     It = It + FFset**2 * (Vset[Rr] + 0*FFset)**2
@@ -1459,31 +1482,31 @@ class McSAS(object):
             # Now for each sphere, calculate its volume fraction
             # (p_c compensated):
             # compensated volume for each sphere in
-            # the set Vsa = 4./3*pi*Rset**(3*Rpfactor)
-            Vsa = VOLfunc(Rset, Rpfactor)
+            # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
+            Vsa = VOLfunc(Rset, PowerCompensationFactor)
             # And the real particle volume:
             # compensated volume for each sphere in
-            # the set Vsa = 4./3*pi*Rset**(3*Rpfactor)
-            Vpa = VOLfunc(Rset, Rpfactor = 1.)
+            # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
+            Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
             # initial guess for the scaling factor.
             Sci = numpy.max(I) / numpy.max(It)
             Bgi = numpy.min(I)
             # optimize scaling and background for this repetition
             Sc, Cv = self._Iopt(I, It, E, [Sci, Bgi])
-            Screps[:, ri] = Sc # scaling and background for this repetition.
+            ScalingFactors[:, ri] = Sc # scaling and background for this repetition.
             # a set of volume fractions
-            Vf[:, ri] = (Sc[0] * Vsa**2/(Vpa * drhosqr)).flatten()
-            Vft[ri] = sum(Vf[:, ri]) # total volume 
-            Nf[:, ri] = Vf[:, ri]/(Vpa.flatten())
-            Nft[ri] = sum(Nf[:, ri]) # total number
-            for isi in range(Ncontrib): # For each sphere
+            VolumeFraction[:, ri] = (Sc[0] * Vsa**2/(Vpa * DeltaRhoSquared)).flatten()
+            TotalVolumeFraction[ri] = sum(VolumeFraction[:, ri]) # total volume 
+            NumberFraction[:, ri] = VolumeFraction[:, ri]/(Vpa.flatten())
+            TotalNumberFraction[ri] = sum(NumberFraction[:, ri]) # total number
+            for isi in range(Contributions): # For each sphere
                 # calculate the observability (the maximum contribution for
                 # that sphere to the total scattering pattern)
                 # NOTE: no need to compensate for p_c here, we work with
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
                 # ov[isi,ri] = (Iset[isi,:]/(It)).max()
-                if Memsave:
+                if LowMemoryFootprint:
                     FFset = FFfunc(Rset[isi, :][newaxis, :])
                     Ir = FFset**2 * (Vset[isi] + 0 * FFset)**2
                     # determine where this maximum observability is
@@ -1491,103 +1514,103 @@ class McSAS(object):
                     qmi = numpy.argmax(Ir.flatten()/It.flatten())
                     # point where the contribution of isi is maximum
                     qm[isi, ri] = q[0, qmi]
-                    vfmin[isi, ri] = numpy.min(E * Vf[isi, ri]/(Sc[0] * Ir))
-                    nfmin[isi, ri] = vfmin[isi, ri]/Vpa[isi]
+                    MinimumRequiredVolume[isi, ri] = numpy.min(E * VolumeFraction[isi, ri]/(Sc[0] * Ir))
+                    MinimumRequiredNumber[isi, ri] = MinimumRequiredVolume[isi, ri]/Vpa[isi]
                 else:
                     # determine where this maximum observability is
                     # of contribution isi (index)
                     qmi = numpy.argmax(Iset[isi, :].flatten()/It.flatten())
                     # point where the contribution of isi is maximum
                     qm[isi, ri] = q[0, qmi]
-                    vfmin[isi, ri] = numpy.min(E * Vf[isi, ri]/
+                    MinimumRequiredVolume[isi, ri] = numpy.min(E * VolumeFraction[isi, ri]/
                                                (Sc[0] * Iset[isi, :]))
-                    nfmin[isi, ri] = vfmin[isi, ri]/Vpa[isi]
+                    MinimumRequiredNumber[isi, ri] = MinimumRequiredVolume[isi, ri]/Vpa[isi]
                 # close approximation:
-                # vfmin[isi,ri] = (E[qmi]*Vf[isi,ri]/(Sc[0]*Iset[isi,qmi]))
+                # MinimumRequiredVolume[isi,ri] = (E[qmi]*VolumeFraction[isi,ri]/(Sc[0]*Iset[isi,qmi]))
                 # or more precice but slower:
-            Nf[:, ri] = Nf[:, ri]/Nft[ri]
-            nfmin[:, ri] = nfmin[:, ri]/Nft[ri]
+            NumberFraction[:, ri] = NumberFraction[:, ri]/TotalNumberFraction[ri]
+            MinimumRequiredNumber[:, ri] = MinimumRequiredNumber[:, ri]/TotalNumberFraction[ri]
 
         # now we histogram over each variable
         # for each variable parameter we define,
         # we need to histogram separately.
-        for vari in range(prod(shape(Histbins))):
+        for vari in range(prod(shape(HistogramBins))):
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
-            if Histscale[vari] == 'lin':
-                # Hx contains the Histbins+1 bin edges, or class limits.
-                Hx = linspace(Bounds[0 + 2*vari],
-                              Bounds[1 + 2*vari],
-                              Histbins[vari] + 1)
+            if HistogramXScale[vari] == 'lin':
+                # HistogramXLowerEdge contains the HistogramBins+1 bin edges, or class limits.
+                HistogramXLowerEdge = linspace(ContributionParameterBounds[0 + 2*vari],
+                              ContributionParameterBounds[1 + 2*vari],
+                              HistogramBins[vari] + 1)
             else:
-                Hx = 10**(linspace(log10(Bounds[0 + 2*vari]),
-                                   log10(Bounds[1 + 2*vari]),
-                                   Histbins[vari] + 1))
+                HistogramXLowerEdge = 10**(linspace(log10(ContributionParameterBounds[0 + 2*vari]),
+                                   log10(ContributionParameterBounds[1 + 2*vari]),
+                                   HistogramBins[vari] + 1))
             # total volume fraction contribution in a bin
-            Hy = zeros([Histbins[vari], Nreps])
+            VolumeHistogramRepetitionsY = zeros([HistogramBins[vari], Repetitions])
             # total number fraction contribution in a bin
-            Hny = zeros([Histbins[vari], Nreps])
+            NumberHistogramRepetitionsY = zeros([HistogramBins[vari], Repetitions])
             # minimum required number of contributions /in a bin/ to make
             # a measurable impact
-            vfminbin = zeros([Histbins[vari], Nreps])
-            nfminbin = zeros([Histbins[vari], Nreps])
-            Hmid = zeros(Histbins[vari])
-            vfminbins = zeros(Histbins[vari])
-            nfminbins = zeros(Histbins[vari])
+            MinimumRequiredVolumebin = zeros([HistogramBins[vari], Repetitions])
+            MinimumRequiredNumberbin = zeros([HistogramBins[vari], Repetitions])
+            HistogramXMean = zeros(HistogramBins[vari])
+            VolumeHistogramMinimumRequired = zeros(HistogramBins[vari])
+            NumberHistogramMinimumRequired = zeros(HistogramBins[vari])
 
-            for ri in range(Nreps):
+            for ri in range(Repetitions):
                 # the single set of R for this calculation
                 Rset = Rrep[:, vari, ri]
-                for bini in range(Histbins[vari]):
+                for bini in range(HistogramBins[vari]):
                     # indexing which contributions fall into the radius bin
-                    findi = ((Rset >= Hx[bini]) * (Rset < Hx[bini + 1]))
-                    # print 'findi: {} Vf: {}'.format(shape(findi), shape(Vf))
+                    findi = ((Rset >= HistogramXLowerEdge[bini]) * (Rset < HistogramXLowerEdge[bini + 1]))
+                    # print 'findi: {} VolumeFraction: {}'.format(shape(findi), shape(VolumeFraction))
                     # findi = findi[:, 0]
                     # y contains the volume fraction for that radius bin
-                    Hy[bini, ri] = sum(Vf[findi, ri])
-                    Hny[bini, ri] = sum(Nf[findi, ri])
+                    VolumeHistogramRepetitionsY[bini, ri] = sum(VolumeFraction[findi, ri])
+                    NumberHistogramRepetitionsY[bini, ri] = sum(NumberFraction[findi, ri])
                     if sum(findi) == 0:
-                        vfminbin[bini, ri] = 0
-                        nfminbin[bini, ri] = 0
+                        MinimumRequiredVolumebin[bini, ri] = 0
+                        MinimumRequiredNumberbin[bini, ri] = 0
                     else:
-                        vfminbin[bini, ri] = numpy.max(vfmin[findi, ri])
-                        vfminbin[bini, ri] = numpy.mean(vfmin[findi, ri])
-                        nfminbin[bini, ri] = numpy.max(nfmin[findi, ri])
-                        nfminbin[bini, ri] = numpy.mean(nfmin[findi, ri])
-                    if isnan(Hy[bini, ri]):
-                        Hy[bini, ri] = 0.
-                        Hny[bini, ri] = 0.
-            for bini in range(Histbins[vari]):
-                Hmid[bini] = numpy.mean(Hx[bini:bini+2])
-                vb = vfminbin[bini, :]
-                vfminbins[bini] = numpy.max(vb[vb < inf])
-                nb = nfminbin[bini, :]
-                nfminbins[bini] = numpy.max(nb[vb < inf])
-            Hmean = numpy.mean(Hy, axis=1)
-            Hnmean = numpy.mean(Hny, axis=1)
-            Hstd = numpy.std(Hy, axis=1)
-            Hnstd = numpy.std(Hny, axis=1)
+                        MinimumRequiredVolumebin[bini, ri] = numpy.max(MinimumRequiredVolume[findi, ri])
+                        MinimumRequiredVolumebin[bini, ri] = numpy.mean(MinimumRequiredVolume[findi, ri])
+                        MinimumRequiredNumberbin[bini, ri] = numpy.max(MinimumRequiredNumber[findi, ri])
+                        MinimumRequiredNumberbin[bini, ri] = numpy.mean(MinimumRequiredNumber[findi, ri])
+                    if isnan(VolumeHistogramRepetitionsY[bini, ri]):
+                        VolumeHistogramRepetitionsY[bini, ri] = 0.
+                        NumberHistogramRepetitionsY[bini, ri] = 0.
+            for bini in range(HistogramBins[vari]):
+                HistogramXMean[bini] = numpy.mean(HistogramXLowerEdge[bini:bini+2])
+                vb = MinimumRequiredVolumebin[bini, :]
+                VolumeHistogramMinimumRequired[bini] = numpy.max(vb[vb < inf])
+                nb = MinimumRequiredNumberbin[bini, :]
+                NumberHistogramMinimumRequired[bini] = numpy.max(nb[vb < inf])
+            VolumeHistogramYMean = numpy.mean(VolumeHistogramRepetitionsY, axis=1)
+            NumberHistogramYMean = numpy.mean(NumberHistogramRepetitionsY, axis=1)
+            VolumeHistogramYStd = numpy.std(VolumeHistogramRepetitionsY, axis=1)
+            NumberHistogramYStd = numpy.std(NumberHistogramRepetitionsY, axis=1)
             self.SetResult(**{
                 'VariableNumber': vari, # this line will place the Results in
                                         # the dict at self.Results[vari]
-                'Hx': Hx,
-                'Hmid': Hmid,
-                'Hwidth': diff(Hx),
-                'Hy': Hy,
-                'Hny': Hny,
-                'Hmean': Hmean,
-                'Hstd': Hstd,
-                'Hnmean': Hnmean,
-                'Hnstd': Hnstd,
-                'vfminbins': vfminbins,
-                'vfmin': vfmin,
-                'Vf': Vf,
-                'Vft': Vft,
-                'nfminbins': nfminbins,
-                'nfmin': nfmin,
-                'Nf': Nf,
-                'Nft': Nft,
-                'Screps': Screps})
+                'HistogramXLowerEdge': HistogramXLowerEdge,
+                'HistogramXMean': HistogramXMean,
+                'HistogramXWidth': diff(HistogramXLowerEdge),
+                'VolumeHistogramRepetitionsY': VolumeHistogramRepetitionsY,
+                'NumberHistogramRepetitionsY': NumberHistogramRepetitionsY,
+                'VolumeHistogramYMean': VolumeHistogramYMean,
+                'VolumeHistogramYStd': VolumeHistogramYStd,
+                'NumberHistogramYMean': NumberHistogramYMean,
+                'NumberHistogramYStd': NumberHistogramYStd,
+                'VolumeHistogramMinimumRequired': VolumeHistogramMinimumRequired,
+                'MinimumRequiredVolume': MinimumRequiredVolume,
+                'VolumeFraction': VolumeFraction,
+                'TotalVolumeFraction': TotalVolumeFraction,
+                'NumberHistogramMinimumRequired': NumberHistogramMinimumRequired,
+                'MinimumRequiredNumber': MinimumRequiredNumber,
+                'NumberFraction': NumberFraction,
+                'TotalNumberFraction': TotalNumberFraction,
+                'ScalingFactors': ScalingFactors})
 
     def GenerateTwoDIntensity(self):
         """
@@ -1599,14 +1622,14 @@ class McSAS(object):
         # load original Dataset
         q = self.GetData('Q', Dataset = 'original')
         I = self.GetData('I', Dataset = 'original')
-        E = self.GetData('IERR', Dataset = 'original')
-        PSI = self.GetData('PSI', Dataset = 'original')
+        E = self.GetData('IError', Dataset = 'original')
+        Psi = self.GetData('Psi', Dataset = 'original')
         # we need to recalculate the Result in two dimensions
         kansas = shape(q) # we will return to this shape
         q = reshape(q, [1, -1]) # flatten
         I = reshape(I, [1, -1]) # flatten
         E = reshape(E, [1, -1]) # flatten
-        PSI = reshape(PSI, [1, -1]) # flatten
+        Psi = reshape(Psi, [1, -1]) # flatten
 
         Randfunc = self.GetFunction('RAND')
         FFfunc = self.GetFunction('FF')
@@ -1615,34 +1638,34 @@ class McSAS(object):
         print "Recalculating final Result, this may take some time"
         # for each Result
         Iave = zeros(shape(q))
-        Nreps = self.GetParameter('Nreps')
-        Rpfactor = self.GetParameter('Rpfactor')
-        qlims = self.GetParameter('qlims')
-        psilims = self.GetParameter('psilims')
-        Memsave = self.GetParameter('Memsave')
-        Ncontrib = self.GetParameter('Ncontrib')
-        Screps = self.GetResult('Screps')
-        for nr in range(Nreps):
-            print 'regenerating set {} of {}'.format(nr, Nreps)
+        Repetitions = self.GetParameter('Repetitions')
+        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
+        QBounds = self.GetParameter('QBounds')
+        PsiBounds = self.GetParameter('PsiBounds')
+        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
+        Contributions = self.GetParameter('Contributions')
+        ScalingFactors = self.GetResult('ScalingFactors')
+        for nr in range(Repetitions):
+            print 'regenerating set {} of {}'.format(nr, Repetitions)
             Rset = Result['Rrep'][:, :, nr]
             # calculate their form factors
-            Vset = VOLfunc(Rset, Rpfactor)
-            # Vset = (4.0/3*pi) * Rset**(3*Rpfactor)
+            Vset = VOLfunc(Rset, PowerCompensationFactor)
+            # Vset = (4.0/3*pi) * Rset**(3*PowerCompensationFactor)
             # calculate the intensities
-            if Memsave == False:
+            if LowMemoryFootprint == False:
                 # Form factors, all normalized to 1 at q=0.
-                FFset = FFfunc(Rset, Q = q, PSI = PSI)
+                FFset = FFfunc(Rset, Q = q, Psi = Psi)
                 # Calculate the intensities
                 # Intensity for each contribution as used in the MC calculation
                 Iset = FFset**2 * (Vset + 0*FFset)**2
                 # the total intensity of the scattering pattern
                 It = sum(Iset, 0)
             else:
-                FFset = FFfunc(Rset[0, :][newaxis, :], Q = q, PSI = PSI)
+                FFset = FFfunc(Rset[0, :][newaxis, :], Q = q, Psi = Psi)
                 It = FFset**2 * (Vset[0] + 0*FFset)**2 # a set of intensities
-                for ri in arange(1, Ncontrib):
+                for ri in arange(1, Contributions):
                     # calculate their form factors
-                    FFset = FFfunc(Rset[ri, :][newaxis, :], Q = q, PSI = PSI)
+                    FFset = FFfunc(Rset[ri, :][newaxis, :], Q = q, Psi = Psi)
                     # a set of intensities
                     It = It + FFset**2 * (Vset[ri] + 0*FFset)**2
             Vst = sum(Vset**2) # total volume squared
@@ -1650,29 +1673,29 @@ class McSAS(object):
             # Optimize the intensities and calculate convergence criterium
             # SMEAR function goes here
             It = SMEARfunc(It)
-            Iave = Iave + It*Screps[0, nr] + Screps[1, nr] # add to average
+            Iave = Iave + It*ScalingFactors[0, nr] + ScalingFactors[1, nr] # add to average
         # print "Initial conval V1", Conval1
-        Iave = Iave/Nreps
+        Iave = Iave/Repetitions
         # mask (lifted from ClipDataset)
-        validbools = isfinite(q)
+        ValidIndices = isfinite(q)
         # Optional masking of negative intensity
-        if self.GetParameter('MaskNegI'):
-            validbools = validbools * (I >= 0)
+        if self.GetParameter('MaskNegativeI'):
+            ValidIndices = ValidIndices * (I >= 0)
         if self.GetParameter('MaskZeroI'):
-            validbools = validbools * (I != 0)
-        if (qlims == []) and (psilims == []):
+            ValidIndices = ValidIndices * (I != 0)
+        if (QBounds == []) and (PsiBounds == []):
             # q limits not set, simply copy Dataset to FitData
-            validbools = validbools
-        if (not(qlims == [])): # and qlims is implicitly set
+            ValidIndices = ValidIndices
+        if (not(QBounds == [])): # and QBounds is implicitly set
             # excluding the lower q limit may prevent q=0 from appearing
-            validbools = validbools * \
-                    (q > numpy.min(qlims)) & ( q<= numpy.max(qlims))
-        # we assume here that we have a Dataset ['PSI']
-        if (not(psilims == [])):
+            ValidIndices = ValidIndices * \
+                    (q > numpy.min(QBounds)) & ( q<= numpy.max(QBounds))
+        # we assume here that we have a Dataset ['Psi']
+        if (not(PsiBounds == [])):
             # excluding the lower q limit may prevent q=0 from appearing
-            validbools = validbools * \
-                    (PSI > numpy.min(psilims)) & (PSI <= numpy.max(psilims))
-        Iave = Iave * validbools
+            ValidIndices = ValidIndices * \
+                    (Psi > numpy.min(PsiBounds)) & (Psi <= numpy.max(PsiBounds))
+        Iave = Iave * ValidIndices
         # shape back to imageform
         I2D = reshape(Iave, kansas)
         self.SetResult(I2D = I2D)
@@ -1693,7 +1716,7 @@ class McSAS(object):
         Input arguments should be names of fields in *self.Result*.
         For example::
 
-            A.McCSV('hist.csv', 'Hx', 'Hwidth', 'Hmean', 'Hstd',
+            A.McCSV('hist.csv', 'HistogramXLowerEdge', 'HistogramXWidth', 'VolumeHistogramYMean', 'VolumeHistogramYStd',
                     VariableNumber = 0)
 
         I.e. just stick on as many columns as you'd like. They will be
@@ -1825,12 +1848,12 @@ class McSAS(object):
             return ah
 
         # load Parameters
-        Histscale = self.GetParameter('Histscale')
-        Histweight = self.GetParameter('Histweight')
+        HistogramXScale = self.GetParameter('HistogramXScale')
+        HistogramWeighting = self.GetParameter('HistogramWeighting')
         # load Result
         Result = self.GetResult()
         # check how many Result plots we need to generate: maximum three.
-        nhists = len(Histscale)
+        nhists = len(HistogramXScale)
 
         # set plot font
         plotfont = fm.FontProperties(
@@ -1846,19 +1869,19 @@ class McSAS(object):
         # load original Dataset
         q = self.GetData('Q', Dataset = 'original')
         I = self.GetData('I', Dataset = 'original')
-        E = self.GetData('IERR', Dataset = 'original')
+        E = self.GetData('IError', Dataset = 'original')
         TwoDMode = False
         if ndim(q) > 1:
             # 2D data
             TwoDMode = True
-            PSI = self.GetData('PSI', Dataset = 'original')
+            Psi = self.GetData('Psi', Dataset = 'original')
             # we need to recalculate the Result in two dimensions
             # done by GenerateTwoDIntensity function
             I2D = self.GetResult('I2D')
             Ishow = I.copy()
             # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
-            Ishow[(PSI >   0) * (PSI <=  90)] = I2D[(PSI >   0) * (PSI <=  90)]
-            Ishow[(PSI > 180) * (PSI <= 270)] = I2D[(PSI > 180) * (PSI <= 270)]
+            Ishow[(Psi >   0) * (Psi <=  90)] = I2D[(Psi >   0) * (Psi <=  90)]
+            Ishow[(Psi > 180) * (Psi <= 270)] = I2D[(Psi > 180) * (Psi <= 270)]
             # xalimits=(-numpy.min(q[:,0]),numpy.max(q[:,-1]))
             # yalimits=(-numpy.min(q[0,:]),numpy.max(q[-1,:]))
             xmidi = int(round(size(q, 1)/2))
@@ -1891,13 +1914,13 @@ class McSAS(object):
                  dash_capstyle = 'round', zorder = -1)
             # xscale('log')
             # yscale('log')
-            aq = sort(Result['Qfit'][0, :])
-            aI = Result['Imean'][0, argsort(Result['Qfit'][0, :])]
+            aq = sort(Result['QFit'][0, :])
+            aI = Result['FitIntensityMean'][0, argsort(Result['QFit'][0, :])]
             plot(aq, aI, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
-            plot(aq, numpy.mean(Result['Screps'][1, :]) + 0*aq,
+            plot(aq, numpy.mean(Result['ScalingFactors'][1, :]) + 0*aq,
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})'
-                         .format(numpy.mean(Result['Screps'][1, :])),
+                         .format(numpy.mean(Result['ScalingFactors'][1, :])),
                  zorder = 3)
             leg = legend(loc = 1, fancybox = True, prop = textfont)
         title('Measured vs. Fitted intensity',
@@ -1905,69 +1928,69 @@ class McSAS(object):
         R_ax = list()
         for histi in range(nhists):
             # get data:
-            Hx = self.GetResult(parname = 'Hx',
+            HistogramXLowerEdge = self.GetResult(parname = 'HistogramXLowerEdge',
                                 VariableNumber = histi)
-            Hmid = self.GetResult(parname = 'Hmid',
+            HistogramXMean = self.GetResult(parname = 'HistogramXMean',
                                   VariableNumber = histi)
-            Hwidth = self.GetResult(parname = 'Hwidth',
+            HistogramXWidth = self.GetResult(parname = 'HistogramXWidth',
                                     VariableNumber = histi)
-            if Histweight == 'volume':
-                Hmean = self.GetResult(parname = 'Hmean',
+            if HistogramWeighting == 'volume':
+                VolumeHistogramYMean = self.GetResult(parname = 'VolumeHistogramYMean',
                                        VariableNumber = histi)
-                vfminbins = self.GetResult(parname = 'vfminbins',
+                VolumeHistogramMinimumRequired = self.GetResult(parname = 'VolumeHistogramMinimumRequired',
                                            VariableNumber = histi)
-                Hstd = self.GetResult(parname = 'Hstd',
+                VolumeHistogramYStd = self.GetResult(parname = 'VolumeHistogramYStd',
                                       VariableNumber = histi)
-            elif Histweight == 'number':
-                Hmean = self.GetResult(parname = 'Hnmean',
+            elif HistogramWeighting == 'number':
+                VolumeHistogramYMean = self.GetResult(parname = 'NumberHistogramYMean',
                                        VariableNumber = histi)
-                vfminbins = self.GetResult(parname = 'nfminbins',
+                VolumeHistogramMinimumRequired = self.GetResult(parname = 'NumberHistogramMinimumRequired',
                                            VariableNumber = histi)
-                Hstd = self.GetResult(parname = 'Hnstd',
+                VolumeHistogramYStd = self.GetResult(parname = 'NumberHistogramYStd',
                                       VariableNumber = histi)
             else: 
-                print "Incorrect value for Histweight: "\
+                print "Incorrect value for HistogramWeighting: "\
                       "should be either 'volume' or 'number'"
 
             # prep axes
-            if Histscale[histi] == 'log':
+            if HistogramXScale[histi] == 'log':
                 # quick fix with the [0] reference. Needs fixing, this
                 # plotting function should be rewritten to support multiple
                 # variables.
                 R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
                             axisbg = (.95, .95, .95),
-                            xlim = (numpy.min(Hx) * (1 - AxisMargin),
-                                    numpy.max(Hx) * (1 + AxisMargin)),
-                            ylim = (0, numpy.max(Hmean) * (1 + AxisMargin)),
+                            xlim = (numpy.min(HistogramXLowerEdge) * (1 - AxisMargin),
+                                    numpy.max(HistogramXLowerEdge) * (1 + AxisMargin)),
+                            ylim = (0, numpy.max(VolumeHistogramYMean) * (1 + AxisMargin)),
                             xlabel = 'Radius, m',
                             ylabel = '[Rel.] Volume Fraction',
                             xscale = 'log'))
             else:
                 R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
                             axisbg = (.95, .95, .95),
-                            xlim = (numpy.min(Hx) - 
-                                        (1 - AxisMargin)*numpy.min(Hx),
-                                    numpy.max(Hx) * (1 + AxisMargin)),
-                            ylim = (0, numpy.max(Hmean) * (1 + AxisMargin)),
+                            xlim = (numpy.min(HistogramXLowerEdge) - 
+                                        (1 - AxisMargin)*numpy.min(HistogramXLowerEdge),
+                                    numpy.max(HistogramXLowerEdge) * (1 + AxisMargin)),
+                            ylim = (0, numpy.max(VolumeHistogramYMean) * (1 + AxisMargin)),
                             xlabel = 'Radius, m',
                             ylabel = '[Rel.] Volume Fraction'))
 
             R_ax[histi] = SetAxis(R_ax[histi])
             # fill axes
-            bar(Hx[0:-1], Hmean, width = Hwidth, color = 'orange',
+            bar(HistogramXLowerEdge[0:-1], VolumeHistogramYMean, width = HistogramXWidth, color = 'orange',
                 edgecolor = 'black', linewidth = 1, zorder = 2,
                 label = 'MC size histogram')
-            plot(Hmid, vfminbins, 'ro', ms = 5, markeredgecolor = 'r',
+            plot(HistogramXMean, VolumeHistogramMinimumRequired, 'ro', ms = 5, markeredgecolor = 'r',
                  label = 'Minimum visibility limit', zorder = 3)
-            errorbar(Hmid, Hmean, Hstd, zorder = 4, fmt = 'k.', ecolor = 'k',
+            errorbar(HistogramXMean, VolumeHistogramYMean, VolumeHistogramYStd, zorder = 4, fmt = 'k.', ecolor = 'k',
                      elinewidth = 2, capsize = 4, ms = 0, lw = 2,
                      solid_capstyle = 'round', solid_joinstyle = 'miter')
             legend(loc = 1, fancybox = True, prop = textfont)
             title('Radius size histogram', fontproperties = textfont,
                   size = 'x-large')
             # reapply limits in x
-            xlim((numpy.min(Hx) * (1 - AxisMargin),
-                  numpy.max(Hx) * (1 + AxisMargin)))
+            xlim((numpy.min(HistogramXLowerEdge) * (1 - AxisMargin),
+                  numpy.max(HistogramXLowerEdge) * (1 + AxisMargin)))
 
         fig.subplots_adjust(left = 0.1, bottom = 0.11,
                             right = 0.96, top = 0.95,
@@ -1979,7 +2002,7 @@ class McSAS(object):
         and its standard deviation over all nreps as well as the first four
         distribution moments: mean, variance, skewness and kurtosis
         (Pearson's definition).
-        Will use the *Histweight* parameter for determining whether to return
+        Will use the *HistogramWeighting* parameter for determining whether to return
         the volume or number-weighted values.
 
         Input arguments are:
@@ -1991,48 +2014,48 @@ class McSAS(object):
               (e.g. 0 = width, 1 = length, 2 = orientation)
 
         Returns a 4-by-2 array, with the values and their sample standard
-        deviations over all *Nreps*.
+        deviations over all *Repetitions*.
         """
         Rrep = self.GetResult('Rrep')
-        Ncontrib = size(Rrep, 0)
-        NRval = size(Rrep, 1)
-        Nreps = size(Rrep, 2)
-        Rpfactor = self.GetParameter('Rpfactor')
-        Memsave = self.GetParameter('Memsave')
-        drhosqr = self.GetParameter('drhosqr')
-        Histbins = self.GetParameter('Histbins')
-        Histscale = self.GetParameter('Histscale')
-        Histweight = self.GetParameter('Histweight')
-        Bounds = self.GetParameter('Bounds')
+        Contributions = size(Rrep, 0)
+        VariablesPerShape = size(Rrep, 1)
+        Repetitions = size(Rrep, 2)
+        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
+        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
+        DeltaRhoSquared = self.GetParameter('DeltaRhoSquared')
+        HistogramBins = self.GetParameter('HistogramBins')
+        HistogramXScale = self.GetParameter('HistogramXScale')
+        HistogramWeighting = self.GetParameter('HistogramWeighting')
+        ContributionParameterBounds = self.GetParameter('ContributionParameterBounds')
         
         # ov = zeros(shape(Rrep)) # observability
-        Vf = self.GetResult('Vf') # volume fraction for each contribution
-        Nf = self.GetResult('Nf') # number fraction for each contribution
-        Vft = self.GetResult('Vft') # total volume fractions
-        Nft = self.GetResult('Nft') # total number 
+        VolumeFraction = self.GetResult('VolumeFraction') # volume fraction for each contribution
+        NumberFraction = self.GetResult('NumberFraction') # number fraction for each contribution
+        TotalVolumeFraction = self.GetResult('TotalVolumeFraction') # total volume fractions
+        TotalNumberFraction = self.GetResult('TotalNumberFraction') # total number 
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
-        Screps = self.GetResult('Screps')
+        ScalingFactors = self.GetResult('ScalingFactors')
 
-        Val = zeros(Nreps) # total value
-        Mu = zeros(Nreps) # moments..
-        Var = zeros(Nreps) # moments..
-        Skw = zeros(Nreps) # moments..
-        Krt = zeros(Nreps) # moments..
+        Val = zeros(Repetitions) # total value
+        Mu = zeros(Repetitions) # moments..
+        Var = zeros(Repetitions) # moments..
+        Skw = zeros(Repetitions) # moments..
+        Krt = zeros(Repetitions) # moments..
 
         # loop over each repetition
-        for ri in range(Nreps):
+        for ri in range(Repetitions):
             # the single set of R for this calculation
             Rset = Rrep[:, Parameter, ri]
             validi = (Rset > numpy.min(ParameterRange)) * \
                      (Rset < numpy.max(ParameterRange))
             Rset = Rset[validi]
             # compensated volume for each sphere in the set
-            Vset = Vf[validi, ri]
-            Nset = Nf[validi, ri]
+            Vset = VolumeFraction[validi, ri]
+            Nset = NumberFraction[validi, ri]
 
-            if Histweight == 'volume':
+            if HistogramWeighting == 'volume':
                 Val[ri] = sum(Vset)
                 Mu[ri] = sum(Rset * Vset)/sum(Vset)
                 Var[ri] = sum( (Rset - Mu[ri])**2 * Vset )/sum(Vset)
@@ -2041,7 +2064,7 @@ class McSAS(object):
                           (sum(Vset) * sigma**3)
                 Krt[ri] = sum( (Rset-Mu[ri])**4 * Vset )/ \
                           (sum(Vset) * sigma**4)
-            elif Histweight == 'number':
+            elif HistogramWeighting == 'number':
                 Val[ri] = sum(Nset)
                 Mu[ri] = sum(Rset * Nset)/sum(Nset)
                 Var[ri] = sum( (Rset-Mu[ri])**2 * Nset )/sum(Nset)
@@ -2052,7 +2075,7 @@ class McSAS(object):
                           (sum(Nset) * sigma**4)
             else:
                 print("Error in moment calculation, "
-                      "unrecognised Histweight value")
+                      "unrecognised HistogramWeighting value")
                 return None
 
         return numpy.array([[numpy.mean(Val), numpy.std(Val, ddof=1)],
@@ -2081,14 +2104,14 @@ def pickle_write(filename, DBlock):
     fh.close()
     return
 
-def binning_array(Q, PSI, I, IERR, S = 2):
+def binning_array(Q, Psi, I, IError, S = 2):
     """This function applies a simple S-by-S binning routine on images.
     It calculates new error based on old error superseded by standard
     deviation in a bin."""
     def isodd(x):
         #checks if a value is even or odd
         return bool(x & 1)
-    ddi = {'Q': Q, 'PSI': PSI, 'I': I, 'IERR':IERR}
+    ddi = {'Q': Q, 'Psi': Psi, 'I': I, 'IError':IError}
     
     sq = shape(Q)
     if isodd(sq[0]):
@@ -2102,9 +2125,9 @@ def binning_array(Q, PSI, I, IERR, S = 2):
     # now we can do n-by-n binning
     sq = shape(Q)
     qo = zeros((sq[0]/S, sq[1]/S))
-    ddo = {'Q': qo.copy(), 'PSI': qo.copy(),
-           'I': qo.copy(), 'IERR': qo.copy()}
-    for it in ['Q', 'PSI', 'I']:
+    ddo = {'Q': qo.copy(), 'Psi': qo.copy(),
+           'I': qo.copy(), 'IError': qo.copy()}
+    for it in ['Q', 'Psi', 'I']:
         for ri in range(sq[0]/S):
             for ci in range(sq[1]/S):
                 ddo[it][ri, ci] = numpy.mean(
@@ -2113,12 +2136,12 @@ def binning_array(Q, PSI, I, IERR, S = 2):
     for ri in range(sq[0]/S):
         for ci in range(sq[1]/S):
             meanE = sqrt(sum((
-                        ddi['IERR'][S*ri:(S*ri+S), S*ci:(S*ci+S)])**2
+                        ddi['IError'][S*ri:(S*ri+S), S*ci:(S*ci+S)])**2
                     ))/S**2
             # sample standard deviation
             stdI = numpy.std(ddi['I'][S*ri:(S*ri+S), S*ci:(S*ci+S)])
             # stdI=0
-            ddo['IERR'][ri, ci] = numpy.max((meanE, stdI))
+            ddo['IError'][ri, ci] = numpy.max((meanE, stdI))
     return ddo
 
 def binning_1D(q, I, E = [], Nbins = 200, Stats = 'STD'):
