@@ -104,7 +104,7 @@ class McSAS(object):
 
         - *Q*: 1D or 2D array of q-values
         - *I*: corresponding intensity values of the same shape
-        - *IError*: corresponding intensity uncertainty values of the same shape
+        - *IError*: corresponding intensity uncertainties of the same shape
 
     **Optional input Parameters:**
 
@@ -143,10 +143,10 @@ class McSAS(object):
             Units in :math:`m^{-4}`
         - *ConvergenceCriterion*: float, default: 1
             Convergence criterion for the least-squares fit. The fit converges
-            once the :math:`normalized \chi^2 < ConvergenceCriterion`. If convergence is
-            reached with `ConvergenceCriterion == 1`, the model describes
-            the data (on average) to within the uncertainty, and thus all
-            information has been extracted from the scattering pattern.
+            once the :math:`normalized \chi^2 < ConvergenceCriterion`. If 
+            convergence is reached with `ConvergenceCriterion == 1`, the model 
+            describes the data (on average) to within the uncertainty, and thus 
+            all information has been extracted from the scattering pattern.
         - *StartFromMinimum*: bool, default: False
             If set to False, the starting configuration is a set of spheres
             with radii uniformly sampled between the given or estimated
@@ -156,9 +156,10 @@ class McSAS(object):
             feature might be depreciated.
         - *MaximumRetries*: int, default: 5
             If a single MC optimization fails to reach convergence within
-            *MaximumIterations*, it may just be due to bad luck. The procedure will try
-            to redo that MC optimization for a maximum of *MaximumRetries* tries
-            before concluding that it is not bad luck but bad input.
+            *MaximumIterations*, it may just be due to bad luck. The procedure 
+            will try to redo that MC optimization for a maximum of 
+            *MaximumRetries* tries before concluding that it is not bad luck 
+            but bad input.
         - *Plot*: Bool, default: False
             If set to True, will generate a plot showing the data and fit, as
             well as the Resulting size histogram.
@@ -205,10 +206,10 @@ class McSAS(object):
             Standard deviation of the fitted I(q), calculated as the standard 
             deviation of all Repetitions Results.
         *Rrep*: size array (Contributions x Repetitions) (*VariableNumber = 0*)
-            Collection of Contributions contributions fitted to best represent the
-            provided I(q) data. Contains the Results of each of *Repetitions*
-            iterations. This can be used for rebinning without having to
-            re-optimize.
+            Collection of Contributions contributions fitted to best represent 
+            the provided I(q) data. Contains the Results of each of 
+            *Repetitions* iterations. This can be used for rebinning without 
+            having to re-optimize.
         *ScalingFactors*: size array (2 x Repetitions) (*VariableNumber = 0*)
             Scaling and background values for each repetition.
             Used to display background level in data and fit plot.
@@ -230,8 +231,8 @@ class McSAS(object):
             Number-weighted analogue of the above *VolumeHistogramYMean*.
         *VolumeHistogramRepetitionsY*: size array (HistogramBins x Repetitions)
             Volume-weighted particle size distribution bin values for
-            each MC fit repetition (the mean of which is *VolumeHistogramYMean*, and the
-            sample standard deviation of which is *VolumeHistogramYStd*).
+            each fit repetition (the mean of which is *VolumeHistogramYMean*, 
+            and the sample standard deviation is *VolumeHistogramYStd*).
         *NumberHistogramRepetitionsY*: size array (HistogramBins x Repetitions)
             Number-weighted particle size distribution bin values for
             each MC fit repetition.
@@ -247,7 +248,8 @@ class McSAS(object):
         *NumberFraction*: size array (Contributions x Repetitions)
             Number fraction for each contribution.
         *TotalVolumeFraction*: size array (Repetitions)
-            Total scatterer volume fraction for each of the Repetitions iterations.
+            Total scatterer volume fraction for each of the *Repetitions* 
+            iterations.
         *TotalNumberFraction*: size array (Repetitions)
             Total number fraction.
         *MinimumRequiredVolume*: size array (Contributions x Repetitions)
@@ -265,8 +267,8 @@ class McSAS(object):
             Scaling and background values for each repetition. Used to display
             background level in data and fit plot.
         *VolumeFraction*: size array (Contributions x Repetitions)
-            Volume fractions for each of *Contributions* spheres in each of *Repetitions*
-            iterations.
+            Volume fractions for each of *Contributions* spheres in each of 
+            *Repetitions* iterations.
         *TotalVolumeFraction*: size array (Repetitions)
             Total scatterer volume fraction for each of the *Repetitions*
             iterations.
@@ -377,10 +379,6 @@ class McSAS(object):
         """
         Populates the default parameter settings
         """
-        # field names
-        # fnames = list(['ContributionParameterBounds', 'Contributions', 'MaximumIterations', 'PowerCompensationFactor', 'Repetitions',
-        #                'QBounds', 'PsiBounds', 'HistogramBins', 'HistogramXScale',
-        #                'DeltaRhoSquared', 'ConvergenceCriterion', 'StartFromMinimum', 'MaximumRetries'])
         self.Parameters = {
             'ContributionParameterBounds': [],
             'Contributions': 200,
@@ -396,7 +394,7 @@ class McSAS(object):
                          # MCFit function
             'HistogramBins': 50,
             'HistogramXScale': 'log',
-            'HistogramWeighting': 'volume', # can be set to "volume" or "number"
+            'HistogramWeighting': 'volume', # can be "volume" or "number"
             'DeltaRhoSquared': 1,
             'ConvergenceCriterion': 1.,
             'StartFromMinimum': False,
@@ -421,8 +419,9 @@ class McSAS(object):
         """Defines Functions. In particular the following are specified:
 
         - The parameter bounds estimation function *BOUNDS*. Should be able
-          to take input argument ContributionParameterBounds to update, should set the parameter
-          bounds in ``self.parameter['ContributionParameterBounds']``
+          to take input argument ContributionParameterBounds to update, i
+          should set the parameter bounds in
+          ``self.parameter['ContributionParameterBounds']``
 
         - The random number generation function *RAND* This must take its
           Parameters from self, and have an optional input argument specifying
@@ -438,9 +437,9 @@ class McSAS(object):
           form factor Functions can exist for non-spherical objects.
 
         - The shape volume calculation function *VOL*, which must be able to
-          deal with input argument *PowerCompensationFactor*, ranging from 0 to 1. Should
-          accept an Nsets-by-nvalues array returning an Nsets number of
-          (PowerCompensationFactor-compensated)-volumes. 
+          deal with input argument *PowerCompensationFactor*, ranging from 
+          0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets 
+          number of (PowerCompensationFactor-compensated)-volumes. 
 
         - The smearing function *SMEAR*. Should take information from self
           and an input Icalc, to output an Ismear of the same length.
@@ -499,13 +498,14 @@ class McSAS(object):
             ValidIndices = ValidIndices
         if (not(QBounds == [])): # and QBounds is implicitly set
             # excluding the lower q limit may prevent q = 0 from appearing
-            ValidIndices = ValidIndices * ((Dataset['Q'] >  numpy.min(QBounds)) &
-                                       (Dataset['Q'] <= numpy.max(QBounds)))
+            ValidIndices = ValidIndices * ((Dataset['Q'] > numpy.min(QBounds))
+                    & (Dataset['Q'] <= numpy.max(QBounds)))
         if (not(PsiBounds==[])):
             # we assume here that we have a Dataset ['Psi']
             # excluding the lower q limit may prevent q = 0 from appearing
-            ValidIndices = ValidIndices * ((Dataset['Psi'] >  numpy.min(PsiBounds)) &
-                                       (Dataset['Psi'] <= numpy.max(PsiBounds)))
+            ValidIndices = ValidIndices * \
+                    ((Dataset['Psi'] > numpy.min(PsiBounds)) & 
+                            (Dataset['Psi'] <= numpy.max(PsiBounds)))
 
         for key in Dataset.keys():
             dsk = Dataset[key][ValidIndices]
@@ -633,7 +633,7 @@ class McSAS(object):
             self.SetParameter(HistogramBins = HistogramBins)
         # now check histscale
         HistogramXScale = self.GetParameter('HistogramXScale')
-        if not(isinstance(HistogramXScale, list)): # meaning it will be a string
+        if not(isinstance(HistogramXScale, list)): # meaning it will be a str
             HS = list()
             for ri in range(VariablesPerShape):
                 HS.append(HistogramXScale) # repeat until we have enough
@@ -731,33 +731,36 @@ class McSAS(object):
         are defined by their equatorial radius, meridional radius and axis
         misalignment (default -45 to 45 degrees in Psi).
         """
-        ContributionParameterBounds = self.GetParameter('ContributionParameterBounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
         q = self.GetData('Q')
         # reasonable, but not necessarily correct, Parameters
         QBounds = array([pi / numpy.max(q),
                          pi / numpy.min((abs(numpy.min(q)),
                                        abs(numpy.min(diff(q)))))])
         if len(ContributionParameterBounds) == 0:
-            print "ContributionParameterBounds not provided, so set related to minimum q or " \
-                  "minimum q step and maximum q. Lower and upper bounds " \
-                  "are {0} and {1}".format(QBounds[0], QBounds[1])
+            print "ContributionParameterBounds not provided, so set related "\
+                    "to minimum q or minimum q step and maximum q. Lower and "\
+                    "upper bounds are {} and {}".format(QBounds[0], QBounds[1])
             ContributionParameterBounds = numpy.array([QBounds[0], QBounds[1],
                                   QBounds[0], QBounds[1],
                                   -45, 45])
         elif len(ContributionParameterBounds) == 6:
             pass
-            #print 'ContributionParameterBounds provided, set to {} and {}'.format(
-            #    ContributionParameterBounds[0], ContributionParameterBounds[1])
         else:
-            print "Wrong number of ContributionParameterBounds provided, defaulting to {}" \
-                  "and {} for radii, -45, 45 for misalignment" \
-                  .format(QBounds[0], QBounds[1])
+            print "Wrong number of ContributionParameterBounds provided, "\
+                    "defaulting to {} and {} for radii, -45, 45 for "\
+                    "misalignment".format(QBounds[0], QBounds[1])
             ContributionParameterBounds = numpy.array([QBounds[0], QBounds[1],
                                   QBounds[0], QBounds[1],
                                   -45, 45])
-        ContributionParameterBounds = numpy.array([numpy.min(ContributionParameterBounds[0:2]), numpy.max(ContributionParameterBounds[0:2]),
-                              numpy.min(ContributionParameterBounds[2:4]), numpy.max(ContributionParameterBounds[2:4]),
-                              numpy.min(ContributionParameterBounds[4:6]), numpy.max(ContributionParameterBounds[4:6])])
+        ContributionParameterBounds = \
+                numpy.array([numpy.min(ContributionParameterBounds[0:2]), 
+                    numpy.max(ContributionParameterBounds[0:2]),
+                    numpy.min(ContributionParameterBounds[2:4]), 
+                    numpy.max(ContributionParameterBounds[2:4]), 
+                    numpy.min(ContributionParameterBounds[4:6]), 
+                    numpy.max(ContributionParameterBounds[4:6])])
 
         self.SetParameter(ContributionParameterBounds = 
                 ContributionParameterBounds)
@@ -1380,17 +1383,17 @@ class McSAS(object):
                 all *Repetitions* Results (y-axis bar height)
             *NumberHistogramYMean*: array
                 Number-weighted analogue of the above *VolumeHistogramYMean*
-            *VolumeHistogramRepetitionsY*: size (HistogramBins x Repetitions) array
-                Volume-weighted particle size distribution bin values for each
-                MC fit repetition (the mean of which is *VolumeHistogramYMean*, and the sample
-                standard deviation of which is *VolumeHistogramYStd*)
-            *NumberHistogramRepetitionsY*: size (HistogramBins x Repetitions) array
-                Number-weighted particle size distribution bin values
+            *VolumeHistogramRepetitionsY*: size (HistogramBins x Repetitions) 
+                array Volume-weighted particle size distribution bin values for 
+                each MC fit repetition (whose mean is *VolumeHistogramYMean*, 
+                and whose sample standard deviation is *VolumeHistogramYStd*)
+            *NumberHistogramRepetitionsY*: size (HistogramBins x Repetitions) 
+                array Number-weighted particle size distribution bin values
                 for each MC fit repetition
             *VolumeHistogramYStd*: array
                 Standard deviations of the corresponding volume-weighted size
-                distribution bins, calculated from *Repetitions* repetitions of the
-                MCfit_sph() function
+                distribution bins, calculated from *Repetitions* repetitions of
+                the MCfit_sph() function
             *NumberHistogramYStd*: array
                 Standard deviation for the number-weigthed distribution
             *VolumeFraction*: size (Contributions x Repetitions) array
@@ -1429,15 +1432,20 @@ class McSAS(object):
         Rrep = self.GetResult('Rrep')
         HistogramBins = self.GetParameter('HistogramBins')
         HistogramXScale = self.GetParameter('HistogramXScale')
-        ContributionParameterBounds = self.GetParameter('ContributionParameterBounds')
+        ContributionParameterBounds = \
+                self.GetParameter('ContributionParameterBounds')
 
-        # ov = zeros(shape(Rrep)) # observability
-        VolumeFraction = zeros((Contributions, Repetitions)) # volume fraction for each contribution
-        NumberFraction = zeros((Contributions, Repetitions)) # number fraction for each contribution
-        qm = zeros((Contributions, Repetitions)) # volume fraction for each contribution
-        MinimumRequiredVolume = zeros((Contributions, Repetitions)) # volume frac. for each contribution
-        MinimumRequiredNumber = zeros((Contributions, Repetitions)) # number frac. for each contribution
-        TotalVolumeFraction = zeros([Repetitions]) # total volume fractions
+        # volume fraction for each contribution
+        VolumeFraction = zeros((Contributions, Repetitions)) 
+        # number fraction for each contribution
+        NumberFraction = zeros((Contributions, Repetitions)) 
+        # volume fraction for each contribution
+        qm = zeros((Contributions, Repetitions)) 
+        # volume frac. for each histogram bin
+        MinimumRequiredVolume = zeros((Contributions, Repetitions)) 
+        # number frac. for each histogram bin
+        MinimumRequiredNumber = zeros((Contributions, Repetitions)) 
+        TotalVolumeFraction = zeros([Repetitions]) # total volume fraction
         TotalNumberFraction = zeros([Repetitions]) # total number 
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
@@ -1493,9 +1501,10 @@ class McSAS(object):
             Bgi = numpy.min(I)
             # optimize scaling and background for this repetition
             Sc, Cv = self._Iopt(I, It, E, [Sci, Bgi])
-            ScalingFactors[:, ri] = Sc # scaling and background for this repetition.
+            ScalingFactors[:, ri] = Sc # scaling and bgnd for this repetition.
             # a set of volume fractions
-            VolumeFraction[:, ri] = (Sc[0] * Vsa**2/(Vpa * DeltaRhoSquared)).flatten()
+            VolumeFraction[:, ri] = \
+                    (Sc[0] * Vsa**2/(Vpa * DeltaRhoSquared)).flatten()
             TotalVolumeFraction[ri] = sum(VolumeFraction[:, ri]) # total volume 
             NumberFraction[:, ri] = VolumeFraction[:, ri]/(Vpa.flatten())
             TotalNumberFraction[ri] = sum(NumberFraction[:, ri]) # total number
@@ -1514,22 +1523,25 @@ class McSAS(object):
                     qmi = numpy.argmax(Ir.flatten()/It.flatten())
                     # point where the contribution of isi is maximum
                     qm[isi, ri] = q[0, qmi]
-                    MinimumRequiredVolume[isi, ri] = numpy.min(E * VolumeFraction[isi, ri]/(Sc[0] * Ir))
-                    MinimumRequiredNumber[isi, ri] = MinimumRequiredVolume[isi, ri]/Vpa[isi]
+                    MinimumRequiredVolume[isi, ri] = \
+                            numpy.min(E * VolumeFraction[isi, ri]/(Sc[0] * Ir))
+                    MinimumRequiredNumber[isi, ri] = \
+                            MinimumRequiredVolume[isi, ri]/Vpa[isi]
                 else:
                     # determine where this maximum observability is
                     # of contribution isi (index)
                     qmi = numpy.argmax(Iset[isi, :].flatten()/It.flatten())
                     # point where the contribution of isi is maximum
                     qm[isi, ri] = q[0, qmi]
-                    MinimumRequiredVolume[isi, ri] = numpy.min(E * VolumeFraction[isi, ri]/
-                                               (Sc[0] * Iset[isi, :]))
-                    MinimumRequiredNumber[isi, ri] = MinimumRequiredVolume[isi, ri]/Vpa[isi]
-                # close approximation:
-                # MinimumRequiredVolume[isi,ri] = (E[qmi]*VolumeFraction[isi,ri]/(Sc[0]*Iset[isi,qmi]))
-                # or more precice but slower:
-            NumberFraction[:, ri] = NumberFraction[:, ri]/TotalNumberFraction[ri]
-            MinimumRequiredNumber[:, ri] = MinimumRequiredNumber[:, ri]/TotalNumberFraction[ri]
+                    MinimumRequiredVolume[isi, ri] = \
+                            numpy.min(E * VolumeFraction[isi, ri]/ 
+                                    (Sc[0] * Iset[isi, :]))
+                    MinimumRequiredNumber[isi, ri] = \
+                            MinimumRequiredVolume[isi, ri]/Vpa[isi]
+            NumberFraction[:, ri] = \
+                    NumberFraction[:, ri]/TotalNumberFraction[ri]
+            MinimumRequiredNumber[:, ri] = \
+                    MinimumRequiredNumber[:, ri]/TotalNumberFraction[ri]
 
         # now we histogram over each variable
         # for each variable parameter we define,
@@ -1538,7 +1550,8 @@ class McSAS(object):
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
             if HistogramXScale[vari] == 'lin':
-                # HistogramXLowerEdge contains the HistogramBins+1 bin edges, or class limits.
+                # HistogramXLowerEdge contains the HistogramBins+1 bin edges, 
+                # or class limits.
                 HistogramXLowerEdge = linspace(ContributionParameterBounds[0 + 2*vari],
                               ContributionParameterBounds[1 + 2*vari],
                               HistogramBins[vari] + 1)
