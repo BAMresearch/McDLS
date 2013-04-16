@@ -1359,7 +1359,8 @@ class McSAS(object):
         Takes the *Rrep* Result from the :py:meth:`McSAS.Analyse` function
         and calculates the corresponding volume- and number fractions for each
         contribution as well as the minimum observability limits. It will
-        subsequently bin the Result across the range for histogramming purposes.
+        subsequently bin the Result across the range for histogramming 
+        purposes.
 
         While the volume-weighted distribution will be in absolute units
         (providing volume fractions of material within a given size range),
@@ -1552,21 +1553,28 @@ class McSAS(object):
             if HistogramXScale[vari] == 'lin':
                 # HistogramXLowerEdge contains the HistogramBins+1 bin edges, 
                 # or class limits.
-                HistogramXLowerEdge = linspace(ContributionParameterBounds[0 + 2*vari],
+                HistogramXLowerEdge = \
+                        linspace(ContributionParameterBounds[0 + 2*vari],
                               ContributionParameterBounds[1 + 2*vari],
                               HistogramBins[vari] + 1)
             else:
-                HistogramXLowerEdge = 10**(linspace(log10(ContributionParameterBounds[0 + 2*vari]),
-                                   log10(ContributionParameterBounds[1 + 2*vari]),
-                                   HistogramBins[vari] + 1))
+                HistogramXLowerEdge = \
+                        10**(linspace(
+                            log10(ContributionParameterBounds[0 + 2*vari]),
+                            log10(ContributionParameterBounds[1 + 2*vari]),
+                            HistogramBins[vari] + 1))
             # total volume fraction contribution in a bin
-            VolumeHistogramRepetitionsY = zeros([HistogramBins[vari], Repetitions])
+            VolumeHistogramRepetitionsY = \
+                    zeros([HistogramBins[vari], Repetitions])
             # total number fraction contribution in a bin
-            NumberHistogramRepetitionsY = zeros([HistogramBins[vari], Repetitions])
+            NumberHistogramRepetitionsY = \
+                    zeros([HistogramBins[vari], Repetitions])
             # minimum required number of contributions /in a bin/ to make
             # a measurable impact
-            MinimumRequiredVolumebin = zeros([HistogramBins[vari], Repetitions])
-            MinimumRequiredNumberbin = zeros([HistogramBins[vari], Repetitions])
+            MinimumRequiredVolumebin = \
+                    zeros([HistogramBins[vari], Repetitions])
+            MinimumRequiredNumberbin = \
+                    zeros([HistogramBins[vari], Repetitions])
             HistogramXMean = zeros(HistogramBins[vari])
             VolumeHistogramMinimumRequired = zeros(HistogramBins[vari])
             NumberHistogramMinimumRequired = zeros(HistogramBins[vari])
@@ -1576,33 +1584,43 @@ class McSAS(object):
                 Rset = Rrep[:, vari, ri]
                 for bini in range(HistogramBins[vari]):
                     # indexing which contributions fall into the radius bin
-                    findi = ((Rset >= HistogramXLowerEdge[bini]) * (Rset < HistogramXLowerEdge[bini + 1]))
-                    # print 'findi: {} VolumeFraction: {}'.format(shape(findi), shape(VolumeFraction))
-                    # findi = findi[:, 0]
+                    findi = ((Rset >= HistogramXLowerEdge[bini]) * \
+                            (Rset < HistogramXLowerEdge[bini + 1]))
                     # y contains the volume fraction for that radius bin
-                    VolumeHistogramRepetitionsY[bini, ri] = sum(VolumeFraction[findi, ri])
-                    NumberHistogramRepetitionsY[bini, ri] = sum(NumberFraction[findi, ri])
+                    VolumeHistogramRepetitionsY[bini, ri] = \
+                            sum(VolumeFraction[findi, ri])
+                    NumberHistogramRepetitionsY[bini, ri] = \
+                            sum(NumberFraction[findi, ri])
                     if sum(findi) == 0:
                         MinimumRequiredVolumebin[bini, ri] = 0
                         MinimumRequiredNumberbin[bini, ri] = 0
                     else:
-                        MinimumRequiredVolumebin[bini, ri] = numpy.max(MinimumRequiredVolume[findi, ri])
-                        MinimumRequiredVolumebin[bini, ri] = numpy.mean(MinimumRequiredVolume[findi, ri])
-                        MinimumRequiredNumberbin[bini, ri] = numpy.max(MinimumRequiredNumber[findi, ri])
-                        MinimumRequiredNumberbin[bini, ri] = numpy.mean(MinimumRequiredNumber[findi, ri])
+                        MinimumRequiredVolumebin[bini, ri] = \
+                                numpy.max(MinimumRequiredVolume[findi, ri])
+                        MinimumRequiredVolumebin[bini, ri] = \
+                                numpy.mean(MinimumRequiredVolume[findi, ri])
+                        MinimumRequiredNumberbin[bini, ri] = \
+                                numpy.max(MinimumRequiredNumber[findi, ri])
+                        MinimumRequiredNumberbin[bini, ri] = \
+                                numpy.mean(MinimumRequiredNumber[findi, ri])
                     if isnan(VolumeHistogramRepetitionsY[bini, ri]):
                         VolumeHistogramRepetitionsY[bini, ri] = 0.
                         NumberHistogramRepetitionsY[bini, ri] = 0.
             for bini in range(HistogramBins[vari]):
-                HistogramXMean[bini] = numpy.mean(HistogramXLowerEdge[bini:bini+2])
+                HistogramXMean[bini] = \
+                        numpy.mean(HistogramXLowerEdge[bini:bini+2])
                 vb = MinimumRequiredVolumebin[bini, :]
                 VolumeHistogramMinimumRequired[bini] = numpy.max(vb[vb < inf])
                 nb = MinimumRequiredNumberbin[bini, :]
                 NumberHistogramMinimumRequired[bini] = numpy.max(nb[vb < inf])
-            VolumeHistogramYMean = numpy.mean(VolumeHistogramRepetitionsY, axis=1)
-            NumberHistogramYMean = numpy.mean(NumberHistogramRepetitionsY, axis=1)
-            VolumeHistogramYStd = numpy.std(VolumeHistogramRepetitionsY, axis=1)
-            NumberHistogramYStd = numpy.std(NumberHistogramRepetitionsY, axis=1)
+            VolumeHistogramYMean = \
+                    numpy.mean(VolumeHistogramRepetitionsY, axis=1)
+            NumberHistogramYMean = \
+                    numpy.mean(NumberHistogramRepetitionsY, axis=1)
+            VolumeHistogramYStd = \
+                    numpy.std(VolumeHistogramRepetitionsY, axis=1)
+            NumberHistogramYStd = \
+                    numpy.std(NumberHistogramRepetitionsY, axis=1)
             self.SetResult(**{
                 'VariableNumber': vari, # this line will place the Results in
                                         # the dict at self.Results[vari]
@@ -1615,11 +1633,13 @@ class McSAS(object):
                 'VolumeHistogramYStd': VolumeHistogramYStd,
                 'NumberHistogramYMean': NumberHistogramYMean,
                 'NumberHistogramYStd': NumberHistogramYStd,
-                'VolumeHistogramMinimumRequired': VolumeHistogramMinimumRequired,
+                'VolumeHistogramMinimumRequired': \
+                        VolumeHistogramMinimumRequired,
                 'MinimumRequiredVolume': MinimumRequiredVolume,
                 'VolumeFraction': VolumeFraction,
                 'TotalVolumeFraction': TotalVolumeFraction,
-                'NumberHistogramMinimumRequired': NumberHistogramMinimumRequired,
+                'NumberHistogramMinimumRequired': \
+                        NumberHistogramMinimumRequired,
                 'MinimumRequiredNumber': MinimumRequiredNumber,
                 'NumberFraction': NumberFraction,
                 'TotalNumberFraction': TotalNumberFraction,
@@ -1686,7 +1706,7 @@ class McSAS(object):
             # Optimize the intensities and calculate convergence criterium
             # SMEAR function goes here
             It = SMEARfunc(It)
-            Iave = Iave + It*ScalingFactors[0, nr] + ScalingFactors[1, nr] # add to average
+            Iave = Iave + It*ScalingFactors[0, nr] + ScalingFactors[1, nr] 
         # print "Initial conval V1", Conval1
         Iave = Iave/Repetitions
         # mask (lifted from ClipDataset)
@@ -1707,7 +1727,8 @@ class McSAS(object):
         if (not(PsiBounds == [])):
             # excluding the lower q limit may prevent q=0 from appearing
             ValidIndices = ValidIndices * \
-                    (Psi > numpy.min(PsiBounds)) & (Psi <= numpy.max(PsiBounds))
+                    (Psi > numpy.min(PsiBounds)) & \
+                    (Psi <= numpy.max(PsiBounds))
         Iave = Iave * ValidIndices
         # shape back to imageform
         I2D = reshape(Iave, kansas)
@@ -1729,8 +1750,9 @@ class McSAS(object):
         Input arguments should be names of fields in *self.Result*.
         For example::
 
-            A.McCSV('hist.csv', 'HistogramXLowerEdge', 'HistogramXWidth', 'VolumeHistogramYMean', 'VolumeHistogramYStd',
-                    VariableNumber = 0)
+            A.McCSV('hist.csv', 'HistogramXLowerEdge', 'HistogramXWidth', 
+                'VolumeHistogramYMean', 'VolumeHistogramYStd', 
+                VariableNumber = 0)
 
         I.e. just stick on as many columns as you'd like. They will be
         flattened by default. A header with the Result keyword names will be
@@ -1743,9 +1765,9 @@ class McSAS(object):
             vni = kwargs['VariableNumber']
             if isinstance(vni, (list, ndarray)):
                 if len(vni) != len(args):
-                    print("Error in ExportCSV, supplied list of variablenumbers"
-                          "does not have the length of 1 or the same length as"
-                          "the list of output variables.")
+                    print("Error in ExportCSV, supplied list of "
+                            "variablenumbers does not have the length of 1 or"
+                            "the same length as the list of output variables.")
                     return
                 for vi in range(len(args)):
                     vna[vi] = vni[vi]
@@ -1927,8 +1949,8 @@ class McSAS(object):
                  dash_capstyle = 'round', zorder = -1)
             # xscale('log')
             # yscale('log')
-            aq = sort(Result['QFit'][0, :])
-            aI = Result['FitIntensityMean'][0, argsort(Result['QFit'][0, :])]
+            aq = sort(Result['FitQ'][0, :])
+            aI = Result['FitIntensityMean'][0, argsort(Result['FitQ'][0, :])]
             plot(aq, aI, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
             plot(aq, numpy.mean(Result['ScalingFactors'][1, :]) + 0*aq,
                  'g-', linewidth = 3,
@@ -1941,26 +1963,28 @@ class McSAS(object):
         R_ax = list()
         for histi in range(nhists):
             # get data:
-            HistogramXLowerEdge = self.GetResult(parname = 'HistogramXLowerEdge',
-                                VariableNumber = histi)
+            HistogramXLowerEdge = self.GetResult(parname = 
+                    'HistogramXLowerEdge', VariableNumber = histi)
             HistogramXMean = self.GetResult(parname = 'HistogramXMean',
-                                  VariableNumber = histi)
+                            VariableNumber = histi)
             HistogramXWidth = self.GetResult(parname = 'HistogramXWidth',
-                                    VariableNumber = histi)
+                            VariableNumber = histi)
             if HistogramWeighting == 'volume':
-                VolumeHistogramYMean = self.GetResult(parname = 'VolumeHistogramYMean',
-                                       VariableNumber = histi)
-                VolumeHistogramMinimumRequired = self.GetResult(parname = 'VolumeHistogramMinimumRequired',
-                                           VariableNumber = histi)
-                VolumeHistogramYStd = self.GetResult(parname = 'VolumeHistogramYStd',
-                                      VariableNumber = histi)
+                VolumeHistogramYMean = self.GetResult(parname = 
+                        'VolumeHistogramYMean', VariableNumber = histi)
+                VolumeHistogramMinimumRequired = self.GetResult(parname = 
+                        'VolumeHistogramMinimumRequired',
+                        VariableNumber = histi)
+                VolumeHistogramYStd = self.GetResult(parname = 
+                        'VolumeHistogramYStd', VariableNumber = histi)
             elif HistogramWeighting == 'number':
-                VolumeHistogramYMean = self.GetResult(parname = 'NumberHistogramYMean',
-                                       VariableNumber = histi)
-                VolumeHistogramMinimumRequired = self.GetResult(parname = 'NumberHistogramMinimumRequired',
-                                           VariableNumber = histi)
-                VolumeHistogramYStd = self.GetResult(parname = 'NumberHistogramYStd',
-                                      VariableNumber = histi)
+                VolumeHistogramYMean = self.GetResult(parname = 
+                        'NumberHistogramYMean', VariableNumber = histi)
+                VolumeHistogramMinimumRequired = self.GetResult(parname = 
+                        'NumberHistogramMinimumRequired', 
+                        VariableNumber = histi)
+                VolumeHistogramYStd = self.GetResult(parname = 
+                        'NumberHistogramYStd', VariableNumber = histi)
             else: 
                 print "Incorrect value for HistogramWeighting: "\
                       "should be either 'volume' or 'number'"
@@ -1972,9 +1996,12 @@ class McSAS(object):
                 # variables.
                 R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
                             axisbg = (.95, .95, .95),
-                            xlim = (numpy.min(HistogramXLowerEdge) * (1 - AxisMargin),
-                                    numpy.max(HistogramXLowerEdge) * (1 + AxisMargin)),
-                            ylim = (0, numpy.max(VolumeHistogramYMean) * (1 + AxisMargin)),
+                            xlim = (numpy.min(HistogramXLowerEdge) * 
+                                (1 - AxisMargin),
+                                numpy.max(HistogramXLowerEdge) * 
+                                (1 + AxisMargin)),
+                            ylim = (0, numpy.max(VolumeHistogramYMean) * 
+                                (1 + AxisMargin)),
                             xlabel = 'Radius, m',
                             ylabel = '[Rel.] Volume Fraction',
                             xscale = 'log'))
@@ -1982,22 +2009,28 @@ class McSAS(object):
                 R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
                             axisbg = (.95, .95, .95),
                             xlim = (numpy.min(HistogramXLowerEdge) - 
-                                        (1 - AxisMargin)*numpy.min(HistogramXLowerEdge),
-                                    numpy.max(HistogramXLowerEdge) * (1 + AxisMargin)),
-                            ylim = (0, numpy.max(VolumeHistogramYMean) * (1 + AxisMargin)),
+                                (1 - AxisMargin)*
+                                numpy.min(HistogramXLowerEdge), 
+                                numpy.max(HistogramXLowerEdge) 
+                                * (1 + AxisMargin)),
+                            ylim = (0, numpy.max(VolumeHistogramYMean) 
+                                * (1 + AxisMargin)),
                             xlabel = 'Radius, m',
                             ylabel = '[Rel.] Volume Fraction'))
 
             R_ax[histi] = SetAxis(R_ax[histi])
             # fill axes
-            bar(HistogramXLowerEdge[0:-1], VolumeHistogramYMean, width = HistogramXWidth, color = 'orange',
-                edgecolor = 'black', linewidth = 1, zorder = 2,
-                label = 'MC size histogram')
-            plot(HistogramXMean, VolumeHistogramMinimumRequired, 'ro', ms = 5, markeredgecolor = 'r',
-                 label = 'Minimum visibility limit', zorder = 3)
-            errorbar(HistogramXMean, VolumeHistogramYMean, VolumeHistogramYStd, zorder = 4, fmt = 'k.', ecolor = 'k',
-                     elinewidth = 2, capsize = 4, ms = 0, lw = 2,
-                     solid_capstyle = 'round', solid_joinstyle = 'miter')
+            bar(HistogramXLowerEdge[0:-1], VolumeHistogramYMean, 
+                    width = HistogramXWidth, color = 'orange',
+                    edgecolor = 'black', linewidth = 1, zorder = 2,
+                    label = 'MC size histogram')
+            plot(HistogramXMean, VolumeHistogramMinimumRequired, 'ro', 
+                    ms = 5, markeredgecolor = 'r',
+                    label = 'Minimum visibility limit', zorder = 3)
+            errorbar(HistogramXMean, VolumeHistogramYMean, VolumeHistogramYStd,
+                    zorder = 4, fmt = 'k.', ecolor = 'k',
+                    elinewidth = 2, capsize = 4, ms = 0, lw = 2,
+                    solid_capstyle = 'round', solid_joinstyle = 'miter')
             legend(loc = 1, fancybox = True, prop = textfont)
             title('Radius size histogram', fontproperties = textfont,
                   size = 'x-large')
@@ -2015,8 +2048,8 @@ class McSAS(object):
         and its standard deviation over all nreps as well as the first four
         distribution moments: mean, variance, skewness and kurtosis
         (Pearson's definition).
-        Will use the *HistogramWeighting* parameter for determining whether to return
-        the volume or number-weighted values.
+        Will use the *HistogramWeighting* parameter for determining whether to 
+        return the volume or number-weighted values.
 
         Input arguments are:
 
@@ -2039,13 +2072,14 @@ class McSAS(object):
         HistogramBins = self.GetParameter('HistogramBins')
         HistogramXScale = self.GetParameter('HistogramXScale')
         HistogramWeighting = self.GetParameter('HistogramWeighting')
-        ContributionParameterBounds = self.GetParameter('ContributionParameterBounds')
+        ContributionParameterBounds =\
+                self.GetParameter('ContributionParameterBounds')
         
         # ov = zeros(shape(Rrep)) # observability
-        VolumeFraction = self.GetResult('VolumeFraction') # volume fraction for each contribution
-        NumberFraction = self.GetResult('NumberFraction') # number fraction for each contribution
-        TotalVolumeFraction = self.GetResult('TotalVolumeFraction') # total volume fractions
-        TotalNumberFraction = self.GetResult('TotalNumberFraction') # total number 
+        VolumeFraction = self.GetResult('VolumeFraction')
+        NumberFraction = self.GetResult('NumberFraction')
+        TotalVolumeFraction = self.GetResult('TotalVolumeFraction') 
+        TotalNumberFraction = self.GetResult('TotalNumberFraction')
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
