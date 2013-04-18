@@ -95,6 +95,108 @@ import os # Miscellaneous operating system interfaces
 import time # Timekeeping and timing of objects
 import sys # For printing of slightly more advanced messages to stdout
 import pickle #for pickle_read and pickle_write
+from abc import ABCMeta, abstractmethod
+import inspect
+import logging
+
+class PropertyNames(object):
+    _cache = None
+
+    @classmethod
+    def properties(cls):
+        """Returns all attributes configured in this class."""
+        nameList = dir(cls)
+        hashValue = hash(repr(nameList))
+        if not cls._cache or cls._cache[0] != hashValue:
+            result = [(name, getattr(cls, name)) for name in nameList
+                      if not name.startswith("_") and
+                      not inspect.ismethod(getattr(cls, name))]
+            cls._cache = hashValue, result
+        return cls._cache[1]
+
+    @classmethod
+    def propNames(cls):
+        return [propName for propName, dummy in cls.properties()]
+
+class ParticleModel(PropertyNames):
+    __metaclass__ = ABCMeta
+    compensationExponent = 0.5 # default
+    bounds = None
+
+    def smear(self, arg):
+        return arg
+
+    @abstractmethod
+    def vol(self, *args):
+        raise NotImplementedError
+
+    @abstractmethod
+    def ff(self, q, *args):
+        raise NotImplementedError
+
+    @abstractmethod
+    def rand(self, count = 1):
+        raise NotImplementedError
+
+class Sphere(ParticleModel):
+    bounds = (0., numpy.inf),
+
+    def vol(self, *args):
+        """Calculates the volume of a sphere, taking compensationExponent
+        from input or preset Parameters.
+        """
+        assert len(args) == len(self.bounds)
+        return (4.0/3*pi) * args[0]**(3*compensationExponent)
+
+    def ff(self, q, *args):
+        """Calculate the Rayleigh function for a sphere.
+        """
+        assert len(args) == len(self.bounds)
+        rSet = args[0]
+        if size(rSet, 0) > 1:
+            # multimensional matrices required, input Rsph has to be Nsph-by-1.
+            # q has to be 1-by-N
+            qR = (q + 0.*rSet) * (rSet + 0.*q)
+        else:
+            qR = (q) * (rSet)
+        fSph = 3. * (sin(qR) - qR * cos(qR)) / (qR**3.)
+        return fSph
+
+    def rand(self, count = 1):
+        """Random number generator with uniform distribution for
+        the sphere form factor.
+        """
+        # generate Nsph random numbers
+        rSet = numpy.random.uniform(numpy.min(self.bounds),
+                                    numpy.max(self.bounds),
+                                    count)
+        rSet = reshape(rSet, (prod(shape(rSet)), 1))
+        # output Nsph-by-1 array
+        return rSet
+
+class McSASParameters(PropertyNames):
+    contribParamBounds = ()
+    numContribs = 200
+    maxIterations = 1e5
+    numReps = 100
+    qBounds = ()
+    psiBounds = ()
+    priors = () # of shape Rrep, to be used as initial guess for
+                # Analyse function, Analyse will pass on a Prior
+                # to MCFit.
+    prior = ()  # of shape Rset, to be used as initial guess for
+                # MCFit function
+    histogramBins = 50
+    histogramXScale = 'log'
+    histogramWeighting = 'volume' # can be "volume" or "number"
+    deltaRhoSquared = 1.0
+    convergenceCriterion = 1.0
+    startFromMinimum = False
+    maxRetries = 5
+    maskNegativeInt = False
+    maskZeroInt = False
+    lowMemoryFootprint = False
+    plot = False
 
 class McSAS(object):
     r"""
@@ -341,12 +443,10 @@ class McSAS(object):
         self.Result.append(dict())
         self.Functions = dict()
 
-        # populate self with defaults
-        self.SetDefaults()
+        # set data values # TODO: DataSet.origin and DataSet.prepared
+        self.SetData(**kwargs)
         # set supplied kwargs and passing on
         self.SetParameter(**kwargs)
-        # set data values
-        self.SetData(**kwargs)
         # apply q and psi limits and populate self.FitData
         self.ClipDataset()
         # reshape FitData to the correct 1-by-n dimensions
@@ -375,45 +475,6 @@ class McSAS(object):
     ######################################################################
     ##################### Pre-optimisation Functions #####################
     ######################################################################
-    def SetDefaults(self):
-        """
-        Populates the default parameter settings
-        """
-        self.Parameters = {
-            'ContributionParameterBounds': [],
-            'Contributions': 200,
-            'MaximumIterations': 1e5,
-            'PowerCompensationFactor': 0.5,
-            'Repetitions': 100,
-            'QBounds': [],
-            'PsiBounds': [],
-            'Priors': [], # of shape Rrep, to be used as initial guess for
-                          # Analyse function, Analyse will pass on a Prior
-                          # to MCFit.
-            'Prior': [], # of shape Rset, to be used as initial guess for
-                         # MCFit function
-            'HistogramBins': 50,
-            'HistogramXScale': 'log',
-            'HistogramWeighting': 'volume', # can be "volume" or "number"
-            'DeltaRhoSquared': 1,
-            'ConvergenceCriterion': 1.,
-            'StartFromMinimum': False,
-            'MaximumRetries': 5,
-            'MaskNegativeI': False,
-            'MaskZeroI': False,
-            'LowMemoryFootprint': False,
-            'Plot': False
-        }
-
-        self.Functions = {
-            'BOUNDS': self.SphereBounds, # this function has to give a vector
-                                      # the size of the number of
-                                      # variables *2 (lower and upper)
-            'RAND': self.random_uniform_sph,
-            'FF': self.FF_sph_1D, # 1D spheres
-            'VOL': self.vol_sph,
-            'SMEAR': self._passthrough # None
-        }
 
     def SetFunction(self, **kwargs):
         """Defines Functions. In particular the following are specified:
@@ -578,10 +639,16 @@ class McSAS(object):
         the self.Functions dict.
         """
         for kw in kwargs:
-            if kw in self.Parameters.keys():
-                self.Parameters[kw] = kwargs[kw]
-            else:
-                pass #no need to store unknown keywords.
+            found = False
+            for cls in McSASParameters, ParticleModel:
+                if kw not in cls.propNames():
+                    continue
+                setattr(cls, kw, kwargs[kw])
+                found = True
+                break
+            if not found:
+                logging.warning("Unknown McSAS parameter specified: '{0}'"
+                                .format(kw))
 
     def SetData(self, **kwargs):
         """Sets the supplied data in the proper location. Optional argument

@@ -61,15 +61,15 @@ def getSettings(testfn, expectedfn):
     q, i, e = getTestData(testfn)
     expected = getExpectedData(expectedfn)
     settings = dict(Q = q, I = i, IError = numpy.maximum(0.01*i, e),
-                    Contributions = 200, Repetitions = 20,
-                    ConvergenceCriterion = 1, MaximumIterations = 1e5,
-                    HistogramXScale = 'log', DeltaRhoSquared = 1e30,
-                    Plot = False)
+                    numContribs = 200, numReps = 20,
+                    convergenceCriterion = 1, maxIterations = 1e5,
+                    histogramXScale = 'log', deltaRhoSquared = 1e30,
+                    plot = False)
     # get number of repetitions+contributions from expected test data
     if isinstance(expected, dict):
         rrep = expected.get("Rrep", None)
         try:
-            settings["Contributions"], dummy, settings["Repetitions"] = tuple(rrep.shape)
+            settings["numContribs"], dummy, settings["numReps"] = tuple(rrep.shape)
         except:
             pass
     return settings, expected
