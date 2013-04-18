@@ -60,16 +60,16 @@ def getSettings(testfn, expectedfn):
 
     q, i, e = getTestData(testfn)
     expected = getExpectedData(expectedfn)
-    settings = dict(Q = q, I = i, IERR = numpy.maximum(0.01*i, e),
-                    Ncontrib = 200, Nreps = 20,
-                    Convcrit = 1, Maxiter = 1e5,
-                    Histscale = 'log', drhosqr = 1e30,
+    settings = dict(Q = q, I = i, IError = numpy.maximum(0.01*i, e),
+                    Contributions = 200, Repetitions = 20,
+                    ConvergenceCriterion = 1, MaximumIterations = 1e5,
+                    HistogramXScale = 'log', DeltaRhoSquared = 1e30,
                     Plot = False)
     # get number of repetitions+contributions from expected test data
     if isinstance(expected, dict):
         rrep = expected.get("Rrep", None)
         try:
-            settings["Ncontrib"], dummy, settings["Nreps"] = tuple(rrep.shape)
+            settings["Contributions"], dummy, settings["Repetitions"] = tuple(rrep.shape)
         except:
             pass
     return settings, expected
@@ -83,7 +83,7 @@ def test():
 
     # run the monte carlo routine
     mcsas = McSAS(**settings)
-    result = mcsas.result[0]
+    result = mcsas.Result[0]
 
     if False:
         # print result keys and shape for debugging
@@ -101,13 +101,20 @@ def test():
     # testing against data from file
     # test only items which are averaged over all repetitions
     # individual tolerances because of large deviations for few repetitions(4)
-    for key, tol in (("Hx", TOL), ("Hmid", TOL), ("Hwidth", TOL),
-                     ("Hmean", 0.2), ("Hnmean", 0.2),
-                     ("Hstd", 0.2), ("Hnstd", 0.2),
-                     ("vfminbins", 0.01), ("nfminbins", 0.1),
-                     ("Qfit", TOL), ("Imean", 0.005), ("Istd", 0.25)):
+    for oldKey, key, tol in (   ("Hx", "HistogramXLowerEdge", TOL),
+                                ("Hmid", "HistogramXMean", TOL),
+                                ("Hwidth", "HistogramXWidth", TOL),
+                                ("Hmean", "VolumeHistogramYMean", 0.2),
+                                ("Hnmean", "NumberHistogramYMean", 0.2),
+                                ("Hstd", "VolumeHistogramYStd", 0.2),
+                                ("Hnstd", "NumberHistogramYStd", 0.2),
+                                ("vfminbins", "VolumeHistogramMinimumRequired", 0.01),
+                                ("nfminbins", "NumberHistogramMinimumRequired", 0.1),
+                                ("Qfit", "FitQ", TOL),
+                                ("Imean", "FitIntensityMean", 0.005),
+                                ("Istd", "FitIntensityStd", 0.25)):
         print("testing {0:10} ".format(key), end="")
-        assert isEqualFloat(result[key], expected[key], tol),\
+        assert isEqualFloat(result[key], expected[oldKey], tol),\
             "Test for {0} failed!".format(key)
 
 if __name__ == "__main__":
