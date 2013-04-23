@@ -99,6 +99,8 @@ from abc import ABCMeta, abstractmethod
 import inspect
 import logging
 
+from dataset import DataSet
+
 class PropertyNames(object):
     _cache = None
 
@@ -197,6 +199,33 @@ class McSASParameters(PropertyNames):
     maskZeroInt = False
     lowMemoryFootprint = False
     plot = False
+
+class SASData(DataSet):
+    """Represents one set of data from a unique source (a file, for example).
+    """
+    _prepared = None
+
+    @classmethod
+    def load(cls, filename):
+        """Factory method for creating SASData objects from file."""
+        if not os.path.isfile(filename):
+            logging.warning("File '{0}' does not exist!".format(filename))
+            return
+        logging.info("Loading '{0}' ...".format(filename))
+        sasFile = PDHFile(filename)
+        sasData = cls(sasFile.name, sasFile.data)
+        return sasData
+
+    @property
+    def prepared(self):
+        return self._prepared
+
+    @prepared.setter
+    def prepared(self, data):
+        self._prepared = data
+
+    def __init__(self, title, data):
+        DataSet.__init__(self, title, data)
 
 class McSAS(object):
     r"""
@@ -404,8 +433,7 @@ class McSAS(object):
 
     """
 
-    Dataset = None
-    FitData = None
+    dataset = None # user provided data to work with
     Parameters = None
     Result = None
     Functions = None
@@ -436,15 +464,14 @@ class McSAS(object):
         .. automethod:: _Iopt
         """
         # initialize
-        self.Dataset = dict()
-        self.FitData = dict()
         self.Parameters = dict()
         self.Result = list()
         self.Result.append(dict())
         self.Functions = dict()
 
-        # set data values # TODO: DataSet.origin and DataSet.prepared
-        self.SetData(**kwargs)
+        # set data values
+        self.SetData(kwargs)
+        print self.dataset.origin, self.dataset.prepared
         # set supplied kwargs and passing on
         self.SetParameter(**kwargs)
         # apply q and psi limits and populate self.FitData
@@ -571,7 +598,7 @@ class McSAS(object):
         for key in Dataset.keys():
             dsk = Dataset[key][ValidIndices]
             # hey, this works!:
-            self.SetData(**{ key: dsk, 'Dataset': 'fit' })
+            self.SetData({ key: dsk, 'Dataset': 'fit' })
             # old version was direct addressing, which is to be discouraged to
             # encourage flexibility in data storage
             # self.FitData[key] = Dataset[key][ValidIndices]
@@ -650,31 +677,36 @@ class McSAS(object):
                 logging.warning("Unknown McSAS parameter specified: '{0}'"
                                 .format(kw))
 
-    def SetData(self, **kwargs):
+    def SetData(self, kwargs):
         """Sets the supplied data in the proper location. Optional argument
         *Dataset* can be set to ``fit`` or ``original`` to define which
         Dataset is set. Default is ``original``.
         """
-        Datasetlist = list(['Q', 'I', 'Psi', 'IError']) # list of valid things
-        if ('Dataset' in kwargs):
-            Dataset = kwargs['Dataset'].lower()
-        else:
-            Dataset = 'original'
-        if Dataset not in ('fit', 'original'):
-            Dataset = 'original'
+        isOriginal = True
+        try:
+            kind = kwargs['Dataset'].lower()
+            if kind not in ('fit', 'original'):
+                raise ValueError
+            if kind == 'fit':
+                isOriginal = False
+        except:
+            pass
 
-        if Dataset == 'original':
-            for kw in kwargs:
-                if kw in Datasetlist:
-                    self.Dataset[kw] = kwargs[kw]
-                else:
-                    pass # do not store non-Dataset values.
-        else: # we want to store to FitData: a clipped Dataset
-            for kw in kwargs:
-                if kw in Datasetlist:
-                    self.FitData[kw] = kwargs[kw]
-                else:
-                    pass # Do not store non-Dataset values.
+        data = tuple((kwargs.pop(n, None) for n in ('Q', 'I', 'IError', 'Psi')))
+        if data[0] is None:
+            raise ValueError("No q values provided!")
+        if data[1] is None:
+            raise ValueError("No intensity values provided!")
+        if data[2] is None:
+            logging.warning("No intensity uncertainties provided!")
+        # TODO: is psi mandatory in 2D? Should ierror be mandatory?
+        # can psi be present without ierror?
+        data = numpy.dstack([d for d in data if d is not None])
+        if isOriginal:
+            self.dataset = SASData("SAS data provided", data)
+        else:
+            self.dataset = SASData("SAS data provided", numpy.zeros_like(data))
+            self.dataset.setPrepared(data)
 
     def CheckParameters(self):
         """Checks for the Parameters, for example to make sure
