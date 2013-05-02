@@ -100,6 +100,7 @@ import inspect
 import logging
 
 from dataset import DataSet
+from utils import isList
 
 class PropertyNames(object):
     _cache = None
@@ -181,8 +182,8 @@ class McSASParameters(PropertyNames):
     numContribs = 200
     maxIterations = 1e5
     numReps = 100
-    qBounds = ()
-    psiBounds = ()
+    qBounds = None
+    psiBounds = None
     priors = () # of shape Rrep, to be used as initial guess for
                 # Analyse function, Analyse will pass on a Prior
                 # to MCFit.
@@ -471,18 +472,16 @@ class McSAS(object):
 
         # set data values
         self.SetData(kwargs)
-        print self.dataset.origin, self.dataset.prepared
+        print self.dataset.origin.shape, self.dataset.prepared
         # set supplied kwargs and passing on
-        self.SetParameter(**kwargs)
+        self.SetParameter(kwargs)
         # apply q and psi limits and populate self.FitData
         self.ClipDataset()
-        # reshape FitData to the correct 1-by-n dimensions
-        self.ReshapeFitdata()
         # apply input settings for fitting,
         # setting the required function definitions
-        self.SetFunction(**kwargs)
+#        self.SetFunction(kwargs)
         # calculate parameter bounds and store
-        self.GetFunction('BOUNDS')()
+#        self.GetFunction('BOUNDS')()
         # check and fix Parameters where necessary
         # This is only a very simple function now in need of expansion
         self.CheckParameters()
@@ -499,11 +498,106 @@ class McSAS(object):
             # Result = self.GetResult()
             self.Plot()
 
+    def SetData(self, kwargs):
+        """Sets the supplied data in the proper location. Optional argument
+        *Dataset* can be set to ``fit`` or ``original`` to define which
+        Dataset is set. Default is ``original``.
+        """
+        isOriginal = True
+        try:
+            kind = kwargs['Dataset'].lower()
+            if kind not in ('fit', 'original'):
+                raise ValueError
+            if kind == 'fit':
+                isOriginal = False
+        except:
+            pass
+        # expecting flat arrays, TODO: check this earlier
+        data = tuple((kwargs.pop(n, None) for n in ('Q', 'I', 'IError', 'Psi')))
+        if data[0] is None:
+            raise ValueError("No q values provided!")
+        if data[1] is None:
+            raise ValueError("No intensity values provided!")
+        if data[2] is None:
+            # ValueError instead? Is it mandatory to have IError?
+            logging.warning("No intensity uncertainties provided!")
+        # data[3]: PSI is optional, only for 2D required
+        # TODO: is psi mandatory in 2D? Should ierror be mandatory?
+        # can psi be present without ierror?
+
+        # make single array: one row per intensity and its associated values
+        # selection of intensity is shorter this way: dataset[validIndices]
+        # enforce a certain shape here (removed ReshapeFitdata)
+        data = numpy.vstack([d for d in data if d is not None]).T
+        if isOriginal:
+            self.dataset = SASData("SAS data provided", data)
+        else:
+            self.dataset = SASData("SAS data provided", None)
+            self.dataset.prepared = data
+
+    def SetParameter(self, kwargs):
+        """Sets the supplied Parameters given in keyword-value pairs for known
+        setting keywords (unknown key-value pairs are skipped).
+        If a supplied parameter is one of the function names, it is stored in
+        the self.Functions dict.
+        """
+        for key in kwargs.keys():
+            found = False
+            for cls in McSASParameters, ParticleModel:
+                if key in cls.propNames():
+                    setattr(cls, key, kwargs.pop(key))
+                    found = True
+                    break
+            if not found:
+                logging.warning("Unknown McSAS parameter specified: '{0}'"
+                                .format(key))
+
+    def ClipDataset(self):
+        """If q and/or psi limits are supplied in self.Parameters,
+        clips the Dataset to within the supplied limits. Copies data to
+        :py:attr:`self.FitData` if no limits are set.
+        """
+
+        data = self.dataset.origin
+        qBounds = McSASParameters.qBounds
+        psiBounds = McSASParameters.psiBounds
+        
+        # some shortcut function, not performance critical as this function
+        # is called only once at the beginning
+        def q(indices):
+            return data[indices, 0]
+        def intensity(indices):
+            return data[indices, 1]
+        def psi(indices):
+            return data[indices, 3]
+
+        # init indices: index array is more flexible than boolean masks
+        validIndices = numpy.where(numpy.isfinite(data[:, 0]))[0]
+        def cutIndices(mask):
+            validIndices = validIndices[mask]
+
+        # Optional masking of negative intensity
+        if McSASParameters.maskZeroInt:
+            # FIXME: compare with machine precision (EPS)?
+            cutIndices(intensity(validIndices) == 0.0)
+        if McSASParameters.maskNegativeInt:
+            cutIndices(intensity(validIndices) > 0.0)
+        if isList(qBounds):
+            # excluding the lower q limit may prevent q = 0 from appearing
+            cutIndices(q(validIndices) > min(qBounds))
+            cutIndices(q(validIndices) <= max(qBounds))
+        if isList(psiBounds) and data.shape[1] > 3: # psi in last column
+            # excluding the lower q limit may prevent q = 0 from appearing
+            cutIndices(psi(validIndices) > min(psiBounds))
+            cutIndices(psi(validIndices) <= max(psiBounds))
+
+        self.dataset.prepared = data[validIndices]
+        
     ######################################################################
     ##################### Pre-optimisation Functions #####################
     ######################################################################
 
-    def SetFunction(self, **kwargs):
+    def SetFunction(self, kwargs):
         """Defines Functions. In particular the following are specified:
 
         - The parameter bounds estimation function *BOUNDS*. Should be able
@@ -535,7 +629,7 @@ class McSAS(object):
         This function will actually use the supplied function name as function
         reference.
         """
-        for kw in kwargs:
+        for kw in kwargs.keys():
             if kw in self.Functions.keys():
                 if callable(kwargs[kw]):
                     self.Functions[kw] = kwargs[kw]
@@ -557,78 +651,6 @@ class McSAS(object):
             return self.Functions
         else:
             return self.Functions[fname]
-
-
-
-    def ReshapeFitdata(self):
-        """This ensures that q, I, Psi and E are in 1-by-n shape."""
-        for key in self.FitData.keys():
-            self.FitData[key] = reshape(self.FitData[key],
-                                        (1, prod(shape(self.FitData[key]))))
-
-    def ClipDataset(self):
-        """If q and/or psi limits are supplied in self.Parameters,
-        clips the Dataset to within the supplied limits. Copies data to
-        :py:attr:`self.FitData` if no limits are set.
-        """
-        QBounds = self.GetParameter('QBounds')
-        PsiBounds = self.GetParameter('PsiBounds')
-        Dataset = self.GetData(Dataset = 'original')
-        
-        ValidIndices = isfinite(Dataset['Q'])
-        # Optional masking of negative intensity
-        if self.GetParameter('MaskNegativeI'):
-            ValidIndices = ValidIndices * (Dataset['I'] >= 0)
-        if self.GetParameter('MaskZeroI'):
-            ValidIndices = ValidIndices * (Dataset['I'] != 0)
-        if (QBounds == []) and (PsiBounds == []):
-            # q limits not set, simply copy Dataset to FitData
-            ValidIndices = ValidIndices
-        if (not(QBounds == [])): # and QBounds is implicitly set
-            # excluding the lower q limit may prevent q = 0 from appearing
-            ValidIndices = ValidIndices * ((Dataset['Q'] > numpy.min(QBounds))
-                    & (Dataset['Q'] <= numpy.max(QBounds)))
-        if (not(PsiBounds==[])):
-            # we assume here that we have a Dataset ['Psi']
-            # excluding the lower q limit may prevent q = 0 from appearing
-            ValidIndices = ValidIndices * \
-                    ((Dataset['Psi'] > numpy.min(PsiBounds)) & 
-                            (Dataset['Psi'] <= numpy.max(PsiBounds)))
-
-        for key in Dataset.keys():
-            dsk = Dataset[key][ValidIndices]
-            # hey, this works!:
-            self.SetData({ key: dsk, 'Dataset': 'fit' })
-            # old version was direct addressing, which is to be discouraged to
-            # encourage flexibility in data storage
-            # self.FitData[key] = Dataset[key][ValidIndices]
-
-        # self.FitData = FitData
-        
-    def GetParameter(self, parname = []):
-        """Gets the value of a parameter, so simple it is probably
-        superfluous.
-        """
-        if parname == []:
-            return self.Parameters
-        else:
-            return self.Parameters[parname]
-
-    def GetData(self, parname = [], Dataset = 'fit'):
-        """Gets the values of a Dataset, retrieves from FitData (clipped)
-        by default. If the original data is wanted,
-        use ``Dataset = 'original'`` as *\*\*kwarg*.
-        """
-        if (parname == []):
-            if (Dataset == 'fit'):
-                return self.FitData
-            else: 
-                return self.Dataset
-        else:
-            if (parname in self.FitData.keys()) and (Dataset == 'fit'):
-                return self.FitData[parname]
-            else:
-                return self.Dataset[parname]
 
     def GetResult(self, parname = [], VariableNumber = 0):
         """Returns the specified entry from common Result container."""
@@ -658,55 +680,6 @@ class McSAS(object):
 
         for kw in kwargs:
             rdict[kw] = kwargs[kw]
-
-    def SetParameter(self, **kwargs):
-        """Sets the supplied Parameters given in keyword-value pairs for known
-        setting keywords (unknown key-value pairs are skipped).
-        If a supplied parameter is one of the function names, it is stored in
-        the self.Functions dict.
-        """
-        for kw in kwargs:
-            found = False
-            for cls in McSASParameters, ParticleModel:
-                if kw not in cls.propNames():
-                    continue
-                setattr(cls, kw, kwargs[kw])
-                found = True
-                break
-            if not found:
-                logging.warning("Unknown McSAS parameter specified: '{0}'"
-                                .format(kw))
-
-    def SetData(self, kwargs):
-        """Sets the supplied data in the proper location. Optional argument
-        *Dataset* can be set to ``fit`` or ``original`` to define which
-        Dataset is set. Default is ``original``.
-        """
-        isOriginal = True
-        try:
-            kind = kwargs['Dataset'].lower()
-            if kind not in ('fit', 'original'):
-                raise ValueError
-            if kind == 'fit':
-                isOriginal = False
-        except:
-            pass
-
-        data = tuple((kwargs.pop(n, None) for n in ('Q', 'I', 'IError', 'Psi')))
-        if data[0] is None:
-            raise ValueError("No q values provided!")
-        if data[1] is None:
-            raise ValueError("No intensity values provided!")
-        if data[2] is None:
-            logging.warning("No intensity uncertainties provided!")
-        # TODO: is psi mandatory in 2D? Should ierror be mandatory?
-        # can psi be present without ierror?
-        data = numpy.dstack([d for d in data if d is not None])
-        if isOriginal:
-            self.dataset = SASData("SAS data provided", data)
-        else:
-            self.dataset = SASData("SAS data provided", numpy.zeros_like(data))
-            self.dataset.setPrepared(data)
 
     def CheckParameters(self):
         """Checks for the Parameters, for example to make sure
