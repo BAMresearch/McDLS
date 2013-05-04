@@ -101,6 +101,8 @@ import logging
 
 from dataset import DataSet
 from utils import isList
+from utils.algorithmbase import AlgorithmBase
+from utils.parameter import ParameterFloat
 
 class PropertyNames(object):
     _cache = None
@@ -121,10 +123,9 @@ class PropertyNames(object):
     def propNames(cls):
         return [propName for propName, dummy in cls.properties()]
 
-class ParticleModel(PropertyNames):
+class ParticleModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
     compensationExponent = 0.5 # default
-    bounds = None
 
     def smear(self, arg):
         return arg
@@ -141,8 +142,18 @@ class ParticleModel(PropertyNames):
     def rand(self, count = 1):
         raise NotImplementedError
 
+class Radius(ParameterFloat):
+    """Parameter for the radius of a scatterer."""
+    name = 'radius'
+    defaultValue = 1.0
+    valueRange = (0., numpy.inf)
+    suffix = 'nm'
+    decimals = 1
+
 class Sphere(ParticleModel):
-    bounds = (0., numpy.inf),
+    """Form factor of a sphere"""
+    shortName = "Sphere"
+    parameters = (Radius, )
 
     def vol(self, *args):
         """Calculates the volume of a sphere, taking compensationExponent
@@ -435,6 +446,7 @@ class McSAS(object):
     """
 
     dataset = None # user provided data to work with
+    model = None
     Parameters = None
     Result = None
     Functions = None
@@ -484,6 +496,7 @@ class McSAS(object):
 #        self.GetFunction('BOUNDS')()
         # check and fix Parameters where necessary
         # This is only a very simple function now in need of expansion
+        self.model = Sphere()
         self.CheckParameters()
 
         self.Analyse()
@@ -689,33 +702,18 @@ class McSAS(object):
         with n values, where n is the number of Parameters specifying
         a shape.
         """
-        # testR = self.Functions['RAND']()
-        testR = self.GetFunction('RAND')()
-        VariablesPerShape = prod(shape(testR))
-        HistogramBins = self.GetParameter('HistogramBins')
-        if not(isinstance(HistogramBins, list)): # meaning it will be a string
-            HB = list()
-            for ri in range(VariablesPerShape):
-                HB.append(int(HistogramBins))
-            self.SetParameter(HistogramBins = HB)
-        elif len(HistogramBins) < VariablesPerShape:
-            # histbins is a list but not of the right length
-            while len(HistogramXScale) < VariablesPerShape:
-                HistogramBins.append(HistogramBins[0])
-            self.SetParameter(HistogramBins = HistogramBins)
-        # now check histscale
-        HistogramXScale = self.GetParameter('HistogramXScale')
-        if not(isinstance(HistogramXScale, list)): # meaning it will be a str
-            HS = list()
-            for ri in range(VariablesPerShape):
-                HS.append(HistogramXScale) # repeat until we have enough
-            # replace histscale
-            self.SetParameter(HistogramXScale = HS)
-        elif len(HistogramXScale) < VariablesPerShape:
-            # histscale is a list but not of the right length
-            while len(HistogramXScale) < VariablesPerShape:
-                HistogramXScale.append(HistogramXScale[0])
-            self.SetParameter(HistogramXScale = HistogramXScale)
+        def fixLength(valueList):
+            if not isList(valueList):
+                valueList = [valueList for i in range(len(self.model))]
+            elif len(valueList) > len(self.model):
+                del valueList[len(self.model):]
+            elif len(valueList) < len(self.model):
+                nMissing = len(self.model) - len(valueList)
+                valueList.extend([valueList[0] for i in range(nMissing)])
+            return valueList
+
+        McSASParameters.histogramBins = fixLength(McSASParameters.histogramBins)
+        McSASParameters.histogramXScale = fixLength(McSASParameters.histogramXScale)
 
     def _Iopt(self, I, Ic, E, Sc, ver = 2,
               OutputI = False, Background = True):
@@ -1111,7 +1109,6 @@ class McSAS(object):
         ConvergenceCriterion = self.GetParameter('ConvergenceCriterion')
         MaximumRetries = self.GetParameter('MaximumRetries')
         # find out how many values a shape is defined by:
-        # testR = self.Functions['RAND']()
         testR = self.GetFunction('RAND')()
         VariablesPerShape = prod(shape((testR)))
         Rrep = zeros([Contributions, VariablesPerShape, Repetitions])
