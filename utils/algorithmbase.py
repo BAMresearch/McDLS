@@ -3,12 +3,21 @@
 
 from classproperty import classproperty
 from utils import isString, isList
-from parameter import Parameter, ParameterError
+from parameter import Parameter, ParameterError, testfor
+
+class AlgorithmError(StandardError):
+    pass
+
+class AlgorithmNameError(AlgorithmError):
+    pass
+
+class AlgorithmParameterError(AlgorithmError):
+    pass
 
 class AlgorithmBase(object):
     """Base class for all data filtering algorithms."""
     shortName = None # name to display in GUI
-    parameters = None # list of parameters
+    parameters = None # list of parameter classes
 
     @classproperty
     @classmethod
@@ -20,18 +29,17 @@ class AlgorithmBase(object):
         return cls()
 
     @classmethod
-    def assertions(cls):
-        for attrname in ('shortName', ):
-            assert (isString(getattr(cls, attrname)) and
-                    len(getattr(cls, attrname)) > 0), \
-                "{0} attribute '{1}' is not set!".format(cls.name, attrname)
-        assert AlgorithmBase.parameters is None, \
-                "Do not add parameters to the base class!"
-        assert isList(cls.parameters), \
-                ("Please set {0} attribute 'parameters' to an empty tuple"
-                 " == () if no parameters needed!".format(cls.name))
-        for p in cls.parameters: # verify parameters
-            assert isinstance(p, Parameter)
+    def __str__(cls):
+        text = [ cls.name, ]
+        for p in cls.parameters:
+            text.append("{0}: '{1}'".format(p.name, getattr(self, p.name)))
+        return "; ".join(text)
+
+    @classmethod
+    def __len__(cls):
+        if isList(cls.parameters):
+            return len(cls.parameters)
+        return 0
 
     def copy(self):
         f = self.makeDefault()
@@ -39,35 +47,27 @@ class AlgorithmBase(object):
             setattr(f, p.name, getattr(self, p.name))
         return f
 
-    def __init__(self, settings = None):
-        self.assertions()
-        # init with default values
+    def __init__(self):
+        testfor(isString(self.shortName) and len(self.shortName) > 0,
+                AlgorithmNameError,
+                "{0} name not set!".format(type(self).__name__))
+        testfor(AlgorithmBase.parameters is None, AlgorithmParameterError,
+                "Do not add parameters to the base class!")
+        # fix parameters attributes if set to single class without list
+        if self.parameters is None:
+            setattr(type(self), 'parameters', ())
+        elif not isList(self.parameters):
+            setattr(type(self), 'parameters', (self.parameters, ))
+        # verify parameter types
         for p in self.parameters:
-            assert not hasattr(self, p.name), \
-                    "Parameter '{0}' already set!".format(p.name)
-            setattr(self, p.name, p.defaultValue)
-
-    def __str__(self):
-        text = [self.name]
+            testfor(isinstance(p, type) and issubclass(p, Parameter),
+                    AlgorithmParameterError,
+                    "Expected a subclass of Parameter, got '{}'!"
+                    .format(type(p)))
+        # init parameter instances
         for p in self.parameters:
-            text.append("{0}: '{1}'".format(p.name, getattr(self, p.name)))
-        return "; ".join(text)
-
-    def __len__(self):
-        if isList(self.parameters):
-            return len(self.parameters)
-        return 0
-
-    def __eq__(self, other):
-        if (self.name != other.name or
-            self.parameters != other.parameters):
-            return False
-        for p in self.parameters:
-            if getattr(self, p.name) != getattr(other, p.name):
-                return False
-        return True
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
+            testfor(not hasattr(self, p.name), AlgorithmParameterError,
+                    "Parameter '{0}' already set!".format(p.name))
+            setattr(self, p.name, p())
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
