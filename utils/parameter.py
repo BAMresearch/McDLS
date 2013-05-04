@@ -120,7 +120,7 @@ class ParameterNumerical(Parameter):
 
     @valueRange.setter
     def valueRange(self, newRange):
-        cls.assertRange(newRange)
+        self.assertRange(newRange)
         self.valueRange = newRange
 
     @property

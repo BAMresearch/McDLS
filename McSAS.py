@@ -98,6 +98,7 @@ import pickle #for pickle_read and pickle_write
 from abc import ABCMeta, abstractmethod
 import inspect
 import logging
+logging.basicConfig(level = logging.INFO)
 
 from dataset import DataSet
 from utils import isList
@@ -127,6 +128,13 @@ class ParticleModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
     compensationExponent = 0.5 # default
 
+    def updateParamBounds(self, bounds):
+        if not isList(bounds):
+            bounds = [bounds,]
+        if not isinstance(bounds, list):
+            bounds = list(*bounds)
+        return bounds
+
     def smear(self, arg):
         return arg
 
@@ -154,6 +162,20 @@ class Sphere(ParticleModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
     parameters = (Radius, )
+
+    def updateParamBounds(self, bounds):
+        bounds = ParticleModel.updateParamBounds(self, bounds)
+        if len(bounds) < 1:
+            return
+        if len(bounds) == 1:
+            logging.warning("Only one bound provided, "
+                            "assuming it denotes the maximum.")
+            bounds.insert(0, self.radius.valueRange[0])
+        elif len(bounds) > 2:
+            bounds = bounds[0:2]
+        logging.info("Updating lower and upper contribution parameter bounds "
+                     "to: ({0}, {1}).".format(bounds[0], bounds[1]))
+        self.radius.valueRange = (min(bounds), max(bounds))
 
     def vol(self, *args):
         """Calculates the volume of a sphere, taking compensationExponent
@@ -216,6 +238,7 @@ class SASData(DataSet):
     """Represents one set of data from a unique source (a file, for example).
     """
     _prepared = None
+    _sizeBounds = None
 
     @classmethod
     def load(cls, filename):
@@ -238,6 +261,18 @@ class SASData(DataSet):
 
     def __init__(self, title, data):
         DataSet.__init__(self, title, data)
+
+    def setOrigin(self, data):
+        DataSet.setOrigin(self, data)
+        # determining sizeBounds from q vector
+        q = data[:,0]
+        self._sizeBounds = pi / array([q.max(),
+                                       min(abs(q.min()),
+                                           abs(diff(q).min()))])
+
+    @property
+    def sizeBounds(self):
+        return self._sizeBounds
 
 class McSAS(object):
     r"""
@@ -547,6 +582,7 @@ class McSAS(object):
         else:
             self.dataset = SASData("SAS data provided", None)
             self.dataset.prepared = data
+        McSASParameters.contribParamBounds = list(self.dataset.sizeBounds)
 
     def SetParameter(self, kwargs):
         """Sets the supplied Parameters given in keyword-value pairs for known
@@ -714,6 +750,7 @@ class McSAS(object):
 
         McSASParameters.histogramBins = fixLength(McSASParameters.histogramBins)
         McSASParameters.histogramXScale = fixLength(McSASParameters.histogramXScale)
+        self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
     def _Iopt(self, I, Ic, E, Sc, ver = 2,
               OutputI = False, Background = True):
