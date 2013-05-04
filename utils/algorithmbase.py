@@ -53,6 +53,11 @@ class AlgorithmBase(object):
             text.append("{0}: '{1}'".format(p.name, getattr(self, p.name)))
         return "; ".join(text)
 
+    def __len__(self):
+        if isList(self.parameters):
+            return len(self.parameters)
+        return 0
+
     def __eq__(self, other):
         if (self.name != other.name or
             self.parameters != other.parameters):
