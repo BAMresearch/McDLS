@@ -29,13 +29,6 @@ class AlgorithmBase(object):
         return cls()
 
     @classmethod
-    def __str__(cls):
-        text = [ cls.name, ]
-        for p in cls.parameters:
-            text.append("{0}: '{1}'".format(p.name, getattr(self, p.name)))
-        return "; ".join(text)
-
-    @classmethod
     def __len__(cls):
         if isList(cls.parameters):
             return len(cls.parameters)
@@ -69,6 +62,12 @@ class AlgorithmBase(object):
             testfor(not hasattr(self, p.name), AlgorithmParameterError,
                     "Parameter '{0}' already set!".format(p.name))
             setattr(self, p.name, p())
+
+    def __str__(self):
+        text = [ self.name ]
+        for p in self.parameters:
+            text.append("  " + str(getattr(self, p.name)))
+        return "\n".join(text)
 
     @property
     def paramIter(self):

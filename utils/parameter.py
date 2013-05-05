@@ -46,10 +46,6 @@ class Parameter(object):
     # instance variables, every object has its own value
     _value = None
 
-    @classmethod
-    def __str__(cls):
-        return str((cls.name, cls.displayName, cls.defaultValue))
-
     def __init__(self, value = None):
         # Checking attributes which have to be set in a class of this type.
         testfor(self.defaultValue is not None,
@@ -63,6 +59,10 @@ class Parameter(object):
         self.value = self.defaultValue
         if isNumber(value):
             self.value = value
+
+    def __str__(self):
+        return "{0} ({1}): {2}".format(
+                self.name, self.displayName, self.defaultValue)
 
     @property
     def value(self):
@@ -90,11 +90,6 @@ class ParameterNumerical(Parameter):
         testfor(all([isNumber(v) for v in newRange]), ValueRangeError,
                 "A value range has to consist of numbers only!")
 
-    @classmethod
-    def __str__(cls):
-        return Parameter.__str__() + str((
-                cls.valueRange, cls.suffix, cls.stepping))
-
     def __init__(self, *args, **kwargs):
         Parameter.__init__(self, *args, **kwargs)
         testfor(isNumber(self.defaultValue), DefaultValueError,
@@ -113,6 +108,10 @@ class ParameterNumerical(Parameter):
                 DisplayValuesError, "Display value keys have to be numbers!")
             testfor(all([isString(s) for s in self.displayValues.itervalues()]),
                 DisplayValuesError, "Display values have to be text!")
+
+    def __str__(self):
+        return (Parameter.__str__(self) + " in [{0}, {1}]{2}, {3} steps"
+                .format(*(self.valueRange + (self.suffix, self.stepping))))
 
     @property
     def valueRange(self):
@@ -141,10 +140,6 @@ class ParameterNumerical(Parameter):
 class ParameterFloat(ParameterNumerical):
     decimals = None
 
-    @classmethod
-    def __str__(cls):
-        return ParameterNumerical.__str__() + str((cls.decimals,))
-
     def __init__(self, *args, **kwargs):
         ParameterNumerical.__init__(self, *args, **kwargs)
         if self.decimals is not None:
@@ -156,6 +151,10 @@ class ParameterFloat(ParameterNumerical):
             self.decimals = int(round(math_log10(math_fabs(end - start))))
         if self.decimals <= 0:
             self.decimals = 1
+
+    def __str__(self):
+        return ParameterNumerical.__str__(self) + ", {0} decimals".format(
+                                                            self.decimals)
 
 class ParameterLog(ParameterFloat):
     pass
