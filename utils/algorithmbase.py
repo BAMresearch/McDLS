@@ -69,10 +69,9 @@ class AlgorithmBase(object):
             text.append("  " + str(getattr(self, p.name)))
         return "\n".join(text)
 
-    @property
-    def paramIter(self):
+    def __iter__(self):
         """Iterator over all Parameter instances."""
-        for p in self.parameters:
-            yield getattr(self, p.name)
+        for i, p in zip(range(len(self)), self.parameters):
+            yield i, getattr(self, p.name)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
