@@ -70,4 +70,10 @@ class AlgorithmBase(object):
                     "Parameter '{0}' already set!".format(p.name))
             setattr(self, p.name, p())
 
+    @property
+    def paramIter(self):
+        """Iterator over all Parameter instances."""
+        for p in self.parameters:
+            yield getattr(self, p.name)
+
 # vim: set ts=4 sts=4 sw=4 tw=0:
