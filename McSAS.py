@@ -70,16 +70,16 @@ Fitting a single Dataset using all automatic and default Parameters
 and good uncertainty estimates).
 The Dataset is considered to consist of three variables *Q*, *I* and *IError*::
 
- McSAS(Q = Q, I = I, IError = IError, Plot = True)
+ McSAS(Q = Q, I = I, IError = IError, plot = True)
 
 Optional Parameters can be supplied in parameter-value pairs to finetune
 optimisation behaviour::
 
  A = McSAS(Q = Q, I = I, IError = numpy.maximum(0.01 * I, E),
-           Contributions = 200, ConvergenceCriterion = 1,
-           ContributionParameterBounds = array([0.5e-9, 35e-9]),
-           MaximumIterations = 1e5, HistogramXScale = 'log',
-           DeltaRhoSquared = 1e30, Repetitions = 100, Plot = True)
+           numContribs = 200, convergenceCriterion = 1,
+           contribParamBounds = array([0.5e-9, 35e-9]),
+           maxIterations = 1e5, histogramXScale = 'log',
+           deltaRhoSquared = 1e30, numReps = 100, plot = True)
 
 Module Documentation
 ====================
@@ -90,7 +90,7 @@ from scipy import optimize # For the leastsq optimization function
 import numpy # For arrays
 from numpy import (inf, array, isfinite, reshape, prod, shape, pi, diff, zeros,
                   arange, size, sin, cos, sum, sqrt, linspace, logspace, log10,
-                  isnan, ndim)
+                  isnan, ndim, newaxis)
 import os # Miscellaneous operating system interfaces
 import time # Timekeeping and timing of objects
 import sys # For printing of slightly more advanced messages to stdout
@@ -139,16 +139,25 @@ class ParticleModel(AlgorithmBase, PropertyNames):
         return arg
 
     @abstractmethod
-    def vol(self, *args):
-        raise NotImplementedError
+    def vol(self, paramValues):
+        return paramValues.shape[1] == len(self)
 
     @abstractmethod
-    def ff(self, q, *args):
-        raise NotImplementedError
+    def ff(self, dataset, paramValues):
+        return paramValues.shape[1] == len(self)
 
-    @abstractmethod
-    def rand(self, count = 1):
-        raise NotImplementedError
+    def randUniform(self, count = 1):
+        """Random number generator with uniform distribution for
+        the parameters of this model.
+        """
+        generator = numpy.random.uniform
+        lst = numpy.zeros((count, len(self)))
+        for idx, param in self:
+            lst[:, idx] = generator(min(param.valueRange),
+                                    max(param.valueRange),
+                                    count)
+        # output count-by-nParameters array
+        return lst
 
 class Radius(ParameterFloat):
     """Parameter for the radius of a scatterer."""
@@ -177,38 +186,23 @@ class Sphere(ParticleModel):
                      "to: ({0}, {1}).".format(bounds[0], bounds[1]))
         self.radius.valueRange = (min(bounds), max(bounds))
 
-    def vol(self, *args):
+    def vol(self, paramValues):
         """Calculates the volume of a sphere, taking compensationExponent
         from input or preset Parameters.
         """
-        assert len(args) == len(self.bounds)
-        return (4.0/3*pi) * args[0]**(3*compensationExponent)
+        assert ParticleModel.vol(self, paramValues)
+        result = (pi*4./3.) * paramValues**(3. * self.compensationExponent)
+        return result
 
-    def ff(self, q, *args):
+    def ff(self, dataset, paramValues):
         """Calculate the Rayleigh function for a sphere.
         """
-        assert len(args) == len(self.bounds)
-        rSet = args[0]
-        if size(rSet, 0) > 1:
-            # multimensional matrices required, input Rsph has to be Nsph-by-1.
-            # q has to be 1-by-N
-            qR = (q + 0.*rSet) * (rSet + 0.*q)
-        else:
-            qR = (q) * (rSet)
-        fSph = 3. * (sin(qR) - qR * cos(qR)) / (qR**3.)
-        return fSph
-
-    def rand(self, count = 1):
-        """Random number generator with uniform distribution for
-        the sphere form factor.
-        """
-        # generate Nsph random numbers
-        rSet = numpy.random.uniform(numpy.min(self.bounds),
-                                    numpy.max(self.bounds),
-                                    count)
-        rSet = reshape(rSet, (prod(shape(rSet)), 1))
-        # output Nsph-by-1 array
-        return rSet
+        assert ParticleModel.ff(self, dataset, paramValues)
+        r = paramValues.flatten()
+        q = dataset[:, 0]
+        qr = numpy.outer(q, r)
+        result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
+        return result
 
 class McSASParameters(PropertyNames):
     contribParamBounds = ()
@@ -218,8 +212,7 @@ class McSASParameters(PropertyNames):
     qBounds = None
     psiBounds = None
     priors = () # of shape Rrep, to be used as initial guess for
-                # Analyse function, Analyse will pass on a Prior
-                # to MCFit.
+                # analyse(). It will pass on a Prior to MCFit.
     prior = ()  # of shape Rset, to be used as initial guess for
                 # MCFit function
     histogramBins = 50
@@ -288,65 +281,68 @@ class McSAS(object):
 
         - *Psi*: 2D array
             Detector angle values, only required for 2D pattern fitting.
-        - *ContributionParameterBounds*: list
+        - *contribParamBounds*: list
             Two-element vector or list indicating upper and lower size
             bounds of the particle radii used in the fitting procedure. If
             not provided, these will be estimated as:
             :math:`R_{max} = {pi \over q_{min}}` and
             :math:`R_{min} = {pi \over q_{max}}`. Units in meter.
-        - *Contributions*: int, default: 200
+        - *numContribs*: int, default: 200
             Number of spheres used for the MC simulation
-        - *MaximumIterations*: int, default: 1e5
+        - *maxIterations*: int, default: 1e5
             Maximum number of iterations for the :py:func:`MCFit` function
-        - *PowerCompensationFactor*: float, default: :math:`1.5 \over 3`
+        - *compensationExponent*: float, default: :math:`1.5 \over 3`
             Parameter used to compensate the :math:`volume^2` scaling of each
             sphere contribution to the simulated I(q).
-        - *Repetitions*: int, default: 100
+        - *numReps*: int, default: 100
             Number of repetitions of the MC fit for determination of final
             histogram uncertainty.
-        - *QBounds*: list, default: [0, inf]
+        - qBounds*: list, default: [0, inf]
             Limits on the fitting range in q.
             Units in :math:`m^{-1}`
-        - *HistogramBins*: int, default: 50
+        - *histogramBins*: int, default: 50
             Number of bins used for the histogramming procedure.
-        - *HistogramXScale*: string, default: 'log'
+        - *histogramXScale*: string, default: 'log'
             Can be set to 'log' for histogramming on a logarithmic size scale,
             recommended for q- and/or size-ranges spanning more than a decade.
-        - *HistogramWeighting*: string, default: 'volume'
+        - *histogramWeighting*: string, default: 'volume'
             Can be set to 'number' to force plotting of number-weighted
             distributions
-        - *DeltaRhoSquared*: float, default: 1
+        - *deltaRhoSquared*: float, default: 1
             Scattering contrast - when known it will be used to calculate the
             absolute volume fraction of each contribution.
             Units in :math:`m^{-4}`
-        - *ConvergenceCriterion*: float, default: 1
+        - *convergenceCriterion*: float, default: 1
             Convergence criterion for the least-squares fit. The fit converges
-            once the :math:`normalized \chi^2 < ConvergenceCriterion`. If 
-            convergence is reached with `ConvergenceCriterion == 1`, the model 
-            describes the data (on average) to within the uncertainty, and thus 
+            once the :math:`normalized \chi^2 < convergenceCriterion`. If
+            convergence is reached with `convergenceCriterion == 1`, the model
+            describes the data (on average) to within the uncertainty, and thus
             all information has been extracted from the scattering pattern.
-        - *StartFromMinimum*: bool, default: False
+        - *startFromMinimum*: bool, default: False
             If set to False, the starting configuration is a set of spheres
             with radii uniformly sampled between the given or estimated
             bounds. If set to True, the starting configuration is a set of
             spheres with radii set to the lower given or estimated Bound
             (if not zero). Practically, this makes little difference and this
             feature might be depreciated.
-        - *MaximumRetries*: int, default: 5
+        - *maxRetries*: int, default: 5
             If a single MC optimization fails to reach convergence within
-            *MaximumIterations*, it may just be due to bad luck. The procedure 
-            will try to redo that MC optimization for a maximum of 
-            *MaximumRetries* tries before concluding that it is not bad luck 
+            *maxIterations*, it may just be due to bad luck. The procedure
+            will try to redo that MC optimization for a maximum of
+            *maxRetries* tries before concluding that it is not bad luck
             but bad input.
-        - *Plot*: Bool, default: False
+        - *plot*: Bool, default: False
             If set to True, will generate a plot showing the data and fit, as
             well as the Resulting size histogram.
-        - *LowMemoryFootprint*: Bool, default: False
+        - *lowMemoryFootprint*: Bool, default: False
             For 2D pattern fitting, or for fitting patterns with a very large
             number of datapoints or contributions, it may make sense to turn
             this option on in order for intensity generating functions not to
             take up much memory. The cost for this is perhaps a 20-ish percent
             reduction in speed.
+
+    **outdated:**
+
         - *BOUNDS*: string
             The McSAS function to use for calculating random number generator
             bounds based on input (f.ex. q and I).
@@ -366,7 +362,7 @@ class McSAS(object):
 
     **Returns:**
 
-    A McSAS object with the following Results stored in the *Result* member
+    A McSAS object with the following Results stored in the *result* member
     attribute. These can be extracted using
     McSAS.GetResult('Keyword',VariableNumber=0)
     where the *VariableNumber* indicates which shape parameter information is
@@ -395,12 +391,12 @@ class McSAS(object):
             Shape parameter index.
             E.g. an ellipsoid has 3: width, height and orientation.
         *HistogramXLowerEdge*: array
-            Histogram bin left edge position (x-axis in histogram).
+            histogram bin left edge position (x-axis in histogram).
         *HistogramXMean*: array
             Center positions for the size histogram bins
             (x-axis in histogram, used for errorbars).
         *HistogramXWidth*: array
-            Histogram bin width
+            histogram bin width
             (x-axis in histogram, defines bar plot bar widths).
         *VolumeHistogramYMean*: array
             Volume-weighted particle size distribution values for
@@ -482,9 +478,7 @@ class McSAS(object):
 
     dataset = None # user provided data to work with
     model = None
-    Parameters = None
-    Result = None
-    Functions = None
+    result = None
 
     def __init__(self, **kwargs):
         """
@@ -501,41 +495,33 @@ class McSAS(object):
             6. Sets the function references
             7. Calculates the shape parameter bounds if not supplied
             8. Peforms simple checks on validity of input
-            9. Runs the Analyse() function which applies the MC fit multiple
+            9. Runs the analyse() function which applies the MC fit multiple
                times
-            10. Runs the Histogram() procedure which processes the MC result
+            10. Runs the histogram() procedure which processes the MC result
             11. Optionally recalculates the resulting intensity in the same
                 shape as the original (for 2D Datasets)
             12. Optionally displays the results graphically.
 
         .. document private Functions
-        .. automethod:: _Iopt
+        .. automethod:: optimScalingAndBackground
         """
         # initialize
-        self.Parameters = dict()
         self.Result = list()
         self.Result.append(dict())
-        self.Functions = dict()
+
+        self.result = [] # does this belong into the model eventually?
 
         # set data values
-        self.SetData(kwargs)
-        print self.dataset.origin.shape, self.dataset.prepared
+        self.setData(kwargs)
         # set supplied kwargs and passing on
-        self.SetParameter(kwargs)
+        self.setParameter(kwargs)
         # apply q and psi limits and populate self.FitData
-        self.ClipDataset()
-        # apply input settings for fitting,
-        # setting the required function definitions
-#        self.SetFunction(kwargs)
-        # calculate parameter bounds and store
-#        self.GetFunction('BOUNDS')()
-        # check and fix Parameters where necessary
-        # This is only a very simple function now in need of expansion
+        self.clipDataset()
         self.model = Sphere()
-        self.CheckParameters()
+        self.checkParameters()
 
-        self.Analyse()
-        self.Histogram()
+        self.analyse()
+        self.histogram()
 
         if ndim(kwargs['Q']) > 1:
             # 2D mode, regenerate intensity
@@ -546,7 +532,7 @@ class McSAS(object):
             # Result = self.GetResult()
             self.Plot()
 
-    def SetData(self, kwargs):
+    def setData(self, kwargs):
         """Sets the supplied data in the proper location. Optional argument
         *Dataset* can be set to ``fit`` or ``original`` to define which
         Dataset is set. Default is ``original``.
@@ -584,7 +570,7 @@ class McSAS(object):
             self.dataset.prepared = data
         McSASParameters.contribParamBounds = list(self.dataset.sizeBounds)
 
-    def SetParameter(self, kwargs):
+    def setParameter(self, kwargs):
         """Sets the supplied Parameters given in keyword-value pairs for known
         setting keywords (unknown key-value pairs are skipped).
         If a supplied parameter is one of the function names, it is stored in
@@ -601,7 +587,7 @@ class McSAS(object):
                 logging.warning("Unknown McSAS parameter specified: '{0}'"
                                 .format(key))
 
-    def ClipDataset(self):
+    def clipDataset(self):
         """If q and/or psi limits are supplied in self.Parameters,
         clips the Dataset to within the supplied limits. Copies data to
         :py:attr:`self.FitData` if no limits are set.
@@ -730,7 +716,7 @@ class McSAS(object):
         for kw in kwargs:
             rdict[kw] = kwargs[kw]
 
-    def CheckParameters(self):
+    def checkParameters(self):
         """Checks for the Parameters, for example to make sure
         histbins is defined for all, or to check if all Parameters fall
         within their limits.
@@ -752,84 +738,84 @@ class McSAS(object):
         McSASParameters.histogramXScale = fixLength(McSASParameters.histogramXScale)
         self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
-    def _Iopt(self, I, Ic, E, Sc, ver = 2,
-              OutputI = False, Background = True):
+    def optimScalingAndBackground(self, intObs, intCalc, error, sc, ver = 2,
+            outputIntensity = False, background = True):
         """
-        Optimizes the scaling and background factor to match Ic closest to I.
-        Returns an array with scaling factors. Input initial guess *Sc* has 
+        Optimizes the scaling and background factor to match *intCalc* closest
+        to intObs. 
+        Returns an array with scaling factors. Input initial guess *sc* has 
         to be a two-element array with the scaling and background.
 
         **Input arguments:**
 
-        :arg I: An array of *measured* intensities
-        :arg Ic: An array of intensities which should be scaled to match *I*
-        :arg E: An array of uncertainties to match *I*
-        :arg Sc: A 2-element array of initial guesses for scaling
+        :arg intObs: An array of *measured*, respectively *observed*
+                     intensities
+        :arg intCalc: An array of intensities which should be scaled to match
+                      *intObs*
+        :arg error: An array of uncertainties to match *intObs*
+        :arg sc: A 2-element array of initial guesses for scaling
                  factor and background
         :arg ver: *(optional)* Can be set to 1 for old version, more robust
                   but slow, default 2 for new version,
                   10x faster than version 1
-        :arg OutputI: *(optional)* Return the scaled intensity as third output
-                      argument, default: False
-        :arg Background: *(optional)* Enables a flat background contribution,
+        :arg outputIntensity: *(optional)* Return the scaled intensity as
+                              third output argument, default: False
+        :arg background: *(optional)* Enables a flat background contribution,
                          default: True
 
-        :returns: (*Sc*, *cval*): A tuple of an array containing the intensity
-            scaling factor and background and the reduced chi-squared value.
+        :returns: (*sc*, *conval*): A tuple of an array containing the
+                  intensity scaling factor and background and the reduced
+                  chi-squared value.
         """
-        def csqr(Sc, I, Ic, E):
+        def csqr(sc, intObs, intCalc, error):
             """Least-squares error for use with scipy.optimize.leastsq"""
-            cs = (I - Sc[0]*Ic - Sc[1]) / E
-            return cs
+            return (intObs - sc[0]*intCalc - sc[1]) / error
         
-        def csqr_noBG(Sc, I, Ic, E):
+        def csqr_nobg(sc, intObs, intCalc, error):
             """Least-squares error for use with scipy.optimize.leastsq,
             without background """
-            cs = (I - Sc[0]*Ic) / E
-            return cs
+            return (intObs - sc[0]*intCalc) / error
 
-        def csqr_v1(I, Ic, E):
+        def csqr_v1(intObs, intCalc, error):
             """Least-squares for data with known error,
             size of parameter-space not taken into account."""
-            cs = sum(((I - Ic)/E)**2) / size(I)
-            return cs
+            return sum(((intObs - intCalc)/error)**2) / size(intObs)
 
+        intObs = intObs.flatten()
+        intCalc = intCalc.flatten()
+        error = error.flatten()
         if ver == 2:
             """uses scipy.optimize.leastsqr"""
-            if Background:
-                Sc, success = scipy.optimize.leastsq(csqr, Sc,
-                                                     args = (I.flatten(),
-                                                             Ic.flatten(),
-                                                             E.flatten()),
-                                                            full_output = 0)
-                cval = csqr_v1(I, Sc[0]*Ic + Sc[1], E)
+            if background:
+                sc, success = scipy.optimize.leastsq(
+                        csqr, sc, args = (intObs, intCalc, error),
+                        full_output = False)
+                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], error)
             else:
-                Sc, success = scipy.optimize.leastsq(csqr_noBG, Sc,
-                                                     args = (I.flatten(),
-                                                             Ic.flatten(),
-                                                             E.flatten()),
-                                                            full_output = 0)
-                Sc[1] = 0.0
-                cval = csqr_v1(I, Sc[0]*Ic, E)
+                sc, success = scipy.optimize.leastsq(
+                        csqr_nobg, sc, args = (intObs, intCalc, error),
+                        full_output = False)
+                sc[1] = 0.0
+                conval = csqr_v1(intObs, sc[0]*intCalc, error)
         else:
             """using scipy.optimize.fmin"""
             # Background can be set to False to just find the scaling factor.
-            if Background:
-                Sc = scipy.optimize.fmin(
-                        lambda Sc: csqr_v1(I, Sc[0]*Ic + Sc[1], E),
-                        Sc, full_output = 0, disp = 0)
-                cval = csqr_v1(I, Sc[0]*Ic + Sc[1], E)
+            if background:
+                sc = scipy.optimize.fmin(
+                    lambda sc: csqr_v1(intObs, sc[0]*intCalc + sc[1], error),
+                    sc, full_output = False, disp = 0)
+                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], error)
             else:
-                Sc = scipy.optimize.fmin(
-                        lambda Sc: csqr_v1(I, Sc[0]*Ic, E),
-                        Sc, full_output = 0, disp = 0)
-                Sc[1] = 0.0
-                cval = csqr_v1(I, Sc[0]*Ic, E)
+                sc = scipy.optimize.fmin(
+                    lambda sc: csqr_v1(intObs, sc[0]*intCalc, error),
+                    sc, full_output = False, disp = 0)
+                sc[1] = 0.0
+                conval = csqr_v1(intObs, sc[0]*intCalc, error)
 
-        if OutputI:
-            return Sc, cval, Sc[0]*Ic + Sc[1]
+        if outputIntensity:
+            return sc, conval, sc[0]*intCalc + sc[1]
         else:
-            return Sc, cval
+            return sc, conval
 
     ######################## Shape Functions ######################
     def EllContributionParameterBounds_2D(self):
@@ -1129,340 +1115,316 @@ class McSAS(object):
     ####################### optimisation Functions #######################
     ######################################################################
 
-    def Analyse(self):
+    def analyse(self):
         """This function runs the Monte Carlo optimisation a multitude
         (*Repetitions*) of times. If convergence is not achieved, it will try 
         again for a maximum of *MaximumRetries* attempts.
         """
-        # get data
-        FitQ = self.GetData('Q')
-        I = self.GetData('I')
-        E = self.GetData('IError')
+        data = self.dataset.prepared
         # get settings
-        Priors = self.GetParameter('Priors')
-        Prior = self.GetParameter('Prior')
-        Contributions = self.GetParameter('Contributions')
-        Repetitions = self.GetParameter('Repetitions')
-        ConvergenceCriterion = self.GetParameter('ConvergenceCriterion')
-        MaximumRetries = self.GetParameter('MaximumRetries')
+        priors = McSASParameters.priors
+        prior = McSASParameters.prior
+        numContribs = McSASParameters.numContribs
+        numReps = McSASParameters.numReps
+        maxRetries = McSASParameters.maxRetries
         # find out how many values a shape is defined by:
-        testR = self.GetFunction('RAND')()
-        VariablesPerShape = prod(shape((testR)))
-        Rrep = zeros([Contributions, VariablesPerShape, Repetitions])
-        # DEBUG:
-        # print 'Rrep: {}'.format(shape(Rrep))
-        Niters = zeros([Repetitions])
-        Irep = zeros([1, prod(shape(I)), Repetitions])
-        bignow = time.time() # for time estimation and reporting
+        contributions = zeros((numContribs, len(self.model), numReps))
+        numIter = zeros(numReps)
+        contribIntensity = zeros([1, len(data), numReps])
+        start = time.time() # for time estimation and reporting
 
         # This is the loop that repeats the MC optimization Repetitions times,
         # after which we can calculate an uncertainty on the Results.
         priorsflag = False
-        for nr in arange(0, Repetitions):
-            if ((Prior == []) and (Priors != [])) or (priorsflag == True):
+        for nr in range(numReps):
+            if (len(prior) <= 0 and len(priors) > 0) or priorsflag:
                 # this flag needs to be set as prior will be set after
                 # the first pass
                 priorsflag = True
-                self.SetParameter(Prior = Priors[:, :, nr%size(Priors, 2)])
+                McSASParameters.prior = priors[:, :, nr%size(priors, 2)]
             # keep track of how many failed attempts there have been
             nt = 0
             # do that MC thing! 
-            ConVal = inf
-            while ConVal > ConvergenceCriterion:
+            convergence = inf
+            while convergence > McSASParameters.convergenceCriterion:
                 # retry in the case we were unlucky in reaching
                 # convergence within MaximumIterations.
                 nt += 1
-                Rrep[:, :, nr], Irep[:, :, nr], ConVal, Details = \
-                        self.MCFit(OutputI = True, OutputDetails = True)
-                if nt > MaximumRetries:
+                (contributions[:, :, nr], contribIntensity[:, :, nr],
+                 convergence, details) = self.mcFit(outputIntensity = True,
+                                                    outputDetails = True)
+                if nt > maxRetries:
                     # this is not a coincidence.
-                    # We have now tried MaximumRetries+2 times
-                    print "could not reach optimization criterion within "\
-                          "{0} attempts, exiting...".format(MaximumRetries+2)
+                    # We have now tried maxRetries+2 times
+                    logging.warning("Could not reach optimization criterion "
+                                    "within {0} attempts, exiting..."
+                                    .format(maxRetries+2))
                     return
             # keep track of how many iterations were needed to reach converg.
-            Niters[nr] = Details['Niter']
+            numIter[nr] = details['numIterations']
 
-            biglap = time.time() # time management
             # in minutes:
-            tottime = (biglap-bignow)/60. # total elapsed time
-            avetime = (tottime/ (nr+1)) # average time per MC optimization
-            remtime = (avetime*Repetitions - tottime) # est. remaining time
-            print "\t*finished optimization number {0} of {1} \r\n"\
-                  "\t*total elapsed time: {2} minutes \r\n"\
-                  "\t*average time per optimization {3} minutes \r\n"\
-                  "\t*total time remaining {4} minutes"\
-                  .format(nr+1, Repetitions, tottime, avetime, remtime)
+            tottime = (time.time() - start)/60. # total elapsed time
+            avetime = (tottime / (nr+1)) # average time per MC optimization
+            remtime = (avetime*numReps - tottime) # est. remaining time
+            logging.info("finished optimization number {0} of {1}\n"
+                    "  total elapsed time: {2} minutes\n"
+                    "  average time per optimization {3} minutes\n"
+                    "  total time remaining {4} minutes"
+                    .format(nr+1, numReps, tottime, avetime, remtime))
         
-        # at this point, all MC optimizations have been completed and
-        # we can process all Repetitions Results.
-        FitIntensityMean = numpy.mean(Irep, axis = 2) # mean fitted intensity
-        # standard deviation on the fitted intensity,
-        # usually not plotted for clarity
-        FitIntensityStd = numpy.std(Irep, axis = 2)
         # store in output dict
-        self.SetResult(**{
-            'Rrep': Rrep,
-            'FitIntensityMean': FitIntensityMean,
-            'FitIntensityStd': FitIntensityStd,
-            'FitQ': FitQ, # can be obtained from self.FitData 
-            #average number of iterations for all repetitions
-            'Niter': numpy.mean(Niters)})
+        self.result.append(dict(
+            contribs = contributions, # Rrep
+            fitIntMean = numpy.mean(contribIntensity, axis = 2),
+            fitIntStd = numpy.std(contribIntensity, axis = 2),
+            fitQ = data[:, 0],
+            # average number of iterations for all repetitions
+            numIter = numpy.mean(numIter)))
 
-    def MCFit(self, OutputI = False,
-                    OutputDetails = False, OutputIterations = False):
+    def mcFit(self, outputIntensity = False,
+                    outputDetails = False, outputIterations = False):
         """
         Object-oriented, shape-flexible core of the Monte Carlo procedure.
         Takes optional arguments:
 
-        *OutputI*:
+        *outputIntensity*:
             Returns the fitted intensity besides the Result
 
-        *OutputDetails*:
-            Details of the fitting procedure, number of iterations and so on
+        *outputDetails*:
+            details of the fitting procedure, number of iterations and so on
 
-        *OutputIterations*:
+        *outputIterations*:
             Returns the Result on every successful iteration step, useful for
             visualising the entire Monte Carlo optimisation procedure for
             presentations.
         """
-        # load Dataset
-        q = self.GetData('Q')
-        I = self.GetData('I')
-        E = self.GetData('IError')
-        # load Parameters
-        Contributions = self.GetParameter('Contributions')
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        ConvergenceCriterion = self.GetParameter('ConvergenceCriterion')
-        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
-        MaximumIterations = self.GetParameter('MaximumIterations')
-        MaskNegativeI = self.GetParameter('MaskNegativeI')
-        MaskZeroI = self.GetParameter('MaskZeroI')
-        StartFromMinimum = self.GetParameter('StartFromMinimum')
-        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
-        Prior = self.GetParameter('Prior')
+        data = self.dataset.prepared
+        # model parameters
+        # ContributionParameterBounds = \
+        #        self.GetParameter('ContributionParameterBounds')
+        # PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
+        # Contributions = self.GetParameter('Contributions')
+        numContribs = McSASParameters.numContribs
+        # MaskNegativeI = self.GetParameter('MaskNegativeI')
+        maskNegativeInt = McSASParameters.maskNegativeInt
+        # MaskZeroI = self.GetParameter('MaskZeroI')
+        maskZeroInt = McSASParameters.maskZeroInt
+        # Prior = self.GetParameter('Prior')
+        prior = McSASParameters.prior
 
         # find out how many values a shape is defined by:
-        Randfunc = self.GetFunction('RAND')
-        FFfunc = self.GetFunction('FF')
-        VOLfunc = self.GetFunction('VOL')
-        SMEARfunc = self.GetFunction('SMEAR')
-        testR = Randfunc()
-        VariablesPerShape = prod(shape(testR))
+        # Randfunc = self.GetFunction('RAND')
+        # FFfunc = self.GetFunction('FF')
+        # VOLfunc = self.GetFunction('VOL')
+        # SMEARfunc = self.GetFunction('SMEAR')
+        # testR = Randfunc()
+        # VariablesPerShape = prod(shape(testR))
 
-        Rset = numpy.zeros((Contributions, VariablesPerShape))
+        # Rset = numpy.zeros((Contributions, VariablesPerShape))
+        rset = numpy.zeros((numContribs, len(self.model)))
 
         # Intialise variables
         FFset = []
         Vset = []
-        Niter = 0
         Conval = inf
-        Details = dict()
+        details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
-        Ri = 0
         
+        q = data[:, 0]
         # generate initial set of spheres
-        if size(Prior) == 0:
-            if StartFromMinimum:
-                for Rvi in range(VariablesPerShape): # minimum bound for each 
-                    if numpy.min(ContributionParameterBounds[Rvi:Rvi+2]) == 0:
-                        mb = pi/numpy.max(q)
-                    else:
-                        mb = numpy.min(ContributionParameterBounds[Rvi:Rvi+2])
-                    Rset[:, Rvi] = numpy.ones(Contributions)[:]*mb/2.
+        if size(prior) == 0:
+            if McSASParameters.startFromMinimum:
+                for idx, param in self.model:
+                    mb = min(param.valueRange)
+                    if mb == 0: # FIXME: compare with EPS eventually?
+                        mb = pi / q.max()
+                    rset[:, idx] = numpy.ones(numContribs) * mb * .5
             else:
-                Rset = Randfunc(Contributions)
-        elif (size(Prior,0) != 0) & (size(Contributions) == 0):
-            Contributions = size(Prior, 0)
-            Rset = Prior
-        elif size(Prior, 0) == Contributions:
-            Rset = Prior
-        elif size(Prior, 0) < Contributions:
-            print "size of prior is smaller than Contributions. "\
+                rset = self.model.randUniform(numContribs)
+        elif prior.shape[0] != 0: #? and size(numContribs) == 0:
+                                  # (didnt understand this part)
+            numContribs = prior.shape[0]
+            rset = prior
+        elif prior.shape[0] == numContribs:
+            rset = prior
+        elif prior.shape[0] < numContribs:
+            print "size of prior is smaller than numContribs. "\
                   "duplicating random prior values"
-            # while size(Prior) < Nsph:
-            Addi = numpy.random.randint(size(Prior,0),
-                        size = Contributions - size(Prior,0))
-            Rset = concatenate((Prior, Prior[Addi, :]))
-            print "size now:", size(Rset)
-        elif size(Prior, 0) > Contributions:
-            print "Size of prior is larger than Contributions. "\
+            randomIndices = numpy.random.randint(prior.shape[0],
+                            size = numContribs - prior.shape[0])
+            rset = numpy.concatenate((prior, prior[randomIndices, :]))
+            print "size now:", rset.shape
+        elif prior.shape[0] > numContribs:
+            print "Size of prior is larger than numContribs. "\
                   "removing random prior values"
             # remaining choices
-            Remi = numpy.random.randint(size(Prior, 0), size = Contributions)
-            Rset = Prior[Remi, :]
-            print "size now:", size(Rset, 0)
+            randomIndices = numpy.random.randint(prior.shape[0],
+                                                 size = numContribs)
+            rset = prior[randomIndices, :]
+            print "size now:", rset.shape
         
-        if LowMemoryFootprint == False:
+        vset = self.model.vol(rset)
+        if not McSASParameters.lowMemoryFootprint:
             # calculate their form factors
-            FFset = FFfunc(Rset)
-            Vset = VOLfunc(Rset, PowerCompensationFactor)
-            # Vset = (4.0/3*pi) * Rset**(3*PowerCompensationFactor)
+            ffset = self.model.ff(data, rset)
             # calculate the intensities
-            Iset = FFset**2 * (Vset + 0*FFset)**2 # a set of intensities
-            Vst = sum(Vset**2) # total volume squared
-            It = sum(Iset, 0) # the total intensity - eq. (1)
-            It = reshape(It, (1, prod(shape(It)))) # reshaped to match I and q
+            iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]), vset**2)
+            vst = sum(vset**2) # total volume squared
+            # the total intensity - eq. (1)
+            # intensities for each q in a _row_
+            it = numpy.sum(iset, 1)
         else:
-            # calculate intensity in memory saving mode:
-            # calculate volume for entire set, this does not take much space   
-            Vset = VOLfunc(Rset, PowerCompensationFactor)
-
-            FFset = FFfunc(Rset[0, :][newaxis, :])
-            It = FFset**2 * (Vset[0] + 0*FFset)**2 # a set of intensities
-            for ri in arange(1, Contributions):
+            it = 0
+            for i in numpy.arange(rset.shape[0]):
                 # calculate their form factors
-                FFset = FFfunc(Rset[ri, :][newaxis, :])
+                ffset = self.model.ff(data, rset[i].reshape((1, 1)))
                 # a set of intensities
-                It = It + FFset**2 * (Vset[ri] + 0*FFset)**2
-            Vst = sum(Vset**2) # total volume squared
-            It = reshape(It, (1, prod(shape(It)))) # reshaped to match I and q
+                it += ffset**2 * vset[i]**2
+            vst = sum(vset**2) # total volume squared
 
         # Optimize the intensities and calculate convergence criterium
         # SMEAR function goes here
-        It = SMEARfunc(It)
-        Sci = numpy.max(I)/numpy.max(It) # init. guess for the scaling factor
-        Bgi = numpy.min(I)
-        Sc, Conval = self._Iopt(I, It/Vst, E, numpy.array([Sci, Bgi]),
-                                ver = 1)
+        it = self.model.smear(it)
+        intensity = data[:, 1]
+        error = data[:, 2]
+        sci = intensity.max() / it.max() # init. guess for the scaling factor
+        bgi = intensity.min()
+        sc, conval = self.optimScalingAndBackground(
+                intensity, it/vst, error, numpy.array([sci, bgi]), ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
-        Sc, Conval = self._Iopt(I, It/Vst, E, Sc)
-        # print "Initial conval V1", Conval1
-        print "Initial Chi-squared value", Conval
+        sc, conval = self.optimScalingAndBackground(
+                intensity, it/vst, error, sc)
+        logging.info("Initial Chi-squared value: {0}".format(conval))
 
-        if OutputIterations:
+        if outputIterations:
             # Output each iteration, starting with number 0. Iterations will
-            # be stored in Details['Itersph'], Details['IterIfit'],
-            # Details['IterConval'], Details['IterSc'] and
-            # Details['IterPriorUnaccepted'] listing the unaccepted number of
+            # be stored in details['paramDistrib'], details['intensityFitted'],
+            # details['convergenceValue'], details['scalingFactor'] and
+            # details['priorUnaccepted'] listing the unaccepted number of
             # moves before the recorded accepted move.
 
             # new iterations will (have to) be appended to this, cannot be
             # zero-padded due to size constraints
-            Details['Itersph'] = Rset[:, newaxis]
-            Details['IterIfit'] = (It/Vst*Sc[0] + Sc[1])[:, newaxis] # ibid.
-            Details['IterConVal'] = Conval[newaxis]
-            Details['IterSc'] = Sc[:, newaxis]
-            Details['IterPriorUnaccepted'] = numpy.array(0)[newaxis]
+            details['paramDistrib'] = rset[:, newaxis]
+            details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis] # ibid.
+            details['convergenceValue'] = conval[newaxis]
+            details['scalingFactor'] = sc[:, newaxis]
+            details['priorUnaccepted'] = numpy.array(0)[newaxis]
 
         # start the MC procedure
-        Now = time.time()
-        Nmoves = 0 # tracking the number of moves
-        Nnotaccepted = 0
-        while (Conval > ConvergenceCriterion) & (Niter < MaximumIterations):
-            Rt = Randfunc()
-            Ft = FFfunc(Rt)
-            Vtt = VOLfunc(Rt, PowerCompensationFactor)
-            Itt = (Ft**2 * Vtt**2)
+        intObs = data[:, 1]
+        error = data[:, 2]
+        start = time.time()
+        numMoves = 0 # tracking the number of moves
+        numNotAccepted = 0
+        numIter = 0
+        ri = 0
+        while (conval > McSASParameters.convergenceCriterion and
+               numIter < McSASParameters.maxIterations):
+            rt = self.model.randUniform()
+            ft = self.model.ff(data, rt)
+            vtt = self.model.vol(rt)
+            itt = (ft**2 * vtt**2).flatten()
             # Calculate new total intensity
-            if LowMemoryFootprint == False:
+            itest = None
+            if not McSASParameters.lowMemoryFootprint:
                 # we do subtractions and additions, which give us another
                 # factor 2 improvement in speed over summation and is much
                 # more scalable
-                Itest = (It - Iset[Ri, :] + Itt)
+                itest = (it - iset[:, ri] + itt)
             else:
-                Fo = FFfunc(Rset[Ri, :][newaxis, :])
-                Io = (Fo**2 * Vset[Ri]**2)
-                Itest = (It - Io + Itt)
+                fo = self.model.ff(data, rset[ri].reshape((1, -1)))
+                io = (fo**2 * vset[ri]**2).flatten()
+                itest = (it.flatten() - io + itt)
 
             # SMEAR function goes here
-            Itest = SMEARfunc(Itest)
-            Vstest = (sqrt(Vst) - Vset[Ri])**2 + Vtt**2
+            itest = self.model.smear(itest)
+            vstest = (sqrt(vst) - vset[ri])**2 + vtt**2
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-            Sct, Convalt = self._Iopt(I, Itest/Vstest, E, Sc)
+            sct, convalt = self.optimScalingAndBackground(
+                                    intObs, itest/vstest, error, sc)
             # test if the radius change is an improvement:
-            if Convalt < Conval: # it's better
-                if LowMemoryFootprint:
-                    Rset[Ri, :], It, Vset[Ri], Vst, Sc, Conval = \
-                            (Rt, Itest, Vtt, Vstest, Sct, Convalt)
-                else:
-                    Rset[Ri,:], Iset[Ri,:], It, Vset[Ri], Vst, Sc, Conval = \
-                            (Rt, Itt, Itest, Vtt, Vstest, Sct, Convalt)
-                print "Improvement in iteration number {0}, "\
-                      "Chi-squared value {1:f} of {2:f}\r".format(
-                              Niter, Conval, ConvergenceCriterion),
-                Nmoves += 1
-                if OutputIterations:
+            if convalt < conval: # it's better
+                # replace current settings with better ones
+                rset[ri], sc, conval = rt, sct, convalt
+                it, vset[ri], vst = itest, vtt, vstest
+                if not McSASParameters.lowMemoryFootprint:
+                    iset[:, ri] = itt
+                print ("Improvement in iteration number {0}, "
+                             "Chi-squared value {1:f} of {2:f}\r"
+                             .format(numIter, conval,
+                                 McSASParameters.convergenceCriterion)),
+                numMoves += 1
+                if outputIterations:
                     # output each iteration, starting with number 0. 
-                    # Iterations will be stored in Details['Itersph'],
-                    # Details['IterIfit'], Details['IterConval'],
-                    # Details['IterSc'] and Details['IterPriorUnaccepted']
+                    # Iterations will be stored in details['paramDistrib'],
+                    # details['intensityFitted'], details['convergenceValue'],
+                    # details['scalingFactor'] and details['priorUnaccepted']
                     # listing the unaccepted number of moves before the
                     # recorded accepted move.
 
                     # new iterations will (have to) be appended to this,
                     # cannot be zero-padded due to size constraints
-                    Details['Itersph'] = concatenate((Details['Itersph'],
-                                                      Rset[:, :, newaxis]),
-                                                      axis = 1)
-                    Details['IterIfit'] = concatenate(
-                            (Details['IterIfit'],
-                             (Itest/Vstest*Sct[0] + Sct[1])[:, newaxis]),
-                            axis=1) # ibid.
-                    Details['IterConVal'] = concatenate(\
-                            (Details['IterConVal'],
-                             numpy.array(Convalt)[newaxis]))
-                    Details['IterSc'] = concatenate((Details['IterSc'],
-                                                     Sct[:,newaxis]), axis=1)
-                    Details['IterPriorUnaccepted'] = concatenate(\
-                            (Details['IterPriorUnaccepted'],
-                             numpy.array(Nnotaccepted)[newaxis]))
-                Nnotaccepted = -1
-            # else nothing to do
-            Ri += 1 # move to next sphere in list
-            Ri = Ri % (Contributions) # loop if last sphere
-            # number of non-accepted moves, resets to zero after accepted move
-            Nnotaccepted += 1
-            Niter += 1 # add one to the iteration number           
-        if Niter >= MaximumIterations:
-            print "exited due to max. number of iterations ({0}) "\
-                  "reached".format(Niter)
+                    details['paramDistrib'] = numpy.dstack(
+                            (details['paramDistrib'], rset[:, :, newaxis]))
+                    details['intensityFitted'] = numpy.hstack(
+                            (details['intensityFitted'],
+                             (itest/vstest*sct[0] + sct[1]).T))
+                    details['convergenceValue'] = numpy.concatenate(
+                            (details['convergenceValue'], convalt[newaxis]))
+                    details['scalingFactor'] = numpy.hstack(
+                            (details['scalingFactor'], sct[:, newaxis]))
+                    details['priorUnaccepted'] = numpy.concatenate(
+                            (details['priorUnaccepted'],
+                             numpy.array((numNotAccepted, ))))
+                numNotAccepted = 0
+            else:
+                # number of non-accepted moves,
+                # resets to zero after on accepted move
+                numNotAccepted += 1
+            # move to next sphere in list, loop if last sphere
+            ri = (ri + 1) % (numContribs)
+            numIter += 1 # add one to the iteration number           
+        if numIter >= McSASParameters.maxIterations:
+            logging.warning("Exited due to max. number of iterations ({0}) "
+                            "reached".format(numIter))
         else:
-            print "Normal exit"
+            logging.info("normal exit")
         # the +0.001 seems necessary to prevent a divide by zero error
         # on some Windows systems.
-        print "Number of iterations per second", \
-                Niter/(time.time() - Now + 0.001)
-        print "Number of valid moves", Nmoves
-        print "final Chi-squared value %f" % (Conval)
-        Details['Niter'] = Niter
-        Details['Nmoves'] = Nmoves
-        Details['elapsed'] = (time.time() - Now + 0.001)
+        elapsed = time.time() - start + 1e-3
+        logging.info("Number of iterations per second: {0}".format(
+                        numIter/elapsed))
+        logging.info("Number of valid moves: {0}".format(numMoves))
+        logging.info("Final Chi-squared value: {0}".format(conval))
+        details['numIterations'] = numIter
+        details['numMoves'] = numMoves
+        details['elapsed'] = elapsed
 
-        # Ifinal = sum(Iset, 0)/sum(Vset**2)
-        Ifinal = It/sum(Vset**2)
-        Ifinal = reshape(Ifinal, (1, prod(shape(Ifinal))))
-        # SMEAR function goes here
-        Ifinal = SMEARfunc(Ifinal)
-        Sc, Conval = self._Iopt(I, Ifinal, E, Sc)    
-        if OutputI:
-            if OutputDetails:
-                # DEBUG:
-                # print 'Rset: {}, I: {}, Conval: {}'\
-                # .format(shape(Rset),shape((Ifinal*Sc[0]+Sc[1])),
-                #         shape(Conval))
-                return Rset, (Ifinal * Sc[0] + Sc[1]), Conval, Details
-            else:
-                return Rset, (Ifinal * Sc[0] + Sc[1]), Conval
-        else:
-            # ifinal cannot be output with variable length intensity
-            # outputs (in case of masked negative intensities or q limits)
-            if OutputDetails:
-                return Rset, Conval, Details
-            else:
-                return Rset, Conval
+        ifinal = it / sum(vset**2)
+        ifinal = self.model.smear(ifinal)
+        sc, conval = self.optimScalingAndBackground(intObs, ifinal, error, sc)
+
+        result = [rset]
+        if outputIntensity:
+            result.append((ifinal * sc[0] + sc[1]))
+        result.append(conval)
+        if outputDetails:
+            result.append(details)
+        # returning <rset, intensity, conval, details>
+        return result
 
     #####################################################################
     #################### Post-optimisation Functions ####################
     #####################################################################
 
-    def Histogram(self):
+    def histogram(self):
         """
-        Takes the *Rrep* Result from the :py:meth:`McSAS.Analyse` function
+        Takes the *Rrep* Result from the :py:meth:`McSAS.analyse` function
         and calculates the corresponding volume- and number fractions for each
         contribution as well as the minimum observability limits. It will
         subsequently bin the Result across the range for histogramming 
@@ -1478,12 +1440,12 @@ class McSAS(object):
                 Shape parameter index. e.g. an ellipsoid has 3:
                 width, height and orientation
             *HistogramXLowerEdge*: array
-                Histogram bin left edge position (x-axis in histogram)
+                histogram bin left edge position (x-axis in histogram)
             *HistogramXMean*: array
                 Center positions for the size histogram bins
                 (x-axis in histogram, used for errorbars)
             *HistogramXWidth*: array
-                Histogram bin width (x-axis in histogram,
+                histogram bin width (x-axis in histogram,
                 defines bar plot bar widths)
             *VolumeHistogramYMean*: array
                 Volume-weighted particle size distribution values for
@@ -1607,7 +1569,7 @@ class McSAS(object):
             Sci = numpy.max(I) / numpy.max(It)
             Bgi = numpy.min(I)
             # optimize scaling and background for this repetition
-            Sc, Cv = self._Iopt(I, It, E, [Sci, Bgi])
+            Sc, Cv = self.optimScalingAndBackground(I, It, E, [Sci, Bgi])
             ScalingFactors[:, ri] = Sc # scaling and bgnd for this repetition.
             # a set of volume fractions
             VolumeFraction[:, ri] = \
@@ -2501,62 +2463,4 @@ def binning_weighted_1D(q, I, E = [], Nbins = 200, Stats = 'SE'):
             SEbin[Bini] = SDbin[Bini]/sqrt(sum(weight_fact))
     return qbin_centres, Ibin, SEbin
  
-##general Functions
-#def csqr(Sc,I,Ic,E):
-#    """Least-squares error for use with scipy.optimize.leastsq"""
-#    cs=(I-Sc[0]*Ic-Sc[1])/E
-#    #print "Size E",size(E)
-#    #print "Sc: %f, %f" %(Sc[0],Sc[1])
-#    return cs
-#
-#def Iopt(I,Ic,E,Sc,OutputI=False):
-#    """Optimizes the scaling and background factor to match Ic closest to I.
-#    Returns an array with scaling factors. Input Sc has to be a two-element
-#    array with the scaling and background.
-#
-#    New version, using leastsq and csqr, speed improvement of over
-#    a factor of 10 w.r.t. V1's use in the MC algorithm
-#    """
-#    # initial guesses. No bounds at the moment are applied,
-#    # except that the intensity scaling has to be positive.
-#    Sc,success=scipy.optimize.leastsq(csqr,Sc,args=(I.flatten(),Ic.flatten(),
-#                                      E.flatten()),full_output=0)
-#    #print "Sc: %f, %f" %(Sc[0],Sc[1])
-#    cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
-#    if OutputI:
-#        return Sc,cval,Sc[0]*Ic+Sc[1]
-#    else:
-#        return Sc,cval
-#
-#def csqr_v1(I,Ic,E):
-#    """Least-squares for data with known error,
-#    size of parameter-space not taken into account."""
-#    cs=sum(((I-Ic)/E)**2)/(size(I))
-#    return cs
-#
-#def Iopt_v1(I,Ic,E,Sc,OutputI=False,Background=True):
-#    """Optimizes the scaling and background factor to match Ic closest to I.
-#    Returns an array with scaling factors. Input Sc has to be a two-element
-#    array with the scaling and background.
-#
-#    Old version, using fmin and csqr_v1.
-#    """
-#    # initial guesses. No bounds at the moment are applied,
-#    # except that the intensity scaling has to be positive.
-#    # Background can be set to False to just find the scaling factor.
-#    if Background:
-#        Sc=scipy.optimize.fmin(lambda Sc: 
-#                   csqr_v1(I,Sc[0]*Ic+Sc[1],E),Sc,full_output=0, disp=0)
-#        cval=csqr_v1(I,Sc[0]*Ic+Sc[1],E)
-#    else:
-#        Sc[1]=0.
-#        Sc=scipy.optimize.fmin(lambda Sc:
-#                   csqr_v1(I,Sc[0]*Ic,E),Sc,full_output=0, disp=0)
-#        Sc[1]=0.
-#        cval=csqr_v1(I,Sc[0]*Ic,E)
-#    if OutputI:
-#        return Sc,cval,Sc[0]*Ic+Sc[1]
-#    else:
-#        return Sc,cval
-
 # vim: set ts=4 sts=4 sw=4 tw=0:
