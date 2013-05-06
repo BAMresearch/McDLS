@@ -7,6 +7,7 @@ import platform
 import hashlib
 import os.path
 import logging
+import numpy
 
 QString = basestring
 EPS = float_info.epsilon
@@ -14,7 +15,10 @@ EPS = float_info.epsilon
 # object tests
 
 def isList(obj):
-    return not isString(obj) and isinstance(obj, collections.Sequence)
+    return (not isString(obj) and
+            (isinstance(obj, collections.Sequence)
+             or (isinstance(obj, numpy.ndarray)
+                 and obj.ndim < 2)))
 
 def isString(obj):
     return isinstance(obj, basestring) or isinstance(obj, QString)
