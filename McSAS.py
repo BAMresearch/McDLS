@@ -19,18 +19,6 @@ Classes and Functions Defined in This File
  - :py:class:`McSAS() <McSAS.McSAS>`:
    A class containing all the Functions required to perform a
    Monte Carlo analysis on small-angle scattering data.
- - :py:func:`binning_array`:
-   Can be used to do n-by-n pixel binning of 2D detector
-   images. The returned uncertainty is the larger of either the binned
-   uncertainty or the sample standard deviation in the bin.
- - :py:func:`binning_1D`:
-   bins the data and propagates errors, or calculates errors
-   if not initially provided
- - :py:func:`binning_weighted_1D`:
-   Weighted binning, where the intensities of a
-   pixel are divided between the two neighbouring bins depending on the
-   distances to the centres. If error provided is empty, the standard
-   deviation of the intensities in the bins are computed.
  - :py:func:`pickle_read`:
    Reads in pickled data from a file (by filename)
  - :py:func:`pickle_write`:
@@ -135,6 +123,8 @@ class ParticleModel(AlgorithmBase, PropertyNames):
             bounds = list(*bounds)
         return bounds
 
+    # it doesn't belong to the model?
+    # should be instrumentation geometry ...
     def smear(self, arg):
         return arg
 
@@ -1424,7 +1414,7 @@ class McSAS(object):
 
     def histogram(self):
         """
-        Takes the *Rrep* Result from the :py:meth:`McSAS.analyse` function
+        Takes the *contribs* result from the :py:meth:`McSAS.analyse` function
         and calculates the corresponding volume- and number fractions for each
         contribution as well as the minimum observability limits. It will
         subsequently bin the Result across the range for histogramming 
@@ -2202,265 +2192,19 @@ class McSAS(object):
 
 ########################## END McSAS OBJECT ############################
 
-#some quick pickle Functions to make my life easier
-
 def pickle_read(filename):
     """*\*args* can be 1-4, indicates number of output variables.
     If it is even possible to extract more from pickle."""
     fh = open(filename)
-    O = pickle.load(fh)
+    output = pickle.load(fh)
     fh.close()
-    return O
+    return output
 
-def pickle_write(filename, DBlock):
+def pickle_write(filename, somedata):
     """Writes DBlock to a file."""
     fh = open(filename, 'w')
-    pickle.dump(DBlock, fh)
+    pickle.dump(somedata, fh)
     fh.close()
     return
 
-def binning_array(Q, Psi, I, IError, S = 2):
-    """This function applies a simple S-by-S binning routine on images.
-    It calculates new error based on old error superseded by standard
-    deviation in a bin."""
-    def isodd(x):
-        #checks if a value is even or odd
-        return bool(x & 1)
-    ddi = {'Q': Q, 'Psi': Psi, 'I': I, 'IError':IError}
-    
-    sq = shape(Q)
-    if isodd(sq[0]):
-        # trim edge
-        for it in ddi.keys():
-            ddi[it] = ddi[it][1:, :]
-    if isodd(sq[1]):
-        # trim edge
-        for it in ddi.keys():
-            ddi[it] = ddi[it][:, 1:]
-    # now we can do n-by-n binning
-    sq = shape(Q)
-    qo = zeros((sq[0]/S, sq[1]/S))
-    ddo = {'Q': qo.copy(), 'Psi': qo.copy(),
-           'I': qo.copy(), 'IError': qo.copy()}
-    for it in ['Q', 'Psi', 'I']:
-        for ri in range(sq[0]/S):
-            for ci in range(sq[1]/S):
-                ddo[it][ri, ci] = numpy.mean(
-                        ddi[it][S*ri:(S*ri+S), S*ci:(S*ci+S)])
-        
-    for ri in range(sq[0]/S):
-        for ci in range(sq[1]/S):
-            meanE = sqrt(sum((
-                        ddi['IError'][S*ri:(S*ri+S), S*ci:(S*ci+S)])**2
-                    ))/S**2
-            # sample standard deviation
-            stdI = numpy.std(ddi['I'][S*ri:(S*ri+S), S*ci:(S*ci+S)])
-            # stdI=0
-            ddo['IError'][ri, ci] = numpy.max((meanE, stdI))
-    return ddo
-
-def binning_1D(q, I, E = [], Nbins = 200, Stats = 'STD'):
-    """An unweighted binning routine.
-    The intensities are sorted across bins of equal size.
-    If error provided is empty, the standard deviation of the intensities in
-    the bins are computed."""
-    # Let's make sure the input is consistent
-    if size(q) != size(I):
-        print "Incompatible sizes of q and I"
-        return
-    elif (size(E) != 0) & (size(E) != size(I)):
-        print "Size of E is not identical to q and I"
-        return
-
-    #flatten q, I and E
-    q = reshape(q, size(q), 0)
-    I = reshape(I, size(I), 0)
-    E = reshape(E, size(E), 0)
-
-    # define the bin edges and centres, and find out the stepsize while
-    # we're at it. Probably, there is no need for knowing the edges...
-    qbin_edges = linspace(numpy.min(q), numpy.max(q), Nbins + 1)
-    stepsize = qbin_edges[1] - qbin_edges[0]
-    qbin_centres = linspace(numpy.min(q) + 0.5*stepsize,
-                            numpy.max(q) - 0.5*stepsize, Nbins)
-    
-    # sort q, let I and E follow sort
-    sort_ind = numpy.argsort(q, axis = None)
-    q = q[sort_ind]
-    I = I[sort_ind]
-    Ibin = numpy.zeros(Nbins)
-    Ebin = numpy.zeros(Nbins)    
-    SDbin = numpy.zeros(Nbins)    
-    SEbin = numpy.zeros(Nbins)    
-    if (size(E) != 0):
-        E = E[sort_ind]
-
-    # now we can fill the bins
-    for Bini in range(Nbins):
-        # limit ourselves to only the bits we're interested in:
-        lim_bool_array = ((q  > (qbin_centres[Bini] - stepsize)) &
-                          (q <= (qbin_centres[Bini] + stepsize)))
-        I_to_bin = I[lim_bool_array]
-        if (size(E) != 0):
-            E_to_bin = sum(E[lim_bool_array])
-
-        # find out the weighting factors for each q,I,E-pair in the array  
-        weight_fact = ones(size(I_to_bin))
-
-        # sum the intensities in one bin and normalize by number of pixels
-        Ibin[Bini] = sum(I_to_bin)/sum(weight_fact)
-
-        # now we deal with the Errors:
-        if (size(E) != 0):
-            # if we have errors supplied from outside
-            # standard error calculation:
-            SEbin[Bini] = sqrt(sum(E_to_bin**2 * weight_fact))/ \
-                            sum(weight_fact)
-            # Ebin2[Bini] = sqrt(sum((E_to_bin*weight_fact)**2))/ \
-            #               sum(weight_fact) old, incorrect
-            if Stats == 'auto':
-                # according to the definition of sample-standard deviation
-                SDbin[Bini] = sqrt(sum((
-                                I_to_bin - Ibin[Bini])**2 * weight_fact
-                                   )/(sum(weight_fact) - 1))
-                # maximum between standard error and Poisson statistics
-                SEbin[Bini] = numpy.max(
-                        array([SEbin[Bini],
-                               SDbin[Bini]/sqrt(sum(weight_fact))]))
-        else:           
-            # calculate the standard deviation of the intensity in the bin
-            # both for samples with supplied error as well as for those where
-            # the error is supposed to be calculated
-            # according to the definition of sample-standard deviation
-            SDbin[Bini] = sqrt(sum(
-                                (I_to_bin-Ibin[Bini])**2 * weight_fact
-                                )/(sum(weight_fact) - 1))
-            # calculate standard error by dividing the standard error by the
-            # square root of the number of measurements
-            SEbin[Bini] = SDbin[Bini]/sqrt(sum(weight_fact))
-
-    return qbin_centres, Ibin, SEbin
-
-def binning_weighted_1D(q, I, E = [], Nbins = 200, Stats = 'SE'):
-    """Implementation of the binning routine written in Matlab.
-    The intensities are divided across the q-range in bins of equal size.
-    The intensities of a pixel are divided between the two neighbouring bins
-    depending on the distances to the centres. If error provided is empty,
-    the standard deviation of the intensities in the bins are computed.
-
-    **Usage**::
-
-        qbin, Ibin, Ebin = binning_weighted_1D(q, I, E = [],
-                                               Nbins = 200, Stats = 'SE')
-
-    **Optional input arguments**:
-
-    *Nbins*: integer indicating the number of bins to divide the intensity
-        over. Alternatively, this can be an array of equidistant bin centres.
-        If you go this route, depending on the range, not all intensity may be
-        counted.
-    *Stats*: Can be set to 'auto'. This takes the maximum error between
-        supplied Poisson statistics error-based errors or the standard error.
-
-    Written by Brian R. Pauw, 2011, released under BSD open source license.
-    """
-    # let's make sure the input is consistent
-    if size(q) != size(I):
-        print "Incompatible lengths of q and I, "\
-              "q must be of the same number of elements as I"
-        return
-    elif (size(E) != 0) & (size(E) != size(I)):
-        print "Size of E is not identical to q and I"
-        return
-    if (Stats.lower() != 'std') & (Stats.lower() != 'poisson') & \
-       (Stats.lower() != 'se') & (Stats.lower() != 'auto'):
-        print "Statistics can only be set to 'SE' (default), or 'auto'.\n"
-        print "Only use 'auto' for photon-counting detectors, selects "\
-              "largest error between SE and Poisson.\n"
-        print "If errors are supplied, standard errors are not calculated "\
-              "except in the case of 'auto'"
-        return
-    if (size(Nbins) == 1):
-        if (Nbins < 1):
-            print "number of bins, Nbins, is smaller than one. "\
-                  "I need at least one bin to fill"
-            return
-    if size(Nbins) > 1:
-        print "Nbins is larger than one value. Assuming that an equidistant "\
-              "list of bin centres has been supplied"
-
-    # flatten q, I and E
-    q = reshape(q, size(q), 0)
-    I = reshape(I, size(I), 0)
-    E = reshape(E, size(E), 0)
-    
-    if size(Nbins) == 1:
-        # define the bin edges and centres, and find out the stepsize while
-        # we're at it. Probably, there is no need for knowing the edges...
-        # do not use qbin_edges!
-        qbin_edges, stepsize = linspace(numpy.min(q), numpy.max(q),
-                                        Nbins + 1, retstep = True)
-        # stepsize = qbin_edges[1] - qbin_edges[0]
-        qbin_centres = linspace(numpy.min(q) + 0.5*stepsize,
-                                numpy.max(q) - 0.5*stepsize, Nbins)
-    else:
-        if (numpy.min(q) > numpy.max(Nbins)) | \
-           (numpy.max(q) < numpy.min(Nbins)):
-            print "Bin centres supplied do not overlap with the q-range, "\
-                  "cannot continue"
-            return
-        qbin_centres = sort(Nbins)
-        stepsize = mean(diff(qbin_centres))
-        Nbins = size(qbin_centres)
-
-    # initialize output matrices
-    Ibin = numpy.zeros(Nbins)
-    SDbin = numpy.zeros(Nbins)    
-    SEbin = numpy.zeros(Nbins)    
-
-    # now we can fill the bins
-    for Bini in range(Nbins):
-        # limit ourselves to only the bits we're interested in:
-        lim_bool_array = ((q  > (qbin_centres[Bini] - stepsize)) & \
-                          (q <= (qbin_centres[Bini] + stepsize)))
-        q_to_bin = q[lim_bool_array]
-        I_to_bin = I[lim_bool_array]
-        if (size(E) != 0):
-            E_to_bin = E[lim_bool_array]
-
-        # find out the weighting factors for each q,I,E-pair in the array
-        q_dist = abs(q_to_bin - qbin_centres[Bini])
-        weight_fact = (1 - q_dist/stepsize)
-
-        # sum the intensities in one bin
-        Ibin[Bini] = sum(I_to_bin * weight_fact)/sum(weight_fact)
-
-        # now we deal with the Errors:
-        if (size(E) != 0): # if we have errors supplied from outside
-            # standard error calculation:
-            SEbin[Bini] = sqrt(sum(E_to_bin**2 * weight_fact))/sum(weight_fact)
-            # Ebin2[Bini] = sqrt(sum((E_to_bin * weight_fact)**2))/
-            #                       sum(weight_fact) old, incorrect
-            if Stats == 'auto':
-                # according to the definition of sample-standard deviation
-                SDbin[Bini] = sqrt(sum(
-                    (I_to_bin - Ibin[Bini])**2 * weight_fact
-                                    )/(sum(weight_fact) - 1))
-                # maximum between standard error and Poisson statistics
-                SEbin[Bini] = numpy.max(array([
-                                        SEbin[Bini],
-                                        SDbin[Bini] / sqrt(sum(weight_fact))]))
-        else:           
-            # calculate the standard deviation of the intensity in the bin
-            # both for samples with supplied error as well as for those where
-            # the error is supposed to be calculated
-            # according to the definition of sample-standard deviation
-            SDbin[Bini] = sqrt(sum(
-                        (I_to_bin - Ibin[Bini])**2 * weight_fact
-                                )/(sum(weight_fact)-1))
-            # calculate standard error by dividing the standard error by the
-            # square root of the number of measurements
-            SEbin[Bini] = SDbin[Bini]/sqrt(sum(weight_fact))
-    return qbin_centres, Ibin, SEbin
- 
 # vim: set ts=4 sts=4 sw=4 tw=0:
