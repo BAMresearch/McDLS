@@ -123,7 +123,7 @@ class ParticleModel(AlgorithmBase, PropertyNames):
         return arg
 
     @abstractmethod
-    def vol(self, paramValues):
+    def vol(self, paramValues, compensationExponent = None):
         return paramValues.shape[1] == len(self)
 
     @abstractmethod
@@ -170,12 +170,14 @@ class Sphere(ParticleModel):
                      "to: ({0}, {1}).".format(bounds[0], bounds[1]))
         self.radius.valueRange = (min(bounds), max(bounds))
 
-    def vol(self, paramValues):
+    def vol(self, paramValues, compensationExponent = None):
         """Calculates the volume of a sphere, taking compensationExponent
         from input or preset Parameters.
         """
         assert ParticleModel.vol(self, paramValues)
-        result = (pi*4./3.) * paramValues**(3. * self.compensationExponent)
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
+        result = (pi*4./3.) * paramValues**(3. * compensationExponent)
         return result
 
     def ff(self, dataset, paramValues):
@@ -209,7 +211,7 @@ class McSASParameters(PropertyNames):
     maskNegativeInt = False
     maskZeroInt = False
     lowMemoryFootprint = False
-    plot = False
+    doPlot = False
 
 class SASData(DataSet):
     """Represents one set of data from a unique source (a file, for example).
@@ -315,7 +317,7 @@ class McSAS(object):
             will try to redo that MC optimization for a maximum of
             *maxRetries* tries before concluding that it is not bad luck
             but bad input.
-        - *plot*: Bool, default: False
+        - *doPlot*: Bool, default: False
             If set to True, will generate a plot showing the data and fit, as
             well as the Resulting size histogram.
         - *lowMemoryFootprint*: Bool, default: False
@@ -368,72 +370,69 @@ class McSAS(object):
             the provided I(q) data. Contains the Results of each of 
             *Repetitions* iterations. This can be used for rebinning without 
             having to re-optimize.
-        *ScalingFactors*: size array (2 x Repetitions) (*VariableNumber = 0*)
+        *scalingFactors*: size array (2 x Repetitions) (*VariableNumber = 0*)
             Scaling and background values for each repetition.
             Used to display background level in data and fit plot.
         *VariableNumber*: int
             Shape parameter index.
             E.g. an ellipsoid has 3: width, height and orientation.
-        *HistogramXLowerEdge*: array
+        *histogramXLowerEdge*: array
             histogram bin left edge position (x-axis in histogram).
-        *HistogramXMean*: array
+        *histogramXMean*: array
             Center positions for the size histogram bins
             (x-axis in histogram, used for errorbars).
-        *HistogramXWidth*: array
+        *histogramXWidth*: array
             histogram bin width
             (x-axis in histogram, defines bar plot bar widths).
-        *VolumeHistogramYMean*: array
+        *volumeHistogramYMean*: array
             Volume-weighted particle size distribution values for
             all Repetitions Results (y-axis bar height).
-        *NumberHistogramYMean*: array
-            Number-weighted analogue of the above *VolumeHistogramYMean*.
-        *VolumeHistogramRepetitionsY*: size array (HistogramBins x Repetitions)
+        *numberHistogramYMean*: array
+            Number-weighted analogue of the above *volumeHistogramYMean*.
+        *volumeHistogramRepetitionsY*: size array (McSASParameters.histogramBins x Repetitions)
             Volume-weighted particle size distribution bin values for
-            each fit repetition (the mean of which is *VolumeHistogramYMean*, 
-            and the sample standard deviation is *VolumeHistogramYStd*).
-        *NumberHistogramRepetitionsY*: size array (HistogramBins x Repetitions)
+            each fit repetition (the mean of which is *volumeHistogramYMean*, 
+            and the sample standard deviation is *volumeHistogramYStd*).
+        *numberHistogramRepetitionsY*: size array (McSASParameters.histogramBins x Repetitions)
             Number-weighted particle size distribution bin values for
             each MC fit repetition.
-        *VolumeHistogramYStd*: array
+        *volumeHistogramYStd*: array
             Standard deviations of the corresponding volume-weighted size
             distribution bins, calculated from *Repetitions* repetitions of the
             :py:meth:`McSAS.MCfit_sph` function.
-        *NumberHistogramYStd*: array
+        *numberHistogramYStd*: array
             Standard deviation for the number-weigthed distribution.
-        *VolumeFraction*: size array (Contributions x Repetitions)
+        *volumeFraction*: size array (Contributions x Repetitions)
             Volume fractions for each of Contributions contributions in each of
             *Repetitions* iterations.
-        *NumberFraction*: size array (Contributions x Repetitions)
+        *numberFraction*: size array (Contributions x Repetitions)
             Number fraction for each contribution.
-        *TotalVolumeFraction*: size array (Repetitions)
+        *totalVolumeFraction*: size array (Repetitions)
             Total scatterer volume fraction for each of the *Repetitions* 
             iterations.
-        *TotalNumberFraction*: size array (Repetitions)
+        *totalNumberFraction*: size array (Repetitions)
             Total number fraction.
-        *MinimumRequiredVolume*: size array (Contributions x Repetitions)
+        *minimumRequiredVolume*: size array (Contributions x Repetitions)
             Minimum required volume fraction for each contribution to become
             statistically significant.
-        *MinimumRequiredNumber*: size array (Contributions x Repetitions)
-            Number-weighted analogue to *MinimumRequiredVolume*.
-        *VolumeHistogramMinimumRequired*: size array (HistogramXMean)
+        *minimumRequiredNumber*: size array (Contributions x Repetitions)
+            Number-weighted analogue to *minimumRequiredVolume*.
+        *volumeHistogramMinimumRequired*: size array (histogramXMean)
             Array with the minimum required volume fraction per bin to become
             statistically significant. Used to display minimum required level
             in histogram.
-        *NumberHistogramMinimumRequired*: size array (HistogramXMean)
-            Number-weighted analogue to *VolumeHistogramMinimumRequired*.
-        *ScalingFactors*: size array (2 x Repetitions)
+        *numberHistogramMinimumRequired*: size array (histogramXMean)
+            Number-weighted analogue to *volumeHistogramMinimumRequired*.
+        *scalingFactors*: size array (2 x Repetitions)
             Scaling and background values for each repetition. Used to display
             background level in data and fit plot.
-        *VolumeFraction*: size array (Contributions x Repetitions)
-            Volume fractions for each of *Contributions* spheres in each of 
-            *Repetitions* iterations.
-        *TotalVolumeFraction*: size array (Repetitions)
+        *totalVolumeFraction*: size array (Repetitions)
             Total scatterer volume fraction for each of the *Repetitions*
             iterations.
-        *MinimumRequiredVolume*: size array (Contributions x Repetitions)
+        *minimumRequiredVolume*: size array (Contributions x Repetitions)
             Minimum required volube fraction for each contribution to become
             statistically significant.
-        *VolumeHistogramMinimumRequired*: size array (HistogramXMean)
+        *volumeHistogramMinimumRequired*: size array (histogramXMean)
             Array with the minimum required volume fraction per bin to become
             statistically significant. Used to display minimum required level
             in histogram.
@@ -509,12 +508,11 @@ class McSAS(object):
 
         if ndim(kwargs['Q']) > 1:
             # 2D mode, regenerate intensity
-            self.GenerateTwoDIntensity()
+            # TODO: test 2D mode
+            self.gen2DIntensity()
 
-        if self.GetParameter('Plot'):
-            # Odata = self.GetData(Dataset = 'original')
-            # Result = self.GetResult()
-            self.Plot()
+        if McSASParameters.doPlot:
+            self.plot()
 
     def setData(self, kwargs):
         """Sets the supplied data in the proper location. Optional argument
@@ -704,7 +702,7 @@ class McSAS(object):
         """Checks for the Parameters, for example to make sure
         histbins is defined for all, or to check if all Parameters fall
         within their limits.
-        For now, all I need is a check that HistogramBins is a 1D vector
+        For now, all I need is a check that McSASParameters.histogramBins is a 1D vector
         with n values, where n is the number of Parameters specifying
         a shape.
         """
@@ -1160,11 +1158,11 @@ class McSAS(object):
         # store in output dict
         self.result.append(dict(
             contribs = contributions, # Rrep
-            fitIntMean = numpy.mean(contribIntensity, axis = 2),
-            fitIntStd = numpy.std(contribIntensity, axis = 2),
+            fitIntMean = contribIntensity.mean(axis = 2),
+            fitIntStd = contribIntensity.std(axis = 2),
             fitQ = data[:, 0],
             # average number of iterations for all repetitions
-            numIter = numpy.mean(numIter)))
+            numIter = numIter.mean()))
 
     def mcFit(self, outputIntensity = False,
                     outputDetails = False, outputIterations = False):
@@ -1233,12 +1231,12 @@ class McSAS(object):
             vst = sum(vset**2) # total volume squared
             # the total intensity - eq. (1)
             # intensities for each q in a _row_
-            it = numpy.sum(iset, 1)
+            it = iset.sum(axis = 1)
         else:
             it = 0
             for i in numpy.arange(rset.shape[0]):
                 # calculate their form factors
-                ffset = self.model.ff(data, rset[i].reshape((1, 1)))
+                ffset = self.model.ff(data, rset[i].reshape((1, -1)))
                 # a set of intensities
                 it += ffset**2 * vset[i]**2
             vst = sum(vset**2) # total volume squared
@@ -1347,7 +1345,9 @@ class McSAS(object):
                 numNotAccepted += 1
             # move to next sphere in list, loop if last sphere
             ri = (ri + 1) % (numContribs)
-            numIter += 1 # add one to the iteration number           
+            numIter += 1 # add one to the iteration number
+
+        print # for progress print in the loop
         if numIter >= McSASParameters.maxIterations:
             logging.warning("Exited due to max. number of iterations ({0}) "
                             "reached".format(numIter))
@@ -1398,281 +1398,263 @@ class McSAS(object):
             *VariableNumber*: int
                 Shape parameter index. e.g. an ellipsoid has 3:
                 width, height and orientation
-            *HistogramXLowerEdge*: array
+            *histogramXLowerEdge*: array
                 histogram bin left edge position (x-axis in histogram)
-            *HistogramXMean*: array
+            *histogramXMean*: array
                 Center positions for the size histogram bins
                 (x-axis in histogram, used for errorbars)
-            *HistogramXWidth*: array
+            *histogramXWidth*: array
                 histogram bin width (x-axis in histogram,
                 defines bar plot bar widths)
-            *VolumeHistogramYMean*: array
+            *volumeHistogramYMean*: array
                 Volume-weighted particle size distribution values for
-                all *Repetitions* Results (y-axis bar height)
-            *NumberHistogramYMean*: array
-                Number-weighted analogue of the above *VolumeHistogramYMean*
-            *VolumeHistogramRepetitionsY*: size (HistogramBins x Repetitions) 
+                all *numReps* Results (y-axis bar height)
+            *numberHistogramYMean*: array
+                Number-weighted analogue of the above *volumeHistogramYMean*
+            *volumeHistogramRepetitionsY*: size (histogramBins x numReps) 
                 array Volume-weighted particle size distribution bin values for 
-                each MC fit repetition (whose mean is *VolumeHistogramYMean*, 
-                and whose sample standard deviation is *VolumeHistogramYStd*)
-            *NumberHistogramRepetitionsY*: size (HistogramBins x Repetitions) 
+                each MC fit repetition (whose mean is *volumeHistogramYMean*, 
+                and whose sample standard deviation is *volumeHistogramYStd*)
+            *numberHistogramRepetitionsY*: size (histogramBins x numReps) 
                 array Number-weighted particle size distribution bin values
                 for each MC fit repetition
-            *VolumeHistogramYStd*: array
+            *volumeHistogramYStd*: array
                 Standard deviations of the corresponding volume-weighted size
-                distribution bins, calculated from *Repetitions* repetitions of
+                distribution bins, calculated from *numReps* repetitions of
                 the MCfit_sph() function
-            *NumberHistogramYStd*: array
+            *numberHistogramYStd*: array
                 Standard deviation for the number-weigthed distribution
-            *VolumeFraction*: size (Contributions x Repetitions) array
-                Volume fractions for each of Contributions contributions 
-                in each of Repetitions iterations
-            *NumberFraction*: size (Contributions x Repetitions) array
+            *volumeFraction*: size (numContribs x numReps) array
+                Volume fractions for each of numContribs contributions 
+                in each of numReps iterations
+            *numberFraction*: size (numContribs x numReps) array
                 Number fraction for each contribution
-            *TotalVolumeFraction*: size (Repetitions) array
-                Total scatterer volume fraction for each of the *Repetitions*
+            *totalVolumeFraction*: size (numReps) array
+                Total scatterer volume fraction for each of the *numReps*
                 iterations
-            *TotalNumberFraction*: size (Repetitions) array
+            *totalNumberFraction*: size (numReps) array
                 Total number fraction 
-            *MinimumRequiredVolume*: size (Nsph x Repetitions) array
+            *minimumRequiredVolume*: size (numContribs x numReps) array
                 minimum required volume fraction for each contribution to
                 become statistically significant.
-            *MinimumRequiredNumber*: size (Nsph x Repetitions) array
-                number-weighted analogue to *MinimumRequiredVolume*
-            *VolumeHistogramMinimumRequired*: size (HistogramXMean) array 
+            *minimumRequiredNumber*: size (numContribs x numReps) array
+                number-weighted analogue to *minimumRequiredVolume*
+            *volumeHistogramMinimumRequired*: size (histogramXMean) array 
                 array with the minimum required volume fraction per bin to
                 become statistically significant. Used to display minimum
                 required level in histogram.
-            *NumberHistogramMinimumRequired*: size (HistogramXMean) array
-                number-weighted analogue to *VolumeHistogramMinimumRequired*
-            *ScalingFactors*: size (2 x Repetitions) array
+            *numberHistogramMinimumRequired*: size (histogramXMean) array
+                number-weighted analogue to *volumeHistogramMinimumRequired*
+            *scalingFactors*: size (2 x numReps) array
                 Scaling and background values for each repetition. Used to
                 display background level in data and fit plot.
         """
-        # get settings
-        # set the bin edges for our radius bins either based on a linear
-        # division or on a logarithmic division of radii.
-        Contributions = self.GetParameter('Contributions')
-        Repetitions = self.GetParameter('Repetitions')
-        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
-        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
-        DeltaRhoSquared = self.GetParameter('DeltaRhoSquared')
-        Rrep = self.GetResult('Rrep')
-        HistogramBins = self.GetParameter('HistogramBins')
-        HistogramXScale = self.GetParameter('HistogramXScale')
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
+        contribs = self.result[0]['contribs']
+        numContribs, dummy, numReps = contribs.shape
 
         # volume fraction for each contribution
-        VolumeFraction = zeros((Contributions, Repetitions)) 
+        volumeFraction = zeros((numContribs, numReps))
         # number fraction for each contribution
-        NumberFraction = zeros((Contributions, Repetitions)) 
+        numberFraction = zeros((numContribs, numReps))
         # volume fraction for each contribution
-        qm = zeros((Contributions, Repetitions)) 
+        qm = zeros((numContribs, numReps))
         # volume frac. for each histogram bin
-        MinimumRequiredVolume = zeros((Contributions, Repetitions)) 
+        minReqVol = zeros((numContribs, numReps)) 
         # number frac. for each histogram bin
-        MinimumRequiredNumber = zeros((Contributions, Repetitions)) 
-        TotalVolumeFraction = zeros([Repetitions]) # total volume fraction
-        TotalNumberFraction = zeros([Repetitions]) # total number 
+        minReqNum = zeros((numContribs, numReps))
+        totalVolumeFraction = zeros((numReps))
+        totalNumberFraction = zeros((numReps))
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
-        ScalingFactors = zeros([2, Repetitions])
+        scalingFactors = zeros((2, numReps))
 
-        # Functions!
-        Randfunc = self.GetFunction('RAND')
-        FFfunc = self.GetFunction('FF')
-        VOLfunc = self.GetFunction('VOL')
-        SMEARfunc = self.GetFunction('SMEAR')
-
-        # data!
-        q = self.GetData('Q')
-        I = self.GetData('I')
-        E = self.GetData('IError')
+        # data, store it in result too, enables to postprocess later
+        # store the model instance too
+        data = self.dataset.prepared
+        q = data[:, 0]
+        intensity = data[:, 1]
+        error = data[:, 2]
 
         # loop over each repetition
-        for ri in range(Repetitions):
-            Rset = Rrep[:, :, ri] # the single set of R for this calculation
+        for ri in range(numReps):
+            rset = contribs[:, :, ri] # the single set of R for this calculation
             # compensated volume for each sphere in the set
-            Vset = VOLfunc(Rset, PowerCompensationFactor)
-            if LowMemoryFootprint == False:
+            vset = self.model.vol(rset)
+            ## TODO: same code than in mcfit pre-loop around line 1225 ff.
+            if not McSASParameters.lowMemoryFootprint:
                 # Form factors, all normalized to 1 at q=0.
-                FFset = FFfunc(Rset)
+                ffset = self.model.ff(data, rset)
                 # Calculate the intensities
                 # Intensity for each contribution as used in the MC calculation
-                Iset = FFset**2 * (Vset + 0*FFset)**2
-                It = sum(Iset, 0) # total intensity of the scattering pattern
+                iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]), vset**2)
+                # total intensity of the scattering pattern
+                it = iset.sum(axis = 1)
             else:
-                FFset = FFfunc(Rset[0, :][newaxis, :])
-                It = FFset**2 * (Vset[0] + 0*FFset)**2 # a set of intensities
-                for Rr in arange(1, Contributions):
+                it = 0
+                for i in numpy.arange(rset.shape[0]):
                     # calculate their form factors
-                    FFset = FFfunc(Rset[Rr, :][newaxis, :])
-                    It = It + FFset**2 * (Vset[Rr] + 0*FFset)**2
+                    ffset = self.model.ff(data, rset[i].reshape((1, -1)))
+                    # a set of intensities
+                    it += ffset**2 * vset[i]**2
 
-            Vst = sum(Vset**2) # total compensated volume squared 
-            It = reshape(It, (1, prod(shape(It))))
-            It = SMEARfunc(It)
+            vst = sum(vset**2) # total compensated volume squared 
+            it = self.model.smear(it)
             
             # Now for each sphere, calculate its volume fraction
             # (p_c compensated):
             # compensated volume for each sphere in
             # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
-            Vsa = VOLfunc(Rset, PowerCompensationFactor)
+            # Vsa = VOLfunc(Rset, PowerCompensationFactor)
+            vsa = vset # vset did not change here
             # And the real particle volume:
             # compensated volume for each sphere in
             # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
-            Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
+            # Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
+            vpa = self.model.vol(rset, compensationExponent = 1.0) 
+            ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            Sci = numpy.max(I) / numpy.max(It)
-            Bgi = numpy.min(I)
+            sci = intensity.max() / it.max()
+            bgi = intensity.min()
             # optimize scaling and background for this repetition
-            Sc, Cv = self.optimScalingAndBackground(I, It, E, [Sci, Bgi])
-            ScalingFactors[:, ri] = Sc # scaling and bgnd for this repetition.
+            sc, conval = self.optimScalingAndBackground(
+                    intensity, it, error, (sci, bgi))
+            scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
-            VolumeFraction[:, ri] = \
-                    (Sc[0] * Vsa**2/(Vpa * DeltaRhoSquared)).flatten()
-            TotalVolumeFraction[ri] = sum(VolumeFraction[:, ri]) # total volume 
-            NumberFraction[:, ri] = VolumeFraction[:, ri]/(Vpa.flatten())
-            TotalNumberFraction[ri] = sum(NumberFraction[:, ri]) # total number
-            for isi in range(Contributions): # For each sphere
+            volumeFraction[:, ri] = (
+                    sc[0] * vsa**2/(vpa * McSASParameters.deltaRhoSquared)
+                    ).flatten()
+            totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
+            numberFraction[:, ri] = volumeFraction[:, ri]/(vpa.flatten())
+            totalNumberFraction[ri] = sum(numberFraction[:, ri])
+
+            for c in range(numContribs): # for each sphere
                 # calculate the observability (the maximum contribution for
                 # that sphere to the total scattering pattern)
                 # NOTE: no need to compensate for p_c here, we work with
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
-                # ov[isi,ri] = (Iset[isi,:]/(It)).max()
-                if LowMemoryFootprint:
-                    FFset = FFfunc(Rset[isi, :][newaxis, :])
-                    Ir = FFset**2 * (Vset[isi] + 0 * FFset)**2
+                if not McSASParameters.lowMemoryFootprint:
                     # determine where this maximum observability is
-                    # of contribution isi (index)
-                    qmi = numpy.argmax(Ir.flatten()/It.flatten())
-                    # point where the contribution of isi is maximum
-                    qm[isi, ri] = q[0, qmi]
-                    MinimumRequiredVolume[isi, ri] = \
-                            numpy.min(E * VolumeFraction[isi, ri]/(Sc[0] * Ir))
-                    MinimumRequiredNumber[isi, ri] = \
-                            MinimumRequiredVolume[isi, ri]/Vpa[isi]
+                    # of contribution c (index)
+                    qmi = numpy.argmax(iset[:, c]/it)
+                    # point where the contribution of c is maximum
+                    qm[c, ri] = q[qmi]
+                    minReqVol[c, ri] = (
+                            error * volumeFraction[c, ri]
+                                    / (sc[0] * iset[:, c])).min() / vpa[c]
                 else:
+                    ffset = self.model.ff(data, rset[c].reshape((1, -1)))
+                    ir = (ffset**2 * vset[c]**2).flatten()
                     # determine where this maximum observability is
-                    # of contribution isi (index)
-                    qmi = numpy.argmax(Iset[isi, :].flatten()/It.flatten())
-                    # point where the contribution of isi is maximum
-                    qm[isi, ri] = q[0, qmi]
-                    MinimumRequiredVolume[isi, ri] = \
-                            numpy.min(E * VolumeFraction[isi, ri]/ 
-                                    (Sc[0] * Iset[isi, :]))
-                    MinimumRequiredNumber[isi, ri] = \
-                            MinimumRequiredVolume[isi, ri]/Vpa[isi]
-            NumberFraction[:, ri] = \
-                    NumberFraction[:, ri]/TotalNumberFraction[ri]
-            MinimumRequiredNumber[:, ri] = \
-                    MinimumRequiredNumber[:, ri]/TotalNumberFraction[ri]
+                    # of contribution c (index)
+                    qmi = numpy.argmax(ir.flatten()/it)
+                    # point where the contribution of c is maximum
+                    qm[c, ri] = q[qmi]
+                    minReqVol[c, ri] = (
+                            error * volumeFraction[c, ri]
+                                    / (sc[0] * ir)).min() / vpa[c]
+
+            numberFraction[:, ri] /= totalNumberFraction[ri]
+            minReqNum[:, ri] /= totalNumberFraction[ri]
 
         # now we histogram over each variable
         # for each variable parameter we define,
         # we need to histogram separately.
-        for vari in range(prod(shape(HistogramBins))):
+        for paramIndex, param in self.model:
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
-            if HistogramXScale[vari] == 'lin':
-                # HistogramXLowerEdge contains the HistogramBins+1 bin edges, 
+            if McSASParameters.histogramXScale[paramIndex] == 'lin':
+                # histogramXLowerEdge contains #histogramBins+1 bin edges,
                 # or class limits.
-                HistogramXLowerEdge = \
-                        linspace(ContributionParameterBounds[0 + 2*vari],
-                              ContributionParameterBounds[1 + 2*vari],
-                              HistogramBins[vari] + 1)
+                histogramXLowerEdge = numpy.linspace(
+                        min(param.valueRange),
+                        max(param.valueRange),
+                        McSASParameters.histogramBins[paramIndex] + 1)
             else:
-                HistogramXLowerEdge = \
-                        10**(linspace(
-                            log10(ContributionParameterBounds[0 + 2*vari]),
-                            log10(ContributionParameterBounds[1 + 2*vari]),
-                            HistogramBins[vari] + 1))
+                histogramXLowerEdge = 10**numpy.linspace(
+                        log10(min(param.valueRange)),
+                        log10(max(param.valueRange)),
+                        McSASParameters.histogramBins[paramIndex] + 1)
+
+            def initHist(reps = 1):
+                """Helper for histogram array initialization"""
+                arr = numpy.zeros(
+                        (McSASParameters.histogramBins[paramIndex], reps))
+                if reps <= 1:
+                    arr = arr.flatten()
+                return arr
+
             # total volume fraction contribution in a bin
-            VolumeHistogramRepetitionsY = \
-                    zeros([HistogramBins[vari], Repetitions])
+            volHistRepY = initHist(numReps)
             # total number fraction contribution in a bin
-            NumberHistogramRepetitionsY = \
-                    zeros([HistogramBins[vari], Repetitions])
+            numHistRepY = initHist(numReps)
             # minimum required number of contributions /in a bin/ to make
             # a measurable impact
-            MinimumRequiredVolumebin = \
-                    zeros([HistogramBins[vari], Repetitions])
-            MinimumRequiredNumberbin = \
-                    zeros([HistogramBins[vari], Repetitions])
-            HistogramXMean = zeros(HistogramBins[vari])
-            VolumeHistogramMinimumRequired = zeros(HistogramBins[vari])
-            NumberHistogramMinimumRequired = zeros(HistogramBins[vari])
+            minReqVolBin = initHist(numReps)
+            minReqNumBin = initHist(numReps)
+            histogramXMean = initHist()
+            volHistMinReq = initHist()
+            numHistMinReq = initHist()
 
-            for ri in range(Repetitions):
-                # the single set of R for this calculation
-                Rset = Rrep[:, vari, ri]
-                for bini in range(HistogramBins[vari]):
+            for ri in range(numReps):
+                # single set of R for this calculation
+                rset = contribs[:, paramIndex, ri]
+                for bini in range(McSASParameters.histogramBins[paramIndex]):
                     # indexing which contributions fall into the radius bin
-                    findi = ((Rset >= HistogramXLowerEdge[bini]) * \
-                            (Rset < HistogramXLowerEdge[bini + 1]))
+                    binMask = (  (rset >= histogramXLowerEdge[bini])
+                               * (rset <  histogramXLowerEdge[bini + 1]))
                     # y contains the volume fraction for that radius bin
-                    VolumeHistogramRepetitionsY[bini, ri] = \
-                            sum(VolumeFraction[findi, ri])
-                    NumberHistogramRepetitionsY[bini, ri] = \
-                            sum(NumberFraction[findi, ri])
-                    if sum(findi) == 0:
-                        MinimumRequiredVolumebin[bini, ri] = 0
-                        MinimumRequiredNumberbin[bini, ri] = 0
+                    volHistRepY[bini, ri] = sum(volumeFraction[binMask, ri])
+                    numHistRepY[bini, ri] = sum(numberFraction[binMask, ri])
+                    if not any(binMask):
+                        minReqVolBin[bini, ri] = 0
+                        minReqNumBin[bini, ri] = 0
                     else:
-                        MinimumRequiredVolumebin[bini, ri] = \
-                                numpy.max(MinimumRequiredVolume[findi, ri])
-                        MinimumRequiredVolumebin[bini, ri] = \
-                                numpy.mean(MinimumRequiredVolume[findi, ri])
-                        MinimumRequiredNumberbin[bini, ri] = \
-                                numpy.max(MinimumRequiredNumber[findi, ri])
-                        MinimumRequiredNumberbin[bini, ri] = \
-                                numpy.mean(MinimumRequiredNumber[findi, ri])
-                    if isnan(VolumeHistogramRepetitionsY[bini, ri]):
-                        VolumeHistogramRepetitionsY[bini, ri] = 0.
-                        NumberHistogramRepetitionsY[bini, ri] = 0.
-            for bini in range(HistogramBins[vari]):
-                HistogramXMean[bini] = \
-                        numpy.mean(HistogramXLowerEdge[bini:bini+2])
-                vb = MinimumRequiredVolumebin[bini, :]
-                VolumeHistogramMinimumRequired[bini] = numpy.max(vb[vb < inf])
-                nb = MinimumRequiredNumberbin[bini, :]
-                NumberHistogramMinimumRequired[bini] = numpy.max(nb[vb < inf])
-            VolumeHistogramYMean = \
-                    numpy.mean(VolumeHistogramRepetitionsY, axis=1)
-            NumberHistogramYMean = \
-                    numpy.mean(NumberHistogramRepetitionsY, axis=1)
-            VolumeHistogramYStd = \
-                    numpy.std(VolumeHistogramRepetitionsY, axis=1)
-            NumberHistogramYStd = \
-                    numpy.std(NumberHistogramRepetitionsY, axis=1)
-            self.SetResult(**{
-                'VariableNumber': vari, # this line will place the Results in
-                                        # the dict at self.Results[vari]
-                'HistogramXLowerEdge': HistogramXLowerEdge,
-                'HistogramXMean': HistogramXMean,
-                'HistogramXWidth': diff(HistogramXLowerEdge),
-                'VolumeHistogramRepetitionsY': VolumeHistogramRepetitionsY,
-                'NumberHistogramRepetitionsY': NumberHistogramRepetitionsY,
-                'VolumeHistogramYMean': VolumeHistogramYMean,
-                'VolumeHistogramYStd': VolumeHistogramYStd,
-                'NumberHistogramYMean': NumberHistogramYMean,
-                'NumberHistogramYStd': NumberHistogramYStd,
-                'VolumeHistogramMinimumRequired': \
-                        VolumeHistogramMinimumRequired,
-                'MinimumRequiredVolume': MinimumRequiredVolume,
-                'VolumeFraction': VolumeFraction,
-                'TotalVolumeFraction': TotalVolumeFraction,
-                'NumberHistogramMinimumRequired': \
-                        NumberHistogramMinimumRequired,
-                'MinimumRequiredNumber': MinimumRequiredNumber,
-                'NumberFraction': NumberFraction,
-                'TotalNumberFraction': TotalNumberFraction,
-                'ScalingFactors': ScalingFactors})
+                        # ignored anyway
+                        # minReqVolBin[bini, ri] = minReqVol[binMask, ri].max()
+                        minReqVolBin[bini, ri] = minReqVol[binMask, ri].mean()
+                        # ignored anyway
+                        # minReqNumBin[bini, ri] = minReqNum[binMask, ri].max()
+                        minReqNumBin[bini, ri] = minReqNum[binMask, ri].mean()
+                    if isnan(volHistRepY[bini, ri]):
+                        volHistRepY[bini, ri] = 0.
+                        numHistRepY[bini, ri] = 0.
+            for bini in range(McSASParameters.histogramBins[paramIndex]):
+                histogramXMean[bini] = histogramXLowerEdge[bini:bini+2].mean()
+                vb = minReqVolBin[bini, :]
+                volHistMinReq[bini] = vb[vb < inf].max()
+                nb = minReqNumBin[bini, :]
+                numHistMinReq[bini] = nb[vb < inf].max()
+            volHistYMean = volHistRepY.mean(axis = 1)
+            numHistYMean = numHistRepY.mean(axis = 1)
+            volHistYStd = volHistRepY.std(axis = 1)
+            numHistYStd = numHistRepY.std(axis = 1)
 
-    def GenerateTwoDIntensity(self):
+            # store the results
+            if paramIndex >= len(self.result):
+                self.result.append(dict())
+            self.result[paramIndex] = dict(
+                histogramXLowerEdge = histogramXLowerEdge,
+                histogramXMean = histogramXMean,
+                histogramXWidth = diff(histogramXLowerEdge),
+                volumeHistogramRepetitionsY = volHistRepY,
+                numberHistogramRepetitionsY = numHistRepY,
+                volumeHistogramYMean = volHistYMean,
+                volumeHistogramYStd = volHistYStd,
+                numberHistogramYMean = numHistYMean,
+                numberHistogramYStd = numHistYStd,
+                volumeHistogramMinimumRequired = volHistMinReq,
+                minimumRequiredVolume = minReqVol,
+                volumeFraction = volumeFraction,
+                totalVolumeFraction = totalVolumeFraction,
+                numberHistogramMinimumRequired = numHistMinReq,
+                minimumRequiredNumber = minReqNum,
+                numberFraction = numberFraction,
+                totalNumberFraction = totalNumberFraction,
+                scalingFactors = scalingFactors)
+
+    def gen2DIntensity(self):
         """
         This function is optionally run after the histogram procedure for
         anisotropic images, and will calculate the MC fit intensity in
@@ -1704,7 +1686,7 @@ class McSAS(object):
         PsiBounds = self.GetParameter('PsiBounds')
         LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
         Contributions = self.GetParameter('Contributions')
-        ScalingFactors = self.GetResult('ScalingFactors')
+        scalingFactors = self.GetResult('scalingFactors')
         for nr in range(Repetitions):
             print 'regenerating set {} of {}'.format(nr, Repetitions)
             Rset = Result['Rrep'][:, :, nr]
@@ -1733,7 +1715,7 @@ class McSAS(object):
             # Optimize the intensities and calculate convergence criterium
             # SMEAR function goes here
             It = SMEARfunc(It)
-            Iave = Iave + It*ScalingFactors[0, nr] + ScalingFactors[1, nr] 
+            Iave = Iave + It*scalingFactors[0, nr] + scalingFactors[1, nr]
         # print "Initial conval V1", Conval1
         Iave = Iave/Repetitions
         # mask (lifted from ClipDataset)
@@ -1777,8 +1759,8 @@ class McSAS(object):
         Input arguments should be names of fields in *self.Result*.
         For example::
 
-            A.McCSV('hist.csv', 'HistogramXLowerEdge', 'HistogramXWidth', 
-                'VolumeHistogramYMean', 'VolumeHistogramYStd', 
+            A.McCSV('hist.csv', 'histogramXLowerEdge', 'histogramXWidth',
+                'volumeHistogramYMean', 'volumeHistogramYStd',
                 VariableNumber = 0)
 
         I.e. just stick on as many columns as you'd like. They will be
@@ -1848,7 +1830,7 @@ class McSAS(object):
         print "{} lines written with {} columns per line, "\
               "and {} empty fields".format(rowi,ncol,emptyfields)
 
-    def Plot(self, AxisMargin = 0.3):
+    def plot(self, axisMargin = 0.3):
         """
         This function plots the output of the Monte-Carlo procedure in two
         windows, with the left window the measured signal versus the fitted
@@ -1910,12 +1892,12 @@ class McSAS(object):
             return ah
 
         # load Parameters
-        HistogramXScale = self.GetParameter('HistogramXScale')
+        McSASParameters.histogramXScale = self.GetParameter('McSASParameters.histogramXScale')
         HistogramWeighting = self.GetParameter('HistogramWeighting')
         # load Result
         Result = self.GetResult()
         # check how many Result plots we need to generate: maximum three.
-        nhists = len(HistogramXScale)
+        nhists = len(McSASParameters.histogramXScale)
 
         # set plot font
         plotfont = fm.FontProperties(
@@ -1938,7 +1920,7 @@ class McSAS(object):
             TwoDMode = True
             Psi = self.GetData('Psi', Dataset = 'original')
             # we need to recalculate the Result in two dimensions
-            # done by GenerateTwoDIntensity function
+            # done by gen2DIntensity function
             I2D = self.GetResult('I2D')
             Ishow = I.copy()
             # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
@@ -1960,11 +1942,11 @@ class McSAS(object):
             colorbar()
         else:
             q_ax = fig.add_subplot(1, (nhists+1), 1, axisbg = (.95, .95, .95),
-                                   xlim = (numpy.min(q) * (1-AxisMargin),
-                                           numpy.max(q) * (1+AxisMargin)),
+                                   xlim = (numpy.min(q) * (1-axisMargin),
+                                           numpy.max(q) * (1+axisMargin)),
                                    ylim = (numpy.min(I[I != 0]) * 
-                                                          (1-AxisMargin),
-                                           numpy.max(I) * (1+AxisMargin)),
+                                                          (1-axisMargin),
+                                           numpy.max(I) * (1+axisMargin)),
                                    xscale = 'log', yscale = 'log',
                                    xlabel = 'q, 1/m', ylabel = 'I, 1/(m sr)')
             q_ax = SetAxis(q_ax)
@@ -1979,10 +1961,10 @@ class McSAS(object):
             aq = sort(Result['FitQ'][0, :])
             aI = Result['FitIntensityMean'][0, argsort(Result['FitQ'][0, :])]
             plot(aq, aI, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
-            plot(aq, numpy.mean(Result['ScalingFactors'][1, :]) + 0*aq,
+            plot(aq, numpy.mean(Result['scalingFactors'][1, :]) + 0*aq,
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})'
-                         .format(numpy.mean(Result['ScalingFactors'][1, :])),
+                         .format(numpy.mean(Result['scalingFactors'][1, :])),
                  zorder = 3)
             leg = legend(loc = 1, fancybox = True, prop = textfont)
         title('Measured vs. Fitted intensity',
@@ -1990,71 +1972,71 @@ class McSAS(object):
         R_ax = list()
         for histi in range(nhists):
             # get data:
-            HistogramXLowerEdge = self.GetResult(parname = 
-                    'HistogramXLowerEdge', VariableNumber = histi)
-            HistogramXMean = self.GetResult(parname = 'HistogramXMean',
+            histogramXLowerEdge = self.GetResult(parname =
+                    'histogramXLowerEdge', VariableNumber = histi)
+            histogramXMean = self.GetResult(parname = 'histogramXMean',
                             VariableNumber = histi)
-            HistogramXWidth = self.GetResult(parname = 'HistogramXWidth',
+            histogramXWidth = self.GetResult(parname = 'histogramXWidth',
                             VariableNumber = histi)
             if HistogramWeighting == 'volume':
-                VolumeHistogramYMean = self.GetResult(parname = 
-                        'VolumeHistogramYMean', VariableNumber = histi)
-                VolumeHistogramMinimumRequired = self.GetResult(parname = 
-                        'VolumeHistogramMinimumRequired',
+                volumeHistogramYMean = self.GetResult(parname =
+                        'volumeHistogramYMean', VariableNumber = histi)
+                volumeHistogramMinimumRequired = self.GetResult(parname =
+                        'volumeHistogramMinimumRequired',
                         VariableNumber = histi)
-                VolumeHistogramYStd = self.GetResult(parname = 
-                        'VolumeHistogramYStd', VariableNumber = histi)
+                volumeHistogramYStd = self.GetResult(parname =
+                        'volumeHistogramYStd', VariableNumber = histi)
             elif HistogramWeighting == 'number':
-                VolumeHistogramYMean = self.GetResult(parname = 
-                        'NumberHistogramYMean', VariableNumber = histi)
-                VolumeHistogramMinimumRequired = self.GetResult(parname = 
-                        'NumberHistogramMinimumRequired', 
+                volumeHistogramYMean = self.GetResult(parname =
+                        'numberHistogramYMean', VariableNumber = histi)
+                volumeHistogramMinimumRequired = self.GetResult(parname =
+                        'numberHistogramMinimumRequired',
                         VariableNumber = histi)
-                VolumeHistogramYStd = self.GetResult(parname = 
-                        'NumberHistogramYStd', VariableNumber = histi)
+                volumeHistogramYStd = self.GetResult(parname =
+                        'numberHistogramYStd', VariableNumber = histi)
             else: 
                 print "Incorrect value for HistogramWeighting: "\
                       "should be either 'volume' or 'number'"
 
             # prep axes
-            if HistogramXScale[histi] == 'log':
+            if McSASParameters.histogramXScale[histi] == 'log':
                 # quick fix with the [0] reference. Needs fixing, this
                 # plotting function should be rewritten to support multiple
                 # variables.
                 R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
                             axisbg = (.95, .95, .95),
-                            xlim = (numpy.min(HistogramXLowerEdge) * 
-                                (1 - AxisMargin),
-                                numpy.max(HistogramXLowerEdge) * 
-                                (1 + AxisMargin)),
-                            ylim = (0, numpy.max(VolumeHistogramYMean) * 
-                                (1 + AxisMargin)),
+                            xlim = (numpy.min(histogramXLowerEdge) *
+                                (1 - axisMargin),
+                                numpy.max(histogramXLowerEdge) *
+                                (1 + axisMargin)),
+                            ylim = (0, numpy.max(volumeHistogramYMean) *
+                                (1 + axisMargin)),
                             xlabel = 'Radius, m',
                             ylabel = '[Rel.] Volume Fraction',
                             xscale = 'log'))
             else:
                 R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
                             axisbg = (.95, .95, .95),
-                            xlim = (numpy.min(HistogramXLowerEdge) - 
-                                (1 - AxisMargin)*
-                                numpy.min(HistogramXLowerEdge), 
-                                numpy.max(HistogramXLowerEdge) 
-                                * (1 + AxisMargin)),
-                            ylim = (0, numpy.max(VolumeHistogramYMean) 
-                                * (1 + AxisMargin)),
+                            xlim = (numpy.min(histogramXLowerEdge) -
+                                (1 - axisMargin)*
+                                numpy.min(histogramXLowerEdge),
+                                numpy.max(histogramXLowerEdge)
+                                * (1 + axisMargin)),
+                            ylim = (0, numpy.max(volumeHistogramYMean)
+                                * (1 + axisMargin)),
                             xlabel = 'Radius, m',
                             ylabel = '[Rel.] Volume Fraction'))
 
             R_ax[histi] = SetAxis(R_ax[histi])
             # fill axes
-            bar(HistogramXLowerEdge[0:-1], VolumeHistogramYMean, 
-                    width = HistogramXWidth, color = 'orange',
+            bar(histogramXLowerEdge[0:-1], volumeHistogramYMean, 
+                    width = histogramXWidth, color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
                     label = 'MC size histogram')
-            plot(HistogramXMean, VolumeHistogramMinimumRequired, 'ro', 
+            plot(histogramXMean, volumeHistogramMinimumRequired, 'ro', 
                     ms = 5, markeredgecolor = 'r',
                     label = 'Minimum visibility limit', zorder = 3)
-            errorbar(HistogramXMean, VolumeHistogramYMean, VolumeHistogramYStd,
+            errorbar(histogramXMean, volumeHistogramYMean, volumeHistogramYStd,
                     zorder = 4, fmt = 'k.', ecolor = 'k',
                     elinewidth = 2, capsize = 4, ms = 0, lw = 2,
                     solid_capstyle = 'round', solid_joinstyle = 'miter')
@@ -2062,14 +2044,14 @@ class McSAS(object):
             title('Radius size histogram', fontproperties = textfont,
                   size = 'x-large')
             # reapply limits in x
-            xlim((numpy.min(HistogramXLowerEdge) * (1 - AxisMargin),
-                  numpy.max(HistogramXLowerEdge) * (1 + AxisMargin)))
+            xlim((numpy.min(histogramXLowerEdge) * (1 - axisMargin),
+                  numpy.max(histogramXLowerEdge) * (1 + axisMargin)))
 
         fig.subplots_adjust(left = 0.1, bottom = 0.11,
                             right = 0.96, top = 0.95,
                             wspace = 0.23, hspace = 0.13)
         
-    def RangeInfo(self, ParameterRange = [0, inf], Parameter = 0):
+    def rangeInfo(self, valueRange = [0, inf], paramIndex = 0):
         """Calculates the total volume or number fraction of the MC Result
         within a given range, and returns the total numer or volume fraction
         and its standard deviation over all nreps as well as the first four
@@ -2080,9 +2062,9 @@ class McSAS(object):
 
         Input arguments are:
 
-            *ParameterRange*
+            *valueRange*
               The radius range in which the moments are to be calculated
-            *Parameter*
+            *paramIndex*
               Which shape parameter the moments are to be calculated for
               (e.g. 0 = width, 1 = length, 2 = orientation)
 
@@ -2096,21 +2078,21 @@ class McSAS(object):
         PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
         LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
         DeltaRhoSquared = self.GetParameter('DeltaRhoSquared')
-        HistogramBins = self.GetParameter('HistogramBins')
-        HistogramXScale = self.GetParameter('HistogramXScale')
+        McSASParameters.histogramBins = self.GetParameter('McSASParameters.histogramBins')
+        McSASParameters.histogramXScale = self.GetParameter('McSASParameters.histogramXScale')
         HistogramWeighting = self.GetParameter('HistogramWeighting')
         ContributionParameterBounds =\
                 self.GetParameter('ContributionParameterBounds')
         
         # ov = zeros(shape(Rrep)) # observability
-        VolumeFraction = self.GetResult('VolumeFraction')
-        NumberFraction = self.GetResult('NumberFraction')
-        TotalVolumeFraction = self.GetResult('TotalVolumeFraction') 
-        TotalNumberFraction = self.GetResult('TotalNumberFraction')
+        volumeFraction = self.GetResult('volumeFraction')
+        numberFraction = self.GetResult('numberFraction')
+        totalVolumeFraction = self.GetResult('totalVolumeFraction') 
+        totalNumberFraction = self.GetResult('totalNumberFraction')
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
-        ScalingFactors = self.GetResult('ScalingFactors')
+        scalingFactors = self.GetResult('scalingFactors')
 
         Val = zeros(Repetitions) # total value
         Mu = zeros(Repetitions) # moments..
@@ -2121,13 +2103,13 @@ class McSAS(object):
         # loop over each repetition
         for ri in range(Repetitions):
             # the single set of R for this calculation
-            Rset = Rrep[:, Parameter, ri]
-            validi = (Rset > numpy.min(ParameterRange)) * \
-                     (Rset < numpy.max(ParameterRange))
+            Rset = Rrep[:, paramIndex, ri]
+            validi = (Rset > numpy.min(valueRange)) * \
+                     (Rset < numpy.max(valueRange))
             Rset = Rset[validi]
             # compensated volume for each sphere in the set
-            Vset = VolumeFraction[validi, ri]
-            Nset = NumberFraction[validi, ri]
+            Vset = volumeFraction[validi, ri]
+            Nset = numberFraction[validi, ri]
 
             if HistogramWeighting == 'volume':
                 Val[ri] = sum(Vset)
