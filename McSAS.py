@@ -69,16 +69,14 @@ Module Documentation
 ====================
 """
 
-import scipy # For many important Functions
-from scipy import optimize # For the leastsq optimization function
 import numpy # For arrays
 from numpy import (inf, array, isfinite, reshape, prod, shape, pi, diff, zeros,
-                  arange, size, sin, cos, sum, sqrt, linspace, logspace, log10,
+                  arange, size, sin, cos, sum, sqrt, linspace, log10,
                   isnan, ndim, newaxis)
+from scipy import optimize
 import os # Miscellaneous operating system interfaces
 import time # Timekeeping and timing of objects
 import sys # For printing of slightly more advanced messages to stdout
-import pickle #for pickle_read and pickle_write
 from abc import ABCMeta, abstractmethod
 import inspect
 import logging
@@ -712,12 +710,12 @@ class McSAS(object):
         """
         def fixLength(valueList):
             if not isList(valueList):
-                valueList = [valueList for i in range(len(self.model))]
+                valueList = [valueList for dummy in range(len(self.model))]
             elif len(valueList) > len(self.model):
                 del valueList[len(self.model):]
             elif len(valueList) < len(self.model):
                 nMissing = len(self.model) - len(valueList)
-                valueList.extend([valueList[0] for i in range(nMissing)])
+                valueList.extend([valueList[0] for dummy in range(nMissing)])
             return valueList
 
         McSASParameters.histogramBins = fixLength(McSASParameters.histogramBins)
@@ -773,12 +771,12 @@ class McSAS(object):
         if ver == 2:
             """uses scipy.optimize.leastsqr"""
             if background:
-                sc, success = scipy.optimize.leastsq(
+                sc, dummySuccess = optimize.leastsq(
                         csqr, sc, args = (intObs, intCalc, error),
                         full_output = False)
                 conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], error)
             else:
-                sc, success = scipy.optimize.leastsq(
+                sc, dummySuccess = optimize.leastsq(
                         csqr_nobg, sc, args = (intObs, intCalc, error),
                         full_output = False)
                 sc[1] = 0.0
@@ -787,12 +785,12 @@ class McSAS(object):
             """using scipy.optimize.fmin"""
             # Background can be set to False to just find the scaling factor.
             if background:
-                sc = scipy.optimize.fmin(
+                sc = optimize.fmin(
                     lambda sc: csqr_v1(intObs, sc[0]*intCalc + sc[1], error),
                     sc, full_output = False, disp = 0)
                 conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], error)
             else:
-                sc = scipy.optimize.fmin(
+                sc = optimize.fmin(
                     lambda sc: csqr_v1(intObs, sc[0]*intCalc, error),
                     sc, full_output = False, disp = 0)
                 sc[1] = 0.0
@@ -1186,34 +1184,9 @@ class McSAS(object):
             presentations.
         """
         data = self.dataset.prepared
-        # model parameters
-        # ContributionParameterBounds = \
-        #        self.GetParameter('ContributionParameterBounds')
-        # PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
-        # Contributions = self.GetParameter('Contributions')
         numContribs = McSASParameters.numContribs
-        # MaskNegativeI = self.GetParameter('MaskNegativeI')
-        maskNegativeInt = McSASParameters.maskNegativeInt
-        # MaskZeroI = self.GetParameter('MaskZeroI')
-        maskZeroInt = McSASParameters.maskZeroInt
-        # Prior = self.GetParameter('Prior')
         prior = McSASParameters.prior
-
-        # find out how many values a shape is defined by:
-        # Randfunc = self.GetFunction('RAND')
-        # FFfunc = self.GetFunction('FF')
-        # VOLfunc = self.GetFunction('VOL')
-        # SMEARfunc = self.GetFunction('SMEAR')
-        # testR = Randfunc()
-        # VariablesPerShape = prod(shape(testR))
-
-        # Rset = numpy.zeros((Contributions, VariablesPerShape))
         rset = numpy.zeros((numContribs, len(self.model)))
-
-        # Intialise variables
-        FFset = []
-        Vset = []
-        Conval = inf
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
