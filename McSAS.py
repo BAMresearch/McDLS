@@ -249,6 +249,48 @@ class SASData(DataSet):
                                        min(abs(q.min()),
                                            abs(diff(q).min()))])
 
+    def clip(self, *args, **kwargs):
+        self.prepared = self.origin[
+                self.clipMask(self.origin, *args, **kwargs)]
+
+    @staticmethod
+    def clipMask(data, qBounds = None, psiBounds = None,
+                        maskNegativeInt = False, maskZeroInt = False):
+        """If q and/or psi limits are supplied in self.Parameters,
+        clips the Dataset to within the supplied limits. Copies data to
+        :py:attr:`self.FitData` if no limits are set.
+        """
+        # some shortcut functions, not performance critical as this function
+        # is called rarely
+        def q(indices):
+            return data[indices, 0]
+        def intensity(indices):
+            return data[indices, 1]
+        def psi(indices):
+            return data[indices, 3]
+
+        # init indices: index array is more flexible than boolean masks
+        validIndices = numpy.where(numpy.isfinite(data[:, 0]))[0]
+        def cutIndices(mask):
+            validIndices = validIndices[mask]
+
+        # Optional masking of negative intensity
+        if maskZeroInt:
+            # FIXME: compare with machine precision (EPS)?
+            cutIndices(intensity(validIndices) == 0.0)
+        if maskNegativeInt:
+            cutIndices(intensity(validIndices) > 0.0)
+        if isList(qBounds):
+            # excluding the lower q limit may prevent q = 0 from appearing
+            cutIndices(q(validIndices) > min(qBounds))
+            cutIndices(q(validIndices) <= max(qBounds))
+        if isList(psiBounds) and data.shape[1] > 3: # psi in last column
+            # excluding the lower q limit may prevent q = 0 from appearing
+            cutIndices(psi(validIndices) > min(psiBounds))
+            cutIndices(psi(validIndices) <= max(psiBounds))
+
+        return validIndices
+
     @property
     def sizeBounds(self):
         return self._sizeBounds
@@ -496,14 +538,17 @@ class McSAS(object):
         # set supplied kwargs and passing on
         self.setParameter(kwargs)
         # apply q and psi limits and populate self.FitData
-        self.clipDataset()
+        self.dataset.clip(McSASParameters.qBounds,
+                          McSASParameters.psiBounds,
+                          McSASParameters.maskNegativeInt,
+                          McSASParameters.maskZeroInt)
         self.model = Sphere()
         self.checkParameters()
 
         self.analyse()
         self.histogram()
 
-        if ndim(kwargs['Q']) > 1:
+        if self.dataset.origin.shape[1] > 3: # not tested yet
             # 2D mode, regenerate intensity
             # TODO: test 2D mode
             self.gen2DIntensity()
@@ -566,47 +611,6 @@ class McSAS(object):
                 logging.warning("Unknown McSAS parameter specified: '{0}'"
                                 .format(key))
 
-    def clipDataset(self):
-        """If q and/or psi limits are supplied in self.Parameters,
-        clips the Dataset to within the supplied limits. Copies data to
-        :py:attr:`self.FitData` if no limits are set.
-        """
-
-        data = self.dataset.origin
-        qBounds = McSASParameters.qBounds
-        psiBounds = McSASParameters.psiBounds
-        
-        # some shortcut function, not performance critical as this function
-        # is called only once at the beginning
-        def q(indices):
-            return data[indices, 0]
-        def intensity(indices):
-            return data[indices, 1]
-        def psi(indices):
-            return data[indices, 3]
-
-        # init indices: index array is more flexible than boolean masks
-        validIndices = numpy.where(numpy.isfinite(data[:, 0]))[0]
-        def cutIndices(mask):
-            validIndices = validIndices[mask]
-
-        # Optional masking of negative intensity
-        if McSASParameters.maskZeroInt:
-            # FIXME: compare with machine precision (EPS)?
-            cutIndices(intensity(validIndices) == 0.0)
-        if McSASParameters.maskNegativeInt:
-            cutIndices(intensity(validIndices) > 0.0)
-        if isList(qBounds):
-            # excluding the lower q limit may prevent q = 0 from appearing
-            cutIndices(q(validIndices) > min(qBounds))
-            cutIndices(q(validIndices) <= max(qBounds))
-        if isList(psiBounds) and data.shape[1] > 3: # psi in last column
-            # excluding the lower q limit may prevent q = 0 from appearing
-            cutIndices(psi(validIndices) > min(psiBounds))
-            cutIndices(psi(validIndices) <= max(psiBounds))
-
-        self.dataset.prepared = data[validIndices]
-        
     ######################################################################
     ##################### Pre-optimisation Functions #####################
     ######################################################################
@@ -1227,7 +1231,6 @@ class McSAS(object):
             ffset = self.model.ff(data, rset)
             # calculate the intensities
             iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]), vset**2)
-            vst = sum(vset**2) # total volume squared
             # the total intensity - eq. (1)
             # intensities for each q in a _row_
             it = iset.sum(axis = 1)
@@ -1238,7 +1241,7 @@ class McSAS(object):
                 ffset = self.model.ff(data, rset[i].reshape((1, -1)))
                 # a set of intensities
                 it += ffset**2 * vset[i]**2
-            vst = sum(vset**2) # total volume squared
+        vst = sum(vset**2) # total volume squared
 
         # Optimize the intensities and calculate convergence criterium
         # SMEAR function goes here
@@ -1632,10 +1635,10 @@ class McSAS(object):
             volHistYStd = volHistRepY.std(axis = 1)
             numHistYStd = numHistRepY.std(axis = 1)
 
-            # store the results
+            # store the results, we'll fix this later by a proper structure
             if paramIndex >= len(self.result):
                 self.result.append(dict())
-            self.result[paramIndex] = dict(
+            self.result[paramIndex].update(dict(
                 histogramXLowerEdge = histogramXLowerEdge,
                 histogramXMean = histogramXMean,
                 histogramXWidth = diff(histogramXLowerEdge),
@@ -1653,137 +1656,108 @@ class McSAS(object):
                 minimumRequiredNumber = minReqNum,
                 numberFraction = numberFraction,
                 totalNumberFraction = totalNumberFraction,
-                scalingFactors = scalingFactors)
+                scalingFactors = scalingFactors))
 
     def gen2DIntensity(self):
         """
         This function is optionally run after the histogram procedure for
         anisotropic images, and will calculate the MC fit intensity in
-        imageform
+        image form
         """
-        Result = self.GetResult()
-        # load original Dataset
-        q = self.GetData('Q', Dataset = 'original')
-        I = self.GetData('I', Dataset = 'original')
-        E = self.GetData('IError', Dataset = 'original')
-        Psi = self.GetData('Psi', Dataset = 'original')
-        # we need to recalculate the Result in two dimensions
-        kansas = shape(q) # we will return to this shape
-        q = reshape(q, [1, -1]) # flatten
-        I = reshape(I, [1, -1]) # flatten
-        E = reshape(E, [1, -1]) # flatten
-        Psi = reshape(Psi, [1, -1]) # flatten
+        print self.result[0].keys()
+        contribs = self.result[0]['contribs']
+        numContribs, dummy, numReps = contribs.shape
 
-        Randfunc = self.GetFunction('RAND')
-        FFfunc = self.GetFunction('FF')
-        VOLfunc = self.GetFunction('VOL')
-        SMEARfunc = self.GetFunction('SMEAR')
-        print "Recalculating final Result, this may take some time"
+        # load original Dataset
+        data = self.dataset.origin
+        q = data[:, 0]
+        # we need to recalculate the result in two dimensions
+        kansas = shape(q) # we will return to this shape
+        q = q.flatten()
+
+        print "Recalculating final result, this may take some time"
         # for each Result
-        Iave = zeros(shape(q))
-        Repetitions = self.GetParameter('Repetitions')
-        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
-        QBounds = self.GetParameter('QBounds')
-        PsiBounds = self.GetParameter('PsiBounds')
-        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
-        Contributions = self.GetParameter('Contributions')
-        scalingFactors = self.GetResult('scalingFactors')
-        for nr in range(Repetitions):
-            print 'regenerating set {} of {}'.format(nr, Repetitions)
-            Rset = Result['Rrep'][:, :, nr]
+        intAvg = zeros(shape(q))
+        # TODO: for which parameter?
+        scalingFactors = self.result[0]['scalingFactors']
+        for ri in range(numReps):
+            print 'regenerating set {} of {}'.format(ri, numReps-1)
+            rset = contribs[:, :, ri]
             # calculate their form factors
-            Vset = VOLfunc(Rset, PowerCompensationFactor)
-            # Vset = (4.0/3*pi) * Rset**(3*PowerCompensationFactor)
-            # calculate the intensities
-            if LowMemoryFootprint == False:
+            vset = self.model.vol(rset)
+            # calculate the intensities, same code as in mcfit(), see above
+            if not McSASParameters.lowMemoryFootprint:
                 # Form factors, all normalized to 1 at q=0.
-                FFset = FFfunc(Rset, Q = q, Psi = Psi)
+                ffset = self.model.ff(data, rset)
                 # Calculate the intensities
                 # Intensity for each contribution as used in the MC calculation
-                Iset = FFset**2 * (Vset + 0*FFset)**2
+                iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]),
+                                              vset**2)
                 # the total intensity of the scattering pattern
-                It = sum(Iset, 0)
+                it = iset.sum(axis = 1)
             else:
-                FFset = FFfunc(Rset[0, :][newaxis, :], Q = q, Psi = Psi)
-                It = FFset**2 * (Vset[0] + 0*FFset)**2 # a set of intensities
-                for ri in arange(1, Contributions):
+                it = 0
+                for i in numpy.arange(rset.shape[0]):
                     # calculate their form factors
-                    FFset = FFfunc(Rset[ri, :][newaxis, :], Q = q, Psi = Psi)
+                    ffset = self.model.ff(data, rset[i].reshape((1, -1)))
                     # a set of intensities
-                    It = It + FFset**2 * (Vset[ri] + 0*FFset)**2
-            Vst = sum(Vset**2) # total volume squared
-            It = reshape(It, (1, -1)) # reshaped to match I and q
+                    it += ffset**2 * vset[i]**2
+            vst = sum(vset**2) # total volume squared
             # Optimize the intensities and calculate convergence criterium
-            # SMEAR function goes here
-            It = SMEARfunc(It)
-            Iave = Iave + It*scalingFactors[0, nr] + scalingFactors[1, nr]
+            it = self.model.smear(it)
+            intAvg = intAvg + it*scalingFactors[0, ri] + scalingFactors[1, ri]
         # print "Initial conval V1", Conval1
-        Iave = Iave/Repetitions
-        # mask (lifted from ClipDataset)
-        ValidIndices = isfinite(q)
-        # Optional masking of negative intensity
-        if self.GetParameter('MaskNegativeI'):
-            ValidIndices = ValidIndices * (I >= 0)
-        if self.GetParameter('MaskZeroI'):
-            ValidIndices = ValidIndices * (I != 0)
-        if (QBounds == []) and (PsiBounds == []):
-            # q limits not set, simply copy Dataset to FitData
-            ValidIndices = ValidIndices
-        if (not(QBounds == [])): # and QBounds is implicitly set
-            # excluding the lower q limit may prevent q=0 from appearing
-            ValidIndices = ValidIndices * \
-                    (q > numpy.min(QBounds)) & ( q<= numpy.max(QBounds))
-        # we assume here that we have a Dataset ['Psi']
-        if (not(PsiBounds == [])):
-            # excluding the lower q limit may prevent q=0 from appearing
-            ValidIndices = ValidIndices * \
-                    (Psi > numpy.min(PsiBounds)) & \
-                    (Psi <= numpy.max(PsiBounds))
-        Iave = Iave * ValidIndices
+        intAvg /= numReps
+        # mask (lifted from clipDataset)
+        validIndices = SASData.clipMask(data,
+                                        McSASParameters.qBounds,
+                                        McSASParameters.psiBounds,
+                                        McSASParameters.maskNegativeInt,
+                                        McSASParameters.maskZeroInt)
+        intAvg = intAvg[validIndices]
         # shape back to imageform
-        I2D = reshape(Iave, kansas)
-        self.SetResult(I2D = I2D)
+        self.result[0]['i2d'] = reshape(intAvg, kansas)
 
     def ExportCSV(self, filename, *args, **kwargs):
         """
         This function writes a semicolon-separated csv file to [filename]
-        containing an arbitrary number of output variables *\*args*. in case of
-        variable length columns, empty fields will contain ''.
+        containing an arbitrary number of output variables *\*args*.
+        In case of variable length columns, empty fields will contain ''.
 
         Optional last argument is a keyword-value argument:
-        VarableNumber=[integer], indicating which shape parameter it is
-        intended to draw upon. VariableNumber can also be a list or array
+        :py:arg:paramIndex = [integer], indicating which shape parameter it
+        is intended to draw upon. VariableNumber can also be a list or array
         of integers, of the same length as the number of output variables
         *\*args* in which case each output variable is matched with a shape
         parameter index. Default is zero.
 
-        Input arguments should be names of fields in *self.Result*.
+        Input arguments should be names of fields in *self.result*.
         For example::
 
-            A.McCSV('hist.csv', 'histogramXLowerEdge', 'histogramXWidth',
-                'volumeHistogramYMean', 'volumeHistogramYStd',
-                VariableNumber = 0)
+            McSAS.ExportCSV('hist.csv', 'histogramXLowerEdge',
+                            'histogramXWidth', 'volumeHistogramYMean',
+                            'volumeHistogramYStd', paramIndex = 0)
 
         I.e. just stick on as many columns as you'd like. They will be
-        flattened by default. A header with the Result keyword names will be
+        flattened by default. A header with the result keyword names will be
         added.
         
         Existing files with the same filename will be overwritten by default.
         """
-        vna = zeros(len(args), dtype = int)
-        if 'VariableNumber' in kwargs:
-            vni = kwargs['VariableNumber']
-            if isinstance(vni, (list, ndarray)):
+        vna = numpy.zeros(len(args), dtype = int)
+        vni = kwargs.pop('paramIndex', None)
+        if vni is not None:
+            if isList(vni):
                 if len(vni) != len(args):
                     print("Error in ExportCSV, supplied list of "
-                            "variablenumbers does not have the length of 1 or"
-                            "the same length as the list of output variables.")
+                          "variablenumbers does not have the length of 1 or"
+                          "the same length as the list of output variables.")
                     return
                 for vi in range(len(args)):
                     vna[vi] = vni[vi]
             else:
                 # single integer value
-                vna = vna + vni
+                vna += vni
                 
         # uses sprintf rather than csv for flexibility
         ncol = len(args)
