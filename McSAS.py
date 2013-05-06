@@ -71,7 +71,7 @@ Module Documentation
 
 import numpy # For arrays
 from numpy import (inf, array, isfinite, reshape, prod, shape, pi, diff, zeros,
-                  arange, size, sin, cos, sum, sqrt, linspace, log10,
+                  arange, size, sin, cos, sum, sqrt, log10,
                   isnan, ndim, newaxis)
 from scipy import optimize
 import os # Miscellaneous operating system interfaces
@@ -244,7 +244,7 @@ class SASData(DataSet):
     def setOrigin(self, data):
         DataSet.setOrigin(self, data)
         # determining sizeBounds from q vector
-        q = data[:,0]
+        q = data[:, 0]
         self._sizeBounds = pi / array([q.max(),
                                        min(abs(q.min()),
                                            abs(diff(q).min()))])
@@ -489,9 +489,6 @@ class McSAS(object):
         .. automethod:: optimScalingAndBackground
         """
         # initialize
-        self.Result = list()
-        self.Result.append(dict())
-
         self.result = [] # does this belong into the model eventually?
 
         # set data values
@@ -716,8 +713,10 @@ class McSAS(object):
                 valueList.extend([valueList[0] for dummy in range(nMissing)])
             return valueList
 
-        McSASParameters.histogramBins = fixLength(McSASParameters.histogramBins)
-        McSASParameters.histogramXScale = fixLength(McSASParameters.histogramXScale)
+        McSASParameters.histogramBins = fixLength(
+                                            McSASParameters.histogramBins)
+        McSASParameters.histogramXScale = fixLength(
+                                            McSASParameters.histogramXScale)
         self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
     def optimScalingAndBackground(self, intObs, intCalc, error, sc, ver = 2,
@@ -1266,7 +1265,7 @@ class McSAS(object):
             # new iterations will (have to) be appended to this, cannot be
             # zero-padded due to size constraints
             details['paramDistrib'] = rset[:, newaxis]
-            details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis] # ibid.
+            details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis]
             details['convergenceValue'] = conval[newaxis]
             details['scalingFactor'] = sc[:, newaxis]
             details['priorUnaccepted'] = numpy.array(0)[newaxis]
@@ -1478,7 +1477,7 @@ class McSAS(object):
 
         # loop over each repetition
         for ri in range(numReps):
-            rset = contribs[:, :, ri] # the single set of R for this calculation
+            rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
             vset = self.model.vol(rset)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
@@ -1487,7 +1486,9 @@ class McSAS(object):
                 ffset = self.model.ff(data, rset)
                 # Calculate the intensities
                 # Intensity for each contribution as used in the MC calculation
-                iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]), vset**2)
+                iset = ffset**2 * numpy.outer(
+                                        numpy.ones(ffset.shape[0]),
+                                        vset**2)
                 # total intensity of the scattering pattern
                 it = iset.sum(axis = 1)
             else:
@@ -2057,7 +2058,7 @@ class McSAS(object):
         and its standard deviation over all nreps as well as the first four
         distribution moments: mean, variance, skewness and kurtosis
         (Pearson's definition).
-        Will use the *HistogramWeighting* parameter for determining whether to 
+        Will use the *histogramWeighting* parameter for determining whether to 
         return the volume or number-weighted values.
 
         Input arguments are:
@@ -2069,75 +2070,64 @@ class McSAS(object):
               (e.g. 0 = width, 1 = length, 2 = orientation)
 
         Returns a 4-by-2 array, with the values and their sample standard
-        deviations over all *Repetitions*.
+        deviations over all *numRepetitions*.
         """
-        Rrep = self.GetResult('Rrep')
-        Contributions = size(Rrep, 0)
-        VariablesPerShape = size(Rrep, 1)
-        Repetitions = size(Rrep, 2)
-        PowerCompensationFactor = self.GetParameter('PowerCompensationFactor')
-        LowMemoryFootprint = self.GetParameter('LowMemoryFootprint')
-        DeltaRhoSquared = self.GetParameter('DeltaRhoSquared')
-        McSASParameters.histogramBins = self.GetParameter('McSASParameters.histogramBins')
-        McSASParameters.histogramXScale = self.GetParameter('McSASParameters.histogramXScale')
-        HistogramWeighting = self.GetParameter('HistogramWeighting')
-        ContributionParameterBounds =\
-                self.GetParameter('ContributionParameterBounds')
-        
-        # ov = zeros(shape(Rrep)) # observability
-        volumeFraction = self.GetResult('volumeFraction')
-        numberFraction = self.GetResult('numberFraction')
-        totalVolumeFraction = self.GetResult('totalVolumeFraction') 
-        totalNumberFraction = self.GetResult('totalNumberFraction')
+        contribs = self.result[0]['contribs']
+        numContribs, dummy, numReps = contribs.shape
+
+        volumeFraction = self.result[paramIndex]['volumeFraction']
+        numberFraction = self.result[paramIndex]['numberFraction']
+        totalVolumeFraction = result[paramIndex]['totalVolumeFraction']
+        totalNumberFraction = result[paramIndex]['totalNumberFraction']
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
-        scalingFactors = self.GetResult('scalingFactors')
+        scalingFactors = self.result[paramIndex]['scalingFactors']
 
-        Val = zeros(Repetitions) # total value
-        Mu = zeros(Repetitions) # moments..
-        Var = zeros(Repetitions) # moments..
-        Skw = zeros(Repetitions) # moments..
-        Krt = zeros(Repetitions) # moments..
+        val = numpy.zeros(numReps) # total value
+        mu  = numpy.zeros(numReps) # moments..
+        var = numpy.zeros(numReps) # moments..
+        skw = numpy.zeros(numReps) # moments..
+        krt = numpy.zeros(numReps) # moments..
 
         # loop over each repetition
-        for ri in range(Repetitions):
+        for ri in range(numReps):
             # the single set of R for this calculation
-            Rset = Rrep[:, paramIndex, ri]
-            validi = (Rset > numpy.min(valueRange)) * \
-                     (Rset < numpy.max(valueRange))
-            Rset = Rset[validi]
+            rset = contribs[:, paramIndex, ri]
+            validRange = (  (rset > min(valueRange))
+                          * (rset < max(valueRange)))
+            rset = rset[validRange]
             # compensated volume for each sphere in the set
-            Vset = volumeFraction[validi, ri]
-            Nset = numberFraction[validi, ri]
+            vset = volumeFraction[validRange, ri]
+            nset = numberFraction[validRange, ri]
 
-            if HistogramWeighting == 'volume':
-                Val[ri] = sum(Vset)
-                Mu[ri] = sum(Rset * Vset)/sum(Vset)
-                Var[ri] = sum( (Rset - Mu[ri])**2 * Vset )/sum(Vset)
-                sigma = sqrt(abs(Var[ri]))
-                Skw[ri] = sum( (Rset-Mu[ri])**3 * Vset )/ \
-                          (sum(Vset) * sigma**3)
-                Krt[ri] = sum( (Rset-Mu[ri])**4 * Vset )/ \
-                          (sum(Vset) * sigma**4)
-            elif HistogramWeighting == 'number':
-                Val[ri] = sum(Nset)
-                Mu[ri] = sum(Rset * Nset)/sum(Nset)
-                Var[ri] = sum( (Rset-Mu[ri])**2 * Nset )/sum(Nset)
-                sigma=sqrt(abs(Var[ri]))
-                Skw[ri] = sum( (Rset-Mu[ri])**3 * Nset )/ \
-                          (sum(Nset) * sigma**3)
-                Krt[ri] = sum( (Rset-Mu[ri])**4 * Nset )/ \
-                          (sum(Nset) * sigma**4)
+            if McSASParameters.histogramWeighting == 'volume':
+                val[ri] = sum(vset)
+                mu[ri]  = sum(rset * vset)/sum(vset)
+                var[ri] = sum( (rset - mu[ri])**2 * vset )/sum(vset)
+                sigma   = numpy.sqrt(abs(var[ri]))
+                skw[ri] = (  sum( (rset-mu[ri])**3 * vset )
+                           / (sum(vset) * sigma**3))
+                krt[ri] = ( sum( (rset-mu[ri])**4 * vset )
+                           / (sum(vset) * sigma**4))
+            elif McSASParameters.histogramWeighting == 'number':
+                val[ri] = sum(nset)
+                mu[ri]  = sum(rset * nset)/sum(nset)
+                var[ri] = sum( (rset-mu[ri])**2 * nset )/sum(nset)
+                sigma   = numpy.sqrt(abs(var[ri]))
+                skw[ri] = ( sum( (rset-mu[ri])**3 * nset )
+                           / (sum(nset) * sigma**3))
+                krt[ri] = ( sum( (rset-mu[ri])**4 * nset )
+                           / (sum(nset) * sigma**4))
             else:
-                print("Error in moment calculation, "
-                      "unrecognised HistogramWeighting value")
+                logging.error("Moment calculation: "
+                              "unrecognised histogramWeighting value!")
                 return None
 
-        return numpy.array([[numpy.mean(Val), numpy.std(Val, ddof=1)],
-                            [numpy.mean(Mu), numpy.std(Mu, ddof=1)],
-                            [numpy.mean(Var), numpy.std(Var, ddof=1)],
-                            [numpy.mean(Skw), numpy.std(Skw, ddof=1)],
-                            [numpy.mean(Krt), numpy.std(Krt, ddof=1)]])
+        return numpy.array([[val.mean(), val.std(ddof = 1)],
+                            [ mu.mean(),  mu.std(ddof = 1)],
+                            [var.mean(), var.std(ddof = 1)],
+                            [skw.mean(), skw.std(ddof = 1)],
+                            [krt.mean(), krt.std(ddof = 1)]])
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
