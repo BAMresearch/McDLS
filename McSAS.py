@@ -19,10 +19,6 @@ Classes and Functions Defined in This File
  - :py:class:`McSAS() <McSAS.McSAS>`:
    A class containing all the Functions required to perform a
    Monte Carlo analysis on small-angle scattering data.
- - :py:func:`pickle_read`:
-   Reads in pickled data from a file (by filename)
- - :py:func:`pickle_write`:
-   write a block or dictionary to a file (by filename)
     
 Made possible with help from (amongst others)
 ---------------------------------------------
@@ -2188,23 +2184,5 @@ class McSAS(object):
                             [numpy.mean(Var), numpy.std(Var, ddof=1)],
                             [numpy.mean(Skw), numpy.std(Skw, ddof=1)],
                             [numpy.mean(Krt), numpy.std(Krt, ddof=1)]])
-        
-
-########################## END McSAS OBJECT ############################
-
-def pickle_read(filename):
-    """*\*args* can be 1-4, indicates number of output variables.
-    If it is even possible to extract more from pickle."""
-    fh = open(filename)
-    output = pickle.load(fh)
-    fh.close()
-    return output
-
-def pickle_write(filename, somedata):
-    """Writes DBlock to a file."""
-    fh = open(filename, 'w')
-    pickle.dump(somedata, fh)
-    fh.close()
-    return
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
