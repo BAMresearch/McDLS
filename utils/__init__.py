@@ -113,4 +113,23 @@ def transformToString(t):
             res += "{0:>+10.3e} ".format(col)
     return res
 
+# some utility functions for testing
+
+def writeout(fn, arr):
+    numpy.set_printoptions(threshold = 1e6)
+    if isinstance(arr, (tuple, list)):
+        arr = numpy.hstack([a.flatten() for a in arr])
+    open(fn, 'w').write(repr(arr.flatten()))
+    print "writing done"
+
+def writecsv(fn, arr):
+    # gnuplot -p -e 'set datafile separator ";"; set logscale xy; plot "/tmp/test.csv" using 1:2 with lines'
+    import csv
+    writer = csv.writer(open(fn, 'w'), delimiter=';')
+    if len(arr.shape) == 1:
+        arr = arr.reshape((-1, 1))
+    for line in tuple(arr):
+        writer.writerow(line)
+    print "writing done"
+
 # vim: set ts=4 sw=4 sts=4 tw=0:
