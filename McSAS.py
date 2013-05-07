@@ -1383,7 +1383,7 @@ class McSAS(object):
     #################### Post-optimisation Functions ####################
     #####################################################################
 
-    def histogram(self):
+    def histogram(self, contribs = None):
         """
         Takes the *contribs* result from the :py:meth:`McSAS.analyse` function
         and calculates the corresponding volume- and number fractions for each
@@ -1451,7 +1451,8 @@ class McSAS(object):
                 Scaling and background values for each repetition. Used to
                 display background level in data and fit plot.
         """
-        contribs = self.result[0]['contribs']
+        if contribs is None:
+            contribs = self.result[0]['contribs']
         numContribs, dummy, numReps = contribs.shape
 
         # volume fraction for each contribution
@@ -1529,7 +1530,7 @@ class McSAS(object):
                     sc[0] * vsa**2/(vpa * McSASParameters.deltaRhoSquared)
                     ).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
-            numberFraction[:, ri] = volumeFraction[:, ri]/(vpa.flatten())
+            numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
 
             for c in range(numContribs): # for each sphere
@@ -1546,7 +1547,7 @@ class McSAS(object):
                     qm[c, ri] = q[qmi]
                     minReqVol[c, ri] = (
                             error * volumeFraction[c, ri]
-                                    / (sc[0] * iset[:, c])).min() / vpa[c]
+                                    / (sc[0] * iset[:, c])).min()
                 else:
                     ffset = self.model.ff(data, rset[c].reshape((1, -1)))
                     ir = (ffset**2 * vset[c]**2).flatten()
@@ -1558,6 +1559,8 @@ class McSAS(object):
                     minReqVol[c, ri] = (
                             error * volumeFraction[c, ri]
                                     / (sc[0] * ir)).min() / vpa[c]
+
+                minReqNum[c, ri] = minReqVol[c, ri] / vpa[c]
 
             numberFraction[:, ri] /= totalNumberFraction[ri]
             minReqNum[:, ri] /= totalNumberFraction[ri]
@@ -1581,13 +1584,12 @@ class McSAS(object):
                         log10(max(param.valueRange)),
                         McSASParameters.histogramBins[paramIndex] + 1)
 
-            def initHist(reps = 1):
+            def initHist(reps = 0):
                 """Helper for histogram array initialization"""
-                arr = numpy.zeros(
-                        (McSASParameters.histogramBins[paramIndex], reps))
-                if reps <= 1:
-                    arr = arr.flatten()
-                return arr
+                shp = McSASParameters.histogramBins[paramIndex]
+                if reps > 0:
+                    shp = (McSASParameters.histogramBins[paramIndex], reps)
+                return numpy.zeros(shp)
 
             # total volume fraction contribution in a bin
             volHistRepY = initHist(numReps)
@@ -1615,7 +1617,7 @@ class McSAS(object):
                         minReqVolBin[bini, ri] = 0
                         minReqNumBin[bini, ri] = 0
                     else:
-                        # ignored anyway
+                        # why? ignored anyway
                         # minReqVolBin[bini, ri] = minReqVol[binMask, ri].max()
                         minReqVolBin[bini, ri] = minReqVol[binMask, ri].mean()
                         # ignored anyway
@@ -1629,7 +1631,7 @@ class McSAS(object):
                 vb = minReqVolBin[bini, :]
                 volHistMinReq[bini] = vb[vb < inf].max()
                 nb = minReqNumBin[bini, :]
-                numHistMinReq[bini] = nb[vb < inf].max()
+                numHistMinReq[bini] = nb[nb < inf].max()
             volHistYMean = volHistRepY.mean(axis = 1)
             numHistYMean = numHistRepY.mean(axis = 1)
             volHistYStd = volHistRepY.std(axis = 1)
