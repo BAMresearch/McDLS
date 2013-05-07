@@ -231,6 +231,12 @@ class SASData(DataSet):
         return sasData
 
     @property
+    def is2d(self):
+        """Returns true if this dataset contains two-dimensional data with
+        psi information available."""
+        return self.origin.shape[1] > 3 # psi column is present
+
+    @property
     def prepared(self):
         return self._prepared
 
@@ -392,32 +398,30 @@ class McSAS(object):
 
     A McSAS object with the following Results stored in the *result* member
     attribute. These can be extracted using
-    McSAS.GetResult('Keyword',VariableNumber=0)
-    where the *VariableNumber* indicates which shape parameter information is
-    requested for
-    (some information is only stored in *VariableNumber = 0* (default)).
+    McSAS.result[<parameterIndexNumber>]['<Keyword>']
+    where the *parameterIndexNumber* indicates which shape parameter 
+    information is requested.
+    E.g. an ellipsoid has 3: width, height and orientation.
+    (Some information is only stored in *parameterIndexNumber = 0* (default)).
 
     **Keyword** may be one of the following:
 
-        *FitIntensityMean*: 1D array (*VariableNumber = 0*)
-            The fitted intensity, given as the mean of all Repetitions Results.
-        *FitQ*: 1D array (*VariableNumber = 0*)
+        *fitIntensityMean*: 1D array (*common result*)
+            The fitted intensity, given as the mean of all numReps Results.
+        *fitQ*: 1D array (*common result*)
             Corresponding q values
             (may be different than the input q if *QBounds* was used).
-        *FitIntensityStd*: array (*VariableNumber = 0*)
+        *fitIntensityStd*: array (*common result*)
             Standard deviation of the fitted I(q), calculated as the standard 
-            deviation of all Repetitions Results.
-        *Rrep*: size array (Contributions x Repetitions) (*VariableNumber = 0*)
-            Collection of Contributions contributions fitted to best represent 
+            deviation of all numReps results.
+        *contribs*: size array (numContribs x numReps) (*common result*)
+            Collection of numContribs contributions fitted to best represent 
             the provided I(q) data. Contains the Results of each of 
-            *Repetitions* iterations. This can be used for rebinning without 
+            *numReps* iterations. This can be used for rebinning without 
             having to re-optimize.
-        *scalingFactors*: size array (2 x Repetitions) (*VariableNumber = 0*)
+        *scalingFactors*: size array (2 x numReps) (*common result*)
             Scaling and background values for each repetition.
             Used to display background level in data and fit plot.
-        *VariableNumber*: int
-            Shape parameter index.
-            E.g. an ellipsoid has 3: width, height and orientation.
         *histogramXLowerEdge*: array
             histogram bin left edge position (x-axis in histogram).
         *histogramXMean*: array
@@ -428,36 +432,36 @@ class McSAS(object):
             (x-axis in histogram, defines bar plot bar widths).
         *volumeHistogramYMean*: array
             Volume-weighted particle size distribution values for
-            all Repetitions Results (y-axis bar height).
+            all numReps Results (y-axis bar height).
         *numberHistogramYMean*: array
             Number-weighted analogue of the above *volumeHistogramYMean*.
-        *volumeHistogramRepetitionsY*: size array (McSASParameters.histogramBins x Repetitions)
+        *volumeHistogramRepetitionsY*: size array (McSASParameters.histogramBins x numReps)
             Volume-weighted particle size distribution bin values for
             each fit repetition (the mean of which is *volumeHistogramYMean*, 
             and the sample standard deviation is *volumeHistogramYStd*).
-        *numberHistogramRepetitionsY*: size array (McSASParameters.histogramBins x Repetitions)
+        *numberHistogramRepetitionsY*: size array (McSASParameters.histogramBins x numReps)
             Number-weighted particle size distribution bin values for
             each MC fit repetition.
         *volumeHistogramYStd*: array
             Standard deviations of the corresponding volume-weighted size
-            distribution bins, calculated from *Repetitions* repetitions of the
+            distribution bins, calculated from *numReps* repetitions of the
             :py:meth:`McSAS.MCfit_sph` function.
         *numberHistogramYStd*: array
             Standard deviation for the number-weigthed distribution.
-        *volumeFraction*: size array (Contributions x Repetitions)
-            Volume fractions for each of Contributions contributions in each of
-            *Repetitions* iterations.
-        *numberFraction*: size array (Contributions x Repetitions)
+        *volumeFraction*: size array (numContribs x numReps)
+            Volume fractions for each of numContribs contributions in each of
+            *numReps* iterations.
+        *numberFraction*: size array (numContribs x numReps)
             Number fraction for each contribution.
-        *totalVolumeFraction*: size array (Repetitions)
-            Total scatterer volume fraction for each of the *Repetitions* 
+        *totalVolumeFraction*: size array (numReps)
+            Total scatterer volume fraction for each of the *numReps* 
             iterations.
-        *totalNumberFraction*: size array (Repetitions)
+        *totalNumberFraction*: size array (numReps)
             Total number fraction.
-        *minimumRequiredVolume*: size array (Contributions x Repetitions)
+        *minimumRequiredVolume*: size array (numContribs x numReps)
             Minimum required volume fraction for each contribution to become
             statistically significant.
-        *minimumRequiredNumber*: size array (Contributions x Repetitions)
+        *minimumRequiredNumber*: size array (numContribs x numReps)
             Number-weighted analogue to *minimumRequiredVolume*.
         *volumeHistogramMinimumRequired*: size array (histogramXMean)
             Array with the minimum required volume fraction per bin to become
@@ -465,13 +469,13 @@ class McSAS(object):
             in histogram.
         *numberHistogramMinimumRequired*: size array (histogramXMean)
             Number-weighted analogue to *volumeHistogramMinimumRequired*.
-        *scalingFactors*: size array (2 x Repetitions)
+        *scalingFactors*: size array (2 x numReps)
             Scaling and background values for each repetition. Used to display
             background level in data and fit plot.
-        *totalVolumeFraction*: size array (Repetitions)
-            Total scatterer volume fraction for each of the *Repetitions*
+        *totalVolumeFraction*: size array (numReps)
+            Total scatterer volume fraction for each of the *numReps*
             iterations.
-        *minimumRequiredVolume*: size array (Contributions x Repetitions)
+        *minimumRequiredVolume*: size array (numContribs x numReps)
             Minimum required volube fraction for each contribution to become
             statistically significant.
         *volumeHistogramMinimumRequired*: size array (histogramXMean)
@@ -548,7 +552,7 @@ class McSAS(object):
         self.analyse()
         self.histogram()
 
-        if self.dataset.origin.shape[1] > 3: # not tested yet
+        if self.dataset.is2d:
             # 2D mode, regenerate intensity
             # TODO: test 2D mode
             self.gen2DIntensity()
@@ -655,50 +659,6 @@ class McSAS(object):
                     # Make it into a function handle/pointer.
                     self.Functions[kw] = getattr(self, kwargs[kw])
 
-    def GetFunction(self, fname = None):
-        """Returns the function handle or all handles (if no function name
-        supplied).
-        
-        :param fname: can be one of the following: <TODO>
-        """
-        fname = fname.upper()
-        if not fname in self.Functions.keys():
-            print "Unknown function identifier {}".format(fname)
-            return None
-        if fname == None:
-            return self.Functions
-        else:
-            return self.Functions[fname]
-
-    def GetResult(self, parname = [], VariableNumber = 0):
-        """Returns the specified entry from common Result container."""
-        if parname == []:
-            return self.Result[VariableNumber]
-        else:
-            return self.Result[VariableNumber][parname]
-
-    def SetResult(self, **kwargs):
-        """Sets the supplied keyword-value pairs to the Result. These can be
-        arbitrary. Varnum is the sequence number of the variable for which
-        data is stored. Default is set to 0, which is where the output of the
-        MC routine is put before histogramming. The Histogramming procedure
-        may populate more variables if so needed.
-        """
-        if 'VariableNumber' in kwargs.keys():
-            varnum = kwargs['VariableNumber']
-        else:
-            varnum = 0
-
-        while len(self.Result) < (varnum + 1):
-            # make sure there is a dictionary in the location we want to save
-            # the Result to
-            self.Result.append(dict())
-        
-        rdict = self.Result[varnum]
-
-        for kw in kwargs:
-            rdict[kw] = kwargs[kw]
-
     def checkParameters(self):
         """Checks for the Parameters, for example to make sure
         histbins is defined for all, or to check if all Parameters fall
@@ -723,7 +683,7 @@ class McSAS(object):
                                             McSASParameters.histogramXScale)
         self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
-    def optimScalingAndBackground(self, intObs, intCalc, error, sc, ver = 2,
+    def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
             outputIntensity = False, background = True):
         """
         Optimizes the scaling and background factor to match *intCalc* closest
@@ -737,7 +697,7 @@ class McSAS(object):
                      intensities
         :arg intCalc: An array of intensities which should be scaled to match
                       *intObs*
-        :arg error: An array of uncertainties to match *intObs*
+        :arg intError: An array of uncertainties to match *intObs*
         :arg sc: A 2-element array of initial guesses for scaling
                  factor and background
         :arg ver: *(optional)* Can be set to 1 for old version, more robust
@@ -752,50 +712,50 @@ class McSAS(object):
                   intensity scaling factor and background and the reduced
                   chi-squared value.
         """
-        def csqr(sc, intObs, intCalc, error):
-            """Least-squares error for use with scipy.optimize.leastsq"""
-            return (intObs - sc[0]*intCalc - sc[1]) / error
+        def csqr(sc, intObs, intCalc, intError):
+            """Least-squares intError for use with scipy.optimize.leastsq"""
+            return (intObs - sc[0]*intCalc - sc[1]) / intError
         
-        def csqr_nobg(sc, intObs, intCalc, error):
-            """Least-squares error for use with scipy.optimize.leastsq,
+        def csqr_nobg(sc, intObs, intCalc, intError):
+            """Least-squares intError for use with scipy.optimize.leastsq,
             without background """
-            return (intObs - sc[0]*intCalc) / error
+            return (intObs - sc[0]*intCalc) / intError
 
-        def csqr_v1(intObs, intCalc, error):
-            """Least-squares for data with known error,
+        def csqr_v1(intObs, intCalc, intError):
+            """Least-squares for data with known intError,
             size of parameter-space not taken into account."""
-            return sum(((intObs - intCalc)/error)**2) / size(intObs)
+            return sum(((intObs - intCalc)/intError)**2) / size(intObs)
 
         intObs = intObs.flatten()
         intCalc = intCalc.flatten()
-        error = error.flatten()
+        intError = intError.flatten()
         if ver == 2:
             """uses scipy.optimize.leastsqr"""
             if background:
                 sc, dummySuccess = optimize.leastsq(
-                        csqr, sc, args = (intObs, intCalc, error),
+                        csqr, sc, args = (intObs, intCalc, intError),
                         full_output = False)
-                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], error)
+                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
             else:
                 sc, dummySuccess = optimize.leastsq(
-                        csqr_nobg, sc, args = (intObs, intCalc, error),
+                        csqr_nobg, sc, args = (intObs, intCalc, intError),
                         full_output = False)
                 sc[1] = 0.0
-                conval = csqr_v1(intObs, sc[0]*intCalc, error)
+                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
         else:
             """using scipy.optimize.fmin"""
             # Background can be set to False to just find the scaling factor.
             if background:
                 sc = optimize.fmin(
-                    lambda sc: csqr_v1(intObs, sc[0]*intCalc + sc[1], error),
+                    lambda sc: csqr_v1(intObs, sc[0]*intCalc + sc[1], intError),
                     sc, full_output = False, disp = 0)
-                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], error)
+                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
             else:
                 sc = optimize.fmin(
-                    lambda sc: csqr_v1(intObs, sc[0]*intCalc, error),
+                    lambda sc: csqr_v1(intObs, sc[0]*intCalc, intError),
                     sc, full_output = False, disp = 0)
                 sc[1] = 0.0
-                conval = csqr_v1(intObs, sc[0]*intCalc, error)
+                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
 
         if outputIntensity:
             return sc, conval, sc[0]*intCalc + sc[1]
@@ -1102,8 +1062,8 @@ class McSAS(object):
 
     def analyse(self):
         """This function runs the Monte Carlo optimisation a multitude
-        (*Repetitions*) of times. If convergence is not achieved, it will try 
-        again for a maximum of *MaximumRetries* attempts.
+        (*numReps*) of times. If convergence is not achieved, it will try 
+        again for a maximum of *maxRetries* attempts.
         """
         data = self.dataset.prepared
         # get settings
@@ -1118,7 +1078,7 @@ class McSAS(object):
         contribIntensity = zeros([1, len(data), numReps])
         start = time.time() # for time estimation and reporting
 
-        # This is the loop that repeats the MC optimization Repetitions times,
+        # This is the loop that repeats the MC optimization numReps times,
         # after which we can calculate an uncertainty on the Results.
         priorsflag = False
         for nr in range(numReps):
@@ -1161,8 +1121,8 @@ class McSAS(object):
         # store in output dict
         self.result.append(dict(
             contribs = contributions, # Rrep
-            fitIntMean = contribIntensity.mean(axis = 2),
-            fitIntStd = contribIntensity.std(axis = 2),
+            fitIntensityMean = contribIntensity.mean(axis = 2),
+            fitIntensityStd = contribIntensity.std(axis = 2),
             fitQ = data[:, 0],
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
@@ -1247,15 +1207,15 @@ class McSAS(object):
         # SMEAR function goes here
         it = self.model.smear(it)
         intensity = data[:, 1]
-        error = data[:, 2]
+        intError = data[:, 2]
         sci = intensity.max() / it.max() # init. guess for the scaling factor
         bgi = intensity.min()
         sc, conval = self.optimScalingAndBackground(
-                intensity, it/vst, error, numpy.array([sci, bgi]), ver = 1)
+                intensity, it/vst, intError, numpy.array([sci, bgi]), ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         sc, conval = self.optimScalingAndBackground(
-                intensity, it/vst, error, sc)
+                intensity, it/vst, intError, sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         if outputIterations:
@@ -1275,7 +1235,7 @@ class McSAS(object):
 
         # start the MC procedure
         intObs = data[:, 1]
-        error = data[:, 2]
+        intError = data[:, 2]
         start = time.time()
         numMoves = 0 # tracking the number of moves
         numNotAccepted = 0
@@ -1305,7 +1265,7 @@ class McSAS(object):
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt = self.optimScalingAndBackground(
-                                    intObs, itest/vstest, error, sc)
+                                    intObs, itest/vstest, intError, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -1368,7 +1328,8 @@ class McSAS(object):
 
         ifinal = it / sum(vset**2)
         ifinal = self.model.smear(ifinal)
-        sc, conval = self.optimScalingAndBackground(intObs, ifinal, error, sc)
+        sc, conval = self.optimScalingAndBackground(
+                            intObs, ifinal, intError, sc)
 
         result = [rset]
         if outputIntensity:
@@ -1397,9 +1358,6 @@ class McSAS(object):
         
         Output a list of dictionaries with one dictionary per shape parameter:
 
-            *VariableNumber*: int
-                Shape parameter index. e.g. an ellipsoid has 3:
-                width, height and orientation
             *histogramXLowerEdge*: array
                 histogram bin left edge position (x-axis in histogram)
             *histogramXMean*: array
@@ -1477,7 +1435,7 @@ class McSAS(object):
         data = self.dataset.prepared
         q = data[:, 0]
         intensity = data[:, 1]
-        error = data[:, 2]
+        intError = data[:, 2]
 
         # loop over each repetition
         for ri in range(numReps):
@@ -1523,7 +1481,7 @@ class McSAS(object):
             bgi = intensity.min()
             # optimize scaling and background for this repetition
             sc, conval = self.optimScalingAndBackground(
-                    intensity, it, error, (sci, bgi))
+                    intensity, it, intError, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
             volumeFraction[:, ri] = (
@@ -1546,7 +1504,7 @@ class McSAS(object):
                     # point where the contribution of c is maximum
                     qm[c, ri] = q[qmi]
                     minReqVol[c, ri] = (
-                            error * volumeFraction[c, ri]
+                            intError * volumeFraction[c, ri]
                                     / (sc[0] * iset[:, c])).min()
                 else:
                     ffset = self.model.ff(data, rset[c].reshape((1, -1)))
@@ -1557,7 +1515,7 @@ class McSAS(object):
                     # point where the contribution of c is maximum
                     qm[c, ri] = q[qmi]
                     minReqVol[c, ri] = (
-                            error * volumeFraction[c, ri]
+                            intError * volumeFraction[c, ri]
                                     / (sc[0] * ir)).min() / vpa[c]
 
                 minReqNum[c, ri] = minReqVol[c, ri] / vpa[c]
@@ -1718,7 +1676,7 @@ class McSAS(object):
                                         McSASParameters.maskZeroInt)
         intAvg = intAvg[validIndices]
         # shape back to imageform
-        self.result[0]['i2d'] = reshape(intAvg, kansas)
+        self.result[0]['intensity2d'] = reshape(intAvg, kansas)
 
     def ExportCSV(self, filename, *args, **kwargs):
         """
@@ -1815,7 +1773,9 @@ class McSAS(object):
         distribution.
         """
         import matplotlib.font_manager as fm
-        def SetAxis(ah):
+        from matplotlib.pyplot import figure, xticks, yticks, errorbar
+        from matplotlib.pyplot import bar, plot, grid, legend, title, xlim
+        def setAxis(ah):
             """Sets the axes Parameters. axtyp can be one of 'q' or 'R'"""
             import matplotlib.font_manager as fm
             plotfont = fm.FontProperties(
@@ -1828,7 +1788,7 @@ class McSAS(object):
                         # family = 'Times New Roman',
                         # fname = '/Library/Fonts/Times New Roman.ttf')
                         family = 'Times')
-            # SetAxis font and ticks
+            # setAxis font and ticks
             ah.set_yticklabels(ah.get_yticks(), fontproperties = plotfont,
                                size = 'large')
             ah.set_xticklabels(ah.get_xticks(), fontproperties = plotfont,
@@ -1837,11 +1797,11 @@ class McSAS(object):
                           size = 'x-large')
             ah.set_ylabel(ah.get_ylabel(), fontproperties = textfont,
                           size = 'x-large')
-            # q_ax.set_yticklabels(q_ax.get_yticks(),
+            # qAxis.set_yticklabels(qAxis.get_yticks(),
             #                      fontproperties = plotfont)
-            # q_ax.set_xticklabels(q_ax.get_xticks(),
+            # qAxis.set_xticklabels(qAxis.get_xticks(),
             #                      fontproperties = plotfont)
-            # R_ax.spines['bottom'].set_color('black')
+            # sizeAxis.spines['bottom'].set_color('black')
             ah.spines['bottom'].set_lw(2)
             ah.spines['top'].set_lw(2)
             ah.spines['left'].set_lw(2)
@@ -1852,15 +1812,15 @@ class McSAS(object):
                            which = 'minor', direction = 'in', length = 3)
             ah.tick_params(axis = 'y', colors = 'black', width = 2,
                            which = 'minor', direction = 'in', length = 3)
-            # q_ax.spines['bottom'].set_lw(2)
-            # q_ax.spines['top'].set_lw(2)
-            # q_ax.spines['left'].set_lw(2)
-            # q_ax.spines['right'].set_lw(2)
-            # q_ax.tick_params(axis = 'both', colors='black',width=2,
+            # qAxis.spines['bottom'].set_lw(2)
+            # qAxis.spines['top'].set_lw(2)
+            # qAxis.spines['left'].set_lw(2)
+            # qAxis.spines['right'].set_lw(2)
+            # qAxis.tick_params(axis = 'both', colors='black',width=2,
             #                  which='major',direction='in',length=6)
-            # q_ax.tick_params(axis = 'x', colors='black',width=2,
+            # qAxis.tick_params(axis = 'x', colors='black',width=2,
             #                  which='minor',direction='in',length=3)
-            # q_ax.tick_params(axis = 'y', colors='black',width=2,
+            # qAxis.tick_params(axis = 'y', colors='black',width=2,
             #                  which='minor',direction='in',length=3)
             locs, labels = xticks()
             xticks(locs, map(lambda x: "%g" % x, locs))
@@ -1868,12 +1828,8 @@ class McSAS(object):
             yticks(locs, map(lambda x: "%g" % x, locs))
             return ah
 
-        # load Parameters
-        McSASParameters.histogramXScale = self.GetParameter('McSASParameters.histogramXScale')
-        HistogramWeighting = self.GetParameter('HistogramWeighting')
-        # load Result
-        Result = self.GetResult()
-        # check how many Result plots we need to generate: maximum three.
+        result = self.result[0]
+        # check how many result plots we need to generate: maximum three.
         nhists = len(McSASParameters.histogramXScale)
 
         # set plot font
@@ -1888,21 +1844,22 @@ class McSAS(object):
         fig = figure(figsize = (7*(nhists+1), 7), dpi = 80,
                      facecolor = 'w', edgecolor = 'k')
         # load original Dataset
-        q = self.GetData('Q', Dataset = 'original')
-        I = self.GetData('I', Dataset = 'original')
-        E = self.GetData('IError', Dataset = 'original')
-        TwoDMode = False
-        if ndim(q) > 1:
+        data = self.dataset.origin
+        q = data[:, 0]
+        intensity = data[:, 1]
+        intError = data[:, 2]
+        if self.dataset.is2d:
             # 2D data
-            TwoDMode = True
-            Psi = self.GetData('Psi', Dataset = 'original')
-            # we need to recalculate the Result in two dimensions
+            psi = data[:, 3]
+            # we need to recalculate the result in two dimensions
             # done by gen2DIntensity function
-            I2D = self.GetResult('I2D')
-            Ishow = I.copy()
+            intensity2d = self.result['intensity2d']
+            intShow = intensity.copy()
             # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
-            Ishow[(Psi >   0) * (Psi <=  90)] = I2D[(Psi >   0) * (Psi <=  90)]
-            Ishow[(Psi > 180) * (Psi <= 270)] = I2D[(Psi > 180) * (Psi <= 270)]
+            intShow[(psi >   0) * (psi <=  90)] = intensity2d[
+                    (psi >   0) * (psi <=  90)]
+            intShow[(psi > 180) * (psi <= 270)] = intensity2d[
+                    (psi > 180) * (psi <= 270)]
             # xalimits=(-numpy.min(q[:,0]),numpy.max(q[:,-1]))
             # yalimits=(-numpy.min(q[0,:]),numpy.max(q[-1,:]))
             xmidi = int(round(size(q, 1)/2))
@@ -1911,68 +1868,62 @@ class McSAS(object):
             QY = numpy.array([-q[0, xmidi], q[-1, xmidi]])
             extent = (QX[0], QX[1], QY[0], QY[1])
 
-            q_ax = fig.add_subplot(1, (nhists+1), 1, axisbg = (.95, .95, .95),
+            qAxis = fig.add_subplot(1, (nhists+1), 1, axisbg = (.95, .95, .95),
                                    xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
                                    ylabel = 'q_y, 1_m')
-            imshow(log10(Ishow), extent = extent, origin = 'lower')
-            q_ax = SetAxis(q_ax)
+            imshow(log10(intShow), extent = extent, origin = 'lower')
+            qAxis = setAxis(qAxis)
             colorbar()
         else:
-            q_ax = fig.add_subplot(1, (nhists+1), 1, axisbg = (.95, .95, .95),
-                                   xlim = (numpy.min(q) * (1-axisMargin),
-                                           numpy.max(q) * (1+axisMargin)),
-                                   ylim = (numpy.min(I[I != 0]) * 
-                                                          (1-axisMargin),
-                                           numpy.max(I) * (1+axisMargin)),
-                                   xscale = 'log', yscale = 'log',
-                                   xlabel = 'q, 1/m', ylabel = 'I, 1/(m sr)')
-            q_ax = SetAxis(q_ax)
-            errorbar(q, I, E, zorder = 2, fmt = 'k.', ecolor = 'k',
-                     elinewidth = 2, capsize = 4, ms = 5,
+            qAxis = fig.add_subplot(
+                        1, (nhists+1), 1,
+                        axisbg = (.95, .95, .95),
+                        xlim = (q.min() * (1 - axisMargin),
+                                q.max() * (1 + axisMargin)),
+                        ylim = (intensity[intensity != 0].min()
+                                    * (1 - axisMargin),
+                                intensity.max()
+                                    * (1 + axisMargin)
+                        ),
+                        xscale = 'log', yscale = 'log',
+                        xlabel = 'q, 1/m', ylabel = 'intensity, 1/(m sr)'
+                    )
+            qAxis = setAxis(qAxis)
+            errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
+                     ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
                      label = 'Measured intensity', lw = 2,
                      solid_capstyle = 'round', solid_joinstyle = 'miter')
             grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
                  dash_capstyle = 'round', zorder = -1)
-            # xscale('log')
-            # yscale('log')
-            aq = sort(Result['FitQ'][0, :])
-            aI = Result['FitIntensityMean'][0, argsort(Result['FitQ'][0, :])]
+            aq = numpy.sort(result['fitQ'])
+            aI = result['fitIntensityMean'][0, 
+                    numpy.argsort(result['fitQ'])]
             plot(aq, aI, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
-            plot(aq, numpy.mean(Result['scalingFactors'][1, :]) + 0*aq,
+            plot(aq, numpy.mean(result['scalingFactors'][1, :]) + 0*aq,
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})'
-                         .format(numpy.mean(Result['scalingFactors'][1, :])),
+                         .format(numpy.mean(result['scalingFactors'][1, :])),
                  zorder = 3)
             leg = legend(loc = 1, fancybox = True, prop = textfont)
         title('Measured vs. Fitted intensity',
               fontproperties = textfont, size = 'x-large')
-        R_ax = list()
-        for histi in range(nhists):
+        sizeAxis = list()
+        for histi in range(len(self.result)):
             # get data:
-            histogramXLowerEdge = self.GetResult(parname =
-                    'histogramXLowerEdge', VariableNumber = histi)
-            histogramXMean = self.GetResult(parname = 'histogramXMean',
-                            VariableNumber = histi)
-            histogramXWidth = self.GetResult(parname = 'histogramXWidth',
-                            VariableNumber = histi)
-            if HistogramWeighting == 'volume':
-                volumeHistogramYMean = self.GetResult(parname =
-                        'volumeHistogramYMean', VariableNumber = histi)
-                volumeHistogramMinimumRequired = self.GetResult(parname =
-                        'volumeHistogramMinimumRequired',
-                        VariableNumber = histi)
-                volumeHistogramYStd = self.GetResult(parname =
-                        'volumeHistogramYStd', VariableNumber = histi)
-            elif HistogramWeighting == 'number':
-                volumeHistogramYMean = self.GetResult(parname =
-                        'numberHistogramYMean', VariableNumber = histi)
-                volumeHistogramMinimumRequired = self.GetResult(parname =
-                        'numberHistogramMinimumRequired',
-                        VariableNumber = histi)
-                volumeHistogramYStd = self.GetResult(parname =
-                        'numberHistogramYStd', VariableNumber = histi)
+            res = self.result[histi]
+            histXLowerEdge = res['histogramXLowerEdge']
+            histXMean = res['histogramXMean']
+            histXWidth = res['histogramXWidth']
+            if McSASParameters.histogramWeighting == 'volume':
+                volHistYMean = res['volumeHistogramYMean']
+                volHistMinReq = res['volumeHistogramMinimumRequired']
+                volHistYStd = res['volumeHistogramYStd']
+            elif McSASParameters.histogramWeighting == 'number':
+                volHistYMean = res['numberHistogramYMean']
+                volHistMinReq = res['numberHistogramMinimumRequired']
+                volHistYStd = res['numberHistogramYStd']
             else: 
-                print "Incorrect value for HistogramWeighting: "\
+                print "Incorrect value for histWeighting: "\
                       "should be either 'volume' or 'number'"
 
             # prep axes
@@ -1980,56 +1931,67 @@ class McSAS(object):
                 # quick fix with the [0] reference. Needs fixing, this
                 # plotting function should be rewritten to support multiple
                 # variables.
-                R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
-                            axisbg = (.95, .95, .95),
-                            xlim = (numpy.min(histogramXLowerEdge) *
-                                (1 - axisMargin),
-                                numpy.max(histogramXLowerEdge) *
-                                (1 + axisMargin)),
-                            ylim = (0, numpy.max(volumeHistogramYMean) *
-                                (1 + axisMargin)),
-                            xlabel = 'Radius, m',
-                            ylabel = '[Rel.] Volume Fraction',
-                            xscale = 'log'))
+                sizeAxis.append(fig.add_subplot(
+                                    1, (nhists + 1), histi + 2,
+                                    axisbg = (.95, .95, .95),
+                                    xlim = (histXLowerEdge.min()
+                                                * (1 - axisMargin),
+                                            histXLowerEdge.max()
+                                                * (1 + axisMargin)
+                                    ),
+                                    ylim = (0, volHistYMean.max()
+                                                * (1 + axisMargin)
+                                    ),
+                                    xlabel = 'Radius, m',
+                                    ylabel = '[Rel.] Volume Fraction',
+                                    xscale = 'log')
+                            )
             else:
-                R_ax.append(fig.add_subplot(1, (nhists + 1), histi + 2,
-                            axisbg = (.95, .95, .95),
-                            xlim = (numpy.min(histogramXLowerEdge) -
-                                (1 - axisMargin)*
-                                numpy.min(histogramXLowerEdge),
-                                numpy.max(histogramXLowerEdge)
-                                * (1 + axisMargin)),
-                            ylim = (0, numpy.max(volumeHistogramYMean)
-                                * (1 + axisMargin)),
-                            xlabel = 'Radius, m',
-                            ylabel = '[Rel.] Volume Fraction'))
+                sizeAxis.append(fig.add_subplot(
+                                    1, (nhists + 1), histi + 2,
+                                    axisbg = (.95, .95, .95),
+                                    xlim = (histXLowerEdge.min()
+                                            - (1 - axisMargin)
+                                            * histXLowerEdge.min(),
+                                            histXLowerEdge.max()
+                                            * (1 + axisMargin)
+                                    ),
+                                    ylim = (0, volHistYMean.max()
+                                                * (1 + axisMargin)
+                                    ),
+                                    xlabel = 'Radius, m',
+                                    ylabel = '[Rel.] Volume Fraction'))
 
-            R_ax[histi] = SetAxis(R_ax[histi])
+            sizeAxis[histi] = setAxis(sizeAxis[histi])
             # fill axes
-            bar(histogramXLowerEdge[0:-1], volumeHistogramYMean, 
-                    width = histogramXWidth, color = 'orange',
+            print "TEST", volHistYMean.min(), volHistYMean.max(), volHistYMean.mean()
+            bar(histXLowerEdge[0:-1], volHistYMean, 
+                    width = histXWidth, color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
                     label = 'MC size histogram')
-            plot(histogramXMean, volumeHistogramMinimumRequired, 'ro', 
+            plot(histXMean, volHistMinReq, 'ro', 
                     ms = 5, markeredgecolor = 'r',
                     label = 'Minimum visibility limit', zorder = 3)
-            errorbar(histogramXMean, volumeHistogramYMean, volumeHistogramYStd,
+            errorbar(histXMean, volHistYMean, volHistYStd,
                     zorder = 4, fmt = 'k.', ecolor = 'k',
                     elinewidth = 2, capsize = 4, ms = 0, lw = 2,
                     solid_capstyle = 'round', solid_joinstyle = 'miter')
             legend(loc = 1, fancybox = True, prop = textfont)
-            title('Radius size histogram', fontproperties = textfont,
+            title('Radius size hist', fontproperties = textfont,
                   size = 'x-large')
             # reapply limits in x
-            xlim((numpy.min(histogramXLowerEdge) * (1 - axisMargin),
-                  numpy.max(histogramXLowerEdge) * (1 + axisMargin)))
+            xlim((histXLowerEdge.min() * (1 - axisMargin),
+                  histXLowerEdge.max() * (1 + axisMargin)))
 
         fig.subplots_adjust(left = 0.1, bottom = 0.11,
                             right = 0.96, top = 0.95,
                             wspace = 0.23, hspace = 0.13)
+        # trigger plot window popup
+        import pylab
+        pylab.show()
         
     def rangeInfo(self, valueRange = [0, inf], paramIndex = 0):
-        """Calculates the total volume or number fraction of the MC Result
+        """Calculates the total volume or number fraction of the MC result
         within a given range, and returns the total numer or volume fraction
         and its standard deviation over all nreps as well as the first four
         distribution moments: mean, variance, skewness and kurtosis
