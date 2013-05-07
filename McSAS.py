@@ -1678,7 +1678,7 @@ class McSAS(object):
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)
 
-    def ExportCSV(self, filename, *args, **kwargs):
+    def exportCSV(self, filename, *args, **kwargs):
         """
         This function writes a semicolon-separated csv file to [filename]
         containing an arbitrary number of output variables *\*args*.
@@ -1694,7 +1694,7 @@ class McSAS(object):
         Input arguments should be names of fields in *self.result*.
         For example::
 
-            McSAS.ExportCSV('hist.csv', 'histogramXLowerEdge',
+            McSAS.exportCSV('hist.csv', 'histogramXLowerEdge',
                             'histogramXWidth', 'volumeHistogramYMean',
                             'volumeHistogramYStd', paramIndex = 0)
 
@@ -1709,7 +1709,7 @@ class McSAS(object):
         if vni is not None:
             if isList(vni):
                 if len(vni) != len(args):
-                    print("Error in ExportCSV, supplied list of "
+                    print("Error in exportCSV, supplied list of "
                           "variablenumbers does not have the length of 1 or"
                           "the same length as the list of output variables.")
                     return
@@ -1730,9 +1730,7 @@ class McSAS(object):
 
         inlist = list()
         for argi in range(len(args)):
-            inlist.append(
-                self.GetResult(args[argi],
-                               VariableNumber = vna[argi]).flatten())
+            inlist.append(self.result[vna[argi]][args[argi]].flatten())
         # find out the longest row
         nrow = 0
         for argi in range(len(args)):
