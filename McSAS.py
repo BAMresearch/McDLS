@@ -114,7 +114,7 @@ class ParticleModel(AlgorithmBase, PropertyNames):
         if not isList(bounds):
             bounds = [bounds,]
         if not isinstance(bounds, list):
-            bounds = list(*bounds)
+            bounds = list(bounds)
         return bounds
 
     # it doesn't belong to the model?
@@ -583,6 +583,7 @@ class McSAS(object):
         if data[2] is None:
             # ValueError instead? Is it mandatory to have IError?
             logging.warning("No intensity uncertainties provided!")
+            # TODO: generate some
         # data[3]: PSI is optional, only for 2D required
         # TODO: is psi mandatory in 2D? Should ierror be mandatory?
         # can psi be present without ierror?
