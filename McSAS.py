@@ -2014,8 +2014,8 @@ class McSAS(object):
 
         volumeFraction = self.result[paramIndex]['volumeFraction']
         numberFraction = self.result[paramIndex]['numberFraction']
-        totalVolumeFraction = result[paramIndex]['totalVolumeFraction']
-        totalNumberFraction = result[paramIndex]['totalNumberFraction']
+        totalVolumeFraction = self.result[paramIndex]['totalVolumeFraction']
+        totalNumberFraction = self.result[paramIndex]['totalNumberFraction']
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
@@ -2046,7 +2046,7 @@ class McSAS(object):
                 skw[ri] = (  sum( (rset-mu[ri])**3 * vset )
                            / (sum(vset) * sigma**3))
                 krt[ri] = ( sum( (rset-mu[ri])**4 * vset )
-                           / (sum(vset) * sigma**4))
+                           / (sum(vset) * sigma**3))
             elif McSASParameters.histogramWeighting == 'number':
                 val[ri] = sum(nset)
                 mu[ri]  = sum(rset * nset)/sum(nset)
@@ -2061,10 +2061,54 @@ class McSAS(object):
                               "unrecognised histogramWeighting value!")
                 return None
 
-        return numpy.array([[val.mean(), val.std(ddof = 1)],
-                            [ mu.mean(),  mu.std(ddof = 1)],
-                            [var.mean(), var.std(ddof = 1)],
-                            [skw.mean(), skw.std(ddof = 1)],
-                            [krt.mean(), krt.std(ddof = 1)]])
+        #now we can calculate the intensity contribution by the subset of
+        #spheres highlighted by the range:
+        logging.info("Calculating partial intensity contribution of range")
+        # loop over each repetition
+        partialIntensities = numpy.zeros(
+                (numReps, self.result[0]['fitQ'].shape[0]))
+
+        data = self.dataset.prepared
+        for ri in range(numReps):
+            rset = contribs[:, paramIndex, ri]
+            validRange = (  (rset > min(valueRange))
+                          * (rset < max(valueRange)))
+            rset = rset[validRange][:, newaxis]
+            # compensated volume for each sphere in the set
+            # TODO: same code as in gen2dintensity and other places
+            vset = self.model.vol(rset)
+            if not McSASParameters.lowMemoryFootprint:
+                # Form factors, all normalized to 1 at q=0.
+                ffset = self.model.ff(data, rset)
+                # Calculate the intensities
+                # Intensity for each contribution as used in the MC calculation
+                iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]),
+                                              vset**2)
+                # the total intensity of the scattering pattern
+                it = iset.sum(axis = 1)
+            else:
+                it = 0
+                for i in numpy.arange(rset.shape[0]):
+                    # calculate their form factors
+                    ffset = self.model.ff(data, rset[i].reshape((1, -1)))
+                    # a set of intensities
+                    it += ffset**2 * vset[i]**2
+            it = self.model.smear(it)
+            sc = scalingFactors[:, ri] # scaling and background for this repetition.
+            # a set of volume fractions
+            partialIntensities[ri, :] = it.flatten() * sc[0]
+
+        rangeInfoResult = dict(
+                partialIntensityMean = partialIntensities.mean(axis = 0),
+                partialIntensityStd  = partialIntensities.std(axis = 0),
+                partialQ =             self.result[0]['fitQ'].flatten(),
+                totalValue =           [val.mean(), val.std(ddof = 1)],
+                mean =                 [ mu.mean(),  mu.std(ddof = 1)],
+                variance =             [var.mean(), var.std(ddof = 1)],
+                skew =                 [skw.mean(), skw.std(ddof = 1)],
+                kurtosis =             [krt.mean(), krt.std(ddof = 1)]
+        )
+        self.result.update(rangeInfoResult)
+        return rangeInfoResult
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
