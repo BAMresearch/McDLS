@@ -191,6 +191,7 @@ class Sphere(ScatteringModel):
         return result
 
 class McSASParameters(PropertyNames):
+    model = None
     contribParamBounds = ()
     numContribs = 200
     maxIterations = 1e5
@@ -310,6 +311,8 @@ class McSAS(object):
         - *Q*: 1D or 2D array of q-values
         - *I*: corresponding intensity values of the same shape
         - *IError*: corresponding intensity uncertainties of the same shape
+        - *model*: The scattering model type to assume.
+                   It has to be a subclass of :py:class:`ScatteringModel`.
 
     **Optional input Parameters:**
 
@@ -375,25 +378,6 @@ class McSAS(object):
             take up much memory. The cost for this is perhaps a 20-ish percent
             reduction in speed.
 
-    **outdated:**
-
-        - *BOUNDS*: string
-            The McSAS function to use for calculating random number generator
-            bounds based on input (f.ex. q and I).
-            default: :py:func:`SphereBounds`
-        - *FF*: string
-            The McSAS function to use for calculating the form factors.
-            default: :py:func:`FF_sph_1D`
-        - *RAND*: string
-            the McSAS function to use for generating random numbers
-            default: :py:func:`random_uniform_sph`
-        - *SMEAR*: string
-            the McSAS function to use for smearing of intensity
-            default: :py:func:`_passthrough`
-        - *VOL*: string
-            the McSAS function to use for calculating the base object volume
-            default: :py:func:`vol_sph`
-
     **Returns:**
 
     A McSAS object with the following Results stored in the *result* member
@@ -445,7 +429,7 @@ class McSAS(object):
         *volumeHistogramYStd*: array
             Standard deviations of the corresponding volume-weighted size
             distribution bins, calculated from *numReps* repetitions of the
-            :py:meth:`McSAS.MCfit_sph` function.
+            model fitting function.
         *numberHistogramYStd*: array
             Standard deviation for the number-weigthed distribution.
         *volumeFraction*: size array (numContribs x numReps)
@@ -546,7 +530,11 @@ class McSAS(object):
                           McSASParameters.psiBounds,
                           McSASParameters.maskNegativeInt,
                           McSASParameters.maskZeroInt)
-        self.model = Sphere()
+        if (McSASParameters.model is None or
+            not issubclass(McSASParameters.model, ScatteringModel)):
+            logging.warning("No ScatteringModel provided, assuming spheres!")
+            McSASParameters.model = Sphere
+        self.model = McSASParameters.model() # create instance
         self.checkParameters()
 
         self.analyse()
@@ -804,41 +792,6 @@ class McSAS(object):
         self.SetParameter(ContributionParameterBounds = 
                 ContributionParameterBounds)
 
-    def SphereBounds(self):
-        """This function will take the q and input bounds and outputs properly
-        formatted two-element size bounds.
-        """
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        q = self.GetData('Q')
-        # reasonable, but not necessarily correct, Parameters
-        QBounds = array([pi/numpy.max(q),
-                         pi/numpy.min((abs(numpy.min(q)),
-                                       abs(numpy.min(diff(q)))))])
-        if len(ContributionParameterBounds) == 0:
-            print "ContributionParameterBounds not provided, so set related "\
-                    "to minimum q or minimum q step and maximum q. Lower and "\
-                    "upper bounds are {0} and {1}"\
-                    .format(QBounds[0], QBounds[1])
-            ContributionParameterBounds = QBounds
-        elif len(ContributionParameterBounds) == 1:
-            print "Only one bound provided, assuming it denotes the maximum."\
-                  " Lower and upper bounds are set to {0} and {1}"\
-                  .format(QBounds[0], ContributionParameterBounds[1])
-            ContributionParameterBounds = \
-                    numpy.array([QBounds[0], ContributionParameterBounds])
-        elif len(ContributionParameterBounds) == 2:
-            pass
-        else:
-            print "Wrong number of ContributionParameterBounds provided, "\
-                    "defaulting to {} and {}".format(QBounds[0], QBounds[1])
-            ContributionParameterBounds = qbounds
-        ContributionParameterBounds = numpy.array(
-                [numpy.min(ContributionParameterBounds), 
-                    numpy.max(ContributionParameterBounds)])
-        self.SetParameter(ContributionParameterBounds = 
-                ContributionParameterBounds)
-
     def random_uniform_ell(self, Nell = 1):
         """Random number generator for generating uniformly-sampled
         size- and orientation Parameters for ellipsoids.
@@ -968,29 +921,6 @@ class McSAS(object):
                     self.GetParameter('PowerCompensationFactor')
         return ((4.0/3*pi) * Rset[:, 0]**(2*PowerCompensationFactor) * 
                 Rset[:, 1]**(PowerCompensationFactor))[:, newaxis]
-
-    def vol_sph(self, Rset, PowerCompensationFactor = []):
-        """Calculates the volume of a sphere, taking PowerCompensationFactor 
-        from input or preset Parameters.
-        """
-        if PowerCompensationFactor == []:
-            PowerCompensationFactor = \
-                    self.GetParameter('PowerCompensationFactor')
-        return (4.0/3*pi) * Rset**(3*PowerCompensationFactor)
-
-    def FF_sph_1D(self, Rset):
-        """Calculate the Rayleigh function for a sphere.
-        """
-        q = self.GetData('Q')
-        if size(Rset, 0) > 1:
-            # multimensional matrices required, input Rsph has to be Nsph-by-1.
-            # q has to be 1-by-N
-            qR = (q + 0*Rset) * (Rset + 0*q)
-        else:
-            qR = (q) * (Rset)
-
-        Fsph = 3 * (sin(qR) - qR * cos(qR)) / (qR**3)
-        return Fsph
 
     def FF_ell_2D(self, Rset = [], Q = [], Psi = []):
         """Calculates the form factor for oriented ellipsoids,
@@ -1382,7 +1312,7 @@ class McSAS(object):
             *volumeHistogramYStd*: array
                 Standard deviations of the corresponding volume-weighted size
                 distribution bins, calculated from *numReps* repetitions of
-                the MCfit_sph() function
+                the model fitting function
             *numberHistogramYStd*: array
                 Standard deviation for the number-weigthed distribution
             *volumeFraction*: size (numContribs x numReps) array
