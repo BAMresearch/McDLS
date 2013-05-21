@@ -106,7 +106,7 @@ class PropertyNames(object):
     def propNames(cls):
         return [propName for propName, dummy in cls.properties()]
 
-class ParticleModel(AlgorithmBase, PropertyNames):
+class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
     compensationExponent = 0.5 # default
 
@@ -151,13 +151,13 @@ class Radius(ParameterFloat):
     suffix = 'nm'
     decimals = 1
 
-class Sphere(ParticleModel):
+class Sphere(ScatteringModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
     parameters = (Radius, )
 
     def updateParamBounds(self, bounds):
-        bounds = ParticleModel.updateParamBounds(self, bounds)
+        bounds = ScatteringModel.updateParamBounds(self, bounds)
         if len(bounds) < 1:
             return
         if len(bounds) == 1:
@@ -174,7 +174,7 @@ class Sphere(ParticleModel):
         """Calculates the volume of a sphere, taking compensationExponent
         from input or preset Parameters.
         """
-        assert ParticleModel.vol(self, paramValues)
+        assert ScatteringModel.vol(self, paramValues)
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         result = (pi*4./3.) * paramValues**(3. * compensationExponent)
@@ -183,7 +183,7 @@ class Sphere(ParticleModel):
     def ff(self, dataset, paramValues):
         """Calculate the Rayleigh function for a sphere.
         """
-        assert ParticleModel.ff(self, dataset, paramValues)
+        assert ScatteringModel.ff(self, dataset, paramValues)
         r = paramValues.flatten()
         q = dataset[:, 0]
         qr = numpy.outer(q, r)
@@ -535,7 +535,7 @@ class McSAS(object):
         .. automethod:: optimScalingAndBackground
         """
         # initialize
-        self.result = [] # does this belong into the model eventually?
+        self.result = [] # TODO
 
         # set data values
         self.setData(kwargs)
@@ -607,7 +607,7 @@ class McSAS(object):
         """
         for key in kwargs.keys():
             found = False
-            for cls in McSASParameters, ParticleModel:
+            for cls in McSASParameters, ScatteringModel:
                 if key in cls.propNames():
                     setattr(cls, key, kwargs.pop(key))
                     found = True
