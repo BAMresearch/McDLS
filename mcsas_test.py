@@ -5,6 +5,7 @@ from __future__ import print_function # python3 print()
 
 import os.path
 import pickle
+import logging
 import numpy
 
 from McSAS import McSAS
@@ -101,6 +102,7 @@ def test():
     # testing against data from file
     # test only items which are averaged over all repetitions
     # individual tolerances because of large deviations for few repetitions(4)
+    success = True
     for oldKey, key, tol in (   ("Hx", "histogramXLowerEdge", TOL),
                                 ("Hmid", "histogramXMean", TOL),
                                 ("Hwidth", "histogramXWidth", TOL),
@@ -113,9 +115,11 @@ def test():
                                 ("Qfit", "fitQ", TOL),
                                 ("Imean", "fitIntensityMean", 0.005),
                                 ("Istd", "fitIntensityStd", 0.25)):
-        print("testing {0:10} ".format(key), end="")
-        assert isEqualFloat(result[key], expected[oldKey], tol),\
-            "Test for {0} failed!".format(key)
+        logging.info("testing {0:10} ".format(key), end="")
+        if not isEqualFloat(result[key], expected[oldKey], tol):
+            success = False
+    if not success:
+        logging.error("Test for {0} failed!".format(key))
 
 if __name__ == "__main__":
     test()
