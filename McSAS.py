@@ -86,6 +86,7 @@ from dataset import DataSet
 from utils import isList
 from utils.algorithmbase import AlgorithmBase
 from utils.parameter import ParameterFloat
+from utils.numbergenerator import RandomUniform, RandomExponential
 
 class PropertyNames(object):
     _cache = None
@@ -130,24 +131,30 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     def ff(self, dataset, paramValues):
         return paramValues.shape[1] == len(self)
 
-    def randUniform(self, count = 1):
-        """Random number generator with uniform distribution for
-        the parameters of this model.
+    def generateParameters(self, count = 1):
+        """Generates a set of parameters for this model using the predefined
+        Parameter.generator. Allows for different random number distributions.
         """
-        generator = numpy.random.uniform
         lst = numpy.zeros((count, len(self)))
         for idx, param in self:
-            lst[:, idx] = generator(min(param.valueRange),
-                                    max(param.valueRange),
-                                    count)
+            # generate numbers in different range for each parameter
+            lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
 
 class Radius(ParameterFloat):
-    """Parameter for the radius of a scatterer."""
+    """Parameter for the radius of a scatterer.
+    The number generator can be overridden from anywhere like this::
+
+     from utils.numbergenerator import RandomExponential
+     from McSAS import Radius
+     Radius.generator = RandomExponential
+
+    """
     name = 'radius'
     defaultValue = 1.0
     valueRange = (0., numpy.inf)
+    generator = RandomUniform
     suffix = 'nm'
     decimals = 1
 
@@ -885,33 +892,6 @@ class McSAS(object):
         # output Nsph-by-3 array
         return Rset
 
-    def random_logR_sph(self, Nsph = 1):
-        """Random number generator with logarithmic probabilistic sampling."""
-        # get Parameters from self
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        # generate Nsph random numbers
-        Rset = 10**(numpy.random.uniform(
-            log10(numpy.min(ContributionParameterBounds)),
-            log10(numpy.max(ContributionParameterBounds)), Nsph))
-        Rset = reshape(Rset, (prod(shape(Rset)), 1))
-        # output Nsph-by-1 array
-        return Rset
-
-    def random_uniform_sph(self, Nsph = 1):
-        """Random number generator with uniform distribution for
-        the sphere form factor."""
-        # get Parameters from self
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        # generate Nsph random numbers
-        Rset = numpy.random.uniform(numpy.min(ContributionParameterBounds),
-                                    numpy.max(ContributionParameterBounds), 
-                                    Nsph)
-        Rset = reshape(Rset, (prod(shape(Rset)), 1))
-        # output Nsph-by-1 array
-        return Rset
-
     def vol_ell(self, Rset, PowerCompensationFactor = []):
         """Calculates the volume of an ellipsoid, taking 
         PowerCompensationFactor from input or preset Parameters.
@@ -1093,7 +1073,7 @@ class McSAS(object):
                         mb = pi / q.max()
                     rset[:, idx] = numpy.ones(numContribs) * mb * .5
             else:
-                rset = self.model.randUniform(numContribs)
+                rset = self.model.generateParameters(numContribs)
         elif prior.shape[0] != 0: #? and size(numContribs) == 0:
                                   # (didnt understand this part)
             numContribs = prior.shape[0]
@@ -1174,7 +1154,7 @@ class McSAS(object):
         ri = 0
         while (conval > McSASParameters.convergenceCriterion and
                numIter < McSASParameters.maxIterations):
-            rt = self.model.randUniform()
+            rt = self.model.generateParameters()
             ft = self.model.ff(data, rt)
             vtt = self.model.vol(rt)
             itt = (ft**2 * vtt**2).flatten()

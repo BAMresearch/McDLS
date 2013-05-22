@@ -3,8 +3,11 @@
 
 from math import log10 as math_log10
 from math import fabs as math_fabs
-from utils import isString, isNumber, isList, isMap
 from inspect import getmembers
+import logging
+import numpy
+from utils import isString, isNumber, isList, isMap
+from numbergenerator import NumberGenerator
 
 class ParameterError(StandardError):
     pass
@@ -28,6 +31,9 @@ class DecimalsError(ParameterError):
     pass
 
 class DisplayValuesError(ParameterError):
+    pass
+
+class ParameterGeneratorError(ParameterError):
     pass
 
 def testfor(condition, exception, errorMessage):
@@ -78,6 +84,7 @@ class ParameterNumerical(Parameter):
     suffix = None
     stepping = None
     displayValues = None # dict maps values to text being displayed instead
+    generator = None
     # instance variables, see Parameter
     _error = None
 
@@ -108,6 +115,10 @@ class ParameterNumerical(Parameter):
                 DisplayValuesError, "Display value keys have to be numbers!")
             testfor(all([isString(s) for s in self.displayValues.itervalues()]),
                 DisplayValuesError, "Display values have to be text!")
+        testfor(issubclass(self.generator, NumberGenerator),
+                ParameterGeneratorError, "NumberGenerator type expected!")
+        logging.info("Parameter {0} uses {1} distribution."
+                     .format(self.name, self.generator.__name__))
 
     def __str__(self):
         return (Parameter.__str__(self) + " in [{0}, {1}]{2}, {3} steps"
@@ -120,7 +131,7 @@ class ParameterNumerical(Parameter):
     @valueRange.setter
     def valueRange(self, newRange):
         self.assertRange(newRange)
-        self.valueRange = newRange
+        self.valueRange = min(newRange), max(newRange)
 
     @property
     def error(self):
@@ -136,6 +147,9 @@ class ParameterNumerical(Parameter):
             testfor(isinstance(newError, type(self.value)),
                     ParameterErrorError, msg)
         self._error = newError
+
+    def generate(self, lower = None, upper = None, count = 1):
+        raise NotImplementedError
 
 class ParameterFloat(ParameterNumerical):
     decimals = None
@@ -155,6 +169,30 @@ class ParameterFloat(ParameterNumerical):
     def __str__(self):
         return ParameterNumerical.__str__(self) + ", {0} decimals".format(
                                                             self.decimals)
+
+    def generate(self, lower = None, upper = None, count = 1):
+        """Returns a list of valid parameter values within given bounds.
+        Accepts a vectors of individual bounds for lower and upper limit.
+        This allows for inequality parameter constraints.
+        """
+        # works with vectors of multiple bounds too
+        vRange = self.valueRange
+        if lower is None:
+            lower = vRange[0]
+        if upper is None:
+            upper = vRange[1]
+        vRange = (numpy.maximum(vRange[0], lower),
+                  numpy.minimum(vRange[1], upper))
+        if isList(vRange[0]) and isList(vRange[1]):
+            assert len(vRange[0]) == len(vRange[1]), \
+                "Provided value range is unsymmetrical!"
+        try: # update count to length of provided bound vectors
+            count = max(count, min([len(x) for x in vRange]))
+        except:
+            pass
+        values = self.generator.get(count)
+        # scale numbers to requested range
+        return values * (vRange[1] - vRange[0]) + vRange[0]
 
 class ParameterLog(ParameterFloat):
     pass
