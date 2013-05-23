@@ -100,6 +100,11 @@ class Parameter(object):
     def displayName(self):
         return self._displayName
 
+    @classproperty
+    @classmethod
+    def dtype(cls):
+        return str
+
     def __str__(self):
         return "{0}: {1}".format(
                 self.displayName(), self.value())
@@ -208,6 +213,11 @@ class ParameterNumerical(Parameter):
     def generator(self):
         return self._generator
 
+    @classproperty
+    @classmethod
+    def dtype(cls):
+        return int
+
     def __str__(self):
         return (Parameter.__str__(self) + " in [{0}, {1}]{2}, {3} steps"
                 .format(*(self.valueRange() + (self.suffix(),
@@ -244,6 +254,11 @@ class ParameterFloat(ParameterNumerical):
     @mixedmethod
     def decimals(self):
         return self._decimals
+
+    @classproperty
+    @classmethod
+    def dtype(cls):
+        return float
 
     def __str__(self):
         return (ParameterNumerical.__str__(self) +
