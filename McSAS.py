@@ -85,7 +85,7 @@ logging.basicConfig(level = logging.INFO)
 from dataset import DataSet
 from utils import isList
 from utils.algorithmbase import AlgorithmBase
-from utils.parameter import ParameterFloat
+from utils.parameter import ParameterFloat, ParameterNumerical
 from utils.numbergenerator import RandomUniform, RandomExponential
 
 class PropertyNames(object):
@@ -484,6 +484,24 @@ class McSAS(AlgorithmBase):
     dataset = None # user provided data to work with
     model = None
     result = None
+    shortName = "McSAS"
+    parameters = (ParameterNumerical.make("numContribs", 200,
+                    displayName = "number of contributions",
+                    valueRange = (1, 1e6)),
+                  ParameterNumerical.make("numReps", 100,
+                    displayName = "number of repetitions",
+                    valueRange = (1, 1e6)),
+                  ParameterNumerical.make("maxIterations", 1e5,
+                    displayName = "maximum iterations",
+                    valueRange = (1, 1e100)),
+                  ParameterNumerical.make("histogramBins", 50,
+                    displayName = "number of histogram bins",
+                    valueRange = (1, 1e6)),
+                  ParameterFloat.make("convergenceCriterion", 1.0,
+                    displayName = "convergence criterion",
+                    valueRange = (0., numpy.inf)),
+    )
+
 
     def __init__(self, **kwargs):
         """
@@ -510,9 +528,11 @@ class McSAS(AlgorithmBase):
         .. document private Functions
         .. automethod:: optimScalingAndBackground
         """
+        AlgorithmBase.__init__(self)
         # initialize
         self.result = [] # TODO
 
+    def calc(self, **kwargs):
         # set data values
         self.setData(kwargs)
         # set supplied kwargs and passing on
@@ -524,9 +544,9 @@ class McSAS(AlgorithmBase):
                           McSASParameters.maskZeroInt)
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
-            logging.warning("No ScatteringModel provided, assuming spheres!")
             McSASParameters.model = Sphere() # create instance
-        self.model = McSASParameters.model
+        if self.model is None:
+            self.model = McSASParameters.model
         self.checkParameters()
         logging.info("Used model: {0}".format(str(self.model)))
 
@@ -590,7 +610,10 @@ class McSAS(AlgorithmBase):
             found = False
             for cls in McSASParameters, ScatteringModel:
                 if key in cls.propNames():
-                    setattr(cls, key, kwargs.pop(key))
+                    value = kwargs.pop(key)
+                    setattr(cls, key, value)
+                    if hasattr(self, key):
+                        getattr(self, key).setValue(value)
                     found = True
                     break
             if not found:
@@ -659,8 +682,7 @@ class McSAS(AlgorithmBase):
                 valueList.extend([valueList[0] for dummy in range(nMissing)])
             return valueList
 
-        McSASParameters.histogramBins = fixLength(
-                                            McSASParameters.histogramBins)
+        McSASParameters.histogramBins = fixLength(self.histogramBins.value())
         McSASParameters.histogramXScale = fixLength(
                                             McSASParameters.histogramXScale)
         self.model.updateParamBounds(McSASParameters.contribParamBounds)
@@ -966,8 +988,8 @@ class McSAS(AlgorithmBase):
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
-        numContribs = McSASParameters.numContribs
-        numReps = McSASParameters.numReps
+        numContribs = self.numContribs.value()
+        numReps = self.numReps.value()
         maxRetries = McSASParameters.maxRetries
         # find out how many values a shape is defined by:
         contributions = zeros((numContribs, len(self.model), numReps))
@@ -988,7 +1010,7 @@ class McSAS(AlgorithmBase):
             nt = 0
             # do that MC thing! 
             convergence = inf
-            while convergence > McSASParameters.convergenceCriterion:
+            while convergence > self.convergenceCriterion.value():
                 # retry in the case we were unlucky in reaching
                 # convergence within MaximumIterations.
                 nt += 1
@@ -1042,7 +1064,7 @@ class McSAS(AlgorithmBase):
             presentations.
         """
         data = self.dataset.prepared
-        numContribs = McSASParameters.numContribs
+        numContribs = self.numContribs.value()
         prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, len(self.model)))
         details = dict()
@@ -1138,8 +1160,8 @@ class McSAS(AlgorithmBase):
         numNotAccepted = 0
         numIter = 0
         ri = 0
-        while (conval > McSASParameters.convergenceCriterion and
-               numIter < McSASParameters.maxIterations):
+        while (conval > self.convergenceCriterion.value() and
+               numIter < self.maxIterations.value()):
             rt = self.model.generateParameters()
             ft = self.model.ff(data, rt)
             vtt = self.model.vol(rt)
@@ -1173,7 +1195,7 @@ class McSAS(AlgorithmBase):
                 print ("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval,
-                                 McSASParameters.convergenceCriterion)),
+                                 self.convergenceCriterion.value())),
                 numMoves += 1
                 if outputIterations:
                     # output each iteration, starting with number 0. 
@@ -1207,7 +1229,7 @@ class McSAS(AlgorithmBase):
             numIter += 1 # add one to the iteration number
 
         print # for progress print in the loop
-        if numIter >= McSASParameters.maxIterations:
+        if numIter >= self.maxIterations.value():
             logging.warning("Exited due to max. number of iterations ({0}) "
                             "reached".format(numIter))
         else:
