@@ -131,7 +131,7 @@ class ParameterNumerical(Parameter):
     @mixedmethod
     def setValue(selforcls, newValue):
         testfor(isNumber(newValue), DefaultValueError,
-                "A default value has to be numerical!")
+                "A value has to be numerical!")
         super(ParameterNumerical, selforcls).setValue(newValue)
 
     @mixedmethod
@@ -142,7 +142,10 @@ class ParameterNumerical(Parameter):
                 "A value range has to consist of two values!")
         testfor(all([isNumber(v) for v in newRange]), ValueRangeError,
                 "A value range has to consist of numbers only!")
-        selforcls._valueRange = minVal, maxVal = min(newRange), max(newRange)
+        minVal, maxVal = min(newRange), max(newRange)
+        minVal = max(minVal, -sys.float_info.max)
+        maxVal = min(maxVal,  sys.float_info.max)
+        selforcls._valueRange = minVal, maxVal
         if selforcls._value < minVal:
             selforcls._value = minVal
         if selforcls._value > maxVal:
@@ -184,8 +187,8 @@ class ParameterNumerical(Parameter):
         else:
             newGenerator = RandomUniform
         selforcls._generator = newGenerator
-        logging.info("Parameter {0} uses {1} distribution."
-                     .format(selforcls._name, newGenerator.__name__))
+#        logging.info("Parameter {0} uses {1} distribution."
+#                     .format(selforcls._name, newGenerator.__name__))
 
     @mixedmethod
     def valueRange(self, index = None):
