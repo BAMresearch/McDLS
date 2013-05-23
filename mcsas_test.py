@@ -25,7 +25,7 @@ def isEqualFloat(a, b, tol = TOL):
     diff = (abs(a-b) / (abs(a)+abs(b)) / 2.)
     equal = numpy.all(diff < tol)
 
-    print("max difference: {0} ({1})".format(numpy.max(diff), tol))
+    print("max difference: {0} ({1})".format(numpy.max(diff), tol), end = "")
     return equal
 
 def getTestData(filename):
@@ -115,9 +115,12 @@ def test():
                                 ("Qfit", "fitQ", TOL),
                                 ("Imean", "fitIntensityMean", 0.005),
                                 ("Istd", "fitIntensityStd", 0.25)):
-        logging.info("testing {0:10} ".format(key), end="")
+        print("testing {0:10} ".format(key), end = "")
         if not isEqualFloat(result[key], expected[oldKey], tol):
             success = False
+            print(" !")
+        else:
+            print()
     if not success:
         logging.error("Test for {0} failed!".format(key))
 
