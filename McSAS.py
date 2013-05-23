@@ -125,10 +125,13 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 
     @abstractmethod
     def vol(self, paramValues, compensationExponent = None):
+        """Calculates the volume of this model, taking compensationExponent
+        into account from input or preset parameters."""
         return paramValues.shape[1] == len(self)
 
     @abstractmethod
     def ff(self, dataset, paramValues):
+        """Calculates the Rayleigh function of this model."""
         return paramValues.shape[1] == len(self)
 
     def generateParameters(self, count = 1):
@@ -151,11 +154,11 @@ class Radius(ParameterFloat):
      Radius.generator = RandomExponential
 
     """
-    name = 'radius'
+    name = "radius"
     defaultValue = 1.0
     valueRange = (0., numpy.inf)
     generator = RandomUniform
-    suffix = 'nm'
+    suffix = "nm"
     decimals = 1
 
 class Sphere(ScatteringModel):
@@ -178,9 +181,6 @@ class Sphere(ScatteringModel):
         self.radius.valueRange = (min(bounds), max(bounds))
 
     def vol(self, paramValues, compensationExponent = None):
-        """Calculates the volume of a sphere, taking compensationExponent
-        from input or preset Parameters.
-        """
         assert ScatteringModel.vol(self, paramValues)
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
@@ -188,8 +188,6 @@ class Sphere(ScatteringModel):
         return result
 
     def ff(self, dataset, paramValues):
-        """Calculate the Rayleigh function for a sphere.
-        """
         assert ScatteringModel.ff(self, dataset, paramValues)
         r = paramValues.flatten()
         q = dataset[:, 0]
