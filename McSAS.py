@@ -145,26 +145,13 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         # output count-by-nParameters array
         return lst
 
-class Radius(ParameterFloat):
-    """Parameter for the radius of a scatterer.
-    The number generator can be overridden from anywhere like this::
-
-     from utils.numbergenerator import RandomExponential
-     from McSAS import Radius
-     Radius.generator = RandomExponential
-
-    """
-    name = "radius"
-    defaultValue = 1.0
-    valueRange = (0., numpy.inf)
-    generator = RandomUniform
-    suffix = "nm"
-    decimals = 1
-
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
-    parameters = (Radius, )
+    parameters = (ParameterFloat.make("radius", 1.0,
+                    valueRange = (0., numpy.inf),
+                    generator = RandomUniform,
+                    suffix = "nm", decimals = 1), )
 
     def updateParamBounds(self, bounds):
         bounds = ScatteringModel.updateParamBounds(self, bounds)
@@ -173,12 +160,12 @@ class Sphere(ScatteringModel):
         if len(bounds) == 1:
             logging.warning("Only one bound provided, "
                             "assuming it denotes the maximum.")
-            bounds.insert(0, self.radius.valueRange[0])
+            bounds.insert(0, self.radius.valueRange(0))
         elif len(bounds) > 2:
             bounds = bounds[0:2]
         logging.info("Updating lower and upper contribution parameter bounds "
                      "to: ({0}, {1}).".format(bounds[0], bounds[1]))
-        self.radius.valueRange = (min(bounds), max(bounds))
+        self.radius.setValueRange((min(bounds), max(bounds)))
 
     def vol(self, paramValues, compensationExponent = None):
         assert ScatteringModel.vol(self, paramValues)
@@ -307,7 +294,7 @@ class SASData(DataSet):
     def sizeBounds(self):
         return self._sizeBounds
 
-class McSAS(object):
+class McSAS(AlgorithmBase):
     r"""
     Main class containing all functions required to do Monte Carlo fitting.
 
@@ -316,8 +303,8 @@ class McSAS(object):
         - *Q*: 1D or 2D array of q-values
         - *I*: corresponding intensity values of the same shape
         - *IError*: corresponding intensity uncertainties of the same shape
-        - *model*: The scattering model type to assume.
-                   It has to be a subclass of :py:class:`ScatteringModel`.
+        - *model*: The scattering model object to assume.
+                   It has to be an instance of :py:class:`ScatteringModel`.
 
     **Optional input Parameters:**
 
@@ -536,11 +523,12 @@ class McSAS(object):
                           McSASParameters.maskNegativeInt,
                           McSASParameters.maskZeroInt)
         if (McSASParameters.model is None or
-            not issubclass(McSASParameters.model, ScatteringModel)):
+            not isinstance(McSASParameters.model, ScatteringModel)):
             logging.warning("No ScatteringModel provided, assuming spheres!")
-            McSASParameters.model = Sphere
-        self.model = McSASParameters.model() # create instance
+            McSASParameters.model = Sphere() # create instance
+        self.model = McSASParameters.model
         self.checkParameters()
+        logging.info("Used model: {0}".format(str(self.model)))
 
         self.analyse()
         self.histogram()
@@ -1066,7 +1054,7 @@ class McSAS(object):
         if size(prior) == 0:
             if McSASParameters.startFromMinimum:
                 for idx, param in self.model:
-                    mb = min(param.valueRange)
+                    mb = min(param.valueRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
                         mb = pi / q.max()
                     rset[:, idx] = numpy.ones(numContribs) * mb * .5
@@ -1442,13 +1430,13 @@ class McSAS(object):
                 # histogramXLowerEdge contains #histogramBins+1 bin edges,
                 # or class limits.
                 histogramXLowerEdge = numpy.linspace(
-                        min(param.valueRange),
-                        max(param.valueRange),
+                        min(param.valueRange()),
+                        max(param.valueRange()),
                         McSASParameters.histogramBins[paramIndex] + 1)
             else:
                 histogramXLowerEdge = 10**numpy.linspace(
-                        log10(min(param.valueRange)),
-                        log10(max(param.valueRange)),
+                        log10(min(param.valueRange())),
+                        log10(max(param.valueRange())),
                         McSASParameters.histogramBins[paramIndex] + 1)
 
             def initHist(reps = 0):

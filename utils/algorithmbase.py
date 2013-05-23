@@ -37,7 +37,7 @@ class AlgorithmBase(object):
     def copy(self):
         f = self.makeDefault()
         for p in self.parameters:
-            setattr(f, p.name, getattr(self, p.name))
+            setattr(f, p.name(), getattr(self, p.name()))
         return f
 
     def __init__(self):
@@ -59,19 +59,19 @@ class AlgorithmBase(object):
                     .format(type(p)))
         # init parameter instances
         for p in self.parameters:
-            testfor(not hasattr(self, p.name), AlgorithmParameterError,
-                    "Parameter '{0}' already set!".format(p.name))
-            setattr(self, p.name, p())
+            testfor(not hasattr(self, p.name()), AlgorithmParameterError,
+                    "Parameter '{0}' already set!".format(p.name()))
+            setattr(self, p.name(), p())
 
     def __str__(self):
         text = [ self.name ]
         for p in self.parameters:
-            text.append("  " + str(getattr(self, p.name)))
+            text.append("  " + str(getattr(self, p.name())))
         return "\n".join(text)
 
     def __iter__(self):
         """Iterator over all Parameter instances."""
         for i, p in zip(range(len(self)), self.parameters):
-            yield i, getattr(self, p.name)
+            yield i, getattr(self, p.name())
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

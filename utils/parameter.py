@@ -6,8 +6,11 @@ from math import fabs as math_fabs
 from inspect import getmembers
 import logging
 import numpy
+import sys
 from utils import isString, isNumber, isList, isMap
-from numbergenerator import NumberGenerator
+from utils.mixedmethod import mixedmethod
+from utils.classproperty import classproperty
+from numbergenerator import NumberGenerator, RandomUniform
 
 class ParameterError(StandardError):
     pass
@@ -37,146 +40,222 @@ class ParameterGeneratorError(ParameterError):
     pass
 
 def testfor(condition, exception, errorMessage):
-    if not __debug__:
-        return
-    if not condition:
+    if __debug__ and not condition:
         raise exception(errorMessage)
+
+# we have to differentiate class variables and instance variables
+# class variables: names, suffix, stepping, datatype
+# -> valueRange? general definition range in type
+# -> user provided subrange for actual calculations in instance
+# only the instance has values and ranges
+# -> everything which differs for other scattering contributions
 
 class Parameter(object):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
-    # class variables, all objects of the same type shared these values
-    name = None
-    displayName = None
-    defaultValue = None
-    # instance variables, every object has its own value
+
+    _name = None
+    _displayName = None
     _value = None
 
-    def __init__(self, value = None):
-        # Checking attributes which have to be set in a class of this type.
-        testfor(self.defaultValue is not None,
+    @staticmethod
+    def setup(cls, name, value, displayName = None):
+        def assertName(newName):
+            testfor(isString(newName) and len(newName) > 0,
+                    ParameterNameError, "A name is mandatory!")
+            testfor(newName.find(" ") < 0,
+                    ParameterNameError, "A name must not contain white space!")
+        assertName(name)
+        newParam = type(name.title()+"Parameter", (cls,), dict())
+        newParam._name = name
+        newParam.setValue(value)
+        newParam.setDisplayName(displayName)
+        return newParam
+
+    @classmethod
+    def make(cls, *args, **kwargs):
+        return cls.setup(cls, *args, **kwargs)
+
+    @mixedmethod
+    def setValue(selforcls, newValue):
+        testfor(newValue is not None,
                 DefaultValueError, "Default value is mandatory!")
-        testfor(isString(self.name) and len(self.name) > 0,
-                ParameterNameError, "A name is mandatory!")
-        testfor(self.name.find(" ") < 0,
-                ParameterNameError, "A name must not contain white space!")
-        if (not isString(self.displayName) or len(self.displayName) <= 0):
-            self.displayName = self.name
-        self.value = self.defaultValue
-        if isNumber(value):
-            self.value = value
+        selforcls._value = newValue
 
-    def __str__(self):
-        return "{0} ({1}): {2}".format(
-                self.name, self.displayName, self.defaultValue)
+    @mixedmethod
+    def setDisplayName(selforcls, newName):
+        if (not isString(newName) or len(newName) <= 0):
+            newName = selforcls.name()
+        selforcls._displayName = newName
 
-    @property
+    @mixedmethod
+    def name(self):
+        return self._name
+
+    @mixedmethod
     def value(self):
         return self._value
 
-    @value.setter
-    def value(self, newValue):
-        self._value = newValue
+    @mixedmethod
+    def displayName(self):
+        return self._displayName
+
+    def __str__(self):
+        return "{0}: {1}".format(
+                self.displayName(), self.value())
 
 class ParameterNumerical(Parameter):
-    # class variables, see Parameter
-    valueRange = None
-    suffix = None
-    stepping = None
-    displayValues = None # dict maps values to text being displayed instead
-    generator = None
-    # instance variables, see Parameter
-    _error = None
+    _valueRange = None
+    _suffix = None
+    _stepping = None
+    _displayValues = None # dict maps values to text being displayed instead
+    _generator = None
 
     @staticmethod
-    def assertRange(newRange):
+    def setup(cls, name, value, displayName = None, valueRange = None,
+             suffix = None, stepping = None, displayValues = None,
+             generator = None):
+        newParam = Parameter.setup(cls, name, value, displayName)
+        newParam.setValueRange(valueRange)
+        newParam.setSuffix(suffix)
+        newParam.setStepping(stepping)
+        newParam.setDisplayValues(displayValues)
+        newParam.setGenerator(generator)
+        return newParam
+
+    @mixedmethod
+    def setValue(selforcls, newValue):
+        testfor(isNumber(newValue), DefaultValueError,
+                "A default value has to be numerical!")
+        super(ParameterNumerical, selforcls).setValue(newValue)
+
+    @mixedmethod
+    def setValueRange(selforcls, newRange):
         testfor(isList(newRange), ValueRangeError,
                 "A value range is mandatory for a numerical parameter!")
         testfor(len(newRange) == 2, ValueRangeError,
                 "A value range has to consist of two values!")
         testfor(all([isNumber(v) for v in newRange]), ValueRangeError,
                 "A value range has to consist of numbers only!")
+        selforcls._valueRange = minVal, maxVal = min(newRange), max(newRange)
+        if selforcls._value < minVal:
+            selforcls._value = minVal
+        if selforcls._value > maxVal:
+            selforcls._value = maxVal
 
-    def __init__(self, *args, **kwargs):
-        Parameter.__init__(self, *args, **kwargs)
-        testfor(isNumber(self.defaultValue), DefaultValueError,
-                "A default value has to be numerical!")
-        self.assertRange(self.valueRange)
-        if self.suffix is not None:
-            testfor(isString(self.suffix) and len(self.suffix) > 0,
-                    SuffixError, "Parameter suffix has to be some text!")
-        if self.stepping is not None:
-            testfor(isNumber(self.stepping),
-                    SteppingError, "Parameter has to be a number!")
-        if self.displayValues is not None:
-            testfor(isMap(self.displayValues), DisplayValuesError,
-                    "Expected a display value mapping of numbers to text!")
-            testfor(all([isNumber(v) for v in self.displayValues.iterkeys()]),
-                DisplayValuesError, "Display value keys have to be numbers!")
-            testfor(all([isString(s) for s in self.displayValues.itervalues()]),
-                DisplayValuesError, "Display values have to be text!")
-        testfor(issubclass(self.generator, NumberGenerator),
-                ParameterGeneratorError, "NumberGenerator type expected!")
+    @mixedmethod
+    def setSuffix(selforcls, newSuffix):
+        if newSuffix is None:
+            return
+        testfor(isString(newSuffix) and len(newSuffix) > 0,
+                SuffixError, "Parameter suffix has to be some text!")
+        selforcls._suffix = newSuffix
+
+    @mixedmethod
+    def setStepping(selforcls, newStepping):
+        if newStepping is None:
+            return
+        testfor(isNumber(newStepping),
+                SteppingError, "Parameter has to be a number!")
+        selforcls._stepping = newStepping
+
+    @mixedmethod
+    def setDisplayValues(selforcls, newDisplayValues):
+        if newDisplayValues is None:
+            return
+        testfor(isMap(newDisplayValues), DisplayValuesError,
+                "Expected a display value mapping of numbers to text!")
+        testfor(all([isNumber(v) for v in newDisplayValues.iterkeys()]),
+            DisplayValuesError, "Display value keys have to be numbers!")
+        testfor(all([isString(s) for s in newDisplayValues.itervalues()]),
+            DisplayValuesError, "Display values have to be text!")
+        selforcls._displayValues = newDisplayValues
+
+    @mixedmethod
+    def setGenerator(selforcls, newGenerator):
+        if isinstance(newGenerator, type):
+            testfor(issubclass(newGenerator, NumberGenerator),
+                    ParameterGeneratorError, "NumberGenerator type expected!")
+        else:
+            newGenerator = RandomUniform
+        selforcls._generator = newGenerator
         logging.info("Parameter {0} uses {1} distribution."
-                     .format(self.name, self.generator.__name__))
+                     .format(selforcls._name, newGenerator.__name__))
+
+    @mixedmethod
+    def valueRange(self, index = None):
+        if not isNumber(index) or index not in range(len(self._valueRange)):
+            return self._valueRange
+        else:
+            return self._valueRange[index]
+
+    @mixedmethod
+    def suffix(self):
+        return self._suffix
+
+    @mixedmethod
+    def stepping(self):
+        return self._stepping
+
+    @mixedmethod
+    def displayValues(self, key = None):
+        if key is None:
+            return self._displayValues
+        else:
+            return self._displayValues.get(key, None)
+
+    @mixedmethod
+    def generator(self):
+        return self._generator
 
     def __str__(self):
         return (Parameter.__str__(self) + " in [{0}, {1}]{2}, {3} steps"
-                .format(*(self.valueRange + (self.suffix, self.stepping))))
-
-    @property
-    def valueRange(self):
-        return self.valueRange
-
-    @valueRange.setter
-    def valueRange(self, newRange):
-        self.assertRange(newRange)
-        self.valueRange = min(newRange), max(newRange)
-
-    @property
-    def error(self):
-        return self._error
-
-    @error.setter
-    def error(self, newError):
-        msg = "A value error has to be of the same data type than the value!"
-        if isList(newError):
-            testfor(all([isinstance(e, type(self.value))
-                        for e in newError]), ParameterErrorError, msg)
-        else:
-            testfor(isinstance(newError, type(self.value)),
-                    ParameterErrorError, msg)
-        self._error = newError
+                .format(*(self.valueRange() + (self.suffix(),
+                                               self.stepping()))))
 
     def generate(self, lower = None, upper = None, count = 1):
         raise NotImplementedError
 
 class ParameterFloat(ParameterNumerical):
-    decimals = None
+    _decimals = None
 
-    def __init__(self, *args, **kwargs):
-        ParameterNumerical.__init__(self, *args, **kwargs)
-        if self.decimals is not None:
-            testfor(isNumber(self.decimals) and self.decimals > 0,
+    @staticmethod
+    def setup(cls, name, value, displayName = None, valueRange = None,
+             suffix = None, stepping = None, displayValues = None,
+             generator = None, decimals = None):
+        newParam = ParameterNumerical.setup(cls, name, value, displayName,
+                    valueRange, suffix, stepping, displayValues, generator)
+        newParam = type(newParam._name, (newParam,), dict())
+        newParam.setDecimals(decimals)
+        return newParam
+
+    @mixedmethod
+    def setDecimals(selforcls, newDecimals):
+        if newDecimals is not None:
+            testfor(isNumber(newDecimals) and newDecimals > 0,
                     DecimalsError, "Parameter decimals has to be a number!")
-            self.decimals = int(self.decimals)
         else:
-            start, end = self.valueRange
-            self.decimals = int(round(math_log10(math_fabs(end - start))))
-        if self.decimals <= 0:
-            self.decimals = 1
+            start, end = selforcls._valueRange
+            newDecimals = round(math_log10(math_fabs(end - start)))
+        newDecimals = max(newDecimals, 1)
+        newDecimals = min(newDecimals, sys.float_info.max_10_exp)
+        selforcls._decimals = int(newDecimals)
+
+    @mixedmethod
+    def decimals(self):
+        return self._decimals
 
     def __str__(self):
-        return ParameterNumerical.__str__(self) + ", {0} decimals".format(
-                                                            self.decimals)
+        return (ParameterNumerical.__str__(self) +
+                ", {0} decimals".format(self.decimals()))
 
     def generate(self, lower = None, upper = None, count = 1):
         """Returns a list of valid parameter values within given bounds.
-        Accepts a vectors of individual bounds for lower and upper limit.
+        Accepts vectors of individual bounds for lower and upper limit.
         This allows for inequality parameter constraints.
         """
         # works with vectors of multiple bounds too
-        vRange = self.valueRange
+        vRange = self.valueRange()
         if lower is None:
             lower = vRange[0]
         if upper is None:
@@ -190,7 +269,7 @@ class ParameterFloat(ParameterNumerical):
             count = max(count, min([len(x) for x in vRange]))
         except:
             pass
-        values = self.generator.get(count)
+        values = self.generator().get(count)
         # scale numbers to requested range
         return values * (vRange[1] - vRange[0]) + vRange[0]
 
