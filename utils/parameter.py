@@ -57,6 +57,7 @@ class Parameter(object):
     _name = None
     _displayName = None
     _value = None
+    isActive = False
 
     @staticmethod
     def setup(cls, name, value, displayName = None):
@@ -143,8 +144,10 @@ class ParameterNumerical(Parameter):
         testfor(all([isNumber(v) for v in newRange]), ValueRangeError,
                 "A value range has to consist of numbers only!")
         minVal, maxVal = min(newRange), max(newRange)
-        minVal = max(minVal, -sys.float_info.max)
-        maxVal = min(maxVal,  sys.float_info.max)
+        #minVal = max(minVal, -sys.float_info.max)
+        #maxVal = min(maxVal,  sys.float_info.max)
+        minVal = max(minVal, -1e200)
+        maxVal = min(maxVal,  1e200)
         selforcls._valueRange = minVal, maxVal
         if selforcls._value < minVal:
             selforcls._value = minVal
@@ -191,11 +194,16 @@ class ParameterNumerical(Parameter):
 #                     .format(selforcls._name, newGenerator.__name__))
 
     @mixedmethod
-    def valueRange(self, index = None):
-        if not isNumber(index) or index not in range(len(self._valueRange)):
-            return self._valueRange
-        else:
-            return self._valueRange[index]
+    def valueRange(self):
+        return self._valueRange
+
+    @mixedmethod
+    def min(self):
+        return self._valueRange[0]
+
+    @mixedmethod
+    def max(self):
+        return self._valueRange[1]
 
     @mixedmethod
     def suffix(self):
