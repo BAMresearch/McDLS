@@ -3,6 +3,7 @@
 
 from classproperty import classproperty
 from utils import isString, isList
+from utils.mixedmethod import mixedmethod
 from parameter import Parameter, ParameterError, testfor
 
 class AlgorithmError(StandardError):
@@ -28,10 +29,23 @@ class AlgorithmBase(object):
     def makeDefault(cls):
         return cls()
 
-    @classmethod
-    def __len__(cls):
-        if isList(cls.parameters):
-            return len(cls.parameters)
+    def __iter__(self):
+        """Iterator over all Parameter instances."""
+        params = [getattr(self, p.name(), None) for p in self.parameters]
+        for i, p in zip(range(len(self)), [p for p in params if p.isActive]):
+            yield i, getattr(self, p.name())
+
+    @mixedmethod
+    def __len__(self):
+        if isList(self.parameters):
+            params = []
+            for p in self.parameters:
+                pi = getattr(self, p.name(), None)
+                if pi is not None:
+                    params.append(pi)
+            if len(params):
+                return len([p for p in params if p.isActive])
+            return len(self.parameters)
         return 0
 
     def copy(self):
@@ -68,10 +82,5 @@ class AlgorithmBase(object):
         for p in self.parameters:
             text.append("  " + str(getattr(self, p.name())))
         return "\n".join(text)
-
-    def __iter__(self):
-        """Iterator over all Parameter instances."""
-        for i, p in zip(range(len(self)), self.parameters):
-            yield i, getattr(self, p.name())
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
