@@ -158,6 +158,10 @@ class Sphere(ScatteringModel):
                     suffix = "nm", decimals = 1), )
     parameters[0].isActive = True
 
+    def __init__(self):
+        ScatteringModel.__init__(self)
+        self.radius.setValueRange((1.0, 1e4))
+
     def updateParamBounds(self, bounds):
         bounds = ScatteringModel.updateParamBounds(self, bounds)
         if len(bounds) < 1:
