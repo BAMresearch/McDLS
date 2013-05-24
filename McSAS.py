@@ -127,11 +127,15 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     def vol(self, paramValues, compensationExponent = None):
         """Calculates the volume of this model, taking compensationExponent
         into account from input or preset parameters."""
+        if len(self) == 0 and paramValues is None:
+            return True
         return paramValues.shape[1] == len(self)
 
     @abstractmethod
     def ff(self, dataset, paramValues):
         """Calculates the Rayleigh function of this model."""
+        if len(self) == 0 and paramValues is None:
+            return True
         return paramValues.shape[1] == len(self)
 
     def generateParameters(self, count = 1):
