@@ -1692,19 +1692,20 @@ class McSAS(AlgorithmBase):
         import matplotlib.font_manager as fm
         from matplotlib.pyplot import figure, xticks, yticks, errorbar
         from matplotlib.pyplot import bar, plot, grid, legend, title, xlim
+        fontFamilyArial = "Arial", "Bitstream Vera Sans", "sans-serif"
+        fontFamilyTimes = "Times", "DejaVu Serif", "serif"
         def setAxis(ah):
             """Sets the axes Parameters. axtyp can be one of 'q' or 'R'"""
-            import matplotlib.font_manager as fm
             plotfont = fm.FontProperties(
                         # this only works for macs, doesn't it?
                         # family = 'Courier New Bold',
                         # fname = '/Library/Fonts/Courier New Bold.ttf')
-                        family = 'Arial')
+                        family = fontFamilyArial)
             textfont = fm.FontProperties(
                         # Baskerville.ttc does not work when saving to eps
                         # family = 'Times New Roman',
                         # fname = '/Library/Fonts/Times New Roman.ttf')
-                        family = 'Times')
+                        family = fontFamilyTimes)
             # setAxis font and ticks
             ah.set_yticklabels(ah.get_yticks(), fontproperties = plotfont,
                                size = 'large')
@@ -1752,11 +1753,11 @@ class McSAS(AlgorithmBase):
         # set plot font
         plotfont = fm.FontProperties(
                     size = 'large',
-                    family = 'Arial')
+                    family = fontFamilyArial)
         textfont = fm.FontProperties(
                     # Baskerville.ttc does not work when saving to eps
                     size = 'large',
-                    family = 'Times')
+                    family = fontFamilyTimes)
         # initialize figure and axes
         fig = figure(figsize = (7*(nhists+1), 7), dpi = 80,
                      facecolor = 'w', edgecolor = 'k')
