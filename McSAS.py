@@ -156,6 +156,7 @@ class Sphere(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1), )
+    parameters[0].isActive = True
 
     def updateParamBounds(self, bounds):
         bounds = ScatteringModel.updateParamBounds(self, bounds)
@@ -551,9 +552,15 @@ class McSAS(AlgorithmBase):
             McSASParameters.model = Sphere() # create instance
         if self.model is None:
             self.model = McSASParameters.model
+        logging.info("Using model: {0}".format(str(self.model.name)))
+        if not len(self.model):
+            logging.warning("No parameters to analyse given! Breaking up.")
+            return
+        logging.info(
+                "\n".join(["Analysing parameters: "]+
+                    [str(p) for i, p in self.model])
+        )
         self.checkParameters()
-        logging.info("Used model: {0}".format(str(self.model)))
-
         self.analyse()
         self.histogram()
 
@@ -1886,7 +1893,6 @@ class McSAS(AlgorithmBase):
 
             sizeAxis[histi] = setAxis(sizeAxis[histi])
             # fill axes
-            print "TEST", volHistYMean.min(), volHistYMean.max(), volHistYMean.mean()
             bar(histXLowerEdge[0:-1], volHistYMean, 
                     width = histXWidth, color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
