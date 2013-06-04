@@ -85,7 +85,7 @@ logging.basicConfig(level = logging.INFO)
 from dataset import DataSet
 from utils import isList
 from utils.algorithmbase import AlgorithmBase
-from utils.parameter import ParameterFloat, ParameterNumerical
+from utils.parameter import ParameterFloat, ParameterNumerical, Parameter
 from utils.numbergenerator import RandomUniform, RandomExponential
 
 class PropertyNames(object):
@@ -627,8 +627,9 @@ class McSAS(AlgorithmBase):
                 if key in cls.propNames():
                     value = kwargs.pop(key)
                     setattr(cls, key, value)
-                    if hasattr(self, key):
-                        getattr(self, key).setValue(value)
+                    param = getattr(self, key, None)
+                    if isinstance(param, Parameter):
+                        param.setValue(value)
                     found = True
                     break
             if not found:
