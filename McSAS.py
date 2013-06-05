@@ -160,7 +160,8 @@ class Sphere(ScatteringModel):
 
     def __init__(self):
         ScatteringModel.__init__(self)
-        self.radius.setValueRange((1.0, 1e4))
+        self.radius.setValueRange((1.0, 1e4)) #this only works for people
+        #defining lengths in angstrom or nm, not m.
 
     def updateParamBounds(self, bounds):
         bounds = ScatteringModel.updateParamBounds(self, bounds)
@@ -173,7 +174,9 @@ class Sphere(ScatteringModel):
         elif len(bounds) > 2:
             bounds = bounds[0:2]
         logging.info("Updating lower and upper contribution parameter bounds "
-                     "to: ({0}, {1}).".format(bounds[0], bounds[1]))
+                     "to: ({0}, {1}).".format(min(bounds), max(bounds))) 
+        #logging.info changed from bounds[0] and bounds[1] to reflect better 
+        #what is done below:
         self.radius.setValueRange((min(bounds), max(bounds)))
 
     def vol(self, paramValues, compensationExponent = None):
@@ -600,9 +603,16 @@ class McSAS(AlgorithmBase):
             # ValueError instead? Is it mandatory to have IError?
             logging.warning("No intensity uncertainties provided!")
             # TODO: generate some
+            #B: nope. It is up to the user to supply error estimates. these
+            #B: are essential to good data practices.
+            #B: i.e. Make it easy, but not so easy it encourages "abuse".
         # data[3]: PSI is optional, only for 2D required
         # TODO: is psi mandatory in 2D? Should ierror be mandatory?
+        #B:Either PSI and Q or QX and QY are required. Useful to calculate the 
+        #B:missing matrices and allow use of both QX and QY or Q and PSI.
         # can psi be present without ierror?
+        #B:yes. but without an error estimate on the intensity, results are
+        #B:ambiguous
 
         # make single array: one row per intensity and its associated values
         # selection of intensity is shorter this way: dataset[validIndices]

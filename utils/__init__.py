@@ -33,8 +33,18 @@ def isSet(obj):
     return isinstance(obj, collections.Set)
 
 def isNumber(obj):
-    return (isinstance(obj, int) or isinstance(obj, float) or
-            isinstance(obj, long) or isinstance(obj, complex))
+    #current implementation does not account for all possibilities.
+    #trying to use numbers.Number and isinstance does not accept things i
+    #like float32
+    #the faster way to do this is "Duck typing", according to SO:
+    try:
+        float(obj)
+    except ValueError:
+        try:
+            complex(obj)
+        except ValueError:
+            return False
+    return True
 
 def isInteger(obj):
     return (isinstance(obj, int) or isinstance(obj, long))
