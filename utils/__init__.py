@@ -54,6 +54,9 @@ def isInteger(obj):
 def isLinux():
     return platform.system().lower() in "linux"
 
+def isMac():
+    return platform.system().lower() in "darwin"
+
 def isWindows():
     return platform.system().lower() in "windows"
 
@@ -141,5 +144,6 @@ def writecsv(fn, arr):
     for line in tuple(arr):
         writer.writerow(line)
     print "writing done"
+    #No closing of the file?
 
 # vim: set ts=4 sw=4 sts=4 tw=0:

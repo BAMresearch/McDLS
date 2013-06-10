@@ -11,15 +11,14 @@
 import pickle
 
 def pickleLoad(filename):
-    """*\*args* can be 1-4, indicates number of output variables.
-    If it is even possible to extract more from pickle."""
+    """Loads data from a pickle file"""
     fh = open(filename)
     output = pickle.load(fh)
     fh.close()
     return output
 
 def pickleStore(filename, somedata):
-    """Writes DBlock to a file."""
+    """Writes python object to a file."""
     fh = open(filename, 'w')
     pickle.dump(somedata, fh)
     fh.close()
