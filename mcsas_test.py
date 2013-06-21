@@ -83,7 +83,8 @@ def test():
     settings, expected = getSettings(FN_TEST_DATA, FN_EXPECTED_DATA)
 
     # run the monte carlo routine
-    mcsas = McSAS(**settings)
+    mcsas = McSAS()
+    mcsas.calc(**settings)
     result = mcsas.result[0]
 
     if False:
