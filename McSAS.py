@@ -1720,8 +1720,8 @@ class McSAS(AlgorithmBase):
         import matplotlib.font_manager as fm
         from matplotlib.pyplot import figure, xticks, yticks, errorbar
         from matplotlib.pyplot import bar, plot, grid, legend, title, xlim
-        fontFamilyArial = "Arial", "Bitstream Vera Sans", "sans-serif"
-        fontFamilyTimes = "Times", "DejaVu Serif", "serif"
+        fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
+        fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
         def setAxis(ah):
             """Sets the axes Parameters. axtyp can be one of 'q' or 'R'"""
             plotfont = fm.FontProperties(
