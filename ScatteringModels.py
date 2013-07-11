@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 # Find the reST syntax at http://sphinx-doc.org/rest.html
+
+# A good idea, it would be even better to have one file per model in a
+# directory 'models'. The file name case convention is lower case often,
+# keeping traditional python naming in mind and Windows/Unix case sensitivity
+
 """
 This module contains definitions of scattering models for use with McSAS
 """
