@@ -393,19 +393,19 @@ class McSAS(AlgorithmBase):
     model = None
     result = None
     shortName = "McSAS"
-    parameters = (ParameterNumerical.make("numContribs", 200,
+    parameters = (Parameter("numContribs", 200,
                     displayName = "number of contributions",
                     valueRange = (1, 1e6)),
-                  ParameterNumerical.make("numReps", 100,
+                  Parameter("numReps", 100,
                     displayName = "number of repetitions",
                     valueRange = (1, 1e6)),
-                  ParameterNumerical.make("maxIterations", 1e5,
+                  Parameter("maxIterations", 1e5,
                     displayName = "maximum iterations",
                     valueRange = (1, 1e100)),
-                  ParameterNumerical.make("histogramBins", 50,
+                  Parameter("histogramBins", 50,
                     displayName = "number of histogram bins",
                     valueRange = (1, 1e6)),
-                  ParameterFloat.make("convergenceCriterion", 1.0,
+                  Parameter("convergenceCriterion", 1.0,
                     displayName = "convergence criterion",
                     valueRange = (0., numpy.inf)),
     )
@@ -536,7 +536,7 @@ class McSAS(AlgorithmBase):
                     value = kwargs.pop(key)
                     setattr(cls, key, value)
                     param = getattr(self, key, None)
-                    if isinstance(param, Parameter):
+                    if isinstance(param, ParameterBase):
                         param.setValue(value)
                     found = True
                     break
