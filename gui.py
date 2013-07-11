@@ -17,7 +17,7 @@ def getScriptPath():
 scriptPath, scriptFilename = getScriptPath()
 programDir = scriptPath
 if not isFrozen():
-    programDir = os.path.abspath(os.path.join(scriptPath, ".."))
+    programDir = os.path.abspath(os.path.join(scriptPath))
     sys.path.append(programDir)
 
 import getopt

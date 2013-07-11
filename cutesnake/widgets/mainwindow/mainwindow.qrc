@@ -1,0 +1,7 @@
+<RCC>
+  <qresource prefix="mainwindow">
+    <file alias="sep">res/separator.png</file>
+    <file alias="hsep">res/hseparator.png</file>
+    <file alias="vsep">res/vseparator.png</file>
+  </qresource>
+</RCC>

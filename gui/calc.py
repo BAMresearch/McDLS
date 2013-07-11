@@ -2,28 +2,24 @@
 # calc.py
 
 import logging
+import time
 import os.path
+import numpy
+import numpy as np
 from cutesnake.dataset import DataSet, ResultMixin
 from cutesnake.utils import isList
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.utilsgui.displayexception import DisplayException
-from cutesnake.log import Log
-
-import mcsas
-from mcsas.McSAS import ScatteringModel
-
-import numpy as np
-
-import time
 from cutesnake.utilsgui import processEventLoop
-
-import numpy
+from cutesnake.log import Log
+from models.scatteringmodel import ScatteringModel
+from McSAS import McSAS
 
 class SASData(DataSet, ResultMixin):
     logWidget = None
     settings = None
-    mcsas = mcsas.McSAS.factory()()
+    mcsas = McSAS.factory()()
 
     @classmethod
     def load(cls, filename):
