@@ -1,80 +1,10 @@
 # -*- coding: utf-8 -*-
-# Find the reST syntax at http://sphinx-doc.org/rest.html
-
-# A good idea, it would be even better to have one file per model in a
-# directory 'models'. The file name case convention is lower case often,
-# keeping traditional python naming in mind and Windows/Unix case sensitivity
-
-"""
-This module contains definitions of scattering models for use with McSAS
-"""
-
+# models/lmadensesphere.py
 
 import numpy # For arrays
-from numpy import (inf, array, isfinite, reshape, prod, shape, pi, diff, zeros,
-                  arange, size, sin, cos, sum, sqrt, log10,
-                  isnan, ndim, newaxis)
-from scipy import optimize
-import os # Miscellaneous operating system interfaces
-import time # Timekeeping and timing of objects
-import sys # For printing of slightly more advanced messages to stdout
-from abc import ABCMeta, abstractmethod
-import inspect
 import logging
-logging.basicConfig(level = logging.INFO)
-
-from dataset import DataSet
-from utils import isList
-#from utils.algorithmbase import AlgorithmBase
-from utils.parameter import ParameterFloat, ParameterNumerical, Parameter
-from utils.numbergenerator import RandomUniform, RandomExponential
-
-from McSAS import PropertyNames, ScatteringModel
-
-class Sphere(ScatteringModel):
-    """Form factor of a sphere"""
-    shortName = "Sphere"
-    parameters = (ParameterFloat.make("radius", 1.0,
-                    valueRange = (0., numpy.inf),
-                    generator = RandomUniform,
-                    suffix = "nm", decimals = 1), )
-    parameters[0].isActive = True
-
-    def __init__(self):
-        ScatteringModel.__init__(self)
-        self.radius.setValueRange((1.0, 1e4)) #this only works for people
-        #defining lengths in angstrom or nm, not m.
-
-    def updateParamBounds(self, bounds):
-        bounds = ScatteringModel.updateParamBounds(self, bounds)
-        if len(bounds) < 1:
-            return
-        if len(bounds) == 1:
-            logging.warning("Only one bound provided, "
-                            "assuming it denotes the maximum.")
-            bounds.insert(0, self.radius.valueRange(0))
-        elif len(bounds) > 2:
-            bounds = bounds[0:2]
-        logging.info("Updating lower and upper contribution parameter bounds "
-                     "to: ({0}, {1}).".format(min(bounds), max(bounds))) 
-        #logging.info changed from bounds[0] and bounds[1] to reflect better 
-        #what is done below:
-        self.radius.setValueRange((min(bounds), max(bounds)))
-
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
-        result = (pi*4./3.) * paramValues**(3. * compensationExponent)
-        return result
-
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-        r = paramValues.flatten()
-        q = dataset[:, 0]
-        qr = numpy.outer(q, r)
-        result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
-        return result
+from cutesnake.algorithm import Parameter, RandomUniform
+from scatteringmodel import ScatteringModel
 
 class LMADenseSphere(ScatteringModel):
     """Form factor of a sphere convoluted with a structure factor, 
@@ -87,7 +17,7 @@ class LMADenseSphere(ScatteringModel):
     """
 
     shortName = "LMADenseSphere"
-    parameters = (ParameterFloat.make("radius", 1.0,
+    parameters = (Parameter("radius", 1.0,
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1), )
@@ -157,3 +87,6 @@ class LMADenseSphere(ScatteringModel):
         result=result * Ssqrt
         return result
 
+LMADenseSphere.factory()
+
+# vim: set ts=4 sts=4 sw=4 tw=0:

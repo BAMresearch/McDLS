@@ -82,117 +82,13 @@ import inspect
 import logging
 logging.basicConfig(level = logging.INFO)
 
-from dataset import DataSet
-from utils import isList
-from utils.algorithmbase import AlgorithmBase
-from utils.parameter import ParameterFloat, ParameterNumerical, Parameter
-from utils.numbergenerator import RandomUniform, RandomExponential
-
-class PropertyNames(object):
-    _cache = None
-
-    @classmethod
-    def properties(cls):
-        """Returns all attributes configured in this class."""
-        nameList = dir(cls)
-        hashValue = hash(repr(nameList))
-        if not cls._cache or cls._cache[0] != hashValue:
-            result = [(name, getattr(cls, name)) for name in nameList
-                      if not name.startswith("_") and
-                      not inspect.ismethod(getattr(cls, name))]
-            cls._cache = hashValue, result
-        return cls._cache[1]
-
-    @classmethod
-    def propNames(cls):
-        return [propName for propName, dummy in cls.properties()]
-
-class ScatteringModel(AlgorithmBase, PropertyNames):
-    __metaclass__ = ABCMeta
-    compensationExponent = 0.5 # default
-
-    def updateParamBounds(self, bounds):
-        if not isList(bounds):
-            bounds = [bounds,]
-        if not isinstance(bounds, list):
-            bounds = list(bounds)
-        return bounds
-
-    # it doesn't belong to the model?
-    # should be instrumentation geometry ...
-    def smear(self, arg):
-        return arg
-
-    @abstractmethod
-    def vol(self, paramValues, compensationExponent = None):
-        """Calculates the volume of this model, taking compensationExponent
-        into account from input or preset parameters."""
-        if len(self) == 0 and paramValues is None:
-            return True
-        return paramValues.shape[1] == len(self)
-
-    @abstractmethod
-    def ff(self, dataset, paramValues):
-        """Calculates the Rayleigh function of this model."""
-        if len(self) == 0 and paramValues is None:
-            return True
-        return paramValues.shape[1] == len(self)
-
-    def generateParameters(self, count = 1):
-        """Generates a set of parameters for this model using the predefined
-        Parameter.generator. Allows for different random number distributions.
-        """
-        lst = numpy.zeros((count, len(self)))
-        for idx, param in self:
-            # generate numbers in different range for each parameter
-            lst[:, idx] = param.generate(count = count)
-        # output count-by-nParameters array
-        return lst
-
-class Sphere(ScatteringModel):
-    """Form factor of a sphere"""
-    shortName = "Sphere"
-    parameters = (ParameterFloat.make("radius", 1.0,
-                    valueRange = (0., numpy.inf),
-                    generator = RandomUniform,
-                    suffix = "nm", decimals = 1), )
-    parameters[0].isActive = True
-
-    def __init__(self):
-        ScatteringModel.__init__(self)
-        self.radius.setValueRange((1.0, 1e4)) #this only works for people
-        #defining lengths in angstrom or nm, not m.
-
-    def updateParamBounds(self, bounds):
-        bounds = ScatteringModel.updateParamBounds(self, bounds)
-        if len(bounds) < 1:
-            return
-        if len(bounds) == 1:
-            logging.warning("Only one bound provided, "
-                            "assuming it denotes the maximum.")
-            bounds.insert(0, self.radius.valueRange(0))
-        elif len(bounds) > 2:
-            bounds = bounds[0:2]
-        logging.info("Updating lower and upper contribution parameter bounds "
-                     "to: ({0}, {1}).".format(min(bounds), max(bounds))) 
-        #logging.info changed from bounds[0] and bounds[1] to reflect better 
-        #what is done below:
-        self.radius.setValueRange((min(bounds), max(bounds)))
-
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
-        result = (pi*4./3.) * paramValues**(3. * compensationExponent)
-        return result
-
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-        r = paramValues.flatten()
-        q = dataset[:, 0]
-        qr = numpy.outer(q, r)
-        result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
-        return result
+from cutesnake.dataset import DataSet
+from cutesnake.utils import isList
+from cutesnake.algorithm import (AlgorithmBase, Parameter, ParameterBase,
+                                 RandomUniform, RandomExponential)
+from utils.propertynames import PropertyNames
+from models.scatteringmodel import ScatteringModel
+from models.sphere import Sphere
 
 class McSASParameters(PropertyNames):
     model = None
