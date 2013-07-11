@@ -5,8 +5,7 @@ import logging
 import time
 import numpy
 from numpy import pi
-from mcsas.McSAS import ScatteringModel
-from cutesnake.algorithm import Parameter, RandomUniform
+from cutesnake.algorithm import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # models/lmadensesphere.py
 
-import numpy # For arrays
+import numpy
+from numpy import pi, sin, cos
 import logging
 from cutesnake.algorithm import Parameter, RandomUniform
 from scatteringmodel import ScatteringModel
@@ -55,7 +56,7 @@ class LMADenseSphere(ScatteringModel):
         assert ScatteringModel.ff(self, dataset, paramValues)
         
         structureFactorVolumeFraction = 0.2
-        structureFactorStandoff=(0.634/structureFactorVolumeFraction)**(1./3)
+        structureFactorStandoff = (0.634/structureFactorVolumeFraction)**(1./3)
         #no idea if this will work
         SFmu=structureFactorVolumeFraction
         SFmf=structureFactorStandoff
@@ -77,14 +78,15 @@ class LMADenseSphere(ScatteringModel):
         qr = numpy.outer(q, r)
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         #now we introduce the structure factor
-        rhsq=numpy.outer(q,(SFmf * r))
-        G=SFG(rhsq,SFmu)        
+        rhsq = numpy.outer(q,(SFmf * r))
+        G = SFG(rhsq,SFmu)
         Ssqrt = (abs( 1. + 24. * SFmu * G / rhsq ))**(-0.5)
-        #the above structure factor needs to be the square root as it is taken into the 
-        #form factor. Eventually, we want to calculate the scattering as FF**2 * S, which
-        #we are now achieving as (FF * S**0.5)**2. The minus sign in the exponent of the
-        #above equation comes from the original equation in the literature.
-        result=result * Ssqrt
+        # the above structure factor needs to be the square root as it is
+        # taken into the form factor. Eventually, we want to calculate the
+        # scattering as FF**2 * S, which we are now achieving as
+        # (FF * S**0.5)**2. The minus sign in the exponent of the above
+        # equation comes from the original equation in the literature.
+        result = result * Ssqrt
         return result
 
 LMADenseSphere.factory()

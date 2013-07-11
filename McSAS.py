@@ -454,16 +454,16 @@ class McSAS(AlgorithmBase):
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
             logging.info("Model not provided, setting to: {0}"
-                    .format(str(McSASParameters.model.name)))
+                    .format(str(McSASParameters.model.name())))
         if self.model is None:
             self.model = McSASParameters.model
-        logging.info("Using model: {0}".format(str(self.model.name)))
-        if not len(self.model):
+        logging.info("Using model: {0}".format(str(self.model.name())))
+        if not self.model.paramCount():
             logging.warning("No parameters to analyse given! Breaking up.")
             return
         logging.info(
                 "\n".join(["Analysing parameters: "]+
-                    [str(p) for i, p in self.model])
+                    [str(p) for p in self.model.params()])
         )
         self.checkParameters()
         self.analyse()
@@ -598,11 +598,11 @@ class McSAS(AlgorithmBase):
         """
         def fixLength(valueList):
             if not isList(valueList):
-                valueList = [valueList for dummy in range(len(self.model))]
-            elif len(valueList) > len(self.model):
-                del valueList[len(self.model):]
-            elif len(valueList) < len(self.model):
-                nMissing = len(self.model) - len(valueList)
+                valueList = [valueList for dummy in range(self.model.paramCount())]
+            elif len(valueList) > self.model.paramCount():
+                del valueList[self.model.paramCount():]
+            elif len(valueList) < self.model.paramCount():
+                nMissing = self.model.paramCount() - len(valueList)
                 valueList.extend([valueList[0] for dummy in range(nMissing)])
             return valueList
 
@@ -916,7 +916,7 @@ class McSAS(AlgorithmBase):
         numReps = self.numReps.value()
         maxRetries = McSASParameters.maxRetries
         # find out how many values a shape is defined by:
-        contributions = zeros((numContribs, len(self.model), numReps))
+        contributions = zeros((numContribs, self.model.paramCount(), numReps))
         numIter = zeros(numReps)
         contribIntensity = zeros([1, len(data), numReps])
         start = time.time() # for time estimation and reporting
@@ -990,7 +990,7 @@ class McSAS(AlgorithmBase):
         data = self.dataset.prepared
         numContribs = self.numContribs.value()
         prior = McSASParameters.prior
-        rset = numpy.zeros((numContribs, len(self.model)))
+        rset = numpy.zeros((numContribs, self.model.paramCount()))
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
@@ -999,7 +999,7 @@ class McSAS(AlgorithmBase):
         # generate initial set of spheres
         if size(prior) == 0:
             if McSASParameters.startFromMinimum:
-                for idx, param in self.model:
+                for idx, param in enumerate(self.model.params()):
                     mb = min(param.valueRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
                         mb = pi / q.max()
@@ -1369,7 +1369,7 @@ class McSAS(AlgorithmBase):
         # now we histogram over each variable
         # for each variable parameter we define,
         # we need to histogram separately.
-        for paramIndex, param in self.model:
+        for paramIndex, param in enumerate(self.model.params()):
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
             if McSASParameters.histogramXScale[paramIndex] == 'lin':

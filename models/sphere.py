@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # models/sphere.py
 
+import logging
 import numpy
+from numpy import pi, sin, cos
 from cutesnake.algorithm import Parameter, RandomUniform
 from scatteringmodel import ScatteringModel
 
