@@ -437,10 +437,10 @@ class McSAS(AlgorithmBase):
         .. automethod:: optimScalingAndBackground
         """
         AlgorithmBase.__init__(self)
-        # initialize
-        self.result = [] # TODO
 
     def calc(self, **kwargs):
+        # initialize
+        self.result = [] # TODO
         # set data values
         self.setData(kwargs)
         # set supplied kwargs and passing on
@@ -467,6 +467,9 @@ class McSAS(AlgorithmBase):
         )
         self.checkParameters()
         self.analyse()
+        # continue if there are results only
+        if not len(self.result):
+            return
         self.histogram()
 
         if self.dataset.is2d:
@@ -1252,6 +1255,9 @@ class McSAS(AlgorithmBase):
                 Scaling and background values for each repetition. Used to
                 display background level in data and fit plot.
         """
+        if not isList(self.result) or not len(self.result):
+            logging.info("There are no results to histogram, breaking up.")
+            return
         if contribs is None:
             contribs = self.result[0]['contribs']
         numContribs, dummy, numReps = contribs.shape
@@ -1670,6 +1676,9 @@ class McSAS(AlgorithmBase):
             yticks(locs, map(lambda x: "%g" % x, locs))
             return ah
 
+        if not isList(self.result) or not len(self.result):
+            logging.info("There are no results to plot, breaking up.")
+            return
         result = self.result[0]
         # check how many result plots we need to generate: maximum three.
         nhists = len(McSASParameters.histogramXScale)
