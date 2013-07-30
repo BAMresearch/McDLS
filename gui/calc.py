@@ -16,6 +16,8 @@ from cutesnake.log import Log
 from models.scatteringmodel import ScatteringModel
 from McSAS import McSAS
 
+INDENT = "    "
+
 class SASData(DataSet, ResultMixin):
     logWidget = None
     settings = None
@@ -79,25 +81,29 @@ class SASData(DataSet, ResultMixin):
             logging.info("No results available!")
         self.writeLog()
 
-    def writeFit(self, mcResult):
-        fn = self.getFilename("fit")
-        logging.info("Writing fit to '{0}'".format(fn))
-        data = np.vstack((mcResult['fitQ'],
-                          mcResult['fitIntensityMean'],
-                          mcResult['fitIntensityStd'])).T
+    def writeResultData(self, mcResult, fileKey, descr, columnNames):
+        fn = self.getFilename(fileKey)
+        logging.info("Writing {0} to:".format(descr))
+        logging.info("{0}'{1}'".format(INDENT, fn))
+        logging.info("Containing the following columns:")
+        for cn in columnNames:
+            logging.info("{0}<{1}>".format(INDENT, cn))
+        data = np.vstack([mcResult[cn] for cn in columnNames]).T
         AsciiFile.writeFile(fn, data)
 
+    def writeFit(self, mcResult):
+        self.writeResultData(mcResult, "fit", "fit data",
+            ('fitQ', 'fitIntensityMean', 'fitIntensityStd')
+        )
+
     def writeDistrib(self, mcResult, mcargs):
-        fn = self.getFilename("dist")
-        logging.info("Writing distribution to '{0}'".format(fn))
-        data = np.vstack((mcResult['histogramXMean'],
-                          mcResult['volumeHistogramYMean'],
-                          mcResult['volumeHistogramYStd'],
-                          mcResult['volumeHistogramMinimumRequired'],
-                          mcResult['numberHistogramYMean'],
-                          mcResult['numberHistogramYStd'],
-                          mcResult['numberHistogramMinimumRequired'])).T
-        AsciiFile.writeFile(fn, data)
+        self.writeResultData(mcResult, "dist", "distributions",
+            ('histogramXMean', 'volumeHistogramYMean',
+             'volumeHistogramYStd', 'volumeHistogramMinimumRequired',
+             'numberHistogramYMean', 'numberHistogramYStd',
+             'numberHistogramMinimumRequired')
+        )
+        # writing settings
         import ConfigParser
         config = ConfigParser.RawConfigParser()
         fn = self.getFilename("setting")
@@ -120,7 +126,8 @@ class SASData(DataSet, ResultMixin):
         if not self.logWidget:
             return
         fn = self.getFilename("log")
-        logging.info("Writing log to '{0}'".format(fn))
+        logging.info("Writing this log to:")
+        logging.info("{0}'{1}'".format(INDENT, fn))
         self.logWidget.saveToFile(filename = fn)
 
     def getFilename(self, kind):
