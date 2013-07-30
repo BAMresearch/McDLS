@@ -16,15 +16,14 @@ class PDHFile(AsciiFile):
         return asciiData
 
     @classmethod
-    def readRow(cls, fields, **kwargs):
-        if len(fields) < 2:
-            raise ValueError
+    def readRow(cls, fields, lineNumber = None, **kwargs):
+        if len(fields) < 2 or lineNumber <= PDHHeader.maxLines:
+            return
         try:
             # just converted to tuple
             return tuple((float(f) for f in fields))
         except:
             raise ValueError
-        return None
 
 class PDHHeader(object):
     _entries = { # entry names and their header position (line, column)

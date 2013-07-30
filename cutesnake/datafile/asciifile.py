@@ -38,8 +38,9 @@ class AsciiFile(DataFile):
     def readFile(cls, filename, dataType = None):
         fileData = []
         with open(filename) as fd:
-            linenr = 1
+            linenr = 0
             for line in fd:
+                linenr += 1
                 # strip trailing white space, replace decimal operators 
                 # eventually, split data fields
                 # we read floating point numbers only
@@ -54,11 +55,9 @@ class AsciiFile(DataFile):
                                          lineNumber = linenr)
                 except ValueError:
                     continue
-                else:
-                    if record is None or len(record) <= 0:
-                        continue
-                    fileData.append(record)
-                linenr += 1
+                if record is None or len(record) <= 0:
+                    continue
+                fileData.append(record)
 
         dataCount = len(fileData)
         if dataCount <= 0:
