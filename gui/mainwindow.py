@@ -6,6 +6,7 @@
 
 import os.path
 from cutesnake.qt import QtCore, QtGui
+from cutesnake.utils.signal import Signal
 from QtCore import Qt, QSettings, QString, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
@@ -199,6 +200,8 @@ class PropertyWidget(SettingsWidget):
         return widget
 
 class MainWindow(MainWindowBase):
+    onCloseSignal = Signal()
+
     def __init__(self, parent = None):
         MainWindowBase.__init__(self, version, parent)
 
@@ -216,6 +219,7 @@ class MainWindow(MainWindowBase):
         centralWidget = QWidget(self)
         centralLayout = QVBoxLayout()
         self.logWidget = LogWidget(self, appversion = version)
+        self.onCloseSignal.connect(self.logWidget.onCloseSlot)
         self.logWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         centralLayout.addWidget(btnWidget)
         centralLayout.addWidget(self.logWidget)
@@ -262,5 +266,9 @@ class MainWindow(MainWindowBase):
     def onStartup(self):
         self.propWidget.selectModel()
         calc(self.getCommandlineArguments())
+
+    def closeEvent(self, closeEvent):
+        super(MainWindow, self).closeEvent(closeEvent)
+        self.onCloseSignal.emit()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

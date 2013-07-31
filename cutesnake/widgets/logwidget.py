@@ -174,4 +174,12 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
             fd.write(self.contents())
         return fn
 
+    def onCloseSlot(self):
+        """Workaround to exit a program during calculation.
+        Logging a message processes Qt events (see append()).
+        It makes sure this slot is called if connected to a application close
+        signal. For example, emitted by the main window on closeEvent()."""
+        import sys
+        sys.exit(0)
+
 # vim: set ts=4 sts=4 sw=4 tw=0:
