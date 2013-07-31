@@ -7,6 +7,8 @@ import os.path
 import ConfigParser
 import numpy
 import numpy as np
+from cutesnake.qt import QtCore
+from QtCore import QUrl
 from cutesnake.dataset import DataSet, ResultMixin
 from cutesnake.utils import isList
 from cutesnake.utils.lastpath import LastPath
@@ -111,7 +113,7 @@ class SASData(DataSet, ResultMixin):
             config.set(sectionName, p.name(), p.value())
             config.set(sectionName, p.name()+"_min", p.min())
             config.set(sectionName, p.name()+"_max", p.max())
-        with open(fn, 'wb') as configfile:
+        with open(fn, 'w') as configfile:
             config.write(configfile)
 
     def writeLog(self):
@@ -123,7 +125,8 @@ class SASData(DataSet, ResultMixin):
     def getResultFilename(self, fileKey, descr):
         fn = self.getFilename(fileKey)
         logging.info("Writing {0} to:".format(descr))
-        logging.info("{0}'file://{1}'".format(INDENT, fn))
+        logging.info("{0}'{1}'".format(INDENT,
+                                       QUrl.fromLocalFile(fn).toEncoded()))
         return fn
 
     def writeResultHelper(self, mcResult, fileKey, descr, columnNames):
