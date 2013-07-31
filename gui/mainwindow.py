@@ -6,7 +6,7 @@
 
 import os.path
 from cutesnake.qt import QtCore, QtGui
-from QtCore import Qt, QSettings, QString
+from QtCore import Qt, QSettings, QString, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox)
@@ -22,29 +22,33 @@ INFOTEXT="""One or more selected files are read in and passed to Brian Pauws Mon
 
 The convergence criterion can be set by the user. If it is not reached no output is generated, just this log is saved to file. On success, the resulting size distribution and the data fit are stored to files with uncertainties.
 
-Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results.
-"""
+Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results."""
 
-CHANGESTEXT=u"""
-{0}
+CHANGESTEXT=QString(u"""
+
+Changes in 0.0.9:
+- added GUI to public McSAS repository
+
 Changes in 0.0.8:
 - new model: GaussianChain, verified against SASfit:
   http://sasfit.sf.net/manual/Gaussian_Chain#Gauss_2
 - fixed volume function exponent in Kholodenko
   was v² instead of just v
-{0}
+
 Changes in 0.0.7:
 - Using restructured McSAS
 - building GUI for models and global settings dynamically
 - new model: Kholodenkos worm-like structure, verified against SASfit
-{0}
+
 Changes in 0.0.6:
 Fixed handling of negative values in PDH data files.
-{0}
+
 Changes in 0.0.5:
 'Number-weighted distributions now come with correct-looking observability limits.'
-https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
-{0}""".format("".join(('-' for i in range(0, 40))))
+ https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
+
+""".replace('\n\n', '<hr />')).replace(
+        QRegExp(r"(Changes in [0-9]\.[0-9]\.[0-9])"), r"<strong>\1</strong>")
 
 from models.sphere import Sphere
 from models.kholodenko import Kholodenko

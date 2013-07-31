@@ -4,6 +4,7 @@
 import logging
 import time
 import os.path
+import ConfigParser
 import numpy
 import numpy as np
 from cutesnake.dataset import DataSet, ResultMixin
@@ -72,50 +73,41 @@ class SASData(DataSet, ResultMixin):
             self.mcsas.model = self.mcsas.model()
         self.mcsas.calc(Q = q, I = I, IError = E, **mcargs)
 
-        if len(self.mcsas.result):
+        if isList(self.mcsas.result) and len(self.mcsas.result):
             res = self.mcsas.result[0]
             if res is not None:
-                self.writeDistrib(res, mcargs)
+                self.writeDistrib(res)
                 self.writeFit(res)
         else:
             logging.info("No results available!")
+
+        self.writeSettings(mcargs)
         self.writeLog()
 
-    def writeResultData(self, mcResult, fileKey, descr, columnNames):
-        fn = self.getFilename(fileKey)
-        logging.info("Writing {0} to:".format(descr))
-        logging.info("{0}'{1}'".format(INDENT, fn))
-        logging.info("Containing the following columns:")
-        for cn in columnNames:
-            logging.info("{0}<{1}>".format(INDENT, cn))
-        data = np.vstack([mcResult[cn] for cn in columnNames]).T
-        AsciiFile.writeFile(fn, data)
-
     def writeFit(self, mcResult):
-        self.writeResultData(mcResult, "fit", "fit data",
+        self.writeResultHelper(mcResult, "fit", "fit data",
             ('fitQ', 'fitIntensityMean', 'fitIntensityStd')
         )
 
-    def writeDistrib(self, mcResult, mcargs):
-        self.writeResultData(mcResult, "dist", "distributions",
+    def writeDistrib(self, mcResult):
+        self.writeResultHelper(mcResult, "dist", "distributions",
             ('histogramXMean', 'volumeHistogramYMean',
              'volumeHistogramYStd', 'volumeHistogramMinimumRequired',
              'numberHistogramYMean', 'numberHistogramYStd',
              'numberHistogramMinimumRequired')
         )
-        # writing settings
-        import ConfigParser
+
+    def writeSettings(self, mcargs):
+        fn = self.getResultFilename("settings", "algorithm settings")
         config = ConfigParser.RawConfigParser()
-        fn = self.getFilename("setting")
         sectionName = "Settings"
         config.add_section(sectionName)
         for key, value in mcargs.iteritems():
             config.set(sectionName, key, value)
-        config.set(sectionName, "model", self.mcsas.model.name)
+        config.set(sectionName, "model", self.mcsas.model.name())
         sectionName = "Model Settings"
         config.add_section(sectionName)
-        for ptype in self.mcsas.model.parameters:
-            p = getattr(self.mcsas.model, ptype.name())
+        for p in self.mcsas.model.params():
             config.set(sectionName, p.name(), p.value())
             config.set(sectionName, p.name()+"_min", p.min())
             config.set(sectionName, p.name()+"_max", p.max())
@@ -125,10 +117,22 @@ class SASData(DataSet, ResultMixin):
     def writeLog(self):
         if not self.logWidget:
             return
-        fn = self.getFilename("log")
-        logging.info("Writing this log to:")
-        logging.info("{0}'{1}'".format(INDENT, fn))
+        fn = self.getResultFilename("log", "this log")
         self.logWidget.saveToFile(filename = fn)
+
+    def getResultFilename(self, fileKey, descr):
+        fn = self.getFilename(fileKey)
+        logging.info("Writing {0} to:".format(descr))
+        logging.info("{0}'file://{1}'".format(INDENT, fn))
+        return fn
+
+    def writeResultHelper(self, mcResult, fileKey, descr, columnNames):
+        fn = self.getResultFilename(fileKey, descr)
+        logging.info("Containing the following columns:")
+        for cn in columnNames:
+            logging.info("{0}&lt; {1} &gt;".format(INDENT, cn))
+        data = np.vstack([mcResult[cn] for cn in columnNames]).T
+        AsciiFile.writeFile(fn, data)
 
     def getFilename(self, kind):
         if not hasattr(self, "basefn") or self.basefn is None:
