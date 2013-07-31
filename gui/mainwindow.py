@@ -237,20 +237,22 @@ class MainWindow(MainWindowBase):
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
+        settings = self.appSettings()
         for name in ("convcrit", "nreps", "min", "max", "bins") + self.propWidget.keys():
             if self.propWidget.get(name) is None:
                 continue
-            self.propWidget.set(name, self.appSettings().value(name))
-        value = self.appSettings().value("lastpath").toString()
+            self.propWidget.set(name, settings.value(name))
+        value = settings.value("lastpath").toString()
         if os.path.isdir(value):
             LastPath.set(value)
 
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
-        for name in ("convcrit", "nreps", "min", "max", "bins") + self.propWidget.keys():
-            self.appSettings().setValue(name, self.propWidget.get(name))
-        self.appSettings().setValue("lastpath", LastPath.get())
         settings = self.appSettings()
+        for name in ("convcrit", "nreps", "min", "max", "bins") + self.propWidget.keys():
+            settings.setValue(name, self.propWidget.get(name))
+        settings.setValue("lastpath", LastPath.get())
+        settings.sync()
         tempSettings = QSettings("/tmp/qsettings.test", QSettings.IniFormat)
         for key in settings.allKeys():
             if key in ('geometry', 'windowState', 'lastpath'):
