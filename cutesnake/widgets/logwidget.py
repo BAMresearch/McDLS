@@ -4,7 +4,7 @@
 import os.path
 from cutesnake.qt import QtCore, QtGui
 from QtCore import Qt
-from QtGui import QKeySequence, QPlainTextEdit
+from QtGui import QKeySequence, QTextEdit
 from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.widgets.mixins.contextmenuwidget import ContextMenuWidget
 from cutesnake.log import Log, WidgetHandler
@@ -14,7 +14,7 @@ from cutesnake.utils.translate import tr
 from cutesnake.utilsgui.filedialog import getSaveFile
 from cutesnake.utilsgui import processEventLoop
 
-class LogWidget(QPlainTextEdit, ContextMenuWidget):
+class LogWidget(QTextEdit, ContextMenuWidget):
     """
     Simple TextEdit which can save its contents to file.
 
@@ -70,7 +70,7 @@ class LogWidget(QPlainTextEdit, ContextMenuWidget):
     title = None
 
     def __init__(self, parent = None, appversion = None):
-        QPlainTextEdit.__init__(self, parent)
+        QTextEdit.__init__(self, parent)
         ContextMenuWidget.__init__(self)
         self.title = TitleHandler.setup(self, "Log")
         self.appversion = appversion
@@ -122,13 +122,14 @@ class LogWidget(QPlainTextEdit, ContextMenuWidget):
         if text[-1] == '\n':
             text = text[:-1]
 
-        if hasattr(self, "hadCR") and self.hadCR:
+        html = self.toHtml()
+        if self.contents().isEmpty():
+            html = ""
+        if getattr(self, "hadCR", False):
             # handle carriage return
-            plainText = self.toPlainText()
-            lastbreak = plainText.lastIndexOf('\n')
+            lastbreak = html.lastIndexOf('\n')
             if lastbreak >= 0:
-                plainText.truncate(lastbreak)
-            self.setPlainText(plainText)
+                html.truncate(lastbreak)
             scroll = self.verticalScrollBar()
             scroll.setValue(scroll.maximum())
             self.hadCR = False
@@ -136,7 +137,9 @@ class LogWidget(QPlainTextEdit, ContextMenuWidget):
         if text[-1] == '\r':
             self.hadCR = True
 
-        self.appendPlainText(text.replace('\r', ''))
+        super(LogWidget, self).setHtml(
+                html + text.replace('\r', '').replace('\n','<br />\n')
+        )
         processEventLoop()
 
     def contents(self):
