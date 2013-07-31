@@ -1087,6 +1087,7 @@ class McSAS(AlgorithmBase):
         numNotAccepted = 0
         numIter = 0
         ri = 0
+        lastUpdate = 0
         while (conval > self.convergenceCriterion.value() and
                numIter < self.maxIterations.value()):
             rt = self.model.generateParameters()
@@ -1119,10 +1120,14 @@ class McSAS(AlgorithmBase):
                 it, vset[ri], vst = itest, vtt, vstest
                 if not McSASParameters.lowMemoryFootprint:
                     iset[:, ri] = itt
-                print ("Improvement in iteration number {0}, "
-                             "Chi-squared value {1:f} of {2:f}\r"
-                             .format(numIter, conval,
-                                 self.convergenceCriterion.value())),
+                if time.time() - lastUpdate > 0.5:
+                    # update twice a sec max -> speedup for fast models
+                    # because output takes much time especially in GUI
+                    print ("Improvement in iteration number {0}, "
+                                 "Chi-squared value {1:f} of {2:f}\r"
+                                 .format(numIter, conval,
+                                     self.convergenceCriterion.value())),
+                    lastUpdate = time.time()
                 numMoves += 1
                 if outputIterations:
                     # output each iteration, starting with number 0. 
