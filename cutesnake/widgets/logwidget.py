@@ -3,8 +3,8 @@
 
 import os.path
 from cutesnake.qt import QtCore, QtGui
-from QtCore import Qt
-from QtGui import QKeySequence, QTextEdit
+from QtCore import Qt, QString, QRegExp
+from QtGui import QKeySequence, QTextBrowser, QDesktopServices
 from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.widgets.mixins.contextmenuwidget import ContextMenuWidget
 from cutesnake.log import Log, WidgetHandler
@@ -14,7 +14,13 @@ from cutesnake.utils.translate import tr
 from cutesnake.utilsgui.filedialog import getSaveFile
 from cutesnake.utilsgui import processEventLoop
 
-class LogWidget(QTextEdit, ContextMenuWidget):
+def url2href(text):
+    """http://daringfireball.net/2010/07/improved_regex_for_matching_urls"""
+    return QString(text).replace(QRegExp(
+        r"((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
+        ), r'<a href="\1">\1</a>')
+
+class LogWidget(QTextBrowser, ContextMenuWidget):
     """
     Simple TextEdit which can save its contents to file.
 
@@ -70,12 +76,13 @@ class LogWidget(QTextEdit, ContextMenuWidget):
     title = None
 
     def __init__(self, parent = None, appversion = None):
-        QTextEdit.__init__(self, parent)
+        QTextBrowser.__init__(self, parent)
         ContextMenuWidget.__init__(self)
         self.title = TitleHandler.setup(self, "Log")
         self.appversion = appversion
         self.setUndoRedoEnabled(False)
         self.setReadOnly(True)
+        self.setOpenExternalLinks(True)
         self.setTextInteractionFlags(
             Qt.LinksAccessibleByMouse|
             Qt.TextSelectableByMouse)
@@ -83,6 +90,8 @@ class LogWidget(QTextEdit, ContextMenuWidget):
         self._setupActions()
         self._copyAvailable = False
         self.copyAvailable.connect(self.setCopyAvailable)
+        self.anchorClicked.connect(QDesktopServices.openUrl)
+        self.setOpenLinks(False)
 
     @property
     def appversion(self):
@@ -130,16 +139,18 @@ class LogWidget(QTextEdit, ContextMenuWidget):
             lastbreak = html.lastIndexOf('\n')
             if lastbreak >= 0:
                 html.truncate(lastbreak)
-            scroll = self.verticalScrollBar()
-            scroll.setValue(scroll.maximum())
             self.hadCR = False
 
         if text[-1] == '\r':
             self.hadCR = True
 
         super(LogWidget, self).setHtml(
-                html + text.replace('\r', '').replace('\n','<br />\n')
+                html + url2href(text.replace('\r', '')
+                                    .replace('\n','<br />\n')
+                                )
         )
+        scroll = self.verticalScrollBar()
+        scroll.setValue(scroll.maximum())
         processEventLoop()
 
     def contents(self):
