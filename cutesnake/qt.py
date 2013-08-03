@@ -2,7 +2,12 @@
 # qt.py
 
 __all__ = ["QtGui", "QtCore", "QtSvg"]
-PYQT = "PyQt4"
+PYQT = "PyQt4" #what if I only have PySide? is there a nice way for checking?
+try:
+    __import__(PYQT)
+except ImportError:
+    #maybe we have PySide as fallback option
+    PYQT="PySide"
 
 import sys
 import importlib
