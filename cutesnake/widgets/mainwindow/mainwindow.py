@@ -4,7 +4,7 @@
 import sys
 import logging
 from QtGui import QMainWindow
-from QtCore import QSettings, QByteArray, QString, QTimer
+from QtCore import QSettings, QByteArray, QTimer
 from cutesnake.appversion import QAppVersion
 from cutesnake.utils.translate import tr
 from ui_mainwindow import Ui_MainWindow
@@ -68,8 +68,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         if self._appsettings is None:
             self._appsettings = QSettings(
-                    QString(self._appversion.organizationName()),
-                    QString(self._appversion.settingsKey()))
+                    unicode(self._appversion.organizationName()),
+                    unicode(self._appversion.settingsKey()))
         defaultSettings = self._appversion.defaultSettings()
         logmsg = "Loaded settings."
         if defaultSettings is not None:

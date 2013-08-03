@@ -2,7 +2,7 @@
 # titlehandler.py
 
 from cutesnake.qt import QtCore, QtGui
-from QtCore import QObject, QString
+from QtCore import QObject
 from QtGui import QWidget
 from cutesnake.dataset import DataSet, TitleMixin
 from cutesnake.utils import isString

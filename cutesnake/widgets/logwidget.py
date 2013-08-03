@@ -3,7 +3,7 @@
 
 import os.path
 from cutesnake.qt import QtCore, QtGui
-from QtCore import Qt, QString, QRegExp
+from QtCore import Qt, QRegExp
 from QtGui import QKeySequence, QTextBrowser, QDesktopServices
 from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.widgets.mixins.contextmenuwidget import ContextMenuWidget
@@ -16,7 +16,7 @@ from cutesnake.utilsgui import processEventLoop
 
 def url2href(text):
     """http://daringfireball.net/2010/07/improved_regex_for_matching_urls"""
-    return QString(text).replace(QRegExp(
+    return unicode(text).replace(QRegExp(
         r"((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
         ), r'<a href="\1">\1</a>')
 

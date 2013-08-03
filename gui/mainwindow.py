@@ -7,7 +7,7 @@
 import os.path
 from cutesnake.qt import QtCore, QtGui
 from cutesnake.utils.signal import Signal
-from QtCore import Qt, QSettings, QString, QRegExp
+from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox)
@@ -25,7 +25,7 @@ The convergence criterion can be set by the user. If it is not reached no output
 
 Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results."""
 
-CHANGESTEXT=QString(u"""
+CHANGESTEXT=unicode(u"""
 
 Changes in 0.0.9:
 - added GUI to public McSAS repository

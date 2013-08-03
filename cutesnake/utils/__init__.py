@@ -9,12 +9,6 @@ import os.path
 import logging
 import numpy
 
-try:
-    from cutesnake.qt import QtCore
-    from QtCore import QString
-except:
-    QString = basestring
-
 EPS = float_info.epsilon
 
 # object tests
@@ -26,7 +20,7 @@ def isList(obj):
                  and obj.ndim < 2)))
 
 def isString(obj):
-    return isinstance(obj, basestring) or isinstance(obj, QString)
+    return isinstance(obj, basestring) or isinstance(obj, unicode)
 
 def isNonEmptyString(obj):
     return (isString(obj) and len(obj) > 0)
