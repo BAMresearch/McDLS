@@ -45,15 +45,15 @@ class SASData(DataSet, ResultMixin):
 
         q, I = data[:, 0], data[:, 1]
         emin, E = 0.01, None #minimum possible error (1%)
+        E = emin * I
         if data.shape[1] < 3:
-            E = emin * I
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(emin * 100.))
         else:
-            logging.warning("Minimum uncertainty ({}% of intensity) set "\
-                    "for {} datapoints.".format(
-                        emin * 100., sum(emin*I>data[:,2])))
-            E = np.maximum(emin * I, data[:, 2])
+            logging.warning("Minimum uncertainty ({}% of intensity) set "
+                            "for {} datapoints.".format(
+                            emin * 100., sum(E > data[:, 2])))
+            E = np.maximum(E, data[:, 2])
 
         bounds = np.array([np.pi/np.max(q), np.pi/np.min(q)])
         nreps, ncontrib, maxiter, convcrit, histbins = 3, 200, 1e4, 1.3, 50
