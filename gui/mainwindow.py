@@ -5,6 +5,7 @@
 # (the author)
 
 import os.path
+import re
 from cutesnake.qt import QtCore, QtGui
 from cutesnake.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp
@@ -19,13 +20,13 @@ from cutesnake.utils.lastpath import LastPath
 from version import version
 from calc import calc, SASData
 
-INFOTEXT="""One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
+INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
 
 The convergence criterion can be set by the user. If it is not reached no output is generated, just this log is saved to file. On success, the resulting size distribution and the data fit are stored to files with uncertainties.
 
 Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results."""
 
-CHANGESTEXT=unicode(u"""
+CHANGESTEXT = (u"""
 
 Changes in 0.0.9:
 - added GUI to public McSAS repository
@@ -48,8 +49,10 @@ Changes in 0.0.5:
 'Number-weighted distributions now come with correct-looking observability limits.'
  https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
 
-""".replace('\n\n', '<hr />')).replace(
-        QRegExp(r"(Changes in [0-9]\.[0-9]\.[0-9])"), r"<strong>\1</strong>")
+""".replace('\n\n', '<hr />'))
+CHANGESTEXT = re.sub(r"(Changes in [0-9]\.[0-9]\.[0-9])",
+                     r"<strong>\1</strong>",
+                     CHANGESTEXT)
 
 from models.sphere import Sphere
 from models.kholodenko import Kholodenko
@@ -242,7 +245,10 @@ class MainWindow(MainWindowBase):
             if self.propWidget.get(name) is None:
                 continue
             self.propWidget.set(name, settings.value(name))
-        value = settings.value("lastpath").toString()
+        try:
+            value = settings.value("lastpath").toString()
+        except AttributeError: # QVariant
+            value = settings.value("lastpath")
         if os.path.isdir(value):
             LastPath.set(value)
 

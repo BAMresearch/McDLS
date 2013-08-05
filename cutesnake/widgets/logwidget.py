@@ -2,9 +2,11 @@
 # logwidget.py
 
 import os.path
+import sys
+import re
 from cutesnake.qt import QtCore, QtGui
 from QtCore import Qt, QRegExp
-from QtGui import QKeySequence, QTextBrowser, QDesktopServices
+from QtGui import QApplication, QKeySequence, QTextBrowser, QDesktopServices
 from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.widgets.mixins.contextmenuwidget import ContextMenuWidget
 from cutesnake.log import Log, WidgetHandler
@@ -16,9 +18,7 @@ from cutesnake.utilsgui import processEventLoop
 
 def url2href(text):
     """http://daringfireball.net/2010/07/improved_regex_for_matching_urls"""
-    return unicode(text).replace(QRegExp(
-        r"((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))"
-        ), r'<a href="\1">\1</a>')
+    return re.sub(r"((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))", r'<a href="\1">\1</a>', text)
 
 class LogWidget(QTextBrowser, ContextMenuWidget):
     """
@@ -112,10 +112,11 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         # copy relevant actions from standard context menu
         menu = self.createStandardContextMenu()
         for a in menu.actions():
-            title = a.text().remove('&')
-            if title.startsWith("Copy\t"):
+            title = unicode(a.text()).replace('&', '')
+            startswith = title.startswith
+            if title.startswith("Copy\t"):
                 self.addMenuEntryAction("copy", a, "isCopyAvailable")
-            elif title.startsWith("Select All\t"):
+            elif title.startswith("Select All\t"):
                 self.addMenuEntryAction("selectall", a, "*")
         self.addMenuSeparator()
         self.addMenuEntry("savetofile", tr("Save Log to File"),
@@ -131,14 +132,14 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         if text[-1] == '\n':
             text = text[:-1]
 
-        html = self.toHtml()
-        if self.contents().isEmpty():
+        html = unicode(self.toHtml())
+        if len(self.contents()) <= 0:
             html = ""
         if getattr(self, "hadCR", False):
             # handle carriage return
-            lastbreak = html.lastIndexOf('\n')
+            lastbreak = html.rfind('\n')
             if lastbreak >= 0:
-                html.truncate(lastbreak)
+                html = html[:lastbreak]
             self.hadCR = False
 
         if text[-1] == '\r':
@@ -154,7 +155,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         processEventLoop()
 
     def contents(self):
-        return self.toPlainText()
+        return unicode(self.toPlainText())
 
     def saveToFile(self, filename = None):
         fn = filename
@@ -179,7 +180,6 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         Logging a message processes Qt events (see append()).
         It makes sure this slot is called if connected to a application close
         signal. For example, emitted by the main window on closeEvent()."""
-        import sys
-        sys.exit(0)
+        QApplication.instance().exit()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

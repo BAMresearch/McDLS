@@ -2,7 +2,13 @@
 # settingswidget.py
 
 from cutesnake.qt import QtCore, QtGui
-from QtCore import QVariant
+try: # remove if switching to PySide exclusively
+    from QtCore import QVariant
+except ImportError:
+    class QVariant: # a dummy class for compatibility
+        Int, Double, Bool, String = None, None, None, None
+        toInt, toDouble, toBool, toString = None, None, None, None
+
 from QtGui import QWidget, QSpinBox, QDoubleSpinBox, QLineEdit
 from cutesnake.widgets.expdoublespinbox import ExpDoubleSpinBox
 from cutesnake.utils.signal import Signal
@@ -45,11 +51,19 @@ class SettingsWidget(QWidget):
         variant = None
         for key in "value", "checked", "text":
             variant = child.property(key)
-            if variant.isValid():
-                break
-        if not variant.isValid():
+            try:
+                if variant.isValid():
+                    break
+            except AttributeError: # QVariant
+                if variant is not None:
+                    break
+        if variant is None:
             return defaultValue
-        value = self._convertData[variant.type()](variant)
+        if isinstance(variant, QVariant):
+            if not variant.isValid():
+                return defaultValue
+            variant = self._convertData[variant.type()](variant)
+        value = variant
         if value is None:
             return defaultValue
         # QVariant.toInt, QVariant.toDouble return tuple (value, ok)
@@ -63,8 +77,12 @@ class SettingsWidget(QWidget):
         child = self.findChild(QWidget, key)
         for key in ("isChecked", "value", "text"):
             variant = child.property(key)
-            if variant.isValid():
-                break
+            try:
+                if variant.isValid():
+                    break
+            except AttributeError: # QVariant
+                if variant is not None:
+                    break
         try:
             child.setProperty(key, value)
         except StandardError:
@@ -82,7 +100,12 @@ class SettingsWidget(QWidget):
             return any([isinstance(widget, widgetType)
                         for widgetType in self._inputWidget.values()])
         readOnlyProperty = widget.property("readOnly")
-        if isInputWidget(widget) and readOnlyProperty.isValid():
+        try:
+            readOnlyProperty = readOnlyProperty.isValid()
+        except AttributeError: # for QVariant
+            if readOnlyProperty is None:
+                readOnlyProperty = False
+        if isInputWidget(widget) and readOnlyProperty:
             widget.editingFinished.connect(self._editingFinishedSlot)
             if isinstance(widget, QLineEdit): # no valueChanged signal
                 widget.textChanged.connect(self._valueChangedSlot)

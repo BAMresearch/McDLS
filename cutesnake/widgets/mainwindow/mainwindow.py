@@ -24,8 +24,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         assert QAppVersion.isValid(appversion), "Please provide a valid QAppVersion."
         self._appversion = appversion
-        self.setWindowTitle(tr("%1 %2").arg(appversion.name())
-                                       .arg(appversion.number()))
+        self.setWindowTitle("{name} {number}"
+                .format(name = appversion.name(),
+                        number = appversion.number()))
         self.restoreSettings()
 
     def getCommandlineArguments(self):
@@ -68,8 +69,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         if self._appsettings is None:
             self._appsettings = QSettings(
-                    unicode(self._appversion.organizationName()),
-                    unicode(self._appversion.settingsKey()))
+                    self._appversion.organizationName(),
+                    self._appversion.settingsKey())
         defaultSettings = self._appversion.defaultSettings()
         logmsg = "Loaded settings."
         if defaultSettings is not None:
@@ -90,7 +91,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # restore actual settings
         for key, func in (('geometry', self.restoreGeometry),
                           ('windowState', self.restoreState)):
-            func(self._appsettings.value(key).toByteArray())
+            try: #QVariant
+                func(self._appsettings.value(key).toByteArray())
+            except AttributeError:
+                func(self._appsettings.value(key))
 
 # TODO: tests?
 

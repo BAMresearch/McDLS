@@ -7,8 +7,9 @@ File dialogs and convenience functions.
 """
 
 import os
-from cutesnake.qt import QtGui
+from cutesnake.qt import QtGui, PYQT
 from QtGui import QFileDialog, QDialog
+from cutesnake.utils import isList
 
 def fileDialogType():
     if sys.platform.startswith('win'):
@@ -48,8 +49,15 @@ def getOpenFiles(parent, labeltext, path,
               'caption': labeltext,
               'directory': path,
               'filter': makeFilter(filefilter)}
+    if 'PySide' in PYQT:
+        kwargs['dir'] = path # why does pyside have different kwarg keys?
     if multiple:
-        return list(QFileDialog.getOpenFileNames(parent, **kwargs))
+        res = QFileDialog.getOpenFileNames(parent, **kwargs)
+        if isList(res) and isList(res[0]):
+            res = res[0]
+        elif not isList(res):
+            res = list(res)
+        return res
     else:
         return [QFileDialog.getOpenFileName(parent, **kwargs)]
 

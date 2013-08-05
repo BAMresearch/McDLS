@@ -45,7 +45,8 @@ class ContextMenuWidget(object):
             title = self.title
             if isinstance(title, TitleHandler):
                 title = title()
-            return text.arg(title.lower())
+            text = text.replace("%", "{0}")
+            return text.format(title.lower())
         return text
 
     def addMenuEntry(self, name = None, text = None, toolTip = None,
