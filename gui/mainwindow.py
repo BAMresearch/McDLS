@@ -246,9 +246,9 @@ class MainWindow(MainWindowBase):
                 continue
             self.propWidget.set(name, settings.value(name))
         try:
-            value = settings.value("lastpath").toString()
+            value = unicode(settings.value("lastpath").toString())
         except AttributeError: # QVariant
-            value = settings.value("lastpath")
+            value = unicode(settings.value("lastpath"))
         if os.path.isdir(value):
             LastPath.set(value)
 
