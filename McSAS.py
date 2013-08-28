@@ -23,26 +23,26 @@ Classes and Functions Defined in This File
 Made possible with help from (amongst others)
 ---------------------------------------------
 
+ - | Ingo Bressler <ingo.bressler@bam.de>
+   | Code cleanup, modification and documentation
+ - | Pawel Kwasniewski <kwasniew@esrf.fr>
+   | Code cleanup and documentation
  - | Samuel Tardif
    | Derivations (mostly observability) and checking of mathematics
  - | Jan Skov Pedersen
    | checking of mathematics
- - | Pawel Kwasniewski <kwasniew@esrf.fr>
-   | Code cleanup and documentation
- - | Ingo Bressler <ingo.bressler@bam.de>
-   | Code cleanup, modification and documentation
 
 A Note on Units
 ---------------
 
-Internally, all length units are in meters, all angle units in degrees
-clockwise from top. *Intensity* is in
-:math:`\left[ 1 \over {m \cdot sr} \right]`,
+Internally, all length units are in meters, 
+all angle units in degrees clockwise from top. 
+*Intensity* is in :math:`\left[ 1 \over {m \cdot sr} \right]`,
 *q* in :math:`\left[ 1 \over m \right]`.
-The electron density contrast squared,
-*DeltaRhoSquared* is in :math:`\left[ m^{-4} \right]`.
+The electron density contrast squared, *DeltaRhoSquared* is in 
+    :math:`\left[ m^{-4} \right]`.
 Other units may be used, but if absolute units are supplied and absolute
-volume fractions required, meters are necessitated.
+volume fractions required, meters are required.
 
 Example Usage
 -------------
@@ -551,46 +551,6 @@ class McSAS(AlgorithmBase):
     ##################### Pre-optimisation Functions #####################
     ######################################################################
 
-    def SetFunction(self, kwargs):
-        """Defines Functions. In particular the following are specified:
-
-        - The parameter bounds estimation function *BOUNDS*. Should be able
-          to take input argument ContributionParameterBounds to update, i
-          should set the parameter bounds in
-          ``self.parameter['ContributionParameterBounds']``
-
-        - The random number generation function *RAND* This must take its
-          Parameters from self, and have an optional input argument specifying
-          the number of sets to return (for MC initialization). It should
-          return a set of Nsets-by-nvalues to be used directly in *FF*. This
-          may be depreciated soon as is can be generated from within.
-
-        - The Form-factor function *FF*. If called, this should get the
-          required information from self and a supplied Nsets-by-nvalues
-          shape-specifying parameter array. It should return an Nsets-by-q
-          array. Orientational averaging should be part of the form-factor
-          function (as it is most efficiently calculated there), so several
-          form factor Functions can exist for non-spherical objects.
-
-        - The shape volume calculation function *VOL*, which must be able to
-          deal with input argument *PowerCompensationFactor*, ranging from 
-          0 to 1. Should accept an Nsets-by-nvalues array returning an Nsets 
-          number of (PowerCompensationFactor-compensated)-volumes. 
-
-        - The smearing function *SMEAR*. Should take information from self
-          and an input Icalc, to output an Ismear of the same length.
-
-        This function will actually use the supplied function name as function
-        reference.
-        """
-        for kw in kwargs.keys():
-            if kw in self.Functions.keys():
-                if callable(kwargs[kw]):
-                    self.Functions[kw] = kwargs[kw]
-                else:
-                    # Make it into a function handle/pointer.
-                    self.Functions[kw] = getattr(self, kwargs[kw])
-
     def checkParameters(self):
         """Checks for the Parameters, for example to make sure
         histbins is defined for all, or to check if all Parameters fall
@@ -692,210 +652,6 @@ class McSAS(AlgorithmBase):
             return sc, conval, sc[0]*intCalc + sc[1]
         else:
             return sc, conval
-
-    ######################## Shape Functions ######################
-    def EllContributionParameterBounds_2D(self):
-        """This function will take the q and psi input bounds and outputs
-        properly formatted two-element size bounds for ellipsoids. Ellipsoids
-        are defined by their equatorial radius, meridional radius and axis
-        misalignment (default -45 to 45 degrees in Psi).
-        """
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        q = self.GetData('Q')
-        # reasonable, but not necessarily correct, Parameters
-        QBounds = array([pi / numpy.max(q),
-                         pi / numpy.min((abs(numpy.min(q)),
-                                       abs(numpy.min(diff(q)))))])
-        if len(ContributionParameterBounds) == 0:
-            print "ContributionParameterBounds not provided, so set related "\
-                    "to minimum q or minimum q step and maximum q. Lower and "\
-                    "upper bounds are {} and {}".format(QBounds[0], QBounds[1])
-            ContributionParameterBounds = numpy.array([QBounds[0], QBounds[1],
-                                  QBounds[0], QBounds[1],
-                                  -45, 45])
-        elif len(ContributionParameterBounds) == 6:
-            pass
-        else:
-            print "Wrong number of ContributionParameterBounds provided, "\
-                    "defaulting to {} and {} for radii, -45, 45 for "\
-                    "misalignment".format(QBounds[0], QBounds[1])
-            ContributionParameterBounds = numpy.array([QBounds[0], QBounds[1],
-                                  QBounds[0], QBounds[1],
-                                  -45, 45])
-        ContributionParameterBounds = \
-                numpy.array([numpy.min(ContributionParameterBounds[0:2]), 
-                    numpy.max(ContributionParameterBounds[0:2]),
-                    numpy.min(ContributionParameterBounds[2:4]), 
-                    numpy.max(ContributionParameterBounds[2:4]), 
-                    numpy.min(ContributionParameterBounds[4:6]), 
-                    numpy.max(ContributionParameterBounds[4:6])])
-
-        self.SetParameter(ContributionParameterBounds = 
-                ContributionParameterBounds)
-
-    def random_uniform_ell(self, Nell = 1):
-        """Random number generator for generating uniformly-sampled
-        size- and orientation Parameters for ellipsoids.
-        """
-        # get Parameters from self
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds') 
-        # generate Nsph random numbers
-        Rset = zeros((Nell, 3))
-        Rset[:, 0] = numpy.random.uniform(
-                numpy.min(ContributionParameterBounds[0]),
-                numpy.max(ContributionParameterBounds[1]), Nell)
-        Rset[:, 1] = numpy.random.uniform(
-                numpy.min(ContributionParameterBounds[2]),
-                numpy.max(ContributionParameterBounds[3]), Nell)
-        Rset[:, 2] = numpy.random.uniform(
-                numpy.min(ContributionParameterBounds[4]),
-                numpy.max(ContributionParameterBounds[5]), Nell)
-        # output Nsph-by-3 array
-        return Rset
-
-    def random_logR_ell(self, Nell = 1):
-        """Random number generator which behaves like its uniform counterpart,
-        but with a higher likelihood of sampling smaller sizes.
-        May speed up some fitting procedures.
-        """
-        #get Parameters from self
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        #generate Nsph random numbers
-        Rset = zeros((Nell, 3))
-        Rset[:, 0] = 10**(numpy.random.uniform(
-            log10(numpy.min(ContributionParameterBounds[0])),
-            log10(numpy.max(ContributionParameterBounds[1])), Nell))
-        Rset[:, 1] = 10**(numpy.random.uniform(
-            log10(numpy.min(ContributionParameterBounds[2])), 
-            log10(numpy.max(ContributionParameterBounds[3])), Nell))
-        Rset[:, 2] = numpy.random.uniform(
-                numpy.min(ContributionParameterBounds[4]),
-                numpy.max(ContributionParameterBounds[5]), Nell)
-        # output Nsph-by-3 array
-        return Rset
-
-    def random_logR_oblate_ell(self, Nell = 1):
-        """Random number generator which behaves like its uniform counterpart,
-        but with a higher likelihood of sampling smaller sizes.
-        May speed up some fitting procedures.
-        """
-        # get Parameters from self
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        # generate Nsph random numbers
-        Rset = zeros((Nell, 3))
-        Rset[:, 0] = 10**(numpy.random.uniform(
-            log10(numpy.min(ContributionParameterBounds[0])),
-            log10(numpy.max(ContributionParameterBounds[1])), Nell))
-        for Ni in range(Nell):
-            Rset[Ni, 1] = 10**(numpy.random.uniform(
-                log10(numpy.min(ContributionParameterBounds[2])),
-                log10(numpy.minimum(ContributionParameterBounds[3],
-                    Rset[Ni,0])), 1))
-        Rset[:,2]=numpy.random.uniform(
-                numpy.min(ContributionParameterBounds[4]),
-                numpy.max(ContributionParameterBounds[5]), Nell)
-        # output Nsph-by-3 array
-        return Rset
-
-    def random_logR_prolate_ell(self, Nell = 1):
-        """Random number generator which behaves like its uniform counterpart,
-        but with a higher likelihood of sampling smaller sizes.
-        May speed up some fitting procedures.
-        """
-        # get Parameters from self
-        ContributionParameterBounds = \
-                self.GetParameter('ContributionParameterBounds')
-        # generate Nsph random numbers
-        Rset = zeros((Nell, 3))
-        Rset[:, 0] = 10**(numpy.random.uniform(
-                            log10(numpy.min(ContributionParameterBounds[0])),
-                            log10(numpy.max(ContributionParameterBounds[1])), 
-                            Nell))
-        for Ni in range(Nell):
-            Rset[Ni, 1] = \
-                    10**(numpy.random.uniform(
-                        log10(numpy.maximum(Rset[Ni, 0], 
-                            ContributionParameterBounds[2])), 
-                        log10(ContributionParameterBounds[3]), 1))
-        Rset[:, 2] = \
-                numpy.random.uniform(numpy.min(ContributionParameterBounds[4]),
-                        numpy.max(ContributionParameterBounds[5]), Nell)
-        # output Nsph-by-3 array
-        return Rset
-
-    def vol_ell(self, Rset, PowerCompensationFactor = []):
-        """Calculates the volume of an ellipsoid, taking 
-        PowerCompensationFactor from input or preset Parameters.
-        """
-        if PowerCompensationFactor == []:
-            PowerCompensationFactor = \
-                    self.GetParameter('PowerCompensationFactor')
-        return ((4.0/3*pi) * Rset[:, 0]**(2*PowerCompensationFactor) * 
-                Rset[:, 1]**(PowerCompensationFactor))[:, newaxis]
-
-    def FF_ell_2D(self, Rset = [], Q = [], Psi = []):
-        """Calculates the form factor for oriented ellipsoids,
-        normalized to 1 at Q = 0.
-
-        :arg Rset: is n-by-3::
-
-                R1 = Rset[:, 0]
-                R2 = Rset[:, 1]
-                R3 = Rset[:, 2]
-
-            **R1 < R2**:
-                prolate ellipsoid (cigar-shaped)
-            **R1 > R2**:
-                oblate ellipsoid (disk-shaped)
-        
-        Rotation is offset from perfect orientation (psi-rot)
-
-        **Note**: All 2D Functions should be able to potentially take
-        externally supplied Q and Psi vectors.
-        """
-        # degrees to radians, forget the dot and get yourself into a
-        # non-floating point mess, even though pi is floating point ...
-        d_to_r = 1. / 360 * 2 * pi
-        if Q == []:
-            q = self.GetData('Q')     # 1-by-N
-            psi = self.GetData('Psi') # 1-by-N
-        else:
-            # externally supplied data
-            q = Q
-            psi = Psi
-        R1, R2, rot = Rset[:, 0], Rset[:, 1], Rset[:, 2]
-        NR = prod(shape(R1))
-        if NR == 1:
-            # option 1:
-            sda = sin((psi-rot) * d_to_r)
-            cda = cos((psi-rot) * d_to_r)
-            r = sqrt(R1**2 * sda**2 + R2**2 * cda**2)
-            qr = q*r
-            Fell = 3*(sin(qr) - qr*cos(qr)) / (qr**3)
-            ##quicker? no, 20% slower:
-            #Fell=3*(
-            #        sin(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-            #            +R2**2*cos((psi-rot)*d_to_r)**2))
-            #        -q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-            #            +R2**2*cos((psi-rot)*d_to_r)**2)
-            #        *cos(q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-            #            +R2**2*cos((psi-rot)*d_to_r)**2)))/
-            #               ((q*sqrt(R1**2*sin((psi-rot)*d_to_r)**2
-            #                +R2**2*cos((psi-rot)*d_to_r)**2))**3)
-        else: # calculate a series
-            Fell = zeros([NR, prod(shape(q))])
-            for Ri in range(size(R1)):
-                sda = sin((psi-rot[Ri]) * d_to_r)
-                cda = cos((psi-rot[Ri]) * d_to_r)
-                r = sqrt(R1[Ri]**2 * sda**2 + R2[Ri]**2 * cda**2)
-                qr = q*r
-                Fell[Ri, :] = 3*(sin(qr) - qr*cos(qr)) / (qr**3)
-
-        return Fell # this will be n-by-len(q) array
 
     def _passthrough(self,In):
         """A passthrough mechanism returning the input unchanged"""
@@ -1964,7 +1720,7 @@ class McSAS(AlgorithmBase):
                 skew =                 [skw.mean(), skw.std(ddof = 1)],
                 kurtosis =             [krt.mean(), krt.std(ddof = 1)]
         )
-        self.result.update(rangeInfoResult)
+        self.result[paramIndex].update(rangeInfoResult)
         return rangeInfoResult
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
