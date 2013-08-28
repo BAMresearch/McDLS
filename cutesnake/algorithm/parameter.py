@@ -61,6 +61,26 @@ from cutesnake.utils.mixedmethod import mixedmethod
 from cutesnake.utils.classproperty import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
 
+def generateValues(numberGenerator, defaultRange, lower, upper, count):
+    # works with vectors of multiple bounds too
+    vRange = defaultRange
+    if lower is None:
+        lower = vRange[0]
+    if upper is None:
+        upper = vRange[1]
+    vRange = (numpy.maximum(vRange[0], lower),
+              numpy.minimum(vRange[1], upper))
+    if isList(vRange[0]) and isList(vRange[1]):
+        assert len(vRange[0]) == len(vRange[1]), \
+            "Provided value range is unsymmetrical!"
+    try: # update count to length of provided bound vectors
+        count = max(count, min([len(x) for x in vRange]))
+    except:
+        pass
+    values = numberGenerator.get(count)
+    # scale numbers to requested range
+    return values * (vRange[1] - vRange[0]) + vRange[0]
+
 class ParameterError(StandardError):
     pass
 
@@ -163,6 +183,14 @@ class ParameterBase(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def generate(self, lower = None, upper = None, count = 1):
+        """Returns a list of valid parameter values within given bounds.
+        Accepts vectors of individual bounds for lower and upper limit.
+        This allows for inequality parameter constraints.
+        lower, upper: arrays for lower and upper bounds
+        """
+        raise NotImplementedError
 
 class ParameterNumerical(ParameterBase):
     _valueRange = None
@@ -298,7 +326,9 @@ class ParameterNumerical(ParameterBase):
                                                self.stepping()))))
 
     def generate(self, lower = None, upper = None, count = 1):
-        raise NotImplementedError
+        return generateValues(self.generator(), self.valueRange(),
+                                                lower, upper, count
+                                ).astype(self.dtype)
 
 class ParameterFloat(ParameterNumerical):
     _decimals = None
@@ -345,28 +375,8 @@ class ParameterFloat(ParameterNumerical):
                 ", {0} decimals".format(self.decimals()))
 
     def generate(self, lower = None, upper = None, count = 1):
-        """Returns a list of valid parameter values within given bounds.
-        Accepts vectors of individual bounds for lower and upper limit.
-        This allows for inequality parameter constraints.
-        """
-        # works with vectors of multiple bounds too
-        vRange = self.valueRange()
-        if lower is None:
-            lower = vRange[0]
-        if upper is None:
-            upper = vRange[1]
-        vRange = (numpy.maximum(vRange[0], lower),
-                  numpy.minimum(vRange[1], upper))
-        if isList(vRange[0]) and isList(vRange[1]):
-            assert len(vRange[0]) == len(vRange[1]), \
-                "Provided value range is unsymmetrical!"
-        try: # update count to length of provided bound vectors
-            count = max(count, min([len(x) for x in vRange]))
-        except:
-            pass
-        values = self.generator().get(count)
-        # scale numbers to requested range
-        return values * (vRange[1] - vRange[0]) + vRange[0]
+        return generateValues(self.generator(), self.valueRange(),
+                                                lower, upper, count)
 
 class ParameterLog(ParameterFloat):
     """Used to select an UI input widget with logarithmic behaviour."""
