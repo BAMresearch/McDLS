@@ -21,21 +21,21 @@ class Sphere(ScatteringModel):
         self.radius.setValueRange((1.0, 1e4)) #this only works for people
         #defining lengths in angstrom or nm, not m.
 
-    def updateParamBounds(self, bounds):
-        bounds = ScatteringModel.updateParamBounds(self, bounds)
-        if len(bounds) < 1:
-            return
-        if len(bounds) == 1:
-            logging.warning("Only one bound provided, "
-                            "assuming it denotes the maximum.")
-            bounds.insert(0, self.radius.valueRange(0))
-        elif len(bounds) > 2:
-            bounds = bounds[0:2]
-        logging.info("Updating lower and upper contribution parameter bounds "
-                     "to: ({0}, {1}).".format(min(bounds), max(bounds))) 
-        #logging.info changed from bounds[0] and bounds[1] to reflect better 
-        #what is done below:
-        self.radius.setValueRange((min(bounds), max(bounds)))
+    #def updateParamBounds(self, bounds):
+    #    bounds = ScatteringModel.updateParamBounds(self, bounds)
+    #    if len(bounds) < 1:
+    #        return
+    #    if len(bounds) == 1:
+    #        logging.warning("Only one bound provided, "
+    #                        "assuming it denotes the maximum.")
+    #        bounds.insert(0, self.radius.valueRange(0))
+    #    elif len(bounds) > 2:
+    #        bounds = bounds[0:2]
+    #    logging.info("Updating lower and upper contribution parameter bounds "
+    #                 "to: ({0}, {1}).".format(min(bounds), max(bounds))) 
+    #    #logging.info changed from bounds[0] and bounds[1] to reflect better 
+    #    #what is done below:
+    #    self.radius.setValueRange((min(bounds), max(bounds)))
 
     def vol(self, paramValues, compensationExponent = None):
         assert ScatteringModel.vol(self, paramValues)
