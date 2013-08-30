@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # calc.py
 
+import sys
 import logging
 import time
 import os.path
@@ -14,8 +15,8 @@ from cutesnake.utils import isList
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.utilsgui.displayexception import DisplayException
-from cutesnake.utilsgui import processEventLoop
-from cutesnake.log import Log
+from cutesnake.log import timestamp, addHandler
+import cutesnake.log as log
 from models.scatteringmodel import ScatteringModel
 from McSAS import McSAS
 
@@ -43,6 +44,11 @@ class SASData(DataSet, ResultMixin):
         if self.logWidget:
             self.logWidget.clear()
 
+        # start log file writing
+        fn = self.getResultFilename("log", "this log")
+        logFile = logging.FileHandler(fn, encoding = "utf8")
+        log.addHandler(logFile)
+
         q, I = data[:, 0], data[:, 1]
         emin, E = 0.01, None #minimum possible error (1%)
         E = emin * I
@@ -56,7 +62,7 @@ class SASData(DataSet, ResultMixin):
             E = np.maximum(E, data[:, 2])
 
         bounds = np.array([np.pi/np.max(q), np.pi/np.min(q)])
-        nreps, ncontrib, maxiter, convcrit, histbins = 3, 200, 1e4, 1.3, 50
+        nreps, ncontrib, maxiter, convcrit, histbins = 3, 200, 1e4, 5., 50
         if self.settings:
             convcrit = self.settings.get("convergenceCriterion")
             nreps = self.settings.get("numReps")
@@ -72,9 +78,6 @@ class SASData(DataSet, ResultMixin):
                       contribParamBounds = bounds,
                       maxIterations = maxiter,
                       convergenceCriterion = convcrit, doPlot = True)
-        if (not isinstance(self.mcsas.model, ScatteringModel) and
-                issubclass(self.mcsas.model, ScatteringModel)):
-            self.mcsas.model = self.mcsas.model()
         self.mcsas.calc(Q = q, I = I, IError = E, **mcargs)
 
         if isList(self.mcsas.result) and len(self.mcsas.result):
@@ -86,7 +89,8 @@ class SASData(DataSet, ResultMixin):
             logging.info("No results available!")
 
         self.writeSettings(mcargs)
-        self.writeLog()
+        log.removeHandler(logFile)
+        self.logWidget.profile.dump_stats("/tmp/profile.log")
 
     def writeFit(self, mcResult):
         self.writeResultHelper(mcResult, "fit", "fit data",
@@ -118,12 +122,6 @@ class SASData(DataSet, ResultMixin):
         with open(fn, 'w') as configfile:
             config.write(configfile)
 
-    def writeLog(self):
-        if not self.logWidget:
-            return
-        fn = self.getResultFilename("log", "this log")
-        self.logWidget.saveToFile(filename = fn)
-
     def getResultFilename(self, fileKey, descr):
         fn = self.getFilename(fileKey)
         logging.info("Writing {0} to:".format(descr))
@@ -140,9 +138,12 @@ class SASData(DataSet, ResultMixin):
         AsciiFile.writeFile(fn, data)
 
     def getFilename(self, kind):
+        """Creates a file name from data base name, its directory and the
+        current timestamp. It's created once so that all output files have
+        the same base name and timestamp."""
         if not hasattr(self, "basefn") or self.basefn is None:
             self.basefn = "{0}_{1}".format(
-                    os.path.join(LastPath.get(), self.title), Log.timestamp())
+                    os.path.join(LastPath.get(), self.title), log.timestamp())
         return "{0}_{1}.txt".format(self.basefn, kind)
 
 def calc(filenames):
@@ -155,8 +156,10 @@ def calc(filenames):
         try:
             SASData.load(fn)
         except StandardError, e:
-            DisplayException(e)
+            # on error, skip the current file
             logging.error(str(e).replace("\n"," ") + " ... skipping")
             continue
+    if sys.exc_info()[0] is not None: # reraise the last error if any
+        raise
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
