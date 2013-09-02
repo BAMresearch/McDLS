@@ -89,6 +89,7 @@ from cutesnake.algorithm import (AlgorithmBase, Parameter, ParameterBase,
 from utils.propertynames import PropertyNames
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
+from cutesnake.utilsgui import processEventLoop
 
 class McSASParameters(PropertyNames):
     model = None
@@ -876,14 +877,10 @@ class McSAS(AlgorithmBase):
                 it, vset[ri], vst = itest, vtt, vstest
                 if not McSASParameters.lowMemoryFootprint:
                     iset[:, ri] = itt
-                if time.time() - lastUpdate > 0.5:
-                    # update twice a sec max -> speedup for fast models
-                    # because output takes much time especially in GUI
-                    print ("Improvement in iteration number {0}, "
-                                 "Chi-squared value {1:f} of {2:f}\r"
-                                 .format(numIter, conval,
-                                     self.convergenceCriterion.value())),
-                    lastUpdate = time.time()
+                print ("Improvement in iteration number {0}, "
+                             "Chi-squared value {1:f} of {2:f}\r"
+                             .format(numIter, conval,
+                                 self.convergenceCriterion.value())),
                 numMoves += 1
                 if outputIterations:
                     # output each iteration, starting with number 0. 
@@ -912,6 +909,14 @@ class McSAS(AlgorithmBase):
                 # number of non-accepted moves,
                 # resets to zero after on accepted move
                 numNotAccepted += 1
+            if time.time() - lastUpdate > 0.25:
+                # update twice a sec max -> speedup for fast models
+                # because output takes much time especially in GUI
+                # process events, check for user input
+                # TODO: don't need this, if we calc in separate processes (multiprocessing)
+                # the gui would have an own thread and will not be blocked by calc
+                processEventLoop()
+                lastUpdate = time.time()
             # move to next sphere in list, loop if last sphere
             ri = (ri + 1) % (numContribs)
             numIter += 1 # add one to the iteration number
