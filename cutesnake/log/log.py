@@ -9,7 +9,6 @@ import sys
 import time
 import string
 import logging
-import cStringIO
 from sink import StdOutSink, StdErrSink
 
 FORMATTER = logging.Formatter(
@@ -44,7 +43,6 @@ def replaceStdOutErr(sout = None, serr = None):
     sys.stderr = serr
     # set custom log format for existing handlers
     handler = logging.StreamHandler(stream = sys.__stderr__)
-    handler.addFilter(HtmlFilter())
     replaceHandler(handler)
 
 def replaceHandler(handler):
@@ -73,13 +71,6 @@ def removeHandler(handler):
     except:
         pass
     logging.getLogger().removeHandler(handler)
-
-class HtmlFilter(logging.Filter):
-    def filter(self, record):
-        record.msg = (record.msg.replace("file://", "")
-                                .replace("&lt;", "<")
-                                .replace("&gt;", ">"))
-        return True
 
 if __name__ == "__main__":
     # run embedded doc tests
