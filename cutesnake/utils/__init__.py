@@ -141,6 +141,12 @@ def transformToString(t):
 
 # some utility functions for testing
 
+def log2file(text):
+    """Logs some text to a temporary file.
+    For debugging logging and output redirection and formatting."""
+    with open("/tmp/test", "a") as fd:
+        fd.write(bytearray(text, "utf8")+"\n")
+
 def writeout(fn, arr):
     numpy.set_printoptions(threshold = 1e6)
     if isinstance(arr, (tuple, list)):
