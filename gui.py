@@ -25,16 +25,20 @@ import logging
 from cutesnake.log import log, replaceStdOutErr
 
 def main(argv = None):
-
     parser = argparse.ArgumentParser(description = "Monte Carlo SAS analysis")
     parser.add_argument("-t", "--text", action = "store_true",
                         help = "Run in text mode without graphical "
                                "user interface")
+    parser.add_argument("-l", "--nolog", action = "store_true",
+                        help = "Disable progress output during fit, "
+                               "it's written to file in any case.")
     parser.add_argument('fnames', nargs = '*', metavar = 'FILENAME',
                         action = "store",
                         help = "One or more data files to analyse")
     # TODO: add info about output files to be created ...
     args = parser.parse_args()
+    from gui.calc import SASData
+    SASData.nolog = args.nolog # forwarding logging setting, quick fix for now
 
     # initiate logging (to console stderr for now)
     replaceStdOutErr() # replace all text output with our sinks
@@ -44,8 +48,8 @@ def main(argv = None):
         # run graphical user interface
         return eventLoop()
     else:
-        from gui import calc
         try:
+            from gui import calc
             calc(args.fnames)
         except StandardError, e:
             # show detailed error traceback if there was one

@@ -20,11 +20,14 @@ import cutesnake.log as log
 from models.scatteringmodel import ScatteringModel
 from McSAS import McSAS
 
-INDENT = "    "
-
 class SASData(DataSet, ResultMixin):
+    # static settings, move this to global app settings later
+    indent = "    "
+    nolog = False
+    # handles of gui components
     logWidget = None
     settings = None
+    # McSAS algorithm instance
     mcsas = McSAS.factory()()
 
     @classmethod
@@ -47,6 +50,7 @@ class SASData(DataSet, ResultMixin):
         # start log file writing
         fn = self.getResultFilename("log", "this log")
         logFile = logging.FileHandler(fn, encoding = "utf8")
+        oldHandler = log.log.handlers[0]
         log.addHandler(logFile)
 
         q, I = data[:, 0], data[:, 1]
@@ -78,7 +82,11 @@ class SASData(DataSet, ResultMixin):
                       contribParamBounds = bounds,
                       maxIterations = maxiter,
                       convergenceCriterion = convcrit, doPlot = True)
+        if self.nolog:
+            log.removeHandler(oldHandler)
         self.mcsas.calc(Q = q, I = I, IError = E, **mcargs)
+        if self.nolog:
+            log.addHandler(oldHandler)
 
         if isList(self.mcsas.result) and len(self.mcsas.result):
             res = self.mcsas.result[0]
@@ -90,7 +98,6 @@ class SASData(DataSet, ResultMixin):
 
         self.writeSettings(mcargs)
         log.removeHandler(logFile)
-        self.logWidget.profile.dump_stats("/tmp/profile.log")
 
     def writeFit(self, mcResult):
         self.writeResultHelper(mcResult, "fit", "fit data",
@@ -125,7 +132,7 @@ class SASData(DataSet, ResultMixin):
     def getResultFilename(self, fileKey, descr):
         fn = self.getFilename(fileKey)
         logging.info("Writing {0} to:".format(descr))
-        logging.info("{0}'{1}'".format(INDENT,
+        logging.info("{0}'{1}'".format(self.indent,
                                        QUrl.fromLocalFile(fn).toEncoded()))
         return fn
 
@@ -133,7 +140,7 @@ class SASData(DataSet, ResultMixin):
         fn = self.getResultFilename(fileKey, descr)
         logging.info("Containing the following columns:")
         for cn in columnNames:
-            logging.info("{0}&lt; {1} &gt;".format(INDENT, cn))
+            logging.info("{0}[ {1} ]".format(self.indent, cn))
         data = np.vstack([mcResult[cn] for cn in columnNames]).T
         AsciiFile.writeFile(fn, data)
 
