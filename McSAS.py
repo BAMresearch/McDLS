@@ -1373,7 +1373,7 @@ class McSAS(AlgorithmBase):
         print "{} lines written with {} columns per line, "\
               "and {} empty fields".format(rowi,ncol,emptyfields)
 
-    def plot(self, axisMargin = 0.3):
+    def plot(self, axisMargin = 0.3, parameterIdx=None):
         """
         This function plots the output of the Monte-Carlo procedure in two
         windows, with the left window the measured signal versus the fitted
@@ -1441,8 +1441,20 @@ class McSAS(AlgorithmBase):
             logging.info("There are no results to plot, breaking up.")
             return
         result = self.result[0]
-        # check how many result plots we need to generate: maximum three.
-        nhists = len(McSASParameters.histogramXScale)
+
+        # check how many result plots we need to generate, and find the 
+        #indices to the to-plot paramters
+        if parameterIdx==None:
+            parameterId=list()
+            nhists=0
+            for parai in range(len(self.model.parameters)):
+                nhists+=int(self.model.parameters[parai].isActive)
+                parameterId.append(parai)
+             
+            #nhists = len(McSASParameters.histogramXScale)
+        else:
+            parameterId=list([parameterIdx])
+            nhists=len(parameterId)
 
         # set plot font
         plotfont = fm.FontProperties(
@@ -1520,9 +1532,9 @@ class McSAS(AlgorithmBase):
         title('Measured vs. Fitted intensity',
               fontproperties = textfont, size = 'x-large')
         sizeAxis = list()
-        for histi in range(len(self.result)):
+        for parami in range(len(parameterId)):
             # get data:
-            res = self.result[histi]
+            res = self.result[parameterId[parami]]
             histXLowerEdge = res['histogramXLowerEdge']
             histXMean = res['histogramXMean']
             histXWidth = res['histogramXWidth']
@@ -1539,12 +1551,12 @@ class McSAS(AlgorithmBase):
                       "should be either 'volume' or 'number'"
 
             # prep axes
-            if McSASParameters.histogramXScale[histi] == 'log':
+            if McSASParameters.histogramXScale[parameterId[parami]] == 'log':
                 # quick fix with the [0] reference. Needs fixing, this
                 # plotting function should be rewritten to support multiple
                 # variables.
                 sizeAxis.append(fig.add_subplot(
-                                    1, (nhists + 1), histi + 2,
+                                    1, (nhists + 1), parami + 2,
                                     axisbg = (.95, .95, .95),
                                     xlim = (histXLowerEdge.min()
                                                 * (1 - axisMargin),
@@ -1560,7 +1572,7 @@ class McSAS(AlgorithmBase):
                             )
             else:
                 sizeAxis.append(fig.add_subplot(
-                                    1, (nhists + 1), histi + 2,
+                                    1, (nhists + 1), parami + 2,
                                     axisbg = (.95, .95, .95),
                                     xlim = (histXLowerEdge.min()
                                             - (1 - axisMargin)
@@ -1574,7 +1586,7 @@ class McSAS(AlgorithmBase):
                                     xlabel = 'Radius, m',
                                     ylabel = '[Rel.] Volume Fraction'))
 
-            sizeAxis[histi] = setAxis(sizeAxis[histi])
+            sizeAxis[parami] = setAxis(sizeAxis[parami])
             # fill axes
             bar(histXLowerEdge[0:-1], volHistYMean, 
                     width = histXWidth, color = 'orange',
