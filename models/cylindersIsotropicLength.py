@@ -2,25 +2,25 @@
 # models/cylinders.py
 
 import numpy, scipy, scipy.special
-from numpy import pi, zeros, sin, cos
+from numpy import pi, zeros, sin, cos, sqrt, newaxis
 from cutesnake.algorithm import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
 
-class CylindersRadiallyIsotropic(ScatteringModel):
+class CylindersIsotropicLength(ScatteringModel):
     r"""Form factor of cylinders
     which are radially isotropic (so not spherically isotropic!)
     !!!completed but not verified!!!
     """
-    shortName = "Cylinders defined by aspect ratio"
+    shortName = "Cylinders defined by length"
     parameters = (
             Parameter("radius", 1.0,
                     displayName = "Cylinder radius",
                     valueRange = (0.1, numpy.inf), suffix = "nm"),
-            Parameter("aspect", 10.0,
-                    displayName = "Aspect ratio L/(2R) of the cylinder",
-                    valueRange = (0.1, numpy.inf), suffix = "-"),
+            Parameter("length", 10.0,
+                    displayName = "length L of the cylinder",
+                    valueRange = (0.1, numpy.inf), suffix = "nm"),
             Parameter("psiAngle", 10.0,
                     displayName = "in-plane cylinder rotation",
                     valueRange = (0.1, 360.1), suffix = "deg."),
@@ -37,7 +37,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
         ScatteringModel.__init__(self)
         # some presets
         self.radius.setValueRange((0.1, 1e3))
-        self.aspect.setValueRange((1, 20))
+        self.length.setValueRange((1, numpy.inf))
 
     def ff(self, dataset, paramValues):
         assert ScatteringModel.ff(self, dataset, paramValues)
@@ -45,26 +45,26 @@ class CylindersRadiallyIsotropic(ScatteringModel):
         # vectorized data and arguments
         q = dataset[:, 0]
         radius = numpy.array((self.radius.value(),))
-        aspect = numpy.array((self.aspect.value(),))
+        length = numpy.array((self.length.value(),))
         psiAngle = numpy.array((self.psiAngle.value(),))
         psiAngleDivisions = numpy.array((self.psiAngleDivisions.value(),))
 
         if self.radius.isActive:
             radius = paramValues[:, 0]
-        if self.aspect.isActive:
+        if self.length.isActive:
             idx = int(self.radius.isActive)
-            aspect = paramValues[:, idx]
+            length = paramValues[:, idx]
         if self.psiAngle.isActive:
             #Question: can we nog simply do idx+=1 here?
             idx = numpy.sum((
                     int(self.radius.isActive),
-                    int(self.aspect.isActive)))
+                    int(self.length.isActive)))
             psiAngle = paramValues[:, idx]
         if self.psiAngleDivisions.isActive:
             #not expected to be variable.
             idx = numpy.sum((
                     int(self.radius.isActive),
-                    int(self.aspect.isActive),
+                    int(self.length.isActive),
                     int(self.psiAngle.isActive)))
             psiAngleDivisions = paramValues[:, idx]
 
@@ -88,11 +88,11 @@ class CylindersRadiallyIsotropic(ScatteringModel):
         Fcyl=zeros((len(q),len(radius)))
         for ri in range(len(radius)):
             psiA=psiAngle[ri%len(psiAngle)]
-            asp=aspect[ri%len(aspect)]
+            lengtH=length[ri%len(length)]
             radi=radius[ri%len(radius)]
-            qRsina=numpy.outer(q,radi*sin(((psi-psiA)*dToR)))
-            qLcosa=numpy.outer(q,radi*asp*cos(((psi-psiA)*dToR)))
-            fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )
+            qRsina=numpy.outer(q,radi*sin((psi-psiA)*dToR))
+            qLcosa=numpy.outer(q,lengtH/2.*cos((psi-psiA)*dToR))
+            fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )*sqrt(abs(sin((psi-psiA)*dToR))[newaxis,:]+0*qRsina)
             #integrate over orientation
             Fcyl[:,ri]=numpy.mean(fsplit,axis=1) #should be length q
 
@@ -104,25 +104,25 @@ class CylindersRadiallyIsotropic(ScatteringModel):
             compensationExponent = self.compensationExponent                   
         idx = 0
         radius=paramValues[:,0]                                                
-        if self.aspect.isActive:                                               
+        if self.length.isActive:                                               
             idx+=1                                                             
-            aspect =paramValues[:,idx]                                         
+            length =paramValues[:,idx]                                         
         else:                                                                  
-            aspect=self.aspect.value()                                         
+            length=self.length.value()                                         
 
-        v = pi*radius**2*(2*radius*aspect)                                     
+        v = pi*radius**2*(length)                                     
         return v**compensationExponent          
 
-CylindersRadiallyIsotropic.factory()
+CylindersIsotropicLength.factory()
 
 if __name__ == "__main__":
     from cutesnake.datafile import PDHFile, AsciiFile
     pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
-    model = CylindersRadiallyIsotropic()
+    model = CylindersIsotropicLength()
     model.radius.setValue(1.)
     model.radius.isActive = False
-    model.aspect.setValue(100.)
-    model.aspect.isActive = False
+    model.length.setValue(100.)
+    model.length.isActive = False
     model.psiAngle.setValue(1.)
     model.psiAngle.isActive = False
     model.psiAngleDivisions.setValue(303)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)
     result = numpy.dstack((q, intensity, delta))[0]
-    AsciiFile.writeFile("CylindersRadiallyIsotropic.dat", result)
+    AsciiFile.writeFile("CylindersIsotropicLength.dat", result)
     # call it like this:
     # PYTHONPATH=..:../mcsas/ python brianpauwgui/gaussianchain.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
 

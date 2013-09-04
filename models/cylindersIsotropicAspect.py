@@ -2,13 +2,13 @@
 # models/cylinders.py
 
 import numpy, scipy, scipy.special
-from numpy import pi, zeros, sin, cos
+from numpy import pi, zeros, sin, cos, sqrt, newaxis
 from cutesnake.algorithm import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
 
-class CylindersRadiallyIsotropic(ScatteringModel):
+class CylindersIsotropic(ScatteringModel):
     r"""Form factor of cylinders
     which are radially isotropic (so not spherically isotropic!)
     !!!completed but not verified!!!
@@ -17,16 +17,16 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     parameters = (
             Parameter("radius", 1.0,
                     displayName = "Cylinder radius",
-                    valueRange = (0.1, numpy.inf), suffix = "nm"),
+                    valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
-                    valueRange = (0.1, numpy.inf), suffix = "-"),
+                    valueRange = (0., numpy.inf), suffix = "-"),
             Parameter("psiAngle", 10.0,
                     displayName = "in-plane cylinder rotation",
-                    valueRange = (0.1, 360.1), suffix = "deg."),
+                    valueRange = (0., 180.), suffix = "deg."),
             Parameter("psiAngleDivisions", 303.,
                     displayName = "in-plane angle divisions",
-                    valueRange = (1, numpy.inf), suffix = "-"),
+                    valueRange = (0, numpy.inf), suffix = "-"),
     )
     parameters[0].isActive = True
     parameters[1].isActive = False#not expected to vary
@@ -90,9 +90,9 @@ class CylindersRadiallyIsotropic(ScatteringModel):
             psiA=psiAngle[ri%len(psiAngle)]
             asp=aspect[ri%len(aspect)]
             radi=radius[ri%len(radius)]
-            qRsina=numpy.outer(q,radi*sin(((psi-psiA)*dToR)))
-            qLcosa=numpy.outer(q,radi*asp*cos(((psi-psiA)*dToR)))
-            fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )
+            qRsina=numpy.outer(q,radi*sin(((psi-psiA)*dToR)%180))
+            qLcosa=numpy.outer(q,radi*asp*cos(((psi-psiA)*dToR)%180))
+            fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )*sqrt((sin((psi-psiA)*dToR))[newaxis,:]%180+0*qRsina)
             #integrate over orientation
             Fcyl[:,ri]=numpy.mean(fsplit,axis=1) #should be length q
 
@@ -113,12 +113,12 @@ class CylindersRadiallyIsotropic(ScatteringModel):
         v = pi*radius**2*(2*radius*aspect)                                     
         return v**compensationExponent          
 
-CylindersRadiallyIsotropic.factory()
+CylindersIsotropic.factory()
 
 if __name__ == "__main__":
     from cutesnake.datafile import PDHFile, AsciiFile
     pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
-    model = CylindersRadiallyIsotropic()
+    model = CylindersIsotropic()
     model.radius.setValue(1.)
     model.radius.isActive = False
     model.aspect.setValue(100.)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)
     result = numpy.dstack((q, intensity, delta))[0]
-    AsciiFile.writeFile("CylindersRadiallyIsotropic.dat", result)
+    AsciiFile.writeFile("CylindersIsotropic.dat", result)
     # call it like this:
     # PYTHONPATH=..:../mcsas/ python brianpauwgui/gaussianchain.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
 
