@@ -6,17 +6,19 @@
 
 import os.path
 import re
+import sys
 from cutesnake.qt import QtCore, QtGui
 from cutesnake.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
-                   QGroupBox, QComboBox)
+                   QGroupBox, QComboBox, QApplication)
 from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
+from cutesnake.utilsgui.displayexception import DisplayException
 from version import version
 from calc import calc, SASData
 
@@ -64,6 +66,12 @@ MODELS = {Sphere.name(): Sphere,
           GaussianChain.name(): GaussianChain,
           LMADenseSphere.name(): LMADenseSphere}
 FIXEDWIDTH = 120
+
+def eventLoop():
+    app = QApplication(sys.argv)
+    mw = MainWindow()
+    mw.show()
+    return app.exec_()
 
 class PropertyWidget(SettingsWidget):
     _optional = None
@@ -269,11 +277,17 @@ class MainWindow(MainWindowBase):
     def fileDialog(self):
         filenames = getOpenFiles(self, "Load one or more data files",
                                  LastPath.get(), multiple = True)
-        calc(filenames)
+        self.startCalc(filenames)
 
     def onStartup(self):
         self.propWidget.selectModel()
-        calc(self.getCommandlineArguments())
+        self.startCalc(self.getCommandlineArguments())
+
+    def startCalc(self, fnames):
+        try:
+            calc(fnames)
+        except StandardError, e:
+            DisplayException(e)
 
     def closeEvent(self, closeEvent):
         super(MainWindow, self).closeEvent(closeEvent)

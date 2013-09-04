@@ -20,41 +20,41 @@ if not isFrozen():
     programDir = os.path.abspath(os.path.join(scriptPath))
     sys.path.append(programDir)
 
-import getopt
-from gui import eventLoop
+import argparse
+import logging
+from cutesnake.log import log, replaceStdOutErr
 
-def cmdName(argv):
-    if not argv or len(argv) <= 0:
-        return ""
+def main(argv = None):
+    parser = argparse.ArgumentParser(description = "Monte Carlo SAS analysis")
+    parser.add_argument("-t", "--text", action = "store_true",
+                        help = "Run in text mode without graphical "
+                               "user interface")
+    parser.add_argument("-l", "--nolog", action = "store_true",
+                        help = "Disable progress output during fit, "
+                               "it's written to file in any case.")
+    parser.add_argument('fnames', nargs = '*', metavar = 'FILENAME',
+                        action = "store",
+                        help = "One or more data files to analyse")
+    # TODO: add info about output files to be created ...
+    args = parser.parse_args()
+    from gui.calc import SASData
+    SASData.nolog = args.nolog # forwarding logging setting, quick fix for now
+
+    # initiate logging (to console stderr for now)
+    replaceStdOutErr() # replace all text output with our sinks
+
+    if not args.text:
+        from gui.mainwindow import eventLoop
+        # run graphical user interface
+        return eventLoop()
     else:
-        return os.path.basename(argv[0])
-
-def printUsage(argv, msg=""):
-    if len(msg):
-        msg += "\n"
-    msg += "USAGE: " + cmdName(argv) + " <A> <B> <intensity-file>"
-    print >> sys.stdout, msg
-    return -1
-
-def main(argv=None):
-
-    if argv is None:
-        argv = sys.argv
-
-    opts = []
-    args = []
-    # extract valid options
-    try:
-        opts, args = getopt.getopt(argv[1:], "h", ["help"])
-    except getopt.error:
-        return printUsage(argv, "For a list of valid options, "
-                                "use '-h' for help.")
-    # evaluate valid options
-    if (unicode("-h"), "") in opts or \
-       (unicode("--help"), "") in opts: 
-        return printUsage(argv)
-
-    return eventLoop()
+        try:
+            from gui import calc
+            calc(args.fnames)
+        except StandardError, e:
+            # show detailed error traceback if there was one
+            import traceback
+            logging.error(traceback.format_exc())
 
 if __name__ == "__main__":
     main()

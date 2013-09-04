@@ -9,18 +9,11 @@ from QtCore import Qt, QRegExp, QTimer
 from QtGui import (QApplication, QKeySequence, QTextBrowser, QDesktopServices)
 from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.widgets.mixins.contextmenuwidget import ContextMenuWidget
-from cutesnake.log import Log, WidgetHandler
+import cutesnake.log as log
 from cutesnake.utils import isString
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.utils.translate import tr
 from cutesnake.utilsgui.filedialog import getSaveFile
-from cutesnake.utilsgui import processEventLoop
-
-import cProfile
-def logfile(text):
-    return
-    with open("/tmp/test", "a") as fd:
-        fd.write(bytearray(text, "utf8")+"\n")
 
 # precompile regular expression for urls
 URLREGEXP = re.compile(r"((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))")
@@ -34,12 +27,12 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
     Simple TextEdit which can save its contents to file.
 
     Fill it with text.
-    >>> from utilsgui import DialogInteraction, fileDialogType
-    >>> from plaintextedit import PlainTextEdit
+    >>> from cutesnake.utilsgui.dialoginteraction import DialogInteraction
+    >>> from cutesnake.widgets.logwidget import LogWidget
     >>> testdata = 'blablubba\\nblubb'
-    >>> te = DialogInteraction.instance(PlainTextEdit)
-    >>> te.appendPlainText(testdata)
-    >>> te.toPlainText() == testdata
+    >>> te = DialogInteraction.instance(LogWidget)
+    >>> te.append(testdata)
+    >>> te.contents() == testdata
     True
 
     Call save to file dialog and save.
@@ -85,35 +78,36 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
     _appversion = None
     _buffer = None
     _timer = None
-    _updateInterval = 1000 # ms
-    _lineBreak = "<br />\n"
+    _updateInterval = 300 # ms
+#    _lineBreak = "<br />\n"
+    _lineBreak = "\n"
 
     def __init__(self, parent = None, appversion = None):
-        QTextBrowser.__init__(self, parent)
+        super(LogWidget, self).__init__(parent = parent)
         ContextMenuWidget.__init__(self)
         self.title = TitleHandler.setup(self, "Log")
         self.appversion = appversion
         self.setUndoRedoEnabled(False)
         self.setReadOnly(True)
-        self.setOpenExternalLinks(True)
         self.setTextInteractionFlags(
             Qt.LinksAccessibleByMouse|
             Qt.TextSelectableByMouse)
+        try:
+            self.setOpenExternalLinks(True)
+            self.anchorClicked.connect(QDesktopServices.openUrl)
+            self.setOpenLinks(False)
+        except: pass
         self._buffer = []
         self._bufferDirty = False
         self._timer = QTimer(self)
         self._timer.setInterval(self._updateInterval)
         self._timer.timeout.connect(self._updateContents)
-        Log.setHandler(WidgetHandler(self))
+        log.replaceHandler(log.WidgetHandler(self))
         self._setupActions()
         self._copyAvailable = False
         self.copyAvailable.connect(self.setCopyAvailable)
-        self.anchorClicked.connect(QDesktopServices.openUrl)
-        self.setOpenLinks(False)
         self._timer.start()
         QTimer.singleShot(50, self._updateContents)
-
-        self.profile = cProfile.Profile()
 
     @property
     def appversion(self):
@@ -155,7 +149,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
     def _appendBuffer(self, text):
         # Handling carriage return \r correctly for overwriting a single line
         # makes this a bit complex ...
-        if getattr(self, "lastr", -1) >= 0:
+        if getattr(self, "lastr", -1) >= 0 and len(self._buffer):
             # delete \r preceding text in the previous line until previous \n
             prev = self._buffer.pop(-1)
             lastn = max(0, prev.rfind('\n', 0, self.lastr))
@@ -170,15 +164,14 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         if self.lastr >= 0:
             lastn = max(0, text.rfind('\n', 0, self.lastr))
             if len(text[self.lastr+1:]):           # there is text following
-                text = text[lastn-1:self.lastr] # delete preceding text
+                text = text[lastn-1:self.lastr]    # delete preceding text
                 self.lastr = -1                    # reset
-        if text[-1] == '\n':                       # remove trailing newlines
+        if len(text) and text[-1] == '\n':         # remove trailing newlines
             text = text[:-1]
         self._buffer.append(url2href(text.replace('\n', self._lineBreak)))
         self._bufferDirty = True
 
     def _updateContents(self):
-        logfile("_updateContents")
         if not self._bufferDirty:
             return
         # remember slider position if not at the bottom
@@ -187,9 +180,12 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         if scroll.sliderPosition() != scroll.maximum():
             sliderPosition = scroll.sliderPosition()
         # update text
-        super(LogWidget, self).setHtml(
-                self._lineBreak.join(self._buffer)
+        super(LogWidget, self).append(
+                "<pre style=\"white-space: pre-wrap; margin: 0;\">" +
+                    self._lineBreak.join(filter(len, self._buffer))
+                + "</pre>"
         )
+        self._buffer = []
         self._bufferDirty = False
         # restore slider position eventually
         if sliderPosition is not None:
@@ -199,29 +195,24 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
 
     def append(self, text):
         """Appends a new line of text."""
-        self.profile.enable()
-        logfile("append {0}".format(len(self._buffer)))
-
-        self._appendBuffer(unicode(text))
-        # process qt events always
-        processEventLoop()
-
-        self.profile.disable()
+        wasEmpty = self.document().isEmpty()
+        # self._appendBuffer(unicode(text)) # disabled \r handling, a must have?
+        self._buffer.extend(url2href(unicode(text).replace('\r', '')).splitlines())
+        self._bufferDirty = True
+        if wasEmpty:
+            self._updateContents()
 
     def contents(self):
         return unicode(self.toPlainText())
 
     def saveToFile(self, filename = None):
-        print "storing profile"
-        self.profile.dump_stats("/tmp/profile.log")
-
         fn = filename
         if not isString(fn):
             filefilter = ["Text files (*.txt)",]
             name, number = "", ""
             if self.appversion:
                 name, number = self.appversion.name(), self.appversion.number()
-            fnFormat = Log.timestamp() + "_{0}-{1}_log.txt"
+            fnFormat = log.timestamp() + "_{0}-{1}_log.txt"
             fn = fnFormat.format(name, number)
             fn = os.path.join(LastPath.get(), fn)
             fn = getSaveFile(self, "Select a file to save the log to.",
@@ -238,5 +229,10 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         It makes sure this slot is called if connected to a application close
         signal. For example, emitted by the main window on closeEvent()."""
         QApplication.instance().exit()
+
+# on single file execution, run doctests
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

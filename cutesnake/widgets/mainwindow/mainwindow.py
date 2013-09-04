@@ -99,4 +99,3 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 # TODO: tests?
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
-

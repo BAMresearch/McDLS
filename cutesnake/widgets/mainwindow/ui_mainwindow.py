@@ -23,7 +23,6 @@ class Ui_MainWindow(object):
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName(fromUtf8("statusbar"))
         MainWindow.setStatusBar(self.statusbar)
-
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -31,3 +30,5 @@ class Ui_MainWindow(object):
         pass
 
 import mainwindow_rc
+
+# vim: set ts=4 sw=4 sts=4 tw=0:
