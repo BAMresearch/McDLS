@@ -1541,41 +1541,33 @@ class McSAS(AlgorithmBase):
                 print "Incorrect value for histWeighting: "\
                       "should be either 'volume' or 'number'"
 
+
+            #get information for labels:
+            plotPar=self.model.parameters[parameterId[parami]]
+            plotTitle=plotPar.displayName()
+            xLabel='{}, {}'.format(plotPar.name(),plotPar.suffix())
+
             # prep axes
             if McSASParameters.histogramXScale[parameterId[parami]] == 'log':
-                # quick fix with the [0] reference. Needs fixing, this
-                # plotting function should be rewritten to support multiple
-                # variables.
-                sizeAxis.append(fig.add_subplot(
-                                    1, (nhists + 1), parami + 2,
-                                    axisbg = (.95, .95, .95),
-                                    xlim = (histXLowerEdge.min()
-                                                * (1 - axisMargin),
-                                            histXLowerEdge.max()
-                                                * (1 + axisMargin)
-                                    ),
-                                    ylim = (0, volHistYMean.max()
-                                                * (1 + axisMargin)
-                                    ),
-                                    xlabel = 'Radius, m',
-                                    ylabel = '[Rel.] Volume Fraction',
-                                    xscale = 'log')
-                            )
+
+                xLim = (histXLowerEdge.min() * (1 - axisMargin), 
+                        histXLowerEdge.max() * (1 + axisMargin))
+                xScale = 'log'
             else:
-                sizeAxis.append(fig.add_subplot(
-                                    1, (nhists + 1), parami + 2,
-                                    axisbg = (.95, .95, .95),
-                                    xlim = (histXLowerEdge.min()
-                                            - (1 - axisMargin)
-                                            * histXLowerEdge.min(),
-                                            histXLowerEdge.max()
-                                            * (1 + axisMargin)
-                                    ),
-                                    ylim = (0, volHistYMean.max()
-                                                * (1 + axisMargin)
-                                    ),
-                                    xlabel = 'Radius, m',
-                                    ylabel = '[Rel.] Volume Fraction'))
+                xLim = (histXLowerEdge.min() - (1 - axisMargin)
+                        * histXLowerEdge.min(), 
+                        histXLowerEdge.max() * (1 + axisMargin))
+                xScale = 'linear'
+
+            yLim = (0, volHistYMean.max() * (1 + axisMargin) )
+            sizeAxis.append(fig.add_subplot(
+                                1, (nhists + 1), parami + 2,
+                                axisbg = (.95, .95, .95),
+                                xlim = xLim,
+                                ylim = yLim,
+                                xlabel = xLabel,
+                                xscale = xScale,
+                                ylabel = '[Rel.] Volume Fraction'))
 
             sizeAxis[parami] = setAxis(sizeAxis[parami])
             # fill axes
@@ -1591,7 +1583,7 @@ class McSAS(AlgorithmBase):
                     elinewidth = 2, capsize = 4, ms = 0, lw = 2,
                     solid_capstyle = 'round', solid_joinstyle = 'miter')
             legend(loc = 1, fancybox = True, prop = textfont)
-            title('Radius size hist', fontproperties = textfont,
+            title(plotTitle, fontproperties = textfont,
                   size = 'x-large')
             # reapply limits in x
             xlim((histXLowerEdge.min() * (1 - axisMargin),
