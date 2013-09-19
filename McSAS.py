@@ -1411,11 +1411,6 @@ class McSAS(AlgorithmBase):
                           size = 'x-large')
             ah.set_ylabel(ah.get_ylabel(), fontproperties = textfont,
                           size = 'x-large')
-            # qAxis.set_yticklabels(qAxis.get_yticks(),
-            #                      fontproperties = plotfont)
-            # qAxis.set_xticklabels(qAxis.get_xticks(),
-            #                      fontproperties = plotfont)
-            # sizeAxis.spines['bottom'].set_color('black')
             ah.spines['bottom'].set_lw(2)
             ah.spines['top'].set_lw(2)
             ah.spines['left'].set_lw(2)
@@ -1426,16 +1421,6 @@ class McSAS(AlgorithmBase):
                            which = 'minor', direction = 'in', length = 3)
             ah.tick_params(axis = 'y', colors = 'black', width = 2,
                            which = 'minor', direction = 'in', length = 3)
-            # qAxis.spines['bottom'].set_lw(2)
-            # qAxis.spines['top'].set_lw(2)
-            # qAxis.spines['left'].set_lw(2)
-            # qAxis.spines['right'].set_lw(2)
-            # qAxis.tick_params(axis = 'both', colors='black',width=2,
-            #                  which='major',direction='in',length=6)
-            # qAxis.tick_params(axis = 'x', colors='black',width=2,
-            #                  which='minor',direction='in',length=3)
-            # qAxis.tick_params(axis = 'y', colors='black',width=2,
-            #                  which='minor',direction='in',length=3)
             locs, labels = xticks()
             xticks(locs, map(lambda x: "%g" % x, locs))
             locs, labels = yticks()
@@ -1453,8 +1438,9 @@ class McSAS(AlgorithmBase):
             parameterId=list()
             nhists=0
             for parai in range(len(self.model.parameters)):
-                nhists+=int(self.model.parameters[parai].isActive)
-                parameterId.append(parai)
+                if bool(int(self.model.parameters[parai].isActive)):
+                    nhists+=1
+                    parameterId.append(parai)
              
             #nhists = len(McSASParameters.histogramXScale)
         else:
