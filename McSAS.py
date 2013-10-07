@@ -1144,7 +1144,7 @@ class McSAS(AlgorithmBase):
         for paramIndex, param in enumerate(self.model.params()):
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
-            if McSASParameters.histogramXScale[paramIndex] == 'lin':
+            if McSASParameters.histogramXScale[paramIndex] == 'linear':
                 # histogramXLowerEdge contains #histogramBins+1 bin edges,
                 # or class limits.
                 histogramXLowerEdge = numpy.linspace(
