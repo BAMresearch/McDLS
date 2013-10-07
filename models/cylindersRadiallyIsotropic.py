@@ -90,11 +90,16 @@ class CylindersRadiallyIsotropic(ScatteringModel):
             psiA=psiAngle[ri%len(psiAngle)]
             asp=aspect[ri%len(aspect)]
             radi=radius[ri%len(radius)]
+            #rotation can be used to get slightly better results, but
+            #ONLY FOR RADIAL SYMMETRY, NOT SPHERICAL.
             qRsina=numpy.outer(q,radi*sin(((psi-psiA)*dToR)))
             qLcosa=numpy.outer(q,radi*asp*cos(((psi-psiA)*dToR)))
+            #leave the rotation out of it for now. 
+            #qRsina=numpy.outer(q,radi*sin(((psi)*dToR)))
+            #qLcosa=numpy.outer(q,radi*asp*cos(((psi)*dToR)))
             fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )
             #integrate over orientation
-            Fcyl[:,ri]=numpy.mean(fsplit,axis=1) #should be length q
+            Fcyl[:,ri]=numpy.sqrt(numpy.mean(fsplit**2,axis=1)) #should be length q
 
         return Fcyl
 

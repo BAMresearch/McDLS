@@ -90,11 +90,15 @@ class CylindersIsotropic(ScatteringModel):
             psiA=psiAngle[ri%len(psiAngle)]
             asp=aspect[ri%len(aspect)]
             radi=radius[ri%len(radius)]
-            qRsina=numpy.outer(q,radi*sin(((psi-psiA)*dToR)%180))
-            qLcosa=numpy.outer(q,radi*asp*cos(((psi-psiA)*dToR)%180))
-            fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )*sqrt((sin((psi-psiA)*dToR))[newaxis,:]%180+0*qRsina)
+            #this is wrong for spherical symmetry:
+            #qRsina=numpy.outer(q,radi*sin(((psi-psiA)*dToR)%180))
+            #qLcosa=numpy.outer(q,radi*asp*cos(((psi-psiA)*dToR)%180))
+            #fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )*sqrt((sin((psi-psiA)*dToR))[newaxis,:]%180+0*qRsina)
+            qRsina=numpy.outer(q,radi*sin(((psi)*dToR)%180))
+            qLcosa=numpy.outer(q,radi*asp*cos(((psi)*dToR)%180))
+            fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )*sqrt((sin((psi)*dToR))[newaxis,:]%180+0*qRsina)
             #integrate over orientation
-            Fcyl[:,ri]=numpy.mean(fsplit,axis=1) #should be length q
+            Fcyl[:,ri]=numpy.sqrt(numpy.mean(fsplit**2,axis=1)) #should be length q
 
         return Fcyl
 
