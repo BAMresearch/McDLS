@@ -1680,7 +1680,9 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, paramIndex, ri]
             validRange = (  (rset > min(valueRange))
                           * (rset < max(valueRange)))
-            rset = rset[validRange][:, newaxis]
+            #BP: this one did not work for multi-parameter models
+            #rset = rset[validRange][:, newaxis]
+            rset = contribs[validRange,:,ri]
             # compensated volume for each sphere in the set
             # TODO: same code as in gen2dintensity and other places
             vset = self.model.vol(rset)
