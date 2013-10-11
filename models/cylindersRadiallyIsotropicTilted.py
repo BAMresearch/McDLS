@@ -122,7 +122,7 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
 
                 fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sinc(qLcosa/pi))
                 #integrate over orientation
-                Fcyl[:,ri]+=numpy.sqrt(numpy.mean(fsplit**2,axis=1)) #should be length q
+                Fcyl[:,ri]+=numpy.sqrt(numpy.mean(fsplit**2,axis=1))/len(phiCtr) #should be length q
 
         return Fcyl
 
