@@ -1388,6 +1388,8 @@ class McSAS(AlgorithmBase):
         import matplotlib.font_manager as fm
         from matplotlib.pyplot import figure, xticks, yticks, errorbar
         from matplotlib.pyplot import bar, plot, grid, legend, title, xlim
+        from matplotlib.pyplot import gca
+        from pylab import show
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
         fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
         def setAxis(ah):
@@ -1519,6 +1521,12 @@ class McSAS(AlgorithmBase):
                  label = 'MC Background level:\n\t ({0:03.3g})'
                          .format(numpy.mean(result['scalingFactors'][1, :])),
                  zorder = 3)
+            #for some reason, the axis settings are not set using the above
+            #call, and need repeating:
+            gca().set_xlim((q.min() * (1 - axisMargin),
+                    q.max() * (1 + axisMargin)))
+            gca().set_ylim((intensity[intensity != 0].min() * (1 - axisMargin),
+                                intensity.max() * (1 + axisMargin) ))
             leg = legend(loc = 1, fancybox = True, prop = textfont)
         title('Measured vs. Fitted intensity',
               fontproperties = textfont, size = 'x-large')
@@ -1593,8 +1601,7 @@ class McSAS(AlgorithmBase):
                             right = 0.96, top = 0.95,
                             wspace = 0.23, hspace = 0.13)
         # trigger plot window popup
-        import pylab
-        pylab.show()
+        show()
         
     def rangeInfo(self, valueRange = [0, inf], paramIndex = 0):
         """Calculates the total volume or number fraction of the MC result
