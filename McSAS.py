@@ -1378,7 +1378,7 @@ class McSAS(AlgorithmBase):
         print "{} lines written with {} columns per line, "\
               "and {} empty fields".format(rowi,ncol,emptyfields)
 
-    def plot(self, axisMargin = 0.3, parameterIdx=None):
+    def plot(self, axisMargin = 0.3, parameterIdx = None):
         """
         This function plots the output of the Monte-Carlo procedure in two
         windows, with the left window the measured signal versus the fitted
@@ -1436,18 +1436,14 @@ class McSAS(AlgorithmBase):
 
         # check how many result plots we need to generate, and find the 
         #indices to the to-plot paramters
-        if parameterIdx==None:
-            parameterId=list()
-            nhists=0
-            for parai in range(len(self.model.parameters)):
-                if bool(int(self.model.parameters[parai].isActive)):
-                    nhists+=1
-                    parameterId.append(parai)
-             
-            #nhists = len(McSASParameters.histogramXScale)
+        if parameterIdx is None: # use 'is': None is a singleton in python
+            parameterId = [i
+                           for p, i in zip(self.model.parameters,
+                                           range(len(self.model.parameters)))
+                           if p.isActive]
         else:
-            parameterId=list([parameterIdx])
-            nhists=len(parameterId)
+            parameterId = [parameterIdx]
+        nhists = len(parameterId)
 
         # set plot font
         plotfont = fm.FontProperties(
