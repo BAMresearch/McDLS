@@ -99,13 +99,7 @@ class SettingsWidget(QWidget):
         def isInputWidget(widget):
             return any([isinstance(widget, widgetType)
                         for widgetType in self._inputWidget.values()])
-        readOnlyProperty = widget.property("readOnly")
-        try:
-            readOnlyProperty = readOnlyProperty.isValid()
-        except AttributeError: # for QVariant
-            if readOnlyProperty is None:
-                readOnlyProperty = False
-        if isInputWidget(widget) and readOnlyProperty:
+        if isInputWidget(widget) and hasattr(widget, "isReadOnly"):
             widget.editingFinished.connect(self._editingFinishedSlot)
             if isinstance(widget, QLineEdit): # no valueChanged signal
                 widget.textChanged.connect(self._valueChangedSlot)
