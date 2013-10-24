@@ -165,6 +165,7 @@ class ParameterBase(object):
             # make sure to provide None value of no key was found
             # this ensures that assertions for mandatory attr are verified
             getattr(pcls, setterName(key))(kwargs.get(key, None))
+        pcls.isActive = kwargs.get("isActive", False)
         return pcls
 
     def copy(self):
