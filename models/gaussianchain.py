@@ -93,7 +93,7 @@ GaussianChain.factory()
 
 if __name__ == "__main__":
     from cutesnake.datafile import PDHFile, AsciiFile
-    pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
+    pf = PDHFile("../brianpauw/sasfit_gauss2-1-100-1-1.dat")
     model = GaussianChain()
     model.rg.setValue(1.)
     model.rg.isActive = False
