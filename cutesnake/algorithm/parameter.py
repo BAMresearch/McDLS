@@ -121,7 +121,7 @@ class ParameterBase(object):
     isActive = False # TODO: does not fit here, move somewhere else eventually
 
     @classmethod
-    def base(cls):
+    def _base(cls):
         lst = [b for b in cls.__bases__ if issubclass(b, ParameterBase)]
         if not len(lst):
             return None
@@ -130,8 +130,8 @@ class ParameterBase(object):
     @classmethod
     def attributeNames(cls):
         """Returns the names of data attributes in the order of inheritance."""
-        base = cls.base()
-        lst = []
+        base = cls._base()
+        lst = ["name"] # name has to be the first, keep this order
         if base is not None:
             lst.extend(base.attributeNames())
         cand = [name for name in dir(cls) if not name.startswith("__")]
@@ -150,20 +150,22 @@ class ParameterBase(object):
         """Returns a dictionary with key, value pairs of all attributes and
         their values in this type or instance.
         Helps to avoid having explicit long argument lists"""
-        res = dict()
+        res = dict(cls = selforcls._base(),
+                   isActive = selforcls.isActive, # FIXME: soon ;)
+                   description = selforcls.__doc__)
         for name in selforcls.attributeNames():
             res[name] = getattr(selforcls, name)()
         return res
 
     @classmethod
-    def factory(cls, **kwargs):
+    def factory(pcls, **kwargs):
         """Returns this type with attribute values initialized in the ordering
         provided by attributeNames()"""
-        for key in cls.attributeNames():
+        for key in pcls.attributeNames():
             # make sure to provide None value of no key was found
             # this ensures that assertions for mandatory attr are verified
-            getattr(cls, setterName(key))(kwargs.get(key, None))
-        return cls
+            getattr(pcls, setterName(key))(kwargs.get(key, None))
+        return pcls
 
     def copy(self):
         return self.factory(**self.attributes())()
@@ -211,16 +213,10 @@ class ParameterBase(object):
     def __eq__(self, other):
         if self.dtype != other.dtype:
             return False
-        for name, val in getmembers(self):
-            if not name.startswith("_"):
-                continue
-            if name.startswith("__"):
-                continue
-            if not hasattr(other, name):
-                return False
-            if val != getattr(other, name):
-                return False
-        return True
+        try:
+            return self.attributes() == other.attributes()
+        except:
+            return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -307,15 +303,17 @@ class ParameterNumerical(ParameterBase):
 
     @mixedmethod
     def valueRange(self):
+        if self._valueRange is None:
+            return (None, None)
         return self._valueRange
 
     @mixedmethod
     def min(self):
-        return self._valueRange[0]
+        return self.valueRange()[0]
 
     @mixedmethod
     def max(self):
-        return self._valueRange[1]
+        return self.valueRange()[1]
 
     @mixedmethod
     def suffix(self):
@@ -387,7 +385,7 @@ class ParameterLog(ParameterFloat):
     """Used to select an UI input widget with logarithmic behaviour."""
     pass
 
-def factory(name, value, description = None, cls = None, **kwargs):
+def factory(**kwargs):
     """
     Generates a new Parameter type derived from one of the predefined
     base classes choosen by the supplied value: Providing a string value
@@ -397,18 +395,24 @@ def factory(name, value, description = None, cls = None, **kwargs):
     Alternatively, a class type cls can be provided which is used as base
     class for the resulting Parameter class type. Make sure in this case,
     all attributes mandatory for this base type are provided too.
+
+    *cls*: forces a certain Parameter type.
+    *description*: Updates the __doc__ attribute. May be displayed in the UI
+                   somewhere.
     """
-    if cls is None:
+    name = kwargs.get("name", None)
+    value = kwargs.get("value", None)
+    cls = kwargs.get("cls", None)
+    if cls is None or not issubclass(cls, ParameterBase):
         if isinstance(value, ParameterFloat.dtype):
             cls = ParameterFloat
         elif isNumber(value):
             cls = ParameterNumerical
         else:
             cls = ParameterBase
-    kwargs.update(dict(name = name, value = value))
-    assertName(name, ParameterNameError)
     # embed description as class documentation
     clsdict = dict()
+    description = kwargs.get("description", None)
     if isString(description) and len(description) > 0:
         clsdict['__doc__'] = description
     # create a new class/type with given name and base class
@@ -419,7 +423,7 @@ def factory(name, value, description = None, cls = None, **kwargs):
     # creating new types here is a problem for pickle
     # it is done to be able to change/add class (type) attributes
     # without modifying the base classes
-    # ATM: __doc__ attribute + all class attribs set by Param.factory()
+    # ATM: __doc__ attrib + all class attribs get mod by Param.factory()
 
 if __name__ == "__main__":
     import doctest

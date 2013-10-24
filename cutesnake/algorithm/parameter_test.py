@@ -1,30 +1,31 @@
 # -*- coding: utf-8 -*-
 # parameter_test.py
 
-from parameter import (ParameterBase, ParameterNumerical, ParameterFloat,
-        ParameterLog, ParameterNameError, DefaultValueError, ValueRangeError,
+from algorithm.parameter import (
+        ParameterBase, ParameterNumerical, ParameterFloat, ParameterLog,
+        ParameterNameError, DefaultValueError, ValueRangeError,
         SuffixError, SteppingError, DecimalsError, DisplayValuesError)
-from parameter import factory as paramFactory
-from numbergenerator import NumberGenerator, RandomUniform
+from algorithm import Parameter as Parameter
+from algorithm import NumberGenerator, RandomUniform
 from nose.tools import raises
 
 def testParameterName():
     @raises(ParameterNameError)
     def testName(newName):
-        p = paramFactory(name, 0)
+        p = Parameter(name, 0)
     for name in (None, "", 1.3, 0):
         yield testName, name
 
 @raises(StandardError)
 def testParameterDefaultValue1():
-    p = paramFactory("testpar")
+    p = Parameter("testpar")
 
 @raises(DefaultValueError)
 def testParameterDefaultValue2():
-    p = paramFactory("testpar", None)
+    p = Parameter("testpar", None)
 
 def testParameterNumerical():
-    ptype = paramFactory("testpar", 3, valueRange = (1, 5),
+    ptype = Parameter("testpar", 3, valueRange = (1, 5),
                          suffix = "mm", stepping = 1)
     p = ptype()
     assert p.value() == 3
@@ -42,7 +43,7 @@ def testParameterNumerical():
 def testParameterNumericalValueRange():
     @raises(ValueRangeError)
     def testValueRange(newRange):
-        p = paramFactory("testpar", 1, valueRange = newRange)
+        p = Parameter("testpar", 1, valueRange = newRange)
     for valueRange in (None, (None, 1), (1, None), (None, None), (1, 2, 3),
                        "", ("", ), (1, ""), ("", 1), ("", 1.0), (1.0, "")):
         yield testValueRange, valueRange
@@ -50,7 +51,7 @@ def testParameterNumericalValueRange():
 def testParameterNumericalSuffix():
     @raises(SuffixError)
     def testSuffix(newSuffix):
-        p = paramFactory("testpar", 1, valueRange = (1, 5),
+        p = Parameter("testpar", 1, valueRange = (1, 5),
                                     suffix = newSuffix)
     for suffix in ("", 1, 1.0):
         yield testSuffix, suffix
@@ -58,14 +59,14 @@ def testParameterNumericalSuffix():
 def testParameterNumericalStepping():
     @raises(SteppingError)
     def testStepping(stepping):
-        p = paramFactory("testpar", 1, valueRange = (1, 5),
+        p = Parameter("testpar", 1, valueRange = (1, 5),
                          stepping = "bla")
     for stepping in ("", "bla", None):
         yield testStepping, stepping
 
 def testParameterNumericalDisplayValues():
     dv = {1: 'one', 2: 'two', 3: 'three'}
-    p = paramFactory("testpar", 1, valueRange = (1, 5),
+    p = Parameter("testpar", 1, valueRange = (1, 5),
                      displayValues = dv)()
     for key, value in dv.iteritems():
         assert key in p.displayValues()
@@ -74,13 +75,13 @@ def testParameterNumericalDisplayValues():
 def testParameterFloat():
     @raises(DecimalsError)
     def testDecimals(newDecimals):
-        p = paramFactory("testpar", 1.0, valueRange = (1, 5),
+        p = Parameter("testpar", 1.0, valueRange = (1, 5),
                          decimals = newDecimals)
     for value in ("", "bla", (1, 2), -1):
         yield testDecimals, value
 
 def testParameterBaseCopy():
-    p1 = paramFactory(name = "p", value = "a", displayName = "displayname"
+    p1 = Parameter(name = "p", value = "a", displayName = "displayname"
                       )()
     p2 = p1.copy()
     assert isinstance(p1, ParameterBase)
@@ -92,7 +93,7 @@ def testParameterBaseCopy():
     assert p1.displayName() != p2.displayName()
 
 def testParameterNumericalCopy():
-    p1 = paramFactory(name = "p", value = 1, displayName = "displayname",
+    p1 = Parameter(name = "p", value = 1, displayName = "displayname",
                       valueRange = (1, 5), suffix = "suf", stepping = 1,
                       displayValues = {}, generator = NumberGenerator
                       )()
@@ -112,7 +113,7 @@ def testParameterNumericalCopy():
     assert p1.generator() != p2.generator()
 
 def testParameterFloatCopy():
-    p1 = paramFactory(name = "p", value = 1.0, displayName = "displayname",
+    p1 = Parameter(name = "p", value = 1.0, displayName = "displayname",
                       valueRange = (1, 5), suffix = "suf", stepping = 1,
                       displayValues = {}, generator = NumberGenerator,
                       decimals = 2
@@ -126,8 +127,8 @@ def testParameterFloatCopy():
 
 def testParameterCompare():
     def compareParameters(pType, kwargs):
-        p1 = paramFactory(**kwargs)()
-        p2 = paramFactory(**kwargs)()
+        p1 = Parameter(**kwargs)()
+        p2 = Parameter(**kwargs)()
         assert isinstance(p1, pType)
         assert p1 == p2
     for pType, kwargs in (
