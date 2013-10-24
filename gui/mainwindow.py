@@ -56,6 +56,7 @@ CHANGESTEXT = re.sub(r"(Changes in [0-9]\.[0-9]\.[0-9])",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
 
+from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
 from models.kholodenko import Kholodenko
 from models.gaussianchain import GaussianChain
@@ -83,7 +84,8 @@ class PropertyWidget(SettingsWidget):
 
     def selectModelSlot(self, key = None):
         model = MODELS.get(str(key), None)
-        if key is not None and model is not None:
+        if (key is not None and model is not None and
+            issubclass(model, ScatteringModel)):
             SASData.mcsas.model = model()
         for child in self.modelParams.children():
             if not isinstance(child, QWidget):

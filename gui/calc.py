@@ -17,7 +17,6 @@ from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.log import timestamp, addHandler
 import cutesnake.log as log
-from models.scatteringmodel import ScatteringModel
 from McSAS import McSAS
 
 class SASData(DataSet, ResultMixin):
