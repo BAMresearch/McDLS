@@ -82,6 +82,10 @@ class AlgorithmBase(object):
     def param(selforcls, index):
         return selforcls._parameters[index]
 
+    @mixedmethod
+    def paramCount(selforcls):
+        return len(selforcls._parameters)
+
     @classmethod
     def factory(cls, name = None, *parameters):
         """This sets the algorithm up and adds the defined parameters as class
@@ -99,10 +103,6 @@ class AlgorithmBase(object):
             cls.setParams(*parameters)
         return cls
 
-    @mixedmethod
-    def paramCount(selforcls):
-        return len(selforcls._parameters)
-
     def __init__(self):
         """Creates instances from defined parameters and replaces the class
         attributes accordingly."""
@@ -114,12 +114,12 @@ class AlgorithmBase(object):
                 "Parameters not configured! "
                 "Set up {name} by calling factory() first."
                 .format(name = type(self).__name__))
-        inst = []
+        instParams = []
         for ptype in self._parameters:
             p = ptype()
-            inst.append(p)
+            instParams.append(p)
             setattr(self, p.name(), p)
-        self._parameters = tuple(inst)
+        self._parameters = tuple(instParams)
 
     def __str__(self):
         text = [ self.name() ]

@@ -108,6 +108,9 @@ class DisplayValuesError(ParameterError):
 class ParameterGeneratorError(ParameterError):
     pass
 
+def setterName(attrName):
+    return "set" + attrName[0].upper() + attrName[1:]
+
 class ParameterBase(object):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
@@ -118,14 +121,52 @@ class ParameterBase(object):
     isActive = False # TODO: does not fit here, move somewhere else eventually
 
     @classmethod
-    def factory(cls, name = None, value = None, displayName = None):
-        cls.setName(name)
-        cls.setValue(value)
-        cls.setDisplayName(displayName)
+    def base(cls):
+        lst = [b for b in cls.__bases__ if issubclass(b, ParameterBase)]
+        if not len(lst):
+            return None
+        return lst[0]
+
+    @classmethod
+    def attributeNames(cls):
+        """Returns the names of data attributes in the order of inheritance."""
+        base = cls.base()
+        lst = []
+        if base is not None:
+            lst.extend(base.attributeNames())
+        cand = [name for name in dir(cls) if not name.startswith("__")]
+        for name in cand:
+            if not name.startswith("_"):
+                continue # get private members which store values
+            name = name[1:]
+            if name in lst:
+                continue # skip if found in base class
+            if setterName(name) in cand and name in cand:
+                lst.append(name)
+        return lst
+
+    @mixedmethod
+    def attributes(selforcls):
+        """Returns a dictionary with key, value pairs of all attributes and
+        their values in this type or instance.
+        Helps to avoid having explicit long argument lists"""
+        res = dict()
+        for name in selforcls.attributeNames():
+            res[name] = getattr(selforcls, name)()
+        return res
+
+    @classmethod
+    def factory(cls, **kwargs):
+        """Returns this type with attribute values initialized in the ordering
+        provided by attributeNames()"""
+        for key in cls.attributeNames():
+            # make sure to provide None value of no key was found
+            # this ensures that assertions for mandatory attr are verified
+            getattr(cls, setterName(key))(kwargs.get(key, None))
         return cls
 
     def copy(self):
-        return self.factory(self.name(), self.value(), self.displayName())()
+        return self.factory(**self.attributes())()
 
     @classmethod
     def setName(cls, name):
@@ -198,26 +239,6 @@ class ParameterNumerical(ParameterBase):
     _stepping = None
     _displayValues = None # dict maps values to text being displayed instead
     _generator = None
-
-    @classmethod
-    def factory(cls, valueRange = None, suffix = None, stepping = None,
-                displayValues = None, generator = None, **kwargs):
-        # calling base class method for setup
-        super(ParameterNumerical, cls).factory(**kwargs)
-        # set up attributes
-        cls.setValueRange(valueRange)
-        cls.setSuffix(suffix)
-        cls.setStepping(stepping)
-        cls.setDisplayValues(displayValues)
-        cls.setGenerator(generator)
-        return cls
-
-    def copy(self):
-        return self.factory(self.valueRange(), self.suffix(),
-                            self.stepping(), self.displayValues(),
-                            self.generator(), name = self.name(),
-                            value = self.value(),
-                            displayName = self.displayName())()
 
     @mixedmethod
     def setValue(selforcls, newValue):
@@ -333,22 +354,6 @@ class ParameterNumerical(ParameterBase):
 class ParameterFloat(ParameterNumerical):
     _decimals = None
 
-    @classmethod
-    def factory(cls, decimals = None, **kwargs):
-        super(ParameterFloat, cls).factory(**kwargs)
-        cls.setDecimals(decimals)
-        return cls
-
-    def copy(self):
-        return self.factory(self.decimals(), suffix = self.suffix(),
-                            stepping = self.stepping(),
-                            displayValues = self.displayValues(),
-                            generator = self.generator(), name = self.name(),
-                            value = self.value(),
-                            valueRange = self.valueRange(),
-                            displayName = self.displayName()
-                            )()
-
     @mixedmethod
     def setDecimals(selforcls, newDecimals):
         if newDecimals is not None:
@@ -411,6 +416,10 @@ def factory(name, value, description = None, cls = None, **kwargs):
     NewType = type(typeName, (cls,), clsdict)
     # set up the new class before return
     return NewType.factory(**kwargs)
+    # creating new types here is a problem for pickle
+    # it is done to be able to change/add class (type) attributes
+    # without modifying the base classes
+    # ATM: __doc__ attribute + all class attribs set by Param.factory()
 
 if __name__ == "__main__":
     import doctest
