@@ -83,6 +83,7 @@ class SASData(DataSet, ResultMixin):
                       convergenceCriterion = convcrit, doPlot = True)
         if self.nolog:
             log.removeHandler(oldHandler)
+        self.mcsas.figureTitle = os.path.basename(self.basefn)
         self.mcsas.calc(Q = q, I = I, IError = E, **mcargs)
         if self.nolog:
             log.addHandler(oldHandler)

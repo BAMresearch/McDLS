@@ -83,7 +83,7 @@ import logging
 logging.basicConfig(level = logging.INFO)
 
 from cutesnake.dataset import DataSet
-from cutesnake.utils import isList
+from cutesnake.utils import isList, isString
 from cutesnake.algorithm import (AlgorithmBase, Parameter, ParameterBase, ParameterFloat,
                                  RandomUniform, RandomExponential, makeParameterType)
 from utils.propertynames import PropertyNames
@@ -410,6 +410,8 @@ class McSAS(AlgorithmBase):
                     displayName = "convergence criterion",
                     valueRange = (0., numpy.inf)),
     )
+    figureTitle = None # FIXME: put this elsewhere, works for now
+                       # set to output file name incl. timestamp, atm
 
 
     def __init__(self, **kwargs):
@@ -1384,7 +1386,7 @@ class McSAS(AlgorithmBase):
         # does not block if another calculation is started
         pickleParams = [p.attributes() for p in self.model.params()]
         plotArgs = (self.result, self.dataset, pickleParams,
-                    axisMargin, parameterIdx)
+                    axisMargin, parameterIdx, self.figureTitle)
         # on Windows the plot figure blocks the app until it is closed
         # -> we have to call matplotlib plot in another thread (1.3.1)
         # on linux it does not block, can show multiple figures (1.0.1)
@@ -1521,7 +1523,8 @@ class McSAS(AlgorithmBase):
         self.result[paramIndex].update(rangeInfoResult)
         return rangeInfoResult
 
-def plotResults(allRes, dataset, params, axisMargin = 0.3, parameterIdx = None):
+def plotResults(allRes, dataset, params,
+                axisMargin = 0.3, parameterIdx = None, figureTitle = None):
     """
     This function plots the output of the Monte-Carlo procedure in two
     windows, with the left window the measured signal versus the fitted
@@ -1602,6 +1605,8 @@ def plotResults(allRes, dataset, params, axisMargin = 0.3, parameterIdx = None):
     # TODO: add settings to window title? (next to figure_xy)
     fig = figure(figsize = (7*(nhists+1), 7), dpi = 80,
                  facecolor = 'w', edgecolor = 'k')
+    if isString(figureTitle):
+        fig.canvas.set_window_title(figureTitle)
     # load original Dataset
     data = dataset.origin
     q = data[:, 0]
