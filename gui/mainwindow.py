@@ -130,7 +130,7 @@ class PropertyWidget(SettingsWidget):
         mcsasSettings = QGroupBox("McSAS settings")
         mcsasLayout = QVBoxLayout(mcsasSettings)
         mcsasLayout.setObjectName("mcsasLayout")
-        for key in self._mcsasKeys:
+        for key in self.keys():
             p = getattr(SASData.mcsas, key)
             container = self._makeSettingWidget(p)
             mcsasLayout.addWidget(container)
@@ -163,13 +163,17 @@ class PropertyWidget(SettingsWidget):
         lbl.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
         return lbl
 
-    def _makeEntry(self, name, dtype, minvalue, maxvalue, value):
+    def _makeEntry(self, name, dtype, value, minmax = None):
         ntry = self.getInputWidget(dtype)(self)
         ntry.setObjectName(name)
-        ntry.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
-        ntry.setMaximum(maxvalue)
-        ntry.setMinimum(minvalue)
-        ntry.setValue(value)
+        if dtype is bool:
+            ntry.setChecked(value)
+        else:
+            ntry.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            if isList(minmax) and len(minmax):
+                ntry.setMinimum(min(minmax))
+                ntry.setMaximum(max(minmax))
+            ntry.setValue(value)
         self.connectInputWidgets(ntry)
         return ntry
 
@@ -179,25 +183,24 @@ class PropertyWidget(SettingsWidget):
         lbl = self._makeLabel(param.displayName())
         lbl.setWordWrap(True)
         layout.addWidget(lbl)
-        if param.isActive:
+        minmax = None
+        if param.isActive and isinstance(param, ParameterNumerical):
+            minmax = type(param).min(), type(param).max()
             ntryMin = self._makeEntry(
-                    param.name()+"min", param.dtype,
-                    type(param).min(), type(param).max(),
-                    param.min())
+                    param.name()+"min", param.dtype, param.min(), minmax)
             ntryMin.setPrefix("min: ")
             layout.addWidget(ntryMin)
             ntryMax = self._makeEntry(
-                    param.name()+"max", param.dtype,
-                    type(param).min(), type(param).max(),
-                    param.max())
+                    param.name()+"max", param.dtype, param.max(), minmax)
             ntryMax.setPrefix("max: ")
             layout.addWidget(ntryMax)
             ntryMin.setFixedWidth(FIXEDWIDTH)
             ntryMax.setFixedWidth(FIXEDWIDTH)
         else:
-            ntry = self._makeEntry(param.name(), param.dtype,
-                                   param.min(), param.max(),
-                                   param.value())
+            if isinstance(param, ParameterNumerical):
+                minmax = param.min(), param.max()
+            ntry = self._makeEntry(param.name(), param.dtype, param.value(),
+                                   minmax)
             ntry.setFixedWidth(FIXEDWIDTH)
             layout.addWidget(ntry)
         if activeBtns:
@@ -254,6 +257,7 @@ class MainWindow(MainWindowBase):
         for name in ("convcrit", "nreps", "min", "max", "bins") + self.propWidget.keys():
             if self.propWidget.get(name) is None:
                 continue
+            val = settings.value(name)
             self.propWidget.set(name, settings.value(name))
         try:
             value = unicode(settings.value("lastpath").toString())

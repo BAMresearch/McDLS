@@ -9,7 +9,7 @@ except ImportError:
         Int, Double, Bool, String = None, None, None, None
         toInt, toDouble, toBool, toString = None, None, None, None
 
-from QtGui import QWidget, QSpinBox, QDoubleSpinBox, QLineEdit
+from QtGui import QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox
 from cutesnake.widgets.expdoublespinbox import ExpDoubleSpinBox
 from cutesnake.utils.signal import Signal
 from cutesnake.utils import isList
@@ -25,7 +25,9 @@ class SettingsWidget(QWidget):
     _inputWidget = { int:   QSpinBox,
                      float: QDoubleSpinBox,
                      'exp': ExpDoubleSpinBox,
-                     str:   QLineEdit }
+                     str:   QLineEdit,
+                     bool:  QCheckBox,
+                   }
     _convertData = { QVariant.Int:    QVariant.toInt,
                      QVariant.Double: QVariant.toDouble,
                      QVariant.Bool:   QVariant.toBool,
@@ -75,7 +77,7 @@ class SettingsWidget(QWidget):
 
     def set(self, key, value):
         child = self.findChild(QWidget, key)
-        for key in ("isChecked", "value", "text"):
+        for key in ("checked", "value", "text"):
             variant = child.property(key)
             try:
                 if variant.isValid():

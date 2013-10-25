@@ -230,6 +230,12 @@ class ParameterBase(object):
         """
         raise NotImplementedError
 
+class ParameterBoolean(ParameterBase):
+    @classproperty
+    @classmethod
+    def dtype(cls):
+        return bool
+
 class ParameterNumerical(ParameterBase):
     _valueRange = None
     _suffix = None
@@ -405,7 +411,9 @@ def factory(**kwargs):
     value = kwargs.get("value", None)
     cls = kwargs.get("cls", None)
     if cls is None or not issubclass(cls, ParameterBase):
-        if isinstance(value, ParameterFloat.dtype):
+        if isinstance(value, ParameterBoolean.dtype):
+            cls = ParameterBoolean
+        elif isinstance(value, ParameterFloat.dtype):
             cls = ParameterFloat
         elif isNumber(value):
             cls = ParameterNumerical

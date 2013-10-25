@@ -4,7 +4,7 @@
 from algorithmbase import AlgorithmBase
 from numbergenerator import NumberGenerator, RandomUniform, RandomExponential
 from parameter import (ParameterBase, ParameterFloat, ParameterNumerical,
-                       ParameterLog, ParameterNameError)
+                       ParameterBoolean, ParameterLog, ParameterNameError)
 from parameter import factory as makeParameterType
 from cutesnake.utils.tests import assertName
 
