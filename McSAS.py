@@ -405,6 +405,8 @@ class McSAS(AlgorithmBase):
                   Parameter("convergenceCriterion", 1.0,
                     displayName = "convergence criterion",
                     valueRange = (0., numpy.inf)),
+                  Parameter("findBackground", True,
+                    displayName = "find background level?"),
     )
     figureTitle = None # FIXME: put this elsewhere, works for now
                        # set to output file name incl. timestamp, atm
@@ -577,7 +579,7 @@ class McSAS(AlgorithmBase):
         self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
     def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
-            outputIntensity = False, background = True):
+            outputIntensity = False):
         """
         Optimizes the scaling and background factor to match *intCalc* closest
         to intObs. 
@@ -622,6 +624,8 @@ class McSAS(AlgorithmBase):
         intObs = intObs.flatten()
         intCalc = intCalc.flatten()
         intError = intError.flatten()
+        # we need an McSAS instance anyway to call this method
+        background = self.findBackground.value()
         if ver == 2:
             """uses scipy.optimize.leastsqr"""
             if background:

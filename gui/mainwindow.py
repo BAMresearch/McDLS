@@ -18,7 +18,9 @@ from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
+from cutesnake.utils import isList
 from cutesnake.utilsgui.displayexception import DisplayException
+from cutesnake.algorithm import ParameterNumerical
 from version import version
 from calc import calc, SASData
 
@@ -77,7 +79,7 @@ def eventLoop():
 class PropertyWidget(SettingsWidget):
     _optional = None
     _mcsasKeys = ("convergenceCriterion", "histogramBins", "numReps",
-                  "numContribs")
+                  "numContribs", "findBackground")
 
     def keys(self):
         return self._mcsasKeys

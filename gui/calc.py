@@ -66,11 +66,17 @@ class SASData(DataSet, ResultMixin):
 
         bounds = np.array([np.pi/np.max(q), np.pi/np.min(q)])
         nreps, ncontrib, maxiter, convcrit, histbins = 3, 200, 1e4, 5., 50
+        background = True
         if self.settings:
+            # TODO: duplicate code, simplify this
+            # values in settings originate in mcsas default parameters
+            # we don't need to read and write them back
+            # for writeSettings() query mcsas object directly
             convcrit = self.settings.get("convergenceCriterion")
             nreps = self.settings.get("numReps")
             ncontrib = self.settings.get("numContribs")
             histbins = self.settings.get("histogramBins")
+            background = self.settings.get("findBackground")
         logging.info("The following parameters are used for 'Analyze_1D':")
         logging.info("bounds: [{0:.4f}; {1:.4f}], Histbins: {2}"
                      .format(bounds[0], bounds[1], histbins))
@@ -80,6 +86,7 @@ class SASData(DataSet, ResultMixin):
                       histogramBins = histbins,
                       contribParamBounds = bounds,
                       maxIterations = maxiter,
+                      findBackground = background,
                       convergenceCriterion = convcrit, doPlot = True)
         if self.nolog:
             log.removeHandler(oldHandler)
