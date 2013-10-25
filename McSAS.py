@@ -94,9 +94,6 @@ from cutesnake.utilsgui import processEventLoop
 class McSASParameters(PropertyNames):
     model = None
     contribParamBounds = ()
-    numContribs = 200
-    maxIterations = 1e5
-    numReps = 100
     qBounds = None
     psiBounds = None
     priors = () # of shape Rrep, to be used as initial guess for
@@ -107,7 +104,6 @@ class McSASParameters(PropertyNames):
     histogramXScale = 'log'
     histogramWeighting = 'volume' # can be "volume" or "number"
     deltaRhoSquared = 1.0
-    convergenceCriterion = 1.0
     startFromMinimum = False
     maxRetries = 5
     maskNegativeInt = False
@@ -537,16 +533,19 @@ class McSAS(AlgorithmBase):
         """
         for key in kwargs.keys():
             found = False
+            param = getattr(self, key, None)
+            if isinstance(param, ParameterBase):
+                param.setValue(kwargs[key])
+                found = True
             for cls in McSASParameters, ScatteringModel:
                 if key in cls.propNames():
-                    value = kwargs.pop(key)
+                    value = kwargs[key]
                     setattr(cls, key, value)
-                    param = getattr(self, key, None)
-                    if isinstance(param, ParameterBase):
-                        param.setValue(value)
                     found = True
                     break
-            if not found:
+            if found:
+                del kwargs[key]
+            else:
                 logging.warning("Unknown McSAS parameter specified: '{0}'"
                                 .format(key))
 
