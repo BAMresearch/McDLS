@@ -95,6 +95,7 @@ class PropertyWidget(SettingsWidget):
 
     def calculator(self):
         """Returns a calculator object updated with current GUI settings."""
+        self._updateModelParams()
         return self._calculator
 
     def __init__(self, parent):

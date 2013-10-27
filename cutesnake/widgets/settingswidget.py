@@ -101,7 +101,12 @@ class SettingsWidget(QWidget):
         def isInputWidget(widget):
             return any([isinstance(widget, widgetType)
                         for widgetType in self._inputWidget.values()])
-        if isInputWidget(widget) and hasattr(widget, "isReadOnly"):
+        if not isInputWidget(widget):
+            return
+        if isinstance(widget, QCheckBox):
+            widget.clicked.connect(self._editingFinishedSlot)
+            widget.stateChanged.connect(self._valueChangedSlot)
+        else:
             widget.editingFinished.connect(self._editingFinishedSlot)
             if isinstance(widget, QLineEdit): # no valueChanged signal
                 widget.textChanged.connect(self._valueChangedSlot)
