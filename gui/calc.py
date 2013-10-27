@@ -92,6 +92,7 @@ class Calculator(object):
         mcargs = dict(Emin = emin, 
                       contribParamBounds = bounds,
                       doPlot = True)
+        self._writeSettings(mcargs)
         if self.nolog:
             log.removeHandler(oldHandler)
         self._algo.figureTitle = os.path.basename(self.basefn)
@@ -107,7 +108,6 @@ class Calculator(object):
         else:
             logging.info("No results available!")
 
-        self._writeSettings(mcargs)
         log.removeHandler(logFile)
 
     def _writeFit(self, mcResult):
