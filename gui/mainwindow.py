@@ -32,6 +32,10 @@ Output files start with the base name of the input file. They have the current d
 
 CHANGESTEXT = (u"""
 
+Changes in 0.0.10:
+- switch to enable/disable background level fit
+- multiple plot figures on Windows supported
+
 Changes in 0.0.9:
 - added GUI to public McSAS repository
 
@@ -54,7 +58,7 @@ Changes in 0.0.5:
  https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
 
 """.replace('\n\n', '<hr />'))
-CHANGESTEXT = re.sub(r"(Changes in [0-9]\.[0-9]\.[0-9])",
+CHANGESTEXT = re.sub(r"(Changes in [0-9]+\.[0-9]+\.[0-9]+)",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
 
