@@ -33,6 +33,8 @@ class LastPath(object):
 
     @classmethod
     def set(cls, lastpath):
+        """Accepts a directory path or a file path.
+        Determines the directory itself in the latter case."""
         if not isString(lastpath):
             lastpath = unicode(lastpath)
         # get path of possible unwritten files (previously selected)

@@ -23,6 +23,7 @@ if not isFrozen():
 import argparse
 import logging
 from cutesnake.log import log, replaceStdOutErr
+from gui.calc import Calculator
 
 def main(argv = None):
     parser = argparse.ArgumentParser(description = "Monte Carlo SAS analysis")
@@ -37,8 +38,7 @@ def main(argv = None):
                         help = "One or more data files to analyse")
     # TODO: add info about output files to be created ...
     args = parser.parse_args()
-    from gui.calc import SASData
-    SASData.nolog = args.nolog # forwarding logging setting, quick fix for now
+    Calculator.nolog = args.nolog # forwarding logging setting, quick fix for now
 
     # initiate logging (to console stderr for now)
     replaceStdOutErr() # replace all text output with our sinks

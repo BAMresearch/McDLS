@@ -20,14 +20,6 @@ import cutesnake.log as log
 from McSAS import McSAS
 
 class SASData(DataSet, ResultMixin):
-    # static settings, move this to global app settings later
-    indent = "    "
-    nolog = False
-    # handles of gui components
-    logWidget = None
-    settings = None
-    # McSAS algorithm instance
-    mcsas = McSAS.factory()()
 
     @classmethod
     def load(cls, filename):
@@ -40,135 +32,145 @@ class SASData(DataSet, ResultMixin):
         sasData = cls(sasFile.name, sasFile.data)
         return sasData
 
-    def __init__(self, title, data):
-        DataSet.__init__(self, title, data)
+class Calculator(object):
+    _algo = None # McSAS algorithm instance
+    # static settings, move this to global app settings later
+    indent = "    "
+    nolog = False
 
-        if self.logWidget:
-            self.logWidget.clear()
+    @staticmethod
+    def paramNames():
+        """Names of parameters which will be configurable by the user in a UI.
+        """
+        return ("convergenceCriterion", "histogramBins", "numReps",
+                "numContribs", "findBackground")
 
+    def __init__(self):
+        self._algo = McSAS.factory()()
+
+    def params(self):
+        """Returns a sub set of parameters defined in paramNames()"""
+        # access the property to be able to change it permanently
+        return [getattr(self._algo, pname) for pname in self.paramNames()]
+
+    @property
+    def model(self):
+        return self._algo.model
+
+    @model.setter
+    def model(self, newModel):
+        self._algo.model = newModel
+
+    def modelParams(self):
+        # access the property to change it permanently
+        return [getattr(self.model, p.name()) for p in self.model.params()]
+
+    def __call__(self, dataset):
         # start log file writing
-        fn = self.getResultFilename("log", "this log")
+        self._title = dataset.title
+        fn = self._getResultFilename("log", "this log")
         logFile = logging.FileHandler(fn, encoding = "utf8")
         oldHandler = log.log.handlers[0]
         log.addHandler(logFile)
 
-        q, I = data[:, 0], data[:, 1]
+        q, I = dataset.origin[:, 0], dataset.origin[:, 1]
         emin, E = 0.01, None #minimum possible error (1%)
         E = emin * I
-        if data.shape[1] < 3:
+        if dataset.origin.shape[1] < 3:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(emin * 100.))
         else:
             logging.warning("Minimum uncertainty ({}% of intensity) set "
                             "for {} datapoints.".format(
-                            emin * 100., sum(E > data[:, 2])))
-            E = np.maximum(E, data[:, 2])
+                            emin * 100., sum(E > dataset.origin[:, 2])))
+            E = np.maximum(E, dataset.origin[:, 2])
 
         bounds = np.array([np.pi/np.max(q), np.pi/np.min(q)])
-        nreps, ncontrib, maxiter, convcrit, histbins = 3, 200, 1e4, 5., 50
-        background = True
-        if self.settings:
-            # TODO: duplicate code, simplify this
-            # values in settings originate in mcsas default parameters
-            # we don't need to read and write them back
-            # for writeSettings() query mcsas object directly
-            convcrit = self.settings.get("convergenceCriterion")
-            nreps = self.settings.get("numReps")
-            ncontrib = self.settings.get("numContribs")
-            histbins = self.settings.get("histogramBins")
-            background = self.settings.get("findBackground")
         logging.info("The following parameters are used for 'Analyze_1D':")
-        logging.info("bounds: [{0:.4f}; {1:.4f}], Histbins: {2}"
-                     .format(bounds[0], bounds[1], histbins))
-        logging.info("Nsph: {0}, Nreps: {1}, MaxIter: {2}, convcrit: {3}"
-                     .format(ncontrib, nreps, maxiter, convcrit))
-        mcargs = dict(Emin = emin, numContribs = ncontrib, numReps = nreps,
-                      histogramBins = histbins,
+        logging.info("bounds: [{0:.4f}; {1:.4f}]"
+                     .format(bounds[0], bounds[1]))
+        mcargs = dict(Emin = emin, 
                       contribParamBounds = bounds,
-                      maxIterations = maxiter,
-                      findBackground = background,
-                      convergenceCriterion = convcrit, doPlot = True)
+                      doPlot = True)
         if self.nolog:
             log.removeHandler(oldHandler)
-        self.mcsas.figureTitle = os.path.basename(self.basefn)
-        self.mcsas.calc(Q = q, I = I, IError = E, **mcargs)
+        self._algo.figureTitle = os.path.basename(self.basefn)
+        self._algo.calc(Q = q, I = I, IError = E, **mcargs)
         if self.nolog:
             log.addHandler(oldHandler)
 
-        if isList(self.mcsas.result) and len(self.mcsas.result):
-            res = self.mcsas.result[0]
+        if isList(self._algo.result) and len(self._algo.result):
+            res = self._algo.result[0]
             if res is not None:
-                self.writeDistrib(res)
-                self.writeFit(res)
+                self._writeDistrib(res)
+                self._writeFit(res)
         else:
             logging.info("No results available!")
 
-        self.writeSettings(mcargs)
+        self._writeSettings(mcargs)
         log.removeHandler(logFile)
 
-    def writeFit(self, mcResult):
-        self.writeResultHelper(mcResult, "fit", "fit data",
+    def _writeFit(self, mcResult):
+        self._writeResultHelper(mcResult, "fit", "fit data",
             ('fitQ', 'fitIntensityMean', 'fitIntensityStd')
         )
 
-    def writeDistrib(self, mcResult):
-        self.writeResultHelper(mcResult, "dist", "distributions",
+    def _writeDistrib(self, mcResult):
+        self._writeResultHelper(mcResult, "dist", "distributions",
             ('histogramXMean', 'volumeHistogramYMean',
              'volumeHistogramYStd', 'volumeHistogramMinimumRequired',
              'numberHistogramYMean', 'numberHistogramYStd',
              'numberHistogramMinimumRequired')
         )
 
-    def writeSettings(self, mcargs):
-        fn = self.getResultFilename("settings", "algorithm settings")
+    def _writeSettings(self, mcargs):
+        fn = self._getResultFilename("settings", "algorithm settings")
         config = ConfigParser.RawConfigParser()
-        sectionName = "Settings"
+        sectionName = "MCSAS Settings"
         config.add_section(sectionName)
         for key, value in mcargs.iteritems():
             config.set(sectionName, key, value)
-        config.set(sectionName, "model", self.mcsas.model.name())
+        for p in self.params():
+            config.set(sectionName, p.name(), p.value())
+        config.set(sectionName, "model", self.model.name())
         sectionName = "Model Settings"
         config.add_section(sectionName)
-        for p in self.mcsas.model.params():
+        for p in self.modelParams():
             config.set(sectionName, p.name(), p.value())
             config.set(sectionName, p.name()+"_min", p.min())
             config.set(sectionName, p.name()+"_max", p.max())
         with open(fn, 'w') as configfile:
             config.write(configfile)
 
-    def getResultFilename(self, fileKey, descr):
-        fn = self.getFilename(fileKey)
+    def _getResultFilename(self, fileKey, descr):
+        fn = self._getFilename(fileKey)
         logging.info("Writing {0} to:".format(descr))
         logging.info("{0}'{1}'".format(self.indent,
                                        QUrl.fromLocalFile(fn).toEncoded()))
         return fn
 
-    def writeResultHelper(self, mcResult, fileKey, descr, columnNames):
-        fn = self.getResultFilename(fileKey, descr)
+    def _writeResultHelper(self, mcResult, fileKey, descr, columnNames):
+        fn = self._getResultFilename(fileKey, descr)
         logging.info("Containing the following columns:")
         for cn in columnNames:
             logging.info("{0}[ {1} ]".format(self.indent, cn))
         data = np.vstack([mcResult[cn] for cn in columnNames]).T
         AsciiFile.writeFile(fn, data)
 
-    def getFilename(self, kind):
+    def _getFilename(self, kind):
         """Creates a file name from data base name, its directory and the
         current timestamp. It's created once so that all output files have
         the same base name and timestamp."""
         if not hasattr(self, "basefn") or self.basefn is None:
             self.basefn = "{0}_{1}".format(
-                    os.path.join(LastPath.get(), self.title), log.timestamp())
+                    os.path.join(LastPath.get(), self._title), log.timestamp())
         return "{0}_{1}.txt".format(self.basefn, kind)
 
-def calc(filenames):
-    if not isList(filenames):
-        return
-    if len(filenames) <= 0:
-        logging.info("Please load an input file!")
-        return
+def calc(calculator, filenames):
     for fn in filenames:
         try:
-            SASData.load(fn)
+            sasdata = SASData.load(fn)
+            calculator(sasdata)
         except StandardError, e:
             # on error, skip the current file
             logging.error(str(e).replace("\n"," ") + " ... skipping")

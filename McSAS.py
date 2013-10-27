@@ -454,7 +454,7 @@ class McSAS(AlgorithmBase):
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
-            logging.info("Model not provided, setting to: {0}"
+            logging.info("Default model not provided, setting to: {0}"
                     .format(str(McSASParameters.model.name())))
         if self.model is None:
             self.model = McSASParameters.model
@@ -466,7 +466,7 @@ class McSAS(AlgorithmBase):
                 "\n".join(["Analysing parameters: "]+
                     [str(p) for p in self.model.params()])
         )
-        self.checkParameters()
+        self.checkParameters() # checks histbins (-> should go into custom parameter type)
         self.analyse()
         # continue if there are results only
         if not len(self.result):

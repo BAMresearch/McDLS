@@ -7,6 +7,7 @@
 import os.path
 import re
 import sys
+import logging
 from cutesnake.qt import QtCore, QtGui
 from cutesnake.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp
@@ -22,7 +23,8 @@ from cutesnake.utils import isList
 from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.algorithm import ParameterNumerical
 from version import version
-from calc import calc, SASData
+from calc import calc, SASData, Calculator
+from McSAS import McSAS
 
 INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
 
@@ -81,63 +83,31 @@ def eventLoop():
     return app.exec_()
 
 class PropertyWidget(SettingsWidget):
-    _optional = None
-    _mcsasKeys = ("convergenceCriterion", "histogramBins", "numReps",
-                  "numContribs", "findBackground")
-
-    def keys(self):
-        return self._mcsasKeys
-
-    def selectModelSlot(self, key = None):
-        model = MODELS.get(str(key), None)
-        if (key is not None and model is not None and
-            issubclass(model, ScatteringModel)):
-            SASData.mcsas.model = model()
-        for child in self.modelParams.children():
-            if not isinstance(child, QWidget):
-                continue
-            self.modelParams.layout().removeWidget(child)
-            child.setParent(QWidget())
-        for ptype in reversed(SASData.mcsas.model.params()):
-            p = getattr(SASData.mcsas.model, ptype.name())
-            container = self._makeSettingWidget(p, activeBtns = True)
-            self.modelParams.layout().insertWidget(0, container)
-
-    def updateModelParams(self):
-        activeChanged = False
-        for p in SASData.mcsas.model.params():
-            # persistent due to changes to the class instead of instance
-            key = p.name()
-            newValue = self.get(key)
-            if newValue is not None:
-                p.setValue(newValue)
-            minValue = self.get(key+"min")
-            maxValue = self.get(key+"max")
-            if minValue is not None and maxValue is not None:
-                p.setValueRange((minValue, maxValue))
-            newActive = self.get(key+"active")
-            if isinstance(newActive, bool) and p.isActive != newActive:
-                p.isActive = newActive
-                activeChanged = True
-        if activeChanged:
-            self.selectModelSlot()
+    _calculator = None
 
     def selectModel(self):
-#        self.modelBox.setCurrentIndex(0)
         index = [i for i in range(0, self.modelBox.count())
                     if self.modelBox.itemText(i) == "Sphere"][0]
         self.modelBox.setCurrentIndex(index)
 
+    def keys(self):
+        return self._calculator.paramNames()
+
+    def calculator(self):
+        """Returns a calculator object updated with current GUI settings."""
+        return self._calculator
+
     def __init__(self, parent):
         SettingsWidget.__init__(self, parent)
+        self._calculator = Calculator()
         layout = QHBoxLayout(self)
         layout.setObjectName("layout")
 
         mcsasSettings = QGroupBox("McSAS settings")
         mcsasLayout = QVBoxLayout(mcsasSettings)
         mcsasLayout.setObjectName("mcsasLayout")
-        for key in self.keys():
-            p = getattr(SASData.mcsas, key)
+        # TODO: use signalmapper for update ...
+        for p in self._calculator.params():
             container = self._makeSettingWidget(p)
             mcsasLayout.addWidget(container)
         mcsasSettings.setLayout(mcsasLayout)
@@ -159,9 +129,48 @@ class PropertyWidget(SettingsWidget):
         modelSettings.setLayout(modelLayout)
         layout.addWidget(modelSettings)
         self.modelBox.setCurrentIndex(-1)
-        self.modelBox.currentIndexChanged[str].connect(self.selectModelSlot)
+        self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
         self.setLayout(layout)
-        self.sigValuesChanged.connect(self.updateModelParams)
+        self.sigValuesChanged.connect(self._updateModelParams)
+
+    def _selectModelSlot(self, key = None):
+        model = MODELS.get(str(key), None)
+        if (key is not None and model is not None and
+            issubclass(model, ScatteringModel)):
+            self._calculator.model = model()
+        for child in self.modelParams.children():
+            if not isinstance(child, QWidget):
+                continue
+            self.modelParams.layout().removeWidget(child)
+            child.setParent(QWidget())
+        for p in reversed(self._calculator.modelParams()):
+            container = self._makeSettingWidget(p, activeBtns = True)
+            self.modelParams.layout().insertWidget(0, container)
+
+    def _updateModelParams(self):
+        activeChanged = False
+        for p in self._calculator.modelParams():
+            # persistent due to changes to the class instead of instance
+            key = p.name()
+            newValue = self.get(key)
+            if newValue is not None:
+                p.setValue(newValue)
+            minValue = self.get(key+"min")
+            maxValue = self.get(key+"max")
+            if minValue is not None and maxValue is not None:
+                p.setValueRange((minValue, maxValue))
+            newActive = self.get(key+"active")
+            if isinstance(newActive, bool) and p.isActive != newActive:
+                p.isActive = newActive
+                activeChanged = True
+        # update algo settings
+        for p in self._calculator.params():
+            value = self.get(p.name())
+            if value is None:
+                continue
+            p.setValue(value)
+        if activeChanged:
+            self._selectModelSlot()
 
     @staticmethod
     def _makeLabel(name):
@@ -216,7 +225,7 @@ class PropertyWidget(SettingsWidget):
             activeBtn.setChecked(param.isActive)
             activeBtn.setFixedWidth(FIXEDWIDTH*.5)
             layout.addWidget(activeBtn)
-            activeBtn.clicked.connect(self.updateModelParams)
+            activeBtn.clicked.connect(self._updateModelParams)
             self.connectInputWidgets(activeBtn)
         widget.setLayout(layout)
         return widget
@@ -225,9 +234,10 @@ class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
 
     def __init__(self, parent = None):
-        MainWindowBase.__init__(self, version, parent)
+        MainWindowBase.__init__(self, version, parent) # calls setupUi() and restoreSettings()
 
     def setupUi(self, *args):
+        # called in MainWindowBase.__init__()
         btnWidget = QWidget(self)
         btnLayout = QHBoxLayout()
         self.loadBtn = QPushButton("browse files ...")
@@ -260,9 +270,9 @@ class MainWindow(MainWindowBase):
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
         settings = self.appSettings()
-        for name in ("convcrit", "nreps", "min", "max", "bins") + self.propWidget.keys():
+        for name in self.propWidget.keys():
             if self.propWidget.get(name) is None:
-                continue
+                continue # no UI element for this setting
             val = settings.value(name)
             self.propWidget.set(name, settings.value(name))
         try:
@@ -275,8 +285,11 @@ class MainWindow(MainWindowBase):
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
         settings = self.appSettings()
-        for name in ("convcrit", "nreps", "min", "max", "bins") + self.propWidget.keys():
-            settings.setValue(name, self.propWidget.get(name))
+        for name in self.propWidget.keys():
+            value = self.propWidget.get(name)
+            if value is None:
+                continue # no UI element for this setting
+            settings.setValue(name, value)
         settings.setValue("lastpath", LastPath.get())
         settings.sync()
         tempSettings = QSettings("/tmp/qsettings.test", QSettings.IniFormat)
@@ -296,8 +309,12 @@ class MainWindow(MainWindowBase):
         self.startCalc(self.getCommandlineArguments())
 
     def startCalc(self, fnames):
+        if not isList(fnames) or not len(fnames):
+            logging.info("Please load an input file!")
+            return
+        self.logWidget.clear()
         try:
-            calc(fnames)
+            calc(self.propWidget.calculator(), fnames)
         except StandardError, e:
             DisplayException(e)
 
