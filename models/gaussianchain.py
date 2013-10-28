@@ -16,11 +16,14 @@ class GaussianChain(ScatteringModel):
     .. [Debye47] `P. Debye, Mollecular-weight determination by light
         scattering, Journal of Physical and Colloid Chemistry, 51:18--32,
         1947. <http://dx.doi.org/10.1021/j150451a002>`_
+
+    I_0 = (bp - (k * Rg^2) * eta_s)^2 with k = 1 nm.
+    k * Rg^2 = volume approximation
     """
     shortName = "Gaussian Chain"
     parameters = (
             Parameter("rg", 1.0,
-                    displayName = "radius of gyration",
+                    displayName = "radius of gyration, Rg",
                     valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("bp", 100.0,
                     displayName = "scattering length of the polymer",
@@ -28,20 +31,19 @@ class GaussianChain(ScatteringModel):
             Parameter("etas", 1.0,
                     displayName = "scattering length density of the solvent",
                     valueRange = (0., numpy.inf), suffix = "cm<sup>-1</sup>"),
-            Parameter("volume", 1.0,
-                    displayName = "molecular volume of a single polymer molecule",
-                    valueRange = (0., numpy.inf), suffix = "cm<sup>3</sup>")
+            Parameter("k", 1.0,
+                    displayName = "volumetric scaling factor of Rg",
+                    valueRange = (0., numpy.inf), suffix = "nm")
     )
     parameters[0].isActive = True
-    parameters[3].isActive = True
 
     def __init__(self):
         ScatteringModel.__init__(self)
         # some presets
-        self.rg.setValueRange((0.1, 1e3))
+        self.rg.setValueRange((1, 1e2))
         self.bp.setValueRange((0.1, 1e3))
         self.etas.setValueRange((0.1, 10.))
-        self.volume.setValueRange((1.0, 1e3))
+        self.k.setValueRange((0.1, 10.))
 
     def ff(self, dataset, paramValues):
         assert ScatteringModel.ff(self, dataset, paramValues)
@@ -59,14 +61,14 @@ class GaussianChain(ScatteringModel):
         if self.etas.isActive:
             idx = int(self.rg.isActive) + int(self.bp.isActive)
             etas = paramValues[:, idx]
-        volume = numpy.array((self.volume.value(),))
-        if self.volume.isActive:
+        k = numpy.array((self.k.value(),))
+        if self.k.isActive:
             idx = int(self.rg.isActive) + int(self.bp.isActive) + int(self.etas.isActive)
-            volume = paramValues[:, idx]
+            k = paramValues[:, idx]
 
-        u = numpy.outer(q, rg)**2 # a matrix usually
-        beta = bp - volume * etas
+        beta = bp - (k * rg**2) * etas
         beta = beta*beta * 2.0
+        u = numpy.outer(q, rg)**2 # a matrix usually
         result = (numpy.expm1(-u) + u) / (u*u)
         for i, res in zip(range(0, result.shape[0]), result):
             if q[i] <= 0.0:
@@ -78,12 +80,14 @@ class GaussianChain(ScatteringModel):
         assert ScatteringModel.vol(self, paramValues)
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        idx = 0
-        for p in self.rg, self.bp, self.etas:
-            idx += int(p.isActive)
-        v = numpy.array((self.volume.value(),))
-        if self.volume.isActive:
-            v = paramValues[:, idx]
+        rg = numpy.array((self.rg.value(),))
+        if self.rg.isActive:
+            rg = paramValues[:, 0]
+        k = numpy.array((self.k.value(),))
+        if self.k.isActive:
+            idx = sum([int(p.isActive) for p in self.rg, self.bp, self.etas])
+            k = paramValues[:, idx]
+        v = k * rg**2
         if len(v) <= 1 and len(v) < len(paramValues):
             # duplicates of single value for dimension compatibility
             v = numpy.ones(len(paramValues)) * v
