@@ -11,6 +11,10 @@ class DisplayMixin(object):
     """Provides additional data to display in a list or tree view."""
     __metaclass__ = ABCMeta
 
+    @staticmethod
+    def displayDataDescr(cls):
+        return ("data title", )
+
     @property
     def displayData(self):
         return ("title", )

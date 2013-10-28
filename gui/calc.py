@@ -10,7 +10,7 @@ import numpy
 import numpy as np
 from cutesnake.qt import QtCore
 from QtCore import QUrl
-from cutesnake.dataset import DataSet, ResultMixin
+from cutesnake.dataset import DataSet, DisplayMixin
 from cutesnake.utils import isList
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.datafile import PDHFile, AsciiFile
@@ -19,10 +19,26 @@ from cutesnake.log import timestamp, addHandler
 import cutesnake.log as log
 from McSAS import McSAS
 
-class SASData(DataSet, ResultMixin):
+class SASData(DataSet, DisplayMixin):
     _sizeEst = None
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
+
+    @staticmethod
+    def displayDataDescr():
+        return ("filename", "data points", "est. sphere size")
+
+    @property
+    def displayData(self):
+        return ("title", "count", "sphericalSizeEstText")
+
+    @property
+    def count(self):
+        return len(self.q())
+
+    @property
+    def sphericalSizeEstText(self):
+        return "min: {0:.4f}, max: {1:.4f}".format(*self.sphericalSizeEst())
 
     @classmethod
     def load(cls, filename):
@@ -190,17 +206,5 @@ class Calculator(object):
             self.basefn = "{0}_{1}".format(
                     os.path.join(LastPath.get(), self._title), log.timestamp())
         return "{0}_{1}.txt".format(self.basefn, kind)
-
-def calc(calculator, filenames):
-    for fn in filenames:
-        try:
-            sasdata = SASData.load(fn)
-            calculator(sasdata)
-        except StandardError, e:
-            # on error, skip the current file
-            logging.error(str(e).replace("\n"," ") + " ... skipping")
-            continue
-    if sys.exc_info()[0] is not None: # reraise the last error if any
-        raise
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

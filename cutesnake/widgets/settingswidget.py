@@ -86,7 +86,9 @@ class SettingsWidget(QWidget):
                 if variant is not None:
                     break
         try:
-            child.setProperty(key, value)
+            success = child.setProperty(key, value)
+            if not success:
+                raise IndexError
         except StandardError:
             raise IndexError("Could not set widget '{0}' to '{1}'!".
                              format(key, value))

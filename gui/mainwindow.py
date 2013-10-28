@@ -13,9 +13,11 @@ from cutesnake.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
-                   QGroupBox, QComboBox, QApplication)
+                   QGroupBox, QComboBox, QApplication, QGridLayout,
+                   QTreeWidgetItem, QTreeWidget)
 from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
+from cutesnake.widgets.datalist import DataList
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
@@ -23,7 +25,7 @@ from cutesnake.utils import isList
 from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.algorithm import ParameterNumerical
 from version import version
-from calc import calc, SASData, Calculator
+from calc import SASData, Calculator
 from McSAS import McSAS
 
 INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
@@ -97,6 +99,15 @@ class PropertyWidget(SettingsWidget):
         """Returns a calculator object updated with current GUI settings."""
         self._updateModelParams()
         return self._calculator
+
+    def setSphericalSizeRange(self, minVal, maxVal):
+        if self.modelBox.currentText() != "Sphere":
+            return
+        key = "radius"
+        keymin, keymax = key+"min", key+"max"
+        if self.get(keymin) is not None and self.get(keymax) is not None:
+            self.set(keymin, minVal)
+            self.set(keymax, maxVal)
 
     def __init__(self, parent):
         SettingsWidget.__init__(self, parent)
@@ -231,42 +242,78 @@ class PropertyWidget(SettingsWidget):
         widget.setLayout(layout)
         return widget
 
+class FileList(DataList):
+    sigSphericalSizeRange = Signal((float, float))
+
+    def loadData(self, fileList = None):
+        if fileList is None or type(fileList) is bool:
+            fileList = getOpenFiles(self, "Load one or more data files",
+                                    LastPath.get(), multiple = True)
+        # populates to data list widget with items based on the return of
+        # processSourceFunc(filename)
+        DataList.loadData(self, sourceList = fileList, showProgress = False,
+                          processSourceFunc = SASData.load)
+
+    def itemDoubleClicked(self, item, column):
+        valueRange = item.data().sphericalSizeEst()
+        self.sigSphericalSizeRange.emit(min(valueRange), max(valueRange))
+
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
+    _loadedData = None
 
     def __init__(self, parent = None):
         MainWindowBase.__init__(self, version, parent) # calls setupUi() and restoreSettings()
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
-        btnWidget = QWidget(self)
-        btnLayout = QHBoxLayout()
-        self.loadBtn = QPushButton("browse files ...")
-        self.loadBtn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        self.propWidget = PropertyWidget(self)
-        self.propWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-        btnLayout.addWidget(self.loadBtn)
-        btnLayout.addWidget(self.propWidget)
-        btnWidget.setLayout(btnLayout)
+        self.fileWidget = FileList(self, title = "data files",
+                                   withBtn = False)
+        self.fileWidget.setHeader(SASData.displayDataDescr())
+        self.fileWidget.setMaximumHeight(100)
+        self.fileWidget.setToolTip(
+                "Double click to use the estimated size for the model.")
 
-        centralWidget = QWidget(self)
-        centralLayout = QVBoxLayout()
+        self.loadBtn = QPushButton("load files ...")
+        self.startBtn = QPushButton("start")
+        self.stopBtn = QPushButton("stop")
+        self.loadBtn.pressed.connect(self.fileWidget.loadData)
+        self.startBtn.pressed.connect(self.calc)
+        btnLayout = QVBoxLayout()
+        for btn in self.loadBtn, self.startBtn, self.stopBtn:
+            btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+            btnLayout.addWidget(btn)
+#        btnLayout.addStretch()
+        btnWidget = QWidget(self)
+        btnWidget.setLayout(btnLayout)
+        self.propWidget = PropertyWidget(self)
+        self.propWidget.setSizePolicy(QSizePolicy.Preferred,
+                                      QSizePolicy.Maximum)
+        self.fileWidget.sigSphericalSizeRange.connect(
+                        self.propWidget.setSphericalSizeRange)
+        ctrlLayout = QHBoxLayout()
+        ctrlLayout.addWidget(btnWidget)
+        ctrlLayout.addWidget(self.propWidget)
+        settingsWidget = QWidget(self)
+        settingsWidget.setLayout(ctrlLayout)
+
         self.logWidget = LogWidget(self, appversion = version)
         self.onCloseSignal.connect(self.logWidget.onCloseSlot)
-        self.logWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        centralLayout.addWidget(btnWidget)
-        centralLayout.addWidget(self.logWidget)
-        centralWidget.setLayout(centralLayout)
-
-        self.setCentralWidget(centralWidget)
-
-        self.loadBtn.pressed.connect(self.fileDialog)
-        SASData.logWidget = self.logWidget
-        SASData.settings = self.propWidget
+        self.logWidget.setSizePolicy(QSizePolicy.Preferred,
+                                     QSizePolicy.Expanding)
         self.logWidget.append(INFOTEXT)
         if len(CHANGESTEXT):
             self.logWidget.append(CHANGESTEXT)
         self.logWidget.append("\n\r")
+
+        self.centralLayout = QVBoxLayout()
+        self.centralLayout.addWidget(self.fileWidget)
+        self.centralLayout.addWidget(settingsWidget)
+        self.centralLayout.addWidget(self.logWidget)
+
+        centralWidget = QWidget(self)
+        centralWidget.setLayout(self.centralLayout)
+        self.setCentralWidget(centralWidget)
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
@@ -303,21 +350,17 @@ class MainWindow(MainWindowBase):
     def fileDialog(self):
         filenames = getOpenFiles(self, "Load one or more data files",
                                  LastPath.get(), multiple = True)
-        self.startCalc(filenames)
+        self.loadFiles(filenames)
 
     def onStartup(self):
         self.propWidget.selectModel()
-        self.startCalc(self.getCommandlineArguments())
+        self.fileWidget.loadData(self.getCommandlineArguments())
 
-    def startCalc(self, fnames):
-        if not isList(fnames) or not len(fnames):
-            logging.info("Please load an input file!")
-            return
+    def calc(self):
         self.logWidget.clear()
-        try:
-            calc(self.propWidget.calculator(), fnames)
-        except StandardError, e:
-            DisplayException(e)
+        calculator = self.propWidget.calculator()
+        self.fileWidget.updateData(updateFunc = calculator,
+                                   showProgress = False)
 
     def closeEvent(self, closeEvent):
         super(MainWindow, self).closeEvent(closeEvent)

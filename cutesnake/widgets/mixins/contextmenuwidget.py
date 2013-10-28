@@ -41,11 +41,12 @@ class ContextMenuWidget(object):
 
     def _updateTitle(self, text):
         """Updates a menu title with the widget title."""
-        if '%' in unicode(text):
+        text = unicode(text)
+        if '%' in text:
             title = self.title
             if isinstance(title, TitleHandler):
                 title = title()
-            text = text.replace("%", "{0}")
+            text = text.replace("%1", "{0}")
             return text.format(title.lower())
         return text
 
