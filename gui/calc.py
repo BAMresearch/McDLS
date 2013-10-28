@@ -20,6 +20,9 @@ import cutesnake.log as log
 from McSAS import McSAS
 
 class SASData(DataSet, ResultMixin):
+    _sizeEst = None
+    _emin = 0.01 # minimum possible error (1%)
+    _uncertainty = None
 
     @classmethod
     def load(cls, filename):
@@ -31,6 +34,39 @@ class SASData(DataSet, ResultMixin):
         sasFile = PDHFile(filename)
         sasData = cls(sasFile.name, sasFile.data)
         return sasData
+
+    def q(self):
+        return self.origin[:, 0]
+
+    def i(self):
+        return self.origin[:, 1]
+
+    def __init__(self, *args):
+        DataSet.__init__(self, *args)
+        self._sizeEst = np.array([np.pi/np.max(self.q()), np.pi/np.min(self.q())])
+        self.prepareUncertainty()
+
+    def sphericalSizeEst(self):
+        return self._sizeEst
+
+    def minUncertainty(self):
+        return self._emin
+
+    def prepareUncertainty(self):
+        self._uncertainty = self.minUncertainty() * self.i()
+        minUncertaintyPercent = self.minUncertainty() * 100.
+        if self.origin.shape[1] < 3:
+            logging.warning("No error column provided! Using {}% of intensity."
+                            .format(minUncertaintyPercent))
+        else:
+            logging.warning("Minimum uncertainty ({}% of intensity) set "
+                            "for {} datapoints.".format(
+                            minUncertaintyPercent,
+                            sum(self._uncertainty > self.origin[:, 2])))
+            self._uncertainty = np.maximum(self._uncertainty, self.origin[:, 2])
+
+    def uncertainty(self):
+        return self._uncertainty
 
 class Calculator(object):
     _algo = None # McSAS algorithm instance
@@ -73,30 +109,19 @@ class Calculator(object):
         oldHandler = log.log.handlers[0]
         log.addHandler(logFile)
 
-        q, I = dataset.origin[:, 0], dataset.origin[:, 1]
-        emin, E = 0.01, None #minimum possible error (1%)
-        E = emin * I
-        if dataset.origin.shape[1] < 3:
-            logging.warning("No error column provided! Using {}% of intensity."
-                            .format(emin * 100.))
-        else:
-            logging.warning("Minimum uncertainty ({}% of intensity) set "
-                            "for {} datapoints.".format(
-                            emin * 100., sum(E > dataset.origin[:, 2])))
-            E = np.maximum(E, dataset.origin[:, 2])
-
-        bounds = np.array([np.pi/np.max(q), np.pi/np.min(q)])
+        bounds = dataset.sphericalSizeEst()
         logging.info("The following parameters are used for 'Analyze_1D':")
         logging.info("bounds: [{0:.4f}; {1:.4f}]"
                      .format(bounds[0], bounds[1]))
-        mcargs = dict(Emin = emin, 
+        mcargs = dict(Emin = dataset.minUncertainty(), 
                       contribParamBounds = bounds,
                       doPlot = True)
         self._writeSettings(mcargs)
         if self.nolog:
             log.removeHandler(oldHandler)
         self._algo.figureTitle = os.path.basename(self.basefn)
-        self._algo.calc(Q = q, I = I, IError = E, **mcargs)
+        self._algo.calc(Q = dataset.q(), I = dataset.i(),
+                        IError = dataset.uncertainty(), **mcargs)
         if self.nolog:
             log.addHandler(oldHandler)
 
