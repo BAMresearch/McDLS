@@ -117,6 +117,9 @@ class Calculator(object):
         # access the property to change it permanently
         return [getattr(self.model, p.name()) for p in self.model.params()]
 
+    def stop(self):
+        self._algo.stop = True
+
     def __call__(self, dataset):
         # start log file writing
         self._title = dataset.title

@@ -442,6 +442,7 @@ class McSAS(AlgorithmBase):
     def calc(self, **kwargs):
         # initialize
         self.result = [] # TODO
+        self.stop = False # TODO, move this into some simple result structure, eventually?
         # set data values
         self.setData(kwargs)
         # set supplied kwargs and passing on
@@ -466,7 +467,8 @@ class McSAS(AlgorithmBase):
                 "\n".join(["Analysing parameters: "]+
                     [str(p) for p in self.model.params()])
         )
-        self.checkParameters() # checks histbins (-> should go into custom parameter type)
+        self.checkParameters() # checks histbins
+                               # (-> should go into custom parameter type)
         self.analyse()
         # continue if there are results only
         if not len(self.result):
@@ -706,7 +708,7 @@ class McSAS(AlgorithmBase):
                 (contributions[:, :, nr], contribIntensity[:, :, nr],
                  convergence, details) = self.mcFit(outputIntensity = True,
                                                     outputDetails = True)
-                if nt > maxRetries:
+                if nt > maxRetries or self.stop:
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
                     logging.warning("Could not reach optimization criterion "
@@ -851,7 +853,7 @@ class McSAS(AlgorithmBase):
         ri = 0
         lastUpdate = 0
         while (conval > self.convergenceCriterion.value() and
-               numIter < self.maxIterations.value()):
+               numIter < self.maxIterations.value() and not self.stop):
             rt = self.model.generateParameters()
             ft = self.model.ff(data, rt)
             vtt = self.model.vol(rt)

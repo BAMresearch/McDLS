@@ -279,6 +279,7 @@ class MainWindow(MainWindowBase):
         self.stopBtn = QPushButton("stop")
         self.loadBtn.pressed.connect(self.fileWidget.loadData)
         self.startBtn.pressed.connect(self.calc)
+        self.stopBtn.pressed.connect(self.onStop)
         btnLayout = QVBoxLayout()
         for btn in self.loadBtn, self.startBtn, self.stopBtn:
             btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
@@ -362,8 +363,12 @@ class MainWindow(MainWindowBase):
         self.fileWidget.updateData(updateFunc = calculator,
                                    showProgress = False)
 
+    def onStop(self):
+        self.propWidget.calculator().stop()
+
     def closeEvent(self, closeEvent):
         super(MainWindow, self).closeEvent(closeEvent)
+        self.onStop()
         self.onCloseSignal.emit()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
