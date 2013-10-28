@@ -465,7 +465,8 @@ class McSAS(AlgorithmBase):
             return
         logging.info(
                 "\n".join(["Analysing parameters: "]+
-                    [str(p) for p in self.model.params()])
+                    [str(p)+", active: "+str(p.isActive)
+                        for p in self.model.params()])
         )
         self.checkParameters() # checks histbins
                                # (-> should go into custom parameter type)
