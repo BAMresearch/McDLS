@@ -1396,16 +1396,14 @@ class McSAS(AlgorithmBase):
         # on Windows the plot figure blocks the app until it is closed
         # -> we have to call matplotlib plot in another thread (1.3.1)
         # on linux it does not block, can show multiple figures (1.0.1)
-        if sys.platform.lower().find("win") < 0:
-            plotResults(*plotArgs)
-        elif sys.platform.lower().find("arwin") > 0:
-            plotResults(*plotArgs)
-        else:
+        if sys.platform.lower().startswith("win"):
             # does not work in linux: UI has to run in main thread (X server error)
             # -> move (headless) calculations to another
             from multiprocessing import Process
             proc = Process(target = plotResults, args = plotArgs)
             proc.start()
+        else:
+            plotResults(*plotArgs)
 
     def rangeInfo(self, valueRange = [0, inf], paramIndex = 0):
         """Calculates the total volume or number fraction of the MC result
