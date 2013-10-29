@@ -1398,6 +1398,8 @@ class McSAS(AlgorithmBase):
         # on linux it does not block, can show multiple figures (1.0.1)
         if sys.platform.lower().find("win") < 0:
             plotResults(*plotArgs)
+        elif sys.platform.lower().find("arwin") > 0:
+            plotResults(*plotArgs)
         else:
             # does not work in linux: UI has to run in main thread (X server error)
             # -> move (headless) calculations to another
