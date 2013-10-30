@@ -1405,13 +1405,14 @@ class McSAS(AlgorithmBase):
         else:
             plotResults(*plotArgs)
 
-    def rangeInfo(self, valueRange = [0, inf], paramIndex = 0):
+    def rangeInfo(self, valueRange = [0, inf], paramIndex = 0, weighting=None):
         """Calculates the total volume or number fraction of the MC result
         within a given range, and returns the total numer or volume fraction
         and its standard deviation over all nreps as well as the first four
         distribution moments: mean, variance, skewness and kurtosis
         (Pearson's definition).
-        Will use the *histogramWeighting* parameter for determining whether to 
+        Will use the *histogramWeighting* parameter or the optional 
+        rangeInfo parameter *weighting* for determining whether to 
         return the volume or number-weighted values.
 
         Input arguments are:
@@ -1421,6 +1422,9 @@ class McSAS(AlgorithmBase):
             *paramIndex*
               Which shape parameter the moments are to be calculated for
               (e.g. 0 = width, 1 = length, 2 = orientation)
+            *weighting*
+              Can be set to "volume" or "number", otherwise it is set to
+              the *histogramWeighting* parameter of the McSAS main function
 
         Returns a 4-by-2 array, with the values and their sample standard
         deviations over all *numRepetitions*.
@@ -1443,6 +1447,8 @@ class McSAS(AlgorithmBase):
         skw = numpy.zeros(numReps) # moments..
         krt = numpy.zeros(numReps) # moments..
 
+        if weighting is None:
+            weighting=McSASParameters.histogramWeighting
         # loop over each repetition
         for ri in range(numReps):
             # the single set of R for this calculation
@@ -1454,7 +1460,7 @@ class McSAS(AlgorithmBase):
             vset = volumeFraction[validRange, ri]
             nset = numberFraction[validRange, ri]
 
-            if McSASParameters.histogramWeighting == 'volume':
+            if weighting == 'volume':
                 val[ri] = sum(vset)
                 mu[ri]  = sum(rset * vset)/sum(vset)
                 var[ri] = sum( (rset - mu[ri])**2 * vset )/sum(vset)
@@ -1463,7 +1469,7 @@ class McSAS(AlgorithmBase):
                            / (sum(vset) * sigma**3))
                 krt[ri] = ( sum( (rset-mu[ri])**4 * vset )
                            / (sum(vset) * sigma**3))
-            elif McSASParameters.histogramWeighting == 'number':
+            elif weighting == 'number':
                 val[ri] = sum(nset)
                 mu[ri]  = sum(rset * nset)/sum(nset)
                 var[ri] = sum( (rset-mu[ri])**2 * nset )/sum(nset)
