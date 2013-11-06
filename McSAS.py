@@ -781,20 +781,20 @@ class McSAS(AlgorithmBase):
         elif prior.shape[0] == numContribs:
             rset = prior
         elif prior.shape[0] < numContribs:
-            print "size of prior is smaller than numContribs. "\
-                  "duplicating random prior values"
+            logging.info("size of prior is smaller than numContribs. "\
+                    "duplicating random prior values")
             randomIndices = numpy.random.randint(prior.shape[0],
                             size = numContribs - prior.shape[0])
             rset = numpy.concatenate((prior, prior[randomIndices, :]))
-            print "size now:", rset.shape
+            logging.info("size now: {}".format(rset.shape))
         elif prior.shape[0] > numContribs:
-            print "Size of prior is larger than numContribs. "\
-                  "removing random prior values"
+            logging.info("Size of prior is larger than numContribs. "\
+                    "removing random prior values")
             # remaining choices
             randomIndices = numpy.random.randint(prior.shape[0],
                                                  size = numContribs)
             rset = prior[randomIndices, :]
-            print "size now:", rset.shape
+            logging.info("size now: {}".format(rset.shape))
         
         vset = self.model.vol(rset)
         if not McSASParameters.lowMemoryFootprint:
@@ -885,7 +885,7 @@ class McSAS(AlgorithmBase):
                 it, vset[ri], vst = itest, vtt, vstest
                 if not McSASParameters.lowMemoryFootprint:
                     iset[:, ri] = itt
-                print ("Improvement in iteration number {0}, "
+                logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval,
                                  self.convergenceCriterion.value())),
@@ -929,7 +929,7 @@ class McSAS(AlgorithmBase):
             ri = (ri + 1) % (numContribs)
             numIter += 1 # add one to the iteration number
 
-        print # for progress print in the loop
+        #print # for progress print in the loop
         if numIter >= self.maxIterations.value():
             logging.warning("Exited due to max. number of iterations ({0}) "
                             "reached".format(numIter))
@@ -1247,7 +1247,6 @@ class McSAS(AlgorithmBase):
         anisotropic images, and will calculate the MC fit intensity in
         image form
         """
-        print self.result[0].keys()
         contribs = self.result[0]['contribs']
         numContribs, dummy, numReps = contribs.shape
 
@@ -1258,13 +1257,13 @@ class McSAS(AlgorithmBase):
         kansas = shape(q) # we will return to this shape
         q = q.flatten()
 
-        print "Recalculating final result, this may take some time"
+        logging.info("Recalculating final 2D intensity, this may take some time")
         # for each Result
         intAvg = zeros(shape(q))
         # TODO: for which parameter?
         scalingFactors = self.result[0]['scalingFactors']
         for ri in range(numReps):
-            print 'regenerating set {} of {}'.format(ri, numReps-1)
+            logging.info('regenerating set {} of {}'.format(ri, numReps-1))
             rset = contribs[:, :, ri]
             # calculate their form factors
             vset = self.model.vol(rset)
@@ -1705,7 +1704,7 @@ def plotResults(allRes, dataset, params,
             volHistMinReq = res['numberHistogramMinimumRequired']
             volHistYStd = res['numberHistogramYStd']
         else: 
-            print "Incorrect value for histWeighting: "\
+            "Incorrect value for histWeighting: "\
                   "should be either 'volume' or 'number'"
 
 
