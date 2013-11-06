@@ -9,6 +9,8 @@ from cutesnake.utils.translate import tr
 class AsciiFile(DataFile):
     """A generic ascii data file."""
     valueFormat = "{0: 14.6E}" # format of data values for ascii export
+    separator = " "
+    newline="\n"
 
     @staticmethod
     def sanitizeData(data):
@@ -18,17 +20,47 @@ class AsciiFile(DataFile):
 
     @classmethod
     def formatRow(cls, row, **kwargs):
-        return " ".join([cls.valueFormat.format(value) for value in row])
+        return cls.separator.join([cls.valueFormat.format(value) 
+            for value in row])
 
     @classmethod
     def formatData(cls, data, **kwargs):
-        return "\n".join([cls.formatRow(row, **kwargs) for row in data])
+        return cls.newline.join([cls.formatRow(row, **kwargs) for row in data])
 
     @classmethod
     def writeFile(cls, filename, data, **kwargs):
         asciiData = cls.formatData(data, **kwargs)
         with open(filename, 'w') as fd:
             fd.write(asciiData)
+
+    @classmethod
+    def appendFile(cls, filename, data, **kwargs):
+        """like writeFile but appends data to an existing file"""
+        asciiData = cls.formatData(data, **kwargs)
+        with open(filename, 'a') as fd:
+            fd.write(asciiData)
+
+    @classmethod
+    def writeHeaderLine(cls, filename, header):
+        """writes a single-line header to a file consisting of a string or 
+        tuple of strings to be joined"""
+        if isinstance(header,str):
+            with open(filename,'w') as fd:
+                fd.writelines(header+cls.newline)
+        else:
+            with open(filename,'w') as fd:
+                fd.writelines(cls.separator.join(header)+cls.newline)
+
+    @classmethod
+    def appendHeaderLine(cls, filename, header):
+        """writes a single-line header to a file consisting of a string or 
+        tuple of strings to be joined"""
+        if isinstance(header,str):
+            with open(filename,'a') as fd:
+                fd.writelines(header+cls.newline)
+        else:
+            with open(filename,'a') as fd:
+                fd.writelines(cls.separator.join(header)+cls.newline)
 
     @classmethod
     def readRow(cls, fields, **kwargs):

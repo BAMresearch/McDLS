@@ -198,8 +198,11 @@ class Calculator(object):
         logging.info("Containing the following columns:")
         for cn in columnNames:
             logging.info("{0}[ {1} ]".format(self.indent, cn))
+        #write header:
+        AsciiFile.writeHeaderLine(fn,columnNames)
         data = np.vstack([mcResult[cn] for cn in columnNames]).T
-        AsciiFile.writeFile(fn, data)
+        #append to the header, do not overwrite:
+        AsciiFile.appendFile(fn, data)
 
     def _getFilename(self, kind):
         """Creates a file name from data base name, its directory and the
