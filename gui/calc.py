@@ -161,7 +161,7 @@ class Calculator(object):
 
     def _writeDistrib(self, mcResult):
         self._writeResultHelper(mcResult, "dist", "distributions",
-            ('histogramXMean', 'volumeHistogramYMean',
+            ('histogramXMean', 'histogramXWidth', 'volumeHistogramYMean',
              'volumeHistogramYStd', 'volumeHistogramMinimumRequired',
              'numberHistogramYMean', 'numberHistogramYStd',
              'numberHistogramMinimumRequired')
