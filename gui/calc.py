@@ -170,6 +170,11 @@ class Calculator(object):
     def _writeSettings(self, mcargs):
         fn = self._getResultFilename("settings", "algorithm settings")
         config = ConfigParser.RawConfigParser()
+        sectionName = "I/O Settings"
+        config.add_section(sectionName)
+        config.set(sectionName,'dataPath',LastPath.get())
+        config.set(sectionName,'fileName',self._title) #not the file name...
+        config.set(sectionName,'outputBaseName',self.basefn)
         sectionName = "MCSAS Settings"
         config.add_section(sectionName)
         for key, value in mcargs.iteritems():
@@ -200,6 +205,7 @@ class Calculator(object):
             logging.info("{0}[ {1} ]".format(self.indent, cn))
         #write header:
         AsciiFile.writeHeaderLine(fn,columnNames)
+        #(additional header lines can be appended if necessary)
         data = np.vstack([mcResult[cn] for cn in columnNames]).T
         #append to the header, do not overwrite:
         AsciiFile.appendFile(fn, data)
