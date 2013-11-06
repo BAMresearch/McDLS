@@ -75,10 +75,12 @@ class SASData(DataSet, DisplayMixin):
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
         else:
-            logging.warning("Minimum uncertainty ({}% of intensity) set "
-                            "for {} datapoints.".format(
-                            minUncertaintyPercent,
-                            sum(self._uncertainty > self.origin[:, 2])))
+            changeNumber=sum(self._uncertainty > self.origin[:, 2])
+            if changeNumber>0:
+                logging.warning("Minimum uncertainty ({}% of intensity) set "
+                                "for {} datapoints.".format(
+                                minUncertaintyPercent,
+                                changeNumber))
             self._uncertainty = np.maximum(self._uncertainty, self.origin[:, 2])
 
     def uncertainty(self):
