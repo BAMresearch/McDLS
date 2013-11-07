@@ -136,7 +136,7 @@ class Calculator(object):
                      .format(bounds[0], bounds[1]))
         mcargs = dict(Emin = dataset.minUncertainty(), 
                       contribParamBounds = bounds,
-                      doPlot = True)
+                      doPlot = False)
         self._writeSettings(mcargs)
         if self.nolog:
             log.removeHandler(oldHandler)
@@ -151,6 +151,7 @@ class Calculator(object):
             if res is not None:
                 self._writeDistrib(res)
                 self._writeFit(res)
+                self._algo.plot()
         else:
             logging.info("No results available!")
 

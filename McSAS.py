@@ -1567,12 +1567,14 @@ def plotResults(allRes, dataset, params,
     intensity (on double-log scale), and the righthand window the size
     distribution.
     """
+
     import matplotlib.font_manager as fm
     import matplotlib.pyplot as pyplot
     from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
                                    plot, grid, legend, title, xlim, gca,
-                                   isinteractive, close, draw)
+                                   close, draw)
     from pylab import show
+
     fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
     fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
     def setAxis(ah):
@@ -1627,6 +1629,7 @@ def plotResults(allRes, dataset, params,
                        if p.isActive]
     else:
         parameterId = [parameterIdx]
+    #check how many histograms there are to plot
     nhists = len(parameterId)
 
     # set plot font
@@ -1648,6 +1651,8 @@ def plotResults(allRes, dataset, params,
     q = data[:, 0]
     intensity = data[:, 1]
     intError = data[:, 2]
+
+    #plot intensity fit:
     if dataset.is2d:
         # 2D data
         psi = data[:, 3]
@@ -1714,6 +1719,8 @@ def plotResults(allRes, dataset, params,
     title('Measured vs. Fitted intensity',
           fontproperties = textfont, size = 'x-large')
     sizeAxis = list()
+
+    #plot histograms
     for parami in range(len(parameterId)):
         # get data:
         res = allRes[parameterId[parami]]
