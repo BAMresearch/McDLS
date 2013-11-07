@@ -38,6 +38,11 @@ class DataItem(QTreeWidgetItem):
             return
         del cls._store[key]
 
+    @staticmethod
+    def hash32(data):
+        """Avoids OverFlowError at setData() with PySide on MacOS."""
+        return hash(data) & 0xffffffff
+
     @property
     def isRemovable(self):
         return bool(self._isRemovable)
@@ -48,7 +53,7 @@ class DataItem(QTreeWidgetItem):
                 QTreeWidgetItem.DontShowIndicatorWhenChildless)
         assert isinstance(data, DisplayMixin)
         self._isRemovable = data.isRemovable
-        self.setData(0, Qt.UserRole, id(data))
+        self.setData(0, Qt.UserRole, self.hash32(data))
         self.store(self.dataId(), data)
         self.update()
 
