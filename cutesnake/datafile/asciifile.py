@@ -5,6 +5,7 @@ from numpy import array as np_array
 from cutesnake.datafile import DataFile
 from cutesnake.utils.error import FileError
 from cutesnake.utils.translate import tr
+from cutesnake.utils import isString
 
 class AsciiFile(DataFile):
     """A generic ascii data file."""
@@ -20,47 +21,46 @@ class AsciiFile(DataFile):
 
     @classmethod
     def formatRow(cls, row, **kwargs):
-        return cls.separator.join([cls.valueFormat.format(value) 
-            for value in row])
+        return cls.separator.join([cls.valueFormat.format(value)
+                                   for value in row])
 
     @classmethod
     def formatData(cls, data, **kwargs):
-        return cls.newline.join([cls.formatRow(row, **kwargs) for row in data])
+        return cls.newline.join([cls.formatRow(row, **kwargs)
+                                 for row in data])
+
+    @staticmethod
+    def _write(filename, mode, asciiData):
+        with open(filename, mode) as fd:
+            fd.write(asciiData)
 
     @classmethod
     def writeFile(cls, filename, data, **kwargs):
-        asciiData = cls.formatData(data, **kwargs)
-        with open(filename, 'w') as fd:
-            fd.write(asciiData)
+        cls._write(filename, 'w', cls.formatData(data, **kwargs))
 
     @classmethod
     def appendFile(cls, filename, data, **kwargs):
         """like writeFile but appends data to an existing file"""
-        asciiData = cls.formatData(data, **kwargs)
-        with open(filename, 'a') as fd:
-            fd.write(asciiData)
+        cls._write(filename, 'a', cls.formatData(data, **kwargs))
+
+    @classmethod
+    def _formatHeader(cls, header):
+        if not isString(header):
+            header = cls.separator.join(header)
+        header += cls.newline
+        return header
 
     @classmethod
     def writeHeaderLine(cls, filename, header):
-        """writes a single-line header to a file consisting of a string or 
+        """writes a single-line header to a file consisting of a string or
         tuple of strings to be joined"""
-        if isinstance(header,str):
-            with open(filename,'w') as fd:
-                fd.writelines(header+cls.newline)
-        else:
-            with open(filename,'w') as fd:
-                fd.writelines(cls.separator.join(header)+cls.newline)
+        cls._write(filename, 'w', cls._formatHeader(header))
 
     @classmethod
     def appendHeaderLine(cls, filename, header):
-        """writes a single-line header to a file consisting of a string or 
+        """writes a single-line header to a file consisting of a string or
         tuple of strings to be joined"""
-        if isinstance(header,str):
-            with open(filename,'a') as fd:
-                fd.writelines(header+cls.newline)
-        else:
-            with open(filename,'a') as fd:
-                fd.writelines(cls.separator.join(header)+cls.newline)
+        cls._write(filename, 'a', cls._formatHeader(header))
 
     @classmethod
     def readRow(cls, fields, **kwargs):
