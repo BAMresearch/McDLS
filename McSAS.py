@@ -77,7 +77,7 @@ from models.sphere import Sphere
 from cutesnake.utilsgui import processEventLoop
 
 class McSASParameters(PropertyNames):
-    """Defines the parameters used for the fitting procedure:
+    """Defines the static parameters used for the fitting procedure:
         - *model*: an instance of McSAS.model defining the fitting model
         - *contribParamBounds*: Bounds of the active (fitting) parameter
         - *qBounds*: limits in *q* between which the fit is applied
@@ -115,6 +115,11 @@ class McSASParameters(PropertyNames):
             reduces the memory requirements drastically as only a single 
             contribution is calculated at a time
         - *doPlot*: sets whether to automatically plot or not
+
+       Most of them should be moved to McSAS as dynamic parameters of type
+       *Parameter* which allows them to be configurable in the GUI.
+       Some, esp. *histogramBins* and *histogramXScale* should be moved to
+       a custom *FitParameter* class along with the *active* flag. (WIP)
 
     """
     model = None
