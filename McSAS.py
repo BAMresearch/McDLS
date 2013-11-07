@@ -1568,6 +1568,13 @@ def plotResults(allRes, dataset, params,
     distribution.
     """
 
+    import matplotlib
+    try:
+        import PySide # verify/test that we have pyside
+        matplotlib.rcParams['backend.qt4'] = 'PySide'
+    except:
+        pass # no pyside
+    matplotlib.use('QT4Agg') # we use Qt anyway
     import matplotlib.font_manager as fm
     import matplotlib.pyplot as pyplot
     from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
