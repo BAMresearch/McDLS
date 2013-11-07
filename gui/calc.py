@@ -145,7 +145,7 @@ class Calculator(object):
         mcargs = dict(Emin = dataset.minUncertainty(), 
                       contribParamBounds = bounds,
                       doPlot = False)
-        self._writeSettings(mcargs)
+        self._writeSettings(mcargs, dataset)
         if self.nolog:
             log.removeHandler(oldHandler)
         self._algo.figureTitle = os.path.basename(self.basefn)
@@ -178,14 +178,22 @@ class Calculator(object):
              'numberHistogramMinimumRequired')
         )
 
-    def _writeSettings(self, mcargs):
+    def _writeSettings(self, mcargs, dataset):
         fn = self._getResultFilename("settings", "algorithm settings")
         config = ConfigParser.RawConfigParser()
         sectionName = "I/O Settings"
         config.add_section(sectionName)
-        config.set(sectionName,'dataPath',LastPath.get())
-        config.set(sectionName,'fileName',self._title) #not the file name...
-        config.set(sectionName,'outputBaseName',self.basefn)
+        # do we really want to store absolute path names?
+        # -> with SASfit, users often transfer output files across systems
+        #    and what to do when loading/interpreting a abs. path
+        #    on another machine?
+        config.set(sectionName, 'dataPath', LastPath.get())
+
+        # the filename w/o extension, see SASData.load()
+        config.set(sectionName, 'fileName', dataset.title)
+        # the filename with timestamp of results
+        config.set(sectionName, 'outputBaseName', os.path.basename(self.basefn))
+
         sectionName = "MCSAS Settings"
         config.add_section(sectionName)
         for key, value in mcargs.iteritems():
