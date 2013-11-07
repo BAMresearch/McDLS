@@ -47,7 +47,15 @@ class SASData(DataSet, DisplayMixin):
             return
         logging.info("Loading '{0}' ...".format(filename))
 
-        sasFile = PDHFile(filename)
+        if filename[-4:]=='.pdh':
+            sasFile = PDHFile(filename)
+        else:
+            #try loading with the ascii reader, using the PDHFile module for
+            #this leads to the truncation of the first five lines
+            #need a new class CSVFile. Can't quite figure out how PDHFile 
+            #adapts AsciiFile to get to what it needs to be. 
+            sasFile = PDHFile(filename)
+
         sasData = cls(sasFile.name, sasFile.data)
         return sasData
 
