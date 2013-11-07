@@ -76,6 +76,9 @@ class SettingsWidget(QWidget):
         return value
 
     def set(self, key, value):
+        if (value is None or
+            (hasattr(value, "isValid") and not value.isValid())):
+            return
         child = self.findChild(QWidget, key)
         for key in ("checked", "value", "text"):
             variant = child.property(key)
