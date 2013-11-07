@@ -68,7 +68,7 @@ import logging
 logging.basicConfig(level = logging.INFO)
 
 from cutesnake.dataset import DataSet
-from cutesnake.utils import isList, isString
+from cutesnake.utils import isList, isString, isFrozen
 from cutesnake.algorithm import (AlgorithmBase, Parameter, ParameterBase, ParameterFloat,
                                  RandomUniform, RandomExponential, makeParameterType)
 from utils.propertynames import PropertyNames
@@ -1425,7 +1425,7 @@ class McSAS(AlgorithmBase):
         # on Windows the plot figure blocks the app until it is closed
         # -> we have to call matplotlib plot in another thread (1.3.1)
         # on linux it does not block, can show multiple figures (1.0.1)
-        if sys.platform.lower().startswith("win"):
+        if sys.platform.lower().startswith("win") and not isFrozen():
             # does not work in linux: UI has to run in main thread (X server error)
             # -> move (headless) calculations to another
             from multiprocessing import Process

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # __init__.py
 
-from sys import float_info
+import sys
 import collections
 import platform
 import hashlib
@@ -16,7 +16,7 @@ except:
     # defines QString as regular python string if it could not be imported
     QString = basestring
 
-EPS = float_info.epsilon
+EPS = sys.float_info.epsilon
 
 # object tests
 
