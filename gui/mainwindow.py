@@ -37,6 +37,12 @@ Output files start with the base name of the input file. They have the current d
 CHANGESTEXT = (u"""
 
 Changes in 0.0.10:
+- data file listing widget on top with short info
+  - double-click uses sphere size est. for sphere model radius range
+- start/stop buttons
+  - allows to abort current calculation and restart
+- column names in output files
+- data file names stored with settings
 - switch to enable/disable background level fit
 - multiple plot figures on Windows supported
 
