@@ -63,11 +63,18 @@ class AsciiFile(DataFile):
         cls._write(filename, 'a', cls._formatHeader(header))
 
     @classmethod
-    def readRow(cls, fields, **kwargs):
-        return tuple(fields) # just converted to tuple
+    def readRow(cls, fields, dataType = float, **kwargs):
+        """Converts each field to the requested datatype.
+           Raises an error if it is incompatible,
+           the line is skipped in that case."""
+        try:
+            # just converted to tuple
+            return tuple((dataType(f) for f in fields))
+        except:
+            raise ValueError
 
     @classmethod
-    def readFile(cls, filename, dataType = None):
+    def readFile(cls, filename, dataType = float):
         fileData = []
         with open(filename) as fd:
             linenr = 0
@@ -84,7 +91,8 @@ class AsciiFile(DataFile):
                 try:
                     # may raise exception
                     record = cls.readRow(fields, filename = filename,
-                                         lineNumber = linenr)
+                                         lineNumber = linenr,
+                                         dataType = dataType)
                 except ValueError:
                     continue
                 if record is None or len(record) <= 0:

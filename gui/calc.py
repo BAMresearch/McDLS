@@ -47,14 +47,10 @@ class SASData(DataSet, DisplayMixin):
             return
         logging.info("Loading '{0}' ...".format(filename))
 
-        if filename[-4:]=='.pdh':
+        if filename[-4:].lower() == '.pdh':
             sasFile = PDHFile(filename)
         else:
-            #try loading with the ascii reader, using the PDHFile module for
-            #this leads to the truncation of the first five lines
-            #need a new class CSVFile. Can't quite figure out how PDHFile 
-            #adapts AsciiFile to get to what it needs to be. 
-            sasFile = PDHFile(filename)
+            sasFile = AsciiFile(filename) # works for CSV too
 
         sasData = cls(sasFile.name, sasFile.data)
         return sasData
@@ -83,12 +79,11 @@ class SASData(DataSet, DisplayMixin):
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
         else:
-            changeNumber=sum(self._uncertainty > self.origin[:, 2])
-            if changeNumber>0:
+            count = sum(self._uncertainty > self.origin[:, 2])
+            if count > 0:
                 logging.warning("Minimum uncertainty ({}% of intensity) set "
                                 "for {} datapoints.".format(
-                                minUncertaintyPercent,
-                                changeNumber))
+                                minUncertaintyPercent, count))
             self._uncertainty = np.maximum(self._uncertainty, self.origin[:, 2])
 
     def uncertainty(self):
