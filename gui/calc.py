@@ -179,9 +179,8 @@ class Calculator(object):
         sectionName = "I/O Settings"
         config.add_section(sectionName)
         # do we really want to store absolute path names?
-        # -> with SASfit, users often transfer output files across systems
-        #    and what to do when loading/interpreting a abs. path
-        #    on another machine?
+        #discussion moved to:
+        #https://bitbucket.org/pkwasniew/mcsas/issue/2/
         config.set(sectionName, 'dataPath', LastPath.get())
 
         # the filename w/o extension, see SASData.load()
