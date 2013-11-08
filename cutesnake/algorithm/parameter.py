@@ -236,6 +236,14 @@ class ParameterBoolean(ParameterBase):
     def dtype(cls):
         return bool
 
+    @mixedmethod
+    def min(self):
+        return False
+
+    @mixedmethod
+    def max(self):
+        return True
+
 class ParameterNumerical(ParameterBase):
     _valueRange = None
     _suffix = None
