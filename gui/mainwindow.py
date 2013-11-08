@@ -286,6 +286,7 @@ class MainWindow(MainWindowBase):
         self.loadBtn.pressed.connect(self.fileWidget.loadData)
         self.startBtn.pressed.connect(self.calc)
         self.stopBtn.pressed.connect(self.onStop)
+        self.stopBtn.setEnabled(False) #disabled until start button pressed
         btnLayout = QVBoxLayout()
         for btn in self.loadBtn, self.startBtn, self.stopBtn:
             btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
@@ -364,12 +365,17 @@ class MainWindow(MainWindowBase):
         self.fileWidget.loadData(self.getCommandlineArguments())
 
     def calc(self):
+        #startbutton does not re-enable after calculation is finished.
+        #self.startBtn.setEnabled(False)
+        self.stopBtn.setEnabled(True)
         self.logWidget.clear()
         calculator = self.propWidget.calculator()
         self.fileWidget.updateData(updateFunc = calculator,
                                    showProgress = False)
 
     def onStop(self):
+        #self.startBtn.setEnabled(True)
+        self.stopBtn.setEnabled(False)
         self.propWidget.calculator().stop()
 
     def closeEvent(self, closeEvent):
