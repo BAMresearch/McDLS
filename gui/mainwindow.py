@@ -77,8 +77,10 @@ from models.sphere import Sphere
 from models.kholodenko import Kholodenko
 from models.gaussianchain import GaussianChain
 from models.lmadensesphere import LMADenseSphere
+from models.cylindersIsotropic import CylindersIsotropic
 
 MODELS = {Sphere.name(): Sphere,
+          CylindersIsotropic.name(): CylindersIsotropic,
           Kholodenko.name(): Kholodenko,
           GaussianChain.name(): GaussianChain,
           LMADenseSphere.name(): LMADenseSphere}
