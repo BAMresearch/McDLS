@@ -198,9 +198,11 @@ class Calculator(object):
         sectionName = "Model Settings"
         config.add_section(sectionName)
         for p in self.modelParams():
-            config.set(sectionName, p.name(), p.value())
-            config.set(sectionName, p.name()+"_min", p.min())
-            config.set(sectionName, p.name()+"_max", p.max())
+            if p.isActive:
+                config.set(sectionName, p.name()+"_min", p.min())
+                config.set(sectionName, p.name()+"_max", p.max())
+            else:
+                config.set(sectionName, p.name(), p.value())
         with open(fn, 'w') as configfile:
             config.write(configfile)
 
