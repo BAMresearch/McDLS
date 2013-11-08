@@ -2,7 +2,7 @@
 # models/cylinders.py
 
 import numpy, scipy, scipy.special
-from numpy import pi, zeros, sin, cos, sqrt, newaxis
+from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from cutesnake.algorithm import Parameter
 from scatteringmodel import ScatteringModel
 
@@ -22,7 +22,7 @@ class CylindersIsotropic(ScatteringModel):
                     valueRange = (0.1, numpy.inf), suffix = "nm"),
             Parameter("psiAngle", 0.0,
                     displayName = "internal parameter -- ignore",
-                    valueRange = (0.1, 360.1), suffix = "deg."),
+                    valueRange = (0.01, 180.01), suffix = "deg."),
             Parameter("psiAngleDivisions", 303.,
                     displayName = "orientation integration divisions",
                     valueRange = (1, numpy.inf), suffix = "-"),
@@ -53,20 +53,7 @@ class CylindersIsotropic(ScatteringModel):
         if self.length.isActive:
             idx = int(self.radius.isActive)
             length = paramValues[:, idx]
-            #unused:
-        if self.psiAngle.isActive:
-            #Question: can we nog simply do idx+=1 here?
-            idx = numpy.sum((
-                    int(self.radius.isActive),
-                    int(self.length.isActive)))
-            psiAngle = paramValues[:, idx]
-        if self.psiAngleDivisions.isActive:
-            #not expected to be variable.
-            idx = numpy.sum((
-                    int(self.radius.isActive),
-                    int(self.length.isActive),
-                    int(self.psiAngle.isActive)))
-            psiAngleDivisions = paramValues[:, idx]
+        #remaining parameters are never active fitting parameters    
 
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
         #used in the equation for a cylinder from Pedersen, 1997
@@ -81,12 +68,12 @@ class CylindersIsotropic(ScatteringModel):
         for ri in range(len(radius)):
             radi=radius[ri%len(radius)]
             if self.lengthIsAspect:
-                lengtH=2.*radi*length[ri%len(length)]
+                halfLength=radi*length[ri%len(length)]
             else:
-                lengtH=length[ri%len(length)]
+                halfLength=0.5*length[ri%len(length)]
             qRsina=numpy.outer(q,radi*sin((psi)*dToR))
-            qLcosa=numpy.outer(q,lengtH/2.*cos((psi)*dToR))
-            fsplit=( 2*scipy.special.j1(qRsina)/qRsina * sin(qLcosa)/qLcosa )*sqrt(abs(sin((psi)*dToR))[newaxis,:]+0*qRsina)
+            qLcosa=numpy.outer(q,halfLength*cos((psi)*dToR))
+            fsplit=( 2.*scipy.special.j1(qRsina)/qRsina * sinc(qLcosa/pi) )*sqrt(abs(sin((psi)*dToR))[newaxis,:]+0*qRsina)
             #integrate over orientation
             Fcyl[:,ri]=numpy.sqrt(numpy.mean(fsplit**2,axis=1)) #should be length q
 
@@ -104,9 +91,11 @@ class CylindersIsotropic(ScatteringModel):
         else:                                                                  
             length=self.length.value()                                         
         if self.lengthIsAspect:
-            length*=2.*radius
+            halfLength=radius*length
+        else:
+            halfLength=length/2.
 
-        v = pi*radius**2*(length)                                     
+        v = pi*radius**2*(halfLength*2)                                     
         return v**compensationExponent          
 
 CylindersIsotropic.factory()
