@@ -45,7 +45,10 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         lst = numpy.zeros((count, self.paramCount()))
         for idx, param in enumerate(self.params()):
             # generate numbers in different range for each parameter
-            lst[:, idx] = param.generate(count = count)
+            #only for active parameters, otherwise it may try to generate
+            #random values for a boolean-type parameter.
+            if param.isActive:
+                lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
 
