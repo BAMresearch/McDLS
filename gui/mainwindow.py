@@ -283,17 +283,14 @@ class MainWindow(MainWindowBase):
                 "Double click to use the estimated size for the model.")
 
         self.loadBtn = QPushButton("load files ...")
-        self.startBtn = QPushButton("start")
-        self.stopBtn = QPushButton("stop")
         self.loadBtn.pressed.connect(self.fileWidget.loadData)
-        self.startBtn.pressed.connect(self.calc)
-        self.stopBtn.pressed.connect(self.onStop)
-        self.stopBtn.setEnabled(False) #disabled until start button pressed
+        self.startStopBtn = QPushButton()
+        self.startStopBtn.setCheckable(True)
+        self.startStopBtn.clicked[bool].connect(self.onStartStopClick)
         btnLayout = QVBoxLayout()
-        for btn in self.loadBtn, self.startBtn, self.stopBtn:
+        for btn in self.loadBtn, self.startStopBtn:
             btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
             btnLayout.addWidget(btn)
-#        btnLayout.addStretch()
         btnWidget = QWidget(self)
         btnWidget.setLayout(btnLayout)
         self.propWidget = PropertyWidget(self)
@@ -365,24 +362,29 @@ class MainWindow(MainWindowBase):
     def onStartup(self):
         self.propWidget.selectModel()
         self.fileWidget.loadData(self.getCommandlineArguments())
+        self.onStartStopClick(False)
+
+    def onStartStopClick(self, checked):
+        if checked:
+            self.startStopBtn.setText("stop")
+            self.startStopBtn.setChecked(True)
+            self.calc()
+        # run this also for 'start' after calculation
+        self.propWidget.calculator().stop()
+        self.startStopBtn.setText("start")
+        self.startStopBtn.setChecked(False)
 
     def calc(self):
-        #startbutton does not re-enable after calculation is finished.
-        #self.startBtn.setEnabled(False)
-        self.stopBtn.setEnabled(True)
+        if len(self.fileWidget) <= 0:
+            return
         self.logWidget.clear()
         calculator = self.propWidget.calculator()
         self.fileWidget.updateData(updateFunc = calculator,
                                    showProgress = False)
 
-    def onStop(self):
-        #self.startBtn.setEnabled(True)
-        self.stopBtn.setEnabled(False)
-        self.propWidget.calculator().stop()
-
     def closeEvent(self, closeEvent):
         super(MainWindow, self).closeEvent(closeEvent)
-        self.onStop()
+        self.onStartStopClick(False)
         self.onCloseSignal.emit()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
