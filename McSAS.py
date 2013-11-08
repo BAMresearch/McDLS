@@ -739,7 +739,10 @@ class McSAS(AlgorithmBase):
                 (contributions[:, :, nr], contribIntensity[:, :, nr],
                  convergence, details) = self.mcFit(outputIntensity = True,
                                                     outputDetails = True)
-                if nt > maxRetries or self.stop:
+                if self.stop:
+                    logging.warning("Stop button pressed, exiting...")
+                    return
+                if nt > maxRetries:
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
                     logging.warning("Could not reach optimization criterion "
