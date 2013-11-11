@@ -67,7 +67,7 @@ class CylindersIsotropic(ScatteringModel):
         Fcyl=zeros((len(q),len(radius)))
         for ri in range(len(radius)):
             radi=radius[ri%len(radius)]
-            if self.lengthIsAspect:
+            if self.lengthIsAspect.value():
                 halfLength=radi*length[ri%len(length)]
             else:
                 halfLength=0.5*length[ri%len(length)]
@@ -90,7 +90,7 @@ class CylindersIsotropic(ScatteringModel):
             length =paramValues[:,idx]                                         
         else:                                                                  
             length=self.length.value()                                         
-        if self.lengthIsAspect:
+        if self.lengthIsAspect.value():
             halfLength=radius*length
         else:
             halfLength=length/2.
