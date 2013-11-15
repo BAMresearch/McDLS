@@ -1583,10 +1583,11 @@ def plotResults(allRes, dataset, params,
     import matplotlib
     try:
         import PySide # verify/test that we have pyside
+        # use() gives an error if calling twice
+        matplotlib.rcParams['backend'] = 'QT4Agg'
         matplotlib.rcParams['backend.qt4'] = 'PySide'
     except:
         pass # no pyside
-    matplotlib.use('QT4Agg') # we use Qt anyway
     import matplotlib.font_manager as fm
     import matplotlib.pyplot as pyplot
     from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
