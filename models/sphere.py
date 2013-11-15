@@ -41,12 +41,17 @@ class Sphere(ScatteringModel):
         assert ScatteringModel.vol(self, paramValues)
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        result = (pi*4./3.) * paramValues**(3. * compensationExponent)
+        r = numpy.array((self.radius.value(),))
+        if self.radius.isActive:
+            r = paramValues[:, 0]
+        result = (pi*4./3.) * r**(3. * compensationExponent)
         return result
 
     def ff(self, dataset, paramValues):
         assert ScatteringModel.ff(self, dataset, paramValues)
-        r = paramValues.flatten()
+        r = numpy.array((self.radius.value(),))
+        if self.radius.isActive:
+            r = paramValues[:, 0]
         q = dataset[:, 0]
         qr = numpy.outer(q, r)
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)

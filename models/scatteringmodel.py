@@ -32,9 +32,9 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         return paramValues.shape[1] == self.paramCount()
 
     @abstractmethod
-    def ff(self, dataset, paramValues):
+    def ff(self, dataset, paramValues = None):
         """Calculates the Rayleigh function of this model."""
-        if self.paramCount() == 0 and paramValues is None:
+        if self.paramCount() == 0 or paramValues is None:
             return True
         return paramValues.shape[1] == self.paramCount()
 
