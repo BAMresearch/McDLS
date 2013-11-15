@@ -710,9 +710,12 @@ class McSAS(AlgorithmBase):
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
+        maxRetries = McSASParameters.maxRetries
         numContribs = self.numContribs.value()
         numReps = self.numReps.value()
-        maxRetries = McSASParameters.maxRetries
+        minConvergence = self.convergenceCriterion.value()
+        if not any([p.isActive for p in self.model.params()]):
+            numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
         contributions = zeros((numContribs, self.model.paramCount(), numReps))
         numIter = zeros(numReps)
@@ -732,13 +735,16 @@ class McSAS(AlgorithmBase):
             nt = 0
             # do that MC thing! 
             convergence = inf
-            while convergence > self.convergenceCriterion.value():
+            while convergence > minConvergence:
                 # retry in the case we were unlucky in reaching
                 # convergence within MaximumIterations.
                 nt += 1
                 (contributions[:, :, nr], contribIntensity[:, :, nr],
-                 convergence, details) = self.mcFit(outputIntensity = True,
-                                                    outputDetails = True)
+                 convergence, details) = self.mcFit(
+                                numContribs, minConvergence,
+                                outputIntensity = True, outputDetails = True)
+                if len(contributions) <= 1:
+                    break # nothing to fit
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
                     return
@@ -750,7 +756,7 @@ class McSAS(AlgorithmBase):
                                     .format(maxRetries+2))
                     return
             # keep track of how many iterations were needed to reach converg.
-            numIter[nr] = details['numIterations']
+            numIter[nr] = details.get('numIterations', 0)
 
             # in minutes:
             tottime = (time.time() - start)/60. # total elapsed time
@@ -771,8 +777,9 @@ class McSAS(AlgorithmBase):
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
 
-    def mcFit(self, outputIntensity = False,
-                    outputDetails = False, outputIterations = False):
+    def mcFit(self, numContribs, minConvergence,
+              outputIntensity = False, outputDetails = False,
+              outputIterations = False):
         """
         Object-oriented, shape-flexible core of the Monte Carlo procedure.
         Takes optional arguments:
@@ -789,7 +796,6 @@ class McSAS(AlgorithmBase):
             presentations.
         """
         data = self.dataset.prepared
-        numContribs = self.numContribs.value()
         prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, self.model.paramCount()))
         details = dict()
@@ -886,8 +892,10 @@ class McSAS(AlgorithmBase):
         numIter = 0
         ri = 0
         lastUpdate = 0
-        while (conval > self.convergenceCriterion.value() and
-               numIter < self.maxIterations.value() and not self.stop):
+        while (len(vset) > 1 and # see if there is a distribution at all
+               conval > minConvergence and
+               numIter < self.maxIterations.value() and
+               not self.stop):
             rt = self.model.generateParameters()
             ft = self.model.ff(data, rt)
             vtt = self.model.vol(rt)
@@ -920,8 +928,7 @@ class McSAS(AlgorithmBase):
                     iset[:, ri] = itt
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
-                             .format(numIter, conval,
-                                 self.convergenceCriterion.value())),
+                             .format(numIter, conval, minConvergence))
                 numMoves += 1
                 if outputIterations:
                     # output each iteration, starting with number 0. 
@@ -1724,11 +1731,14 @@ def plotResults(allRes, dataset, params,
         aI = result['fitIntensityMean'][0, 
                 numpy.argsort(result['fitQ'])]
         plot(aq, aI, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
-        plot(aq, numpy.mean(result['scalingFactors'][1, :]) + 0*aq,
-             'g-', linewidth = 3,
-             label = 'MC Background level:\n\t ({0:03.3g})'
-                     .format(numpy.mean(result['scalingFactors'][1, :])),
-             zorder = 3)
+        try:
+            plot(aq, numpy.mean(result['scalingFactors'][1, :]) + 0*aq,
+                 'g-', linewidth = 3,
+                 label = 'MC Background level:\n\t ({0:03.3g})'
+                         .format(numpy.mean(result['scalingFactors'][1, :])),
+                 zorder = 3)
+        except:
+            pass
         #for some reason, the axis settings are not set using the above
         #call, and need repeating:
         gca().set_xlim((q.min() * (1 - axisMargin),

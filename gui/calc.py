@@ -214,6 +214,9 @@ class Calculator(object):
         return fn
 
     def _writeResultHelper(self, mcResult, fileKey, descr, columnNames):
+        for cn in columnNames:
+            if not hasattr(mcResult, cn):
+                return
         fn = self._getResultFilename(fileKey, descr)
         logging.info("Containing the following columns:")
         for cn in columnNames:
