@@ -16,7 +16,7 @@ from cutesnake.utils.translate import tr
 from cutesnake.qt import QtCore, QtGui
 from QtCore import Qt, QMetaObject
 from QtGui import (QWidget, QAction, QTreeWidget, QTreeWidgetItem,
-                   QVBoxLayout, QPushButton, QAbstractItemView)
+                   QVBoxLayout, QPushButton, QAbstractItemView, QKeySequence)
 from mixins.dropwidget import DropWidget
 from mixins.contextmenuwidget import ContextMenuWidget
 
@@ -225,13 +225,13 @@ class DataList(QWidget, DropWidget, ContextMenuWidget, TitleMixin):
         self.addMenuEntry(
             name = "remove", text = tr("remove"),
             toolTip = tr("Remove selected %1."),
-            shortCut = tr("Del"), menuStates = "isRemovableSelected",
+            shortCut = QKeySequence.Delete, menuStates = "isRemovableSelected",
             callbacks = self.removeSelected)
         self.addMenuSeparator("hasSelection")
         self.addMenuSeparator("isNotEmpty")
         self.addMenuEntry(
             name = "selectall", text = tr("select all"),
-            shortCut = tr("Ctrl+A"), menuStates = "isNotEmpty",
+            shortCut = QKeySequence.SelectAll, menuStates = "isNotEmpty",
             callbacks = self.listWidget.selectAll)
         self.addMenuEntry(
             name = "expandall", text = tr("expand all"),
