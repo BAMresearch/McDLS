@@ -127,8 +127,9 @@ class PropertyWidget(SettingsWidget):
         mcsasLayout = QVBoxLayout(mcsasSettings)
         mcsasLayout.setObjectName("mcsasLayout")
         # TODO: use signalmapper for update ...
+        entries = []
         for p in self._calculator.params():
-            container = self._makeSettingWidget(p)
+            container = self._makeSettingWidget(entries, p)
             mcsasLayout.addWidget(container)
         mcsasSettings.setLayout(mcsasLayout)
         layout.addWidget(mcsasSettings)
@@ -163,9 +164,14 @@ class PropertyWidget(SettingsWidget):
                 continue
             self.modelParams.layout().removeWidget(child)
             child.setParent(QWidget())
+        entries = []
         for p in reversed(self._calculator.modelParams()):
-            container = self._makeSettingWidget(p, activeBtns = True)
+            container = self._makeSettingWidget(entries, p,
+                                                activeBtns = True)
             self.modelParams.layout().insertWidget(0, container)
+        entries.append(self.modelBox)
+        for i in reversed(range(1, len(entries))):
+            self.modelParams.setTabOrder(entries[i], entries[i-1])
 
     def _updateModelParams(self):
         activeChanged = False
@@ -212,7 +218,7 @@ class PropertyWidget(SettingsWidget):
         self.connectInputWidgets(ntry)
         return ntry
 
-    def _makeSettingWidget(self, param, activeBtns = False):
+    def _makeSettingWidget(self, entries, param, activeBtns = False):
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
         lbl = self._makeLabel(param.displayName())
@@ -231,6 +237,7 @@ class PropertyWidget(SettingsWidget):
             layout.addWidget(ntryMax)
             ntryMin.setFixedWidth(FIXEDWIDTH)
             ntryMax.setFixedWidth(FIXEDWIDTH)
+            entries.extend((ntryMax, ntryMin)) # reversed order, see above
         else:
             if isinstance(param, ParameterNumerical):
                 minmax = param.min(), param.max()
@@ -238,6 +245,7 @@ class PropertyWidget(SettingsWidget):
                                    minmax)
             ntry.setFixedWidth(FIXEDWIDTH)
             layout.addWidget(ntry)
+            entries.append(ntry)
         if activeBtns:
             activeBtn = QPushButton("active", self)
             activeBtn.setObjectName(param.name()+"active")
