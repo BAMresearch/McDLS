@@ -81,7 +81,6 @@ from models.cylindersIsotropic import CylindersIsotropic
 
 MODELS = {Sphere.name(): Sphere,
           CylindersIsotropic.name(): CylindersIsotropic,
-          Kholodenko.name(): Kholodenko,
           GaussianChain.name(): GaussianChain,
           LMADenseSphere.name(): LMADenseSphere}
 FIXEDWIDTH = 120

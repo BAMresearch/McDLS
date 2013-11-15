@@ -174,7 +174,7 @@ class Kholodenko(ScatteringModel):
         p0 = calcParamsVsQ(coreIntegralOverQ, q, constants)
         if len(LASTMSG):
             logging.warning("\n".join(["numpy.quad integration messages: "] + list(LASTMSG)))
-        return p0 * pcs
+        return p0 * pcs # FIXME: must not be squared!
 
     def vol(self, paramValues, compensationExponent = None):
         assert ScatteringModel.vol(self, paramValues)
@@ -205,7 +205,7 @@ if __name__ == "__main__":
     model.lenKuhn.isActive = False
     model.lenContour.setValue(1000.)
     model.lenContour.isActive = False
-    intensity = model.ff(pf.data, None).reshape(-1)
+    intensity = model.ff(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)
