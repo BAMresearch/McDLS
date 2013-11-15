@@ -96,16 +96,16 @@ GaussianChain.factory()
 
 if __name__ == "__main__":
     from cutesnake.datafile import PDHFile, AsciiFile
-    pf = PDHFile("../brianpauw/sasfit_gauss2-1-100-1-1.dat")
+    pf = PDHFile("../brianpauw/sasfit_gauss2-5-1.5-2-1.dat")
     model = GaussianChain()
-    model.rg.setValue(1.)
+    model.rg.setValue(5.)
     model.rg.isActive = False
-    model.bp.setValue(100.)
+    model.bp.setValue(1.5)
     model.bp.isActive = False
     model.etas.setValue(1.)
     model.etas.isActive = False
-    model.volume.setValue(1.)
-    model.volume.isActive = False
+    model.k.setValue(0.08)
+    model.k.isActive = False
     intensity = model.ff(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
