@@ -45,7 +45,7 @@ class GaussianChain(ScatteringModel):
         self.etas.setValueRange((0.1, 10.))
         self.k.setValueRange((0.1, 10.))
 
-    def ff(self, dataset, paramValues):
+    def ff(self, dataset, paramValues = None):
         assert ScatteringModel.ff(self, dataset, paramValues)
 
         # vectorized data and arguments
@@ -67,9 +67,8 @@ class GaussianChain(ScatteringModel):
             k = paramValues[:, idx]
 
         beta = bp - (k * rg**2) * etas
-        beta = beta*beta * 2.0
         u = numpy.outer(q, rg)**2 # a matrix usually
-        result = (numpy.expm1(-u) + u) / (u*u)
+        result = numpy.sqrt(2.) * numpy.sqrt(numpy.expm1(-u) + u) / u
         for i, res in zip(range(0, result.shape[0]), result):
             if q[i] <= 0.0:
                 result[i] = beta
@@ -107,7 +106,7 @@ if __name__ == "__main__":
     model.etas.isActive = False
     model.volume.setValue(1.)
     model.volume.isActive = False
-    intensity = model.ff(pf.data, None).reshape(-1)
+    intensity = model.ff(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)
