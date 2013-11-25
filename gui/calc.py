@@ -193,7 +193,7 @@ class Calculator(object):
 
     def _writeSettings(self, mcargs, dataset):
         fn = self._getResultFilename("settings", "algorithm settings", 
-                extension='.ini')
+                extension='.cfg')
         config = ConfigParser.RawConfigParser()
 
         sectionName = "I/O Settings"
