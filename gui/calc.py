@@ -8,6 +8,7 @@ import os.path
 import ConfigParser
 import numpy
 import numpy as np
+import pickle
 from cutesnake.qt import QtCore
 from QtCore import QUrl
 from cutesnake.dataset import DataSet, DisplayMixin
@@ -154,6 +155,7 @@ class Calculator(object):
             if res is not None:
                 self._writeDistrib(res)
                 self._writeFit(res)
+                self._writeContribs(res)
                 self._algo.plot()
         else:
             logging.info("No results available!")
@@ -162,7 +164,8 @@ class Calculator(object):
 
     def _writeFit(self, mcResult):
         self._writeResultHelper(mcResult, "fit", "fit data",
-            ('fitQ', 'fitIntensityMean', 'fitIntensityStd')
+            ('fitQ', 'fitIntensityMean', 'fitIntensityStd'),
+            extension = '.csv'
         )
 
     def _writeDistrib(self, mcResult):
@@ -170,19 +173,28 @@ class Calculator(object):
             ('histogramXMean', 'histogramXWidth', 'volumeHistogramYMean',
              'volumeHistogramYStd', 'volumeHistogramMinimumRequired',
              'numberHistogramYMean', 'numberHistogramYStd',
-             'numberHistogramMinimumRequired')
+             'numberHistogramMinimumRequired'),
+            extension = '.csv'
         )
 
+    def _writeContribs(self, mcResult):
+        #Writes the contribution parameters to a pickled file. Can be used
+        #to continue or reanalyse a previously fitted file
+        fn=self._getResultFilename("Contributions",
+                "Model contribution parameters",extension='.pickle')
+        with open(fn,'w') as fh:
+            pickle.dump(mcResult['contribs'],fh)
+
     def _writeSettings(self, mcargs, dataset):
-        fn = self._getResultFilename("settings", "algorithm settings")
+        fn = self._getResultFilename("settings", "algorithm settings", 
+                extension='.ini')
         config = ConfigParser.RawConfigParser()
+
         sectionName = "I/O Settings"
         config.add_section(sectionName)
         # do we really want to store absolute path names?
-        #discussion moved to:
-        #https://bitbucket.org/pkwasniew/mcsas/issue/2/
+        #discuss at: https://bitbucket.org/pkwasniew/mcsas/issue/2/
         config.set(sectionName, 'dataPath', LastPath.get())
-
         # the filename w/o extension, see SASData.load()
         config.set(sectionName, 'fileName', dataset.title)
         # the filename with timestamp of results
@@ -210,18 +222,14 @@ class Calculator(object):
         with open(fn, 'w') as configfile:
             config.write(configfile)
 
-    def _getResultFilename(self, fileKey, descr):
-        fn = self._getFilename(fileKey)
-        logging.info("Writing {0} to:".format(descr))
-        logging.info("{0}'{1}'".format(self.indent,
-                                       QUrl.fromLocalFile(fn).toEncoded()))
-        return fn
-
-    def _writeResultHelper(self, mcResult, fileKey, descr, columnNames):
+    def _writeResultHelper(self, mcResult, fileKey, descr, columnNames, extension='.txt'):
+        
         for cn in columnNames:
-            if not hasattr(mcResult, cn):
+            #if not hasattr(mcResult, cn): #no idea why this worked before!?
+            if not cn in mcResult:
+                logging.warning('Result does not contain the requested data')
                 return
-        fn = self._getResultFilename(fileKey, descr)
+        fn = self._getResultFilename(fileKey, descr, extension = extension)
         logging.info("Containing the following columns:")
         for cn in columnNames:
             logging.info("{0}[ {1} ]".format(self.indent, cn))
