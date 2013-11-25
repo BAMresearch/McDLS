@@ -232,13 +232,20 @@ class Calculator(object):
         #append to the header, do not overwrite:
         AsciiFile.appendFile(fn, data)
 
-    def _getFilename(self, kind):
+    def _getResultFilename(self, fileKey, descr, extension='.txt'):
+        fn = self._getFilename(fileKey, extension = extension)
+        logging.info("Writing {0} to:".format(descr))
+        logging.info("{0}'{1}'".format(self.indent,
+                                       QUrl.fromLocalFile(fn).toEncoded()))
+        return fn
+
+    def _getFilename(self, kind, extension='.txt'):
         """Creates a file name from data base name, its directory and the
         current timestamp. It's created once so that all output files have
         the same base name and timestamp."""
         if not hasattr(self, "basefn") or self.basefn is None:
             self.basefn = "{0}_{1}".format(
                     os.path.join(LastPath.get(), self._title), log.timestamp())
-        return "{0}_{1}.txt".format(self.basefn, kind)
+        return "{0}_{1}{2}".format(self.basefn, kind, extension)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
