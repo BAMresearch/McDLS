@@ -195,6 +195,10 @@ class Calculator(object):
         for p in self.params():
             config.set(sectionName, p.name(), p.value())
         config.set(sectionName, "model", self.model.name())
+        #We don't have to do anything with these yet, but storing them for now:
+        config.set(sectionName, "Q limits", 
+                np.array([np.min(dataset.q()),np.max(dataset.q())]) )
+
         sectionName = "Model Settings"
         config.add_section(sectionName)
         for p in self.modelParams():
