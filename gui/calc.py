@@ -24,6 +24,7 @@ class SASData(DataSet, DisplayMixin):
     _sizeEst = None
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
+    _filename = None
 
     @staticmethod
     def displayDataDescr():
@@ -46,6 +47,10 @@ class SASData(DataSet, DisplayMixin):
         if not os.path.isfile(filename):
             logging.warning("File '{0}' does not exist!".format(filename))
             return
+
+        #probably not the right way of saving the filename somewhere:
+        cls._filename = filename
+
         logging.info("Loading '{0}' ...".format(filename))
 
         if str(filename[-4:]).lower() == '.pdh':
@@ -129,6 +134,7 @@ class Calculator(object):
     def __call__(self, dataset):
         # start log file writing
         self._title = dataset.title
+        self._filename = dataset._filename #extensions are necessary sometimes...
         fn = self._getResultFilename("log", "this log")
         logFile = logging.FileHandler(fn, encoding = "utf8")
         oldHandler = log.log.handlers[0]
@@ -195,8 +201,8 @@ class Calculator(object):
         # do we really want to store absolute path names?
         #discuss at: https://bitbucket.org/pkwasniew/mcsas/issue/2/
         config.set(sectionName, 'dataPath', LastPath.get())
-        # the filename w/o extension, see SASData.load()
-        config.set(sectionName, 'fileName', dataset.title)
+        # the filename with extension, see SASData.load()
+        config.set(sectionName, 'fileName', dataset._filename)
         # the filename with timestamp of results
         config.set(sectionName, 'outputBaseName', os.path.basename(self.basefn))
 
