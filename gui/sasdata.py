@@ -42,14 +42,22 @@ class SASData(DataSet, DisplayMixin):
     def sphericalSizeEstText(self):
         return "min: {0:.4f}, max: {1:.4f}".format(*self.sphericalSizeEst())
 
+    @property
+    def filename(self):
+        return self._filename
+
+    def setFilename(self, fn):
+        """Stores the absolute path to this data file.
+        Should be reviewed when data sets can be created from several files."""
+        if not os.path.isfile(fn):
+            return
+        self._filename = os.path.abspath(fn)
+
     @classmethod
     def load(cls, filename):
         if not os.path.isfile(filename):
             logging.warning("File '{0}' does not exist!".format(filename))
             return
-
-        #probably not the right way of saving the filename somewhere:
-        cls._filename = filename
 
         logging.info("Loading '{0}' ...".format(filename))
 
@@ -59,6 +67,7 @@ class SASData(DataSet, DisplayMixin):
             sasFile = AsciiFile(filename) # works for CSV too
 
         sasData = cls(sasFile.name, sasFile.data)
+        sasData.setFilename(sasFile.filename)
         return sasData
 
     def q(self):
