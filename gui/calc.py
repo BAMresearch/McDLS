@@ -123,10 +123,7 @@ class Calculator(object):
 
         sectionName = "I/O Settings"
         config.add_section(sectionName)
-        # do we really want to store absolute path names?
-        #discuss at: https://bitbucket.org/pkwasniew/mcsas/issue/2/
-        config.set(sectionName, 'dataPath', LastPath.get())
-        # the filename with extension, see SASData.load()
+        # the absolute filename with extension, see SASData.load()
         config.set(sectionName, 'fileName', dataset.filename)
         # the filename with timestamp of results
         config.set(sectionName, 'outputBaseName', os.path.basename(self.basefn))
