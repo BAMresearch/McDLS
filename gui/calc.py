@@ -87,11 +87,30 @@ class Calculator(object):
                 self._writeDistrib(res)
                 self._writeFit(res)
                 self._writeContribs(res)
+                self._writeStatistics()
                 self._algo.plot()
         else:
             logging.info("No results available!")
 
         log.removeHandler(logFile)
+
+    def _writeStatistics(self):
+        paramIndex = [i for i, p in enumerate(self.modelParams()) if p.isActive]
+        if not len(paramIndex):
+            return
+        paramIndex = paramIndex[0]
+        stats = dict()
+        columnNames = []
+        for weighting in 'volume', 'number':
+            res = self._algo.rangeInfo(paramIndex = paramIndex,
+                                       weighting = weighting)
+            for key in ('totalValue',
+                        'mean', 'variance', 'skew', 'kurtosis'):
+                columnNames.append("{0}-{1}".format(weighting, key))
+                stats[columnNames[-1]] = res.get(key, None)
+        pname = self.modelParams()[paramIndex].name()
+        self._writeResultHelper(stats, "stats_"+pname, "distribution statistics",
+                                columnNames, extension = '.csv')
 
     def _writeFit(self, mcResult):
         self._writeResultHelper(mcResult, "fit", "fit data",
@@ -151,17 +170,22 @@ class Calculator(object):
         with open(fn, 'w') as configfile:
             config.write(configfile)
 
-    def _writeResultHelper(self, mcResult, fileKey, descr, columnNames, extension='.txt'):
-        
-        for cn in columnNames:
-            #if not hasattr(mcResult, cn): #no idea why this worked before!?
-            if not cn in mcResult:
-                logging.warning('Result does not contain the requested data')
-                return
+    def _writeResultHelper(self, mcResult, fileKey, descr, columnNames,
+                           extension = '.txt'):
+        if not all(cn in mcResult for cn in columnNames):
+            logging.warning('Result does not contain the requested data')
+            return
         fn = self._getResultFilename(fileKey, descr, extension = extension)
         logging.info("Containing the following columns:")
+        cwidth = max([len(cn) for cn in columnNames])
+        fmt = "{0}[ {1:" + str(cwidth) + "s} ]"
         for cn in columnNames:
-            logging.info("{0}[ {1} ]".format(self.indent, cn))
+            msg = fmt.format(self.indent, cn)
+            peek = np.ravel(mcResult[cn])
+            if len(peek) < 3:
+                for value in peek[0:2]:
+                    msg += " {0: .4e}".format(value)
+            logging.info(msg)
         # write header:
         AsciiFile.writeHeaderLine(fn, columnNames)
         # (additional header lines can be appended if necessary)
