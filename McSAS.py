@@ -1526,8 +1526,8 @@ class McSAS(AlgorithmBase):
                               "unrecognised histogramWeighting value!")
                 return None
 
-        #now we can calculate the intensity contribution by the subset of
-        #spheres highlighted by the range:
+        # now we can calculate the intensity contribution by the subset of
+        # spheres highlighted by the range:
         logging.info("Calculating partial intensity contribution of range")
         # loop over each repetition
         partialIntensities = numpy.zeros(
@@ -1538,8 +1538,8 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, paramIndex, ri]
             validRange = (  (rset > min(valueRange))
                           * (rset < max(valueRange)))
-            #BP: this one did not work for multi-parameter models
-            #rset = rset[validRange][:, newaxis]
+            # BP: this one did not work for multi-parameter models
+            # rset = rset[validRange][:, newaxis]
             rset = contribs[validRange,:,ri]
             # compensated volume for each sphere in the set
             # TODO: same code as in gen2dintensity and other places

@@ -109,16 +109,17 @@ class Calculator(object):
         )
 
     def _writeContribs(self, mcResult):
-        #Writes the contribution parameters to a pickled file. Can be used
-        #to continue or reanalyse a previously fitted file
-        fn=self._getResultFilename("Contributions",
-                "Model contribution parameters",extension='.pickle')
+        # Writes the contribution parameters to a pickled file.
+        # Can be used to continue or reanalyse a previously fitted file
+        fn = self._getResultFilename("Contributions",
+                                     "Model contribution parameters",
+                                     extension = '.pickle')
         with open(fn,'w') as fh:
             pickle.dump(mcResult['contribs'],fh)
 
     def _writeSettings(self, mcargs, dataset):
         fn = self._getResultFilename("settings", "algorithm settings", 
-                extension='.cfg')
+                                     extension = '.cfg')
         config = ConfigParser.RawConfigParser()
 
         sectionName = "I/O Settings"
@@ -135,7 +136,7 @@ class Calculator(object):
         for p in self.params():
             config.set(sectionName, p.name(), p.value())
         config.set(sectionName, "model", self.model.name())
-        #We don't have to do anything with these yet, but storing them for now:
+        # We don't have to do anything with these yet, but storing them for now:
         config.set(sectionName, "Q limits", 
                 np.array([np.min(dataset.q()),np.max(dataset.q())]) )
 
@@ -161,21 +162,21 @@ class Calculator(object):
         logging.info("Containing the following columns:")
         for cn in columnNames:
             logging.info("{0}[ {1} ]".format(self.indent, cn))
-        #write header:
-        AsciiFile.writeHeaderLine(fn,columnNames)
-        #(additional header lines can be appended if necessary)
+        # write header:
+        AsciiFile.writeHeaderLine(fn, columnNames)
+        # (additional header lines can be appended if necessary)
         data = np.vstack([mcResult[cn] for cn in columnNames]).T
-        #append to the header, do not overwrite:
+        # append to the header, do not overwrite:
         AsciiFile.appendFile(fn, data)
 
-    def _getResultFilename(self, fileKey, descr, extension='.txt'):
+    def _getResultFilename(self, fileKey, descr, extension = '.txt'):
         fn = self._getFilename(fileKey, extension = extension)
         logging.info("Writing {0} to:".format(descr))
         logging.info("{0}'{1}'".format(self.indent,
                                        QUrl.fromLocalFile(fn).toEncoded()))
         return fn
 
-    def _getFilename(self, kind, extension='.txt'):
+    def _getFilename(self, kind, extension = '.txt'):
         """Creates a file name from data base name, its directory and the
         current timestamp. It's created once so that all output files have
         the same base name and timestamp."""
