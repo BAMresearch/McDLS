@@ -207,6 +207,10 @@ class ParameterBase(object):
     def dtype(cls):
         return str
 
+    @classmethod
+    def isDataType(cls, value):
+        return isinstance(value, cls.dtype)
+
     def __str__(self):
         return "{0}: {1}".format(
                 self.displayName(), self.value())
@@ -346,6 +350,11 @@ class ParameterNumerical(ParameterBase):
     def dtype(cls):
         return int
 
+    @classmethod
+    def isDataType(cls, value):
+        """ParameterNumerical is a fallback for all number not being float."""
+        return isNumber(value) and not isinstance(value, float)
+
     def __str__(self):
         return (ParameterBase.__str__(self) + " in [{0}, {1}]{2}, {3} steps"
                 .format(*(self.valueRange() + (self.suffix(),
@@ -380,6 +389,10 @@ class ParameterFloat(ParameterNumerical):
     def dtype(cls):
         return float
 
+    @classmethod
+    def isDataType(cls, value):
+        return isinstance(value, cls.dtype)
+
     def __str__(self):
         return (ParameterNumerical.__str__(self) +
                 ", {0} decimals".format(self.decimals()))
@@ -392,7 +405,7 @@ class ParameterLog(ParameterFloat):
     """Used to select an UI input widget with logarithmic behaviour."""
     pass
 
-def factory(**kwargs):
+def factory(name, value, paramTypes = None, **kwargs):
     """
     Generates a new Parameter type derived from one of the predefined
     base classes choosen by the supplied value: Providing a string value
@@ -403,22 +416,29 @@ def factory(**kwargs):
     class for the resulting Parameter class type. Make sure in this case,
     all attributes mandatory for this base type are provided too.
 
-    *cls*: forces a certain Parameter type.
+    *name*: short name of the new parameter without spaces
+    *value*: default value from which the type is derived if cls is not given
+
+    Optional arguments:
+    *paramTypes*:  tuple of available parameter types instead of the default
+    *cls*:         forces a certain Parameter type.
     *description*: Updates the __doc__ attribute. May be displayed in the UI
                    somewhere.
     """
+    kwargs.update(name = name, value = value)
     name = kwargs.get("name", None)
+    assertName(name, ParameterNameError)
     value = kwargs.get("value", None)
     cls = kwargs.get("cls", None)
+    if paramTypes is None:
+        paramTypes = (ParameterBoolean, ParameterFloat,
+                      ParameterNumerical, ParameterBase)
     if cls is None or not issubclass(cls, ParameterBase):
-        if isinstance(value, ParameterBoolean.dtype):
-            cls = ParameterBoolean
-        elif isinstance(value, ParameterFloat.dtype):
-            cls = ParameterFloat
-        elif isNumber(value):
-            cls = ParameterNumerical
+        for cls in paramTypes[:-1]:
+            if cls.isDataType(value):
+                break
         else:
-            cls = ParameterBase
+            cls = paramTypes[-1] # ParameterBase usually
     # embed description as class documentation
     clsdict = dict()
     description = kwargs.get("description", None)
@@ -432,7 +452,7 @@ def factory(**kwargs):
     # creating new types here is a problem for pickle
     # it is done to be able to change/add class (type) attributes
     # without modifying the base classes
-    # ATM: __doc__ attrib + all class attribs get mod by Param.factory()
+    # ATM: __doc__ + all class attribs get mod by Param.factory()
 
 if __name__ == "__main__":
     import doctest

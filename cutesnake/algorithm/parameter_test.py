@@ -5,7 +5,7 @@ from algorithm.parameter import (
         ParameterBase, ParameterNumerical, ParameterFloat, ParameterLog,
         ParameterNameError, DefaultValueError, ValueRangeError,
         SuffixError, SteppingError, DecimalsError, DisplayValuesError)
-from algorithm import Parameter as Parameter
+from algorithm import Parameter
 from algorithm import NumberGenerator, RandomUniform
 from nose.tools import raises
 

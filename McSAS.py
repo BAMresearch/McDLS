@@ -70,7 +70,7 @@ logging.basicConfig(level = logging.INFO)
 from cutesnake.dataset import DataSet
 from cutesnake.utils import isList, isString, isFrozen
 from cutesnake.algorithm import (AlgorithmBase, Parameter, ParameterBase, ParameterFloat,
-                                 RandomUniform, RandomExponential, makeParameterType)
+                                 RandomUniform, RandomExponential)
 from utils.propertynames import PropertyNames
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
@@ -1648,7 +1648,7 @@ def plotResults(allRes, dataset, params,
 
     # check how many result plots we need to generate, and find the 
     # indices to the to-plot paramters
-    params = [makeParameterType(**attr) for attr in params]
+    params = [Parameter(**attr) for attr in params]
     if parameterIdx is None: # use 'is': None is a singleton in python
         parameterId = [i
                        for p, i in zip(params,
