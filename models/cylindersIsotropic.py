@@ -112,7 +112,7 @@ if __name__ == "__main__":
     model.psiAngle.isActive = False
     model.psiAngleDivisions.setValue(303)
     model.psiAngleDivisions.isActive = False
-    intensity = model.ff(pf.data, None).reshape(-1)
+    intensity = (model.ff(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)
