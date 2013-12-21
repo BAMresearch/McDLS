@@ -445,7 +445,8 @@ def factory(name, value, paramTypes = None, **kwargs):
     if isString(description) and len(description) > 0:
         clsdict['__doc__'] = description
     # create a new class/type with given name and base class
-    typeName = name.title().translate(None, ' \t\n\r') + "Parameter"
+    # translate works different for unicode strings:
+    typeName = str(name.title()).translate(None, ' \t\n\r') + "Parameter"
     NewType = type(typeName, (cls,), clsdict)
     # set up the new class before return
     return NewType.factory(**kwargs)
