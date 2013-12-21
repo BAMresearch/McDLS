@@ -2,7 +2,7 @@
     "numContribs" : {
         "displayName" : "number of contributions",
         "cls" : "int",
-        "explanation" : "Total number of contributions making up a scattering pattern",
+        "description" : "Total number of contributions making up a scattering pattern",
         "valueRange" : [1,1e6],
         "default" : 200,
         "isActive" : false 
@@ -10,7 +10,7 @@
     "numReps" : {
         "displayName" : "number of repetitions",
         "cls" : "int",
-        "explanation" : "Number of independent McSAS results to compute, from which averages and uncertainties are estimated",
+        "description" : "Number of independent McSAS results to compute, from which averages and uncertainties are estimated",
         "default" : 100,
         "valueRange" : [1,1e6],
         "isActive" : false 
@@ -20,7 +20,7 @@
         "valueRange" : [1,1e100],
         "cls" : "int",
 	    "default" : 1e5,
-        "explanation" : "Maximum number of iterations allowed before failing.",
+        "description" : "Maximum number of iterations allowed before failing.",
         "isActive" : false 
     },
     "histogramBins" : {
@@ -28,21 +28,21 @@
         "valueRange" : [1,1e6],
         "cls" : "int",
 	    "default" : 50,
-        "explanation" : "Amount of histogram bins used for distribution visualisation",
+        "description" : "Amount of histogram bins used for distribution visualisation",
         "isActive" : false 
     },
     "convergenceCriterion" : {
         "displayName" : "convergence criterion",
         "valueRange" : [0,Infinity],
         "cls" : "float",
-        "explanation" : "Reduced Chi-squared value to reach for optimisation success.",
+        "description" : "Reduced Chi-squared value to reach for optimisation success.",
         "default" : 1.0,
         "isActive" : false 
     },
     "findBackground" : {
         "displayName" : "find background level?",
         "cls" : "bool",
-        "explanation" : "Adds a constant background level to the model fitting.",
+        "description" : "Adds a constant background level to the model fitting.",
         "default" : true,
         "isActive" : false 
     }
