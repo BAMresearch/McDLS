@@ -168,8 +168,32 @@ class ParameterBase(object):
         pcls.isActive = kwargs.get("isActive", False)
         return pcls
 
+    @classmethod
     def copy(self):
         return self.factory(**self.attributes())()
+
+    @classmethod
+    def get(self, key):
+        """metagetter to get an attribute parameter"""
+        if key in self.attributeNames():
+            getterFunc = getattr(self, key)
+            return getterFunc()
+
+        else:
+            logging.warning('parameter {} attribute {} not understood in get'
+                    .format(self.name(), key )
+                    )
+
+    @classmethod
+    def set(self, key, value):
+        """metasetter to set an attribute value"""
+        if key in self.attributeNames():
+            setterFunc = getattr(self, setterName(key))
+            setterFunc(value)
+        else:
+            logging.warning('parameter {} attribute {} not found in set'
+                    .format(self.name(), key)
+                    )
 
     @classmethod
     def setName(cls, name):
