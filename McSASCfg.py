@@ -22,18 +22,17 @@ __date__ = "2013-12-21"
 __status__ = "alpha"
 version = "0.0.1"
 
-from cutesnake.algorithm import Parameter
-import numpy as np
-import logging
-import os
 from McSASDefaultCfg import cInfo
 
 # instantiate a parameters class filled with defaults
 parameters = cInfo()
 
-
-# this could be a useful function:
-def saveSettings(self,filename):
-    """save the current parameters to a file"""
-    pass
-
+# # this could be a useful function:
+# def saveSettings(self,filename):
+#     """save the current parameters to a file"""
+#     pass
+# 
+# def loadSettings(self,filename):
+#     """load particular settings (not defaults) from a file"""
+#     pass
+# 
