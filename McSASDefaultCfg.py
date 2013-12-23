@@ -16,6 +16,32 @@ version = "0.0.1"
 from cutesnake.algorithm import (Parameter, ParameterFloat, ParameterBoolean, ParameterNumerical)
 import logging, json
 import os, inspect
+import numpy as np
+
+class ExtendedEncoder(json.JSONEncoder):
+    """JSON encoder extended to deal with Unicode, arrays and cls descriptions"""
+    def default(self, obj):
+        if isinstance(obj, unicode):
+            return str(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif obj == np.array or obj == np.ndarray :
+            return "array"
+        elif isinstance(obj, type):
+            #return a suitable string
+            if obj is float:
+                return "float"
+            elif obj is unicode:
+                return "unicode"
+            elif obj is str:
+                return "str"
+            elif obj is int:
+                return "int"
+            else:
+                return repr(obj)
+
+        return json.JSONEncoder.default(self, obj)
+
 
 class cInfo(object):
     """
@@ -54,10 +80,23 @@ class cInfo(object):
         self.setParDefFile(fname)
         self.loadParams()
 
-    def loadParams(self):
-        """writes the default definitions and bounds for the configuration
-        parameters to self.parameters"""
-        self.parameters=lambda: None
+    def loadParams(self, fname = None):
+        """
+        writes the default definitions and bounds for the configuration
+        parameters to self.parameters
+        Can also be used to update existing parameters from supplied filename
+        """
+        if fname is None:
+            fname = self.parDefFile()
+
+        with open(self.parDefFile(),'r') as jfile:
+            parDict=json.load(jfile)
+            logging.info('loading parameters from file: {}'.format(fname))
+
+        if self.parameters is None:
+            #create if it does not exist yet
+            self.parameters=lambda: None
+
         #something like what is used in McSAS?
         with open(self.parDefFile(),'r') as jfile:
             parDict=json.load(jfile)
@@ -81,11 +120,37 @@ class cInfo(object):
             else:
                 logging.warning('parameter type {} for parameter {} not understood from {}'.format(cls, kw, self.parDefFile() ))
 
-            temp = Parameter(name, value, **subDict)
-            setattr(self.parameters,kw,temp)
-            self.parameterNames.append(kw)
-            logging.info('successfully ingested parameter: {}'.format(kw))
+            if kw in self.parameterNames:
+                #value exists, should be updated with supplied kwargs
+                self.set(kw,**subDict)
+                logging.info('successfully updated parameter: {}'.format(kw))
+            else:
+                temp = Parameter(name, value, **subDict)
+                setattr(self.parameters,kw,temp)
+                self.parameterNames.append(kw)
+                logging.info('successfully ingested parameter: {}'.format(kw))
         
+
+    def writeConfig(self, fname):
+        """
+        writes the configuration to a settings file. 
+        Required input parameter is the filename to write to.
+        """
+
+        #create a dictionary containing one (sub-)dictionary per parameter
+        parDict = dict()
+        for kw in self.parameterNames:
+            subDict = dict()
+            par = self.getPar(kw)
+            for aName in par.attributeNames():
+                subDict[aName] = par.get(aName)
+
+            parDict[kw] = subDict
+
+        #write dictionary to file
+        with open(fname,'wb') as jfile:
+            json.dump(parDict, jfile, cls=ExtendedEncoder, indent = 4, sort_keys=True)
+
 
     def parseConfig(self):
         """
