@@ -196,7 +196,7 @@ class cInfo(object):
         parhandle = self.getPar(par)
         return parhandle.value()
 
-    def set(self,par,kwargs):
+    def set(self,par,**kwargs):
         """
         sets one or more parameter attributes
         not sure the "set" function works in Parameter as in imp2
