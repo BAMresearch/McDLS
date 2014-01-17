@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# models/cylinders.py
+# models/EllipsoidalCoreShell.py
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
@@ -33,7 +33,7 @@ class EllipsoidalCoreShell(ScatteringModel):
                     displayName = "solvent SLD",
                     valueRange = (0, numpy.inf), suffix = "-"),
             Parameter("intDiv", 100,
-                    displayName = "orientation integration divisions"),
+                    displayName = "orientation integration divisions",
                     valueRange = (0, 1e4), suffix = "-"),
     )
     parameters[0].isActive = True
@@ -74,18 +74,17 @@ class EllipsoidalCoreShell(ScatteringModel):
         intDiv = numpy.array((self.intDiv.value(),))
         #unused:
 
+        idx = 0
         if self.a.isActive:
-            a = paramValues[:, 0]
+            a = paramValues[:, idx]
+            idx += 1
         if self.b.isActive:
-            idx = int(self.a.isActive)
             b = paramValues[:, idx]
+            idx += 1
         if self.t.isActive:
-            idx = int(self.a.isActive) + int(self.b.isActive)
             t = paramValues[:, idx]
+            idx += 1
         #remaining parameters are never active fitting parameters    
-
-        #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
-        #used in the equation for a cylinder from Pedersen, 1997
 
         dToR = pi / 180. #degrees to radian
         intVal = numpy.linspace(0., 1., intDiv)
@@ -93,18 +92,16 @@ class EllipsoidalCoreShell(ScatteringModel):
         Vc = 4./3 * pi * a * b **2
         Vt = 4./3 * pi * (a + t) * (b + t) ** 2
         VRatio = Vc / Vt 
-        if not isinstance(VRatio, np.ndarray):
-            VRatio = np.array(VRatio)
+        if not isinstance(VRatio, numpy.ndarray):
+            VRatio = numpy.array(VRatio)
         
-        Fell=zeros((len(q), len(radius)))
+        Fell=zeros((len(q), len(paramValues[:,(idx-1)])))
         for ri in range(len(a)):
             arad = a[ ri % len(a) ]
             brad = b[ ri % len(b) ]
             ti = t[ ri % len(t) ]
-            qRsina=numpy.outer(q,radi*sin((psi)*dToR))
-            qLcosa=numpy.outer(q,halfLength*cos((psi)*dToR))
-            Xc = xc(q, a, b, intVal)
-            Xt = xt(q, a, b, t, intVal)
+            Xc = xc(q, arad, brad, intVal)
+            Xt = xt(q, arad, brad, ti, intVal)
             fsplit = ( 
                     (eta_c - eta_s) * VRatio[ri % len(VRatio)] * 
                     ( 3 * j1( Xc ) / Xc ) + 
@@ -112,9 +109,9 @@ class EllipsoidalCoreShell(ScatteringModel):
                     ( 3 * j1( Xt ) / Xt )
                     )
             #integrate over orientation
-            Fcyl[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
+            Fell[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
 
-        return Fcyl
+        return Fell
 
     def vol(self, paramValues, compensationExponent = None):                   
         assert ScatteringModel.vol(self, paramValues)                          
@@ -140,24 +137,25 @@ class EllipsoidalCoreShell(ScatteringModel):
 EllipsoidalCoreShell.factory()
 
 if __name__ == "__main__":
-    from cutesnake.datafile import PDHFile, AsciiFile
-    pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
-    model = CylindersIsotropic()
-    model.radius.setValue(1.)
-    model.radius.isActive = False
-    model.length.setValue(100.)
-    model.length.isActive = False
-    model.psiAngle.setValue(1.)
-    model.psiAngle.isActive = False
-    model.psiAngleDivisions.setValue(303)
-    model.psiAngleDivisions.isActive = False
-    intensity = (model.ff(pf.data, None).reshape(-1))**2
-    q = pf.data[:, 0]
-    oldInt = pf.data[:, 1]
-    delta = abs(oldInt - intensity)
-    result = numpy.dstack((q, intensity, delta))[0]
-    AsciiFile.writeFile("CylindersIsotropic.dat", result)
-    # call it like this:
-    # PYTHONPATH=..:../mcsas/ python brianpauwgui/gaussianchain.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
+    pass
+    #from cutesnake.datafile import PDHFile, AsciiFile
+    #pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
+    #model = CylindersIsotropic()
+    #model.radius.setValue(1.)
+    #model.radius.isActive = False
+    #model.length.setValue(100.)
+    #model.length.isActive = False
+    #model.psiAngle.setValue(1.)
+    #model.psiAngle.isActive = False
+    #model.psiAngleDivisions.setValue(303)
+    #model.psiAngleDivisions.isActive = False
+    #intensity = (model.ff(pf.data, None).reshape(-1))**2
+    #q = pf.data[:, 0]
+    #oldInt = pf.data[:, 1]
+    #delta = abs(oldInt - intensity)
+    #result = numpy.dstack((q, intensity, delta))[0]
+    #AsciiFile.writeFile("CylindersIsotropic.dat", result)
+    ## call it like this:
+    ## PYTHONPATH=..:../mcsas/ python brianpauwgui/gaussianchain.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

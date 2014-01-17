@@ -78,11 +78,15 @@ from models.kholodenko import Kholodenko
 from models.gaussianchain import GaussianChain
 from models.lmadensesphere import LMADenseSphere
 from models.cylindersIsotropic import CylindersIsotropic
+from models.EllipsoidalCoreShell import EllipsoidalCoreShell
 
 MODELS = {Sphere.name(): Sphere,
           CylindersIsotropic.name(): CylindersIsotropic,
+          EllipsoidalCoreShell.name(): EllipsoidalCoreShell,
           GaussianChain.name(): GaussianChain,
-          LMADenseSphere.name(): LMADenseSphere}
+          LMADenseSphere.name(): LMADenseSphere,
+          Kholodenko.name(): Kholodenko
+          }
 FIXEDWIDTH = 120
 
 def eventLoop():
