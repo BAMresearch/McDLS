@@ -115,12 +115,15 @@ class EllipsoidalCoreShell(ScatteringModel):
             arad = a[ ri % len(a) ]
             brad = b[ ri % len(b) ]
             ti = t[ ri % len(t) ]
+            etac = eta_c[ ri % len(eta_c) ]
+            etas = eta_s[ ri % len(eta_s) ]
+            etasol = eta_sol[ ri % len(eta_sol) ]
             Xc = xc(q, arad, brad, intVal)
             Xt = xt(q, arad, brad, ti, intVal)
             fsplit = ( 
-                    (eta_c - eta_s) * VRatio[ri % len(VRatio)] * 
+                    (etac - etas) * VRatio[ri % len(VRatio)] * 
                     ( 3 * j1( Xc ) / Xc ) + 
-                    (eta_s - eta_sol) * 1. * 
+                    (etas - etasol) * 1. * 
                     ( 3 * j1( Xt ) / Xt )
                     )
             #integrate over orientation

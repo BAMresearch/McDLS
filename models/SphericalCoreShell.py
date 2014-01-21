@@ -96,9 +96,12 @@ class SphericalCoreShell(ScatteringModel):
         for ri in range(len(radius)):
             rad = radius[ ri % len(radius) ]
             ti = t[ ri % len(t) ]
+            etac = eta_c[ ri % len(eta_c) ]
+            etas = eta_s[ ri % len(eta_s) ]
+            etasol = eta_sol[ ri % len(eta_sol) ]
             VRati = VRatio[ ri % len(VRatio) ] 
-            Ks = K(q, (rad + ti), (eta_s - eta_sol))
-            Kc = K(q, rad, (eta_s - eta_c))
+            Ks = K(q, (rad + ti), (etas - etasol))
+            Kc = K(q, rad, (etas - etac))
             Fell[:,ri] = ( Ks - VRati * Kc ).flatten()
             #integrate over orientation
             #Fell[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
