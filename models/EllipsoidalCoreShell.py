@@ -10,7 +10,8 @@ from scatteringmodel import ScatteringModel
 
 class EllipsoidalCoreShell(ScatteringModel):
     r"""Form factor for an ellipsoidal core shell structure
-    as defined in the sasFIT manual (par. 3.2.3)
+    as defined in the SASfit manual (par. 3.2.3)
+    Tested 2014-01-21 against SASfit function with good agreement.
     """
     shortName = "Core-shell ellipsoid"
     parameters = (
@@ -46,6 +47,8 @@ class EllipsoidalCoreShell(ScatteringModel):
         self.t.setValueRange((0.1, 1e3))
 
     def ff(self, dataset, paramValues):
+        assert ScatteringModel.ff(self, dataset, paramValues)
+
         def j1(x):
             return ( sin(x) - x * cos(x) ) / (x**2)
 
@@ -61,7 +64,6 @@ class EllipsoidalCoreShell(ScatteringModel):
                     )
             return numpy.outer(Q, sfact)
 
-        assert ScatteringModel.ff(self, dataset, paramValues)
 
         # vectorized data and arguments
         q = dataset[:, 0]
@@ -95,7 +97,11 @@ class EllipsoidalCoreShell(ScatteringModel):
         if not isinstance(VRatio, numpy.ndarray):
             VRatio = numpy.array(VRatio)
         
-        Fell=zeros((len(q), len(paramValues[:,(idx-1)])))
+        if paramValues is None:
+            Fell=zeros((len(q), 1 ))
+        else:
+            Fell=zeros((len(q), len(paramValues[:,(idx-1)])))
+
         for ri in range(len(a)):
             arad = a[ ri % len(a) ]
             brad = b[ ri % len(b) ]
@@ -137,25 +143,40 @@ class EllipsoidalCoreShell(ScatteringModel):
 EllipsoidalCoreShell.factory()
 
 if __name__ == "__main__":
-    pass
-    #from cutesnake.datafile import PDHFile, AsciiFile
-    #pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
-    #model = CylindersIsotropic()
-    #model.radius.setValue(1.)
-    #model.radius.isActive = False
-    #model.length.setValue(100.)
-    #model.length.isActive = False
-    #model.psiAngle.setValue(1.)
-    #model.psiAngle.isActive = False
-    #model.psiAngleDivisions.setValue(303)
-    #model.psiAngleDivisions.isActive = False
-    #intensity = (model.ff(pf.data, None).reshape(-1))**2
-    #q = pf.data[:, 0]
-    #oldInt = pf.data[:, 1]
-    #delta = abs(oldInt - intensity)
-    #result = numpy.dstack((q, intensity, delta))[0]
-    #AsciiFile.writeFile("CylindersIsotropic.dat", result)
-    ## call it like this:
-    ## PYTHONPATH=..:../mcsas/ python brianpauwgui/gaussianchain.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
+    import sys
+    sys.path.append('..')
+    sys.path.append('.')
+    sys.path.append('../utils')
+    sys.path.append('../cutesnake')
+    from cutesnake.datafile import PDHFile, AsciiFile
+    from models.EllipsoidalCoreShell import EllipsoidalCoreShell
+    pf = PDHFile("testData/EllCoreShell_a100_b150_t500_c3p16_s2p53_sol0.csv")
+    model = EllipsoidalCoreShell()
+    model.a.setValue(100.)
+    model.a.isActive = False
+    model.b.setValue(150.)
+    model.b.isActive = False
+    model.t.setValue(500.)
+    model.t.isActive = False
+    model.eta_c.setValue(3.16)
+    model.eta_c.isActive = False
+    model.eta_s.setValue(2.53)
+    model.eta_s.isActive = False
+    model.eta_sol.setValue(0.)
+    model.eta_sol.isActive = False
+    model.intDiv.setValue(100)
+    model.intDiv.isActive = False
+    intensity = (model.ff(pf.data, None).reshape(-1))**2
+    q = pf.data[:, 0]
+    oldInt = pf.data[:, 1]
+    #normalize
+    intensity /= intensity.max()
+    oldInt /= oldInt.max()
+    delta = abs(oldInt - intensity)
+    print('mean Delta: {}'.format(delta.mean()))
+    result = numpy.dstack((q, intensity, delta))[0]
+    AsciiFile.writeFile("EllipsoidalCoreShell.dat", result)
+    # call it like this:
+    # PYTHONPATH=..:../mcsas/ python EllipsoidalCoreShell.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
