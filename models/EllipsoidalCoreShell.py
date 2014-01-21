@@ -86,6 +86,15 @@ class EllipsoidalCoreShell(ScatteringModel):
         if self.t.isActive:
             t = paramValues[:, idx]
             idx += 1
+        if self.eta_c.isActive:
+            eta_c = paramValues[:, idx]
+            idx += 1
+        if self.eta_s.isActive:
+            eta_s = paramValues[:, idx]
+            idx += 1
+        if self.eta_sol.isActive:
+            eta_sol = paramValues[:, idx]
+            idx += 1
         #remaining parameters are never active fitting parameters    
 
         dToR = pi / 180. #degrees to radian
