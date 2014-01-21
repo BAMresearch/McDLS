@@ -1228,6 +1228,7 @@ class McSAS(AlgorithmBase):
             volHistMinReq = initHist()
             numHistMinReq = initHist()
 
+            print('shape contribs: {}, paramIndex: {}'.format(shape(contribs),paramIndex))
             for ri in range(numReps):
                 # single set of R for this calculation
                 rset = contribs[:, paramIndex, ri]
@@ -1263,7 +1264,7 @@ class McSAS(AlgorithmBase):
             numHistYStd = numHistRepY.std(axis = 1)
 
             # store the results, we'll fix this later by a proper structure
-            if paramIndex >= len(self.result):
+            while paramIndex >= len(self.result):
                 self.result.append(dict())
             self.result[paramIndex].update(dict(
                 histogramXLowerEdge = histogramXLowerEdge,
