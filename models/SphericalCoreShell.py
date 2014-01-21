@@ -13,7 +13,7 @@ class SphericalCoreShell(ScatteringModel):
     as defined in the SASfit manual (par. 3.1.4, Spherical Shell III).
     One modification is the ability to specify SLD for core, shell and 
     solvent, identical to the notation used in the Core-shell ellipsoid.
-    Compared wiht a SASfit-generated model (no distribution)
+    Compared wiht a SASfit-generated model (both with and without distribution)
     """
     shortName = "Core-shell sphere"
     parameters = (
@@ -23,13 +23,13 @@ class SphericalCoreShell(ScatteringModel):
             Parameter("t", 1.0,
                     displayName = "Thickness of shell",
                     valueRange = (0., numpy.inf), suffix = "nm"),
-            Parameter("eta_c", 303.,
+            Parameter("eta_c", 3.16,
                     displayName = "core SLD",
                     valueRange = (0, numpy.inf), suffix = "-"),
-            Parameter("eta_s", 303.,
+            Parameter("eta_s", 2.53,
                     displayName = "shell SLD",
                     valueRange = (0, numpy.inf), suffix = "-"),
-            Parameter("eta_sol", 303.,
+            Parameter("eta_sol", 0.,
                     displayName = "solvent SLD",
                     valueRange = (0, numpy.inf), suffix = "-"),
     )
