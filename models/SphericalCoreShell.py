@@ -15,7 +15,7 @@ class SphericalCoreShell(ScatteringModel):
     solvent, identical to the notation used in the Core-shell ellipsoid.
     Compared wiht a SASfit-generated model (no distribution)
     """
-    shortName = "Core-shell ellipsoid"
+    shortName = "Core-shell sphere"
     parameters = (
             Parameter("radius", 1.0,
                     displayName = "Core radius",
@@ -99,8 +99,6 @@ class SphericalCoreShell(ScatteringModel):
             VRati = VRatio[ ri % len(VRatio) ] 
             Ks = K(q, (rad + ti), (eta_s - eta_sol))
             Kc = K(q, rad, (eta_s - eta_c))
-            print('shape Ks: {}, shape Kc: {}, shape VRatio: {}'.format(
-                numpy.shape(Ks), numpy.shape(Kc), numpy.shape(VRatio))) 
             Fell[:,ri] = ( Ks - VRati * Kc ).flatten()
             #integrate over orientation
             #Fell[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
