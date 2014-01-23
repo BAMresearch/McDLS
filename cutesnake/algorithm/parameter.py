@@ -198,27 +198,26 @@ class ParameterBase(object):
         return self.factory(**self.attributes())()
 
     @classmethod
-    def get(self, key):
+    def get(self, key, default = None):
         """metagetter to get an attribute parameter"""
         if key in self.attributeNames():
-            getterFunc = getattr(self, key)
+            getterFunc = getattr(self, key, default)
             return getterFunc()
-
         else:
-            logging.warning('parameter {} attribute {} not understood in get'
-                    .format(self.name(), key )
-                    )
+            logging.warning(
+                    "parameter {n} attribute {k} not understood in get"
+                    .format(n = self.name(), k = key))
 
     @classmethod
     def set(self, key, value):
         """metasetter to set an attribute value"""
         if key in self.attributeNames():
-            setterFunc = getattr(self, setterName(key))
+            setterFunc = getattr(self, _setterName(key))
             setterFunc(value)
         else:
-            logging.warning('parameter {} attribute {} not found in set'
-                    .format(self.name(), key)
-                    )
+            logging.warning(
+                    "parameter {n} attribute {k} not found in set"
+                    .format(n = self.name(), k = key))
 
     @classmethod
     def setName(cls, name):
@@ -276,6 +275,39 @@ class ParameterBoolean(ParameterBase):
     @classmethod
     def dtype(cls):
         return bool
+
+class ParameterString(ParameterBase):
+    """
+    String-based parameter class. The default value should be the first
+    item in the _valueRange list.
+    """
+    ParameterBase.setAttributes(locals(), "valueRange")
+
+    @classmethod
+    def setValueRange(self, newRange):
+        testfor(isList(newRange), ValueRangeError,
+                "A value range for a string type parameter has to be a list!")
+        testfor(all([isString(v) for v in newRange]), ValueRangeError,
+                "A value range for a string has to be a list of strings!")
+        self._valueRange = newRange
+        if not (self.value() in self.valueRange()):
+            # where are the default values?
+            self.setValue(self.valueRange()[0])
+
+    @mixedmethod
+    def valueRange(self):
+        if self._valueRange is None:
+            return ()
+        return self._valueRange
+
+    @classproperty
+    @classmethod
+    def dtype(cls):
+        return str
+
+    @classmethod
+    def isDataType(cls, value):
+        return isString(value) 
 
 class ParameterNumerical(ParameterBase):
     # defines attributes for this parameter type and creates default
@@ -350,25 +382,25 @@ class ParameterNumerical(ParameterBase):
 #                     .format(selforcls._name, newGenerator.__name__))
 
     @mixedmethod
-    def valueRange(self):
-        if self._valueRange is None:
+    def valueRange(selforcls):
+        if selforcls._valueRange is None:
             return (None, None)
-        return self._valueRange
+        return selforcls._valueRange
 
     @mixedmethod
-    def min(self):
-        return self.valueRange()[0]
+    def min(selforcls):
+        return selforcls.valueRange()[0]
 
     @mixedmethod
-    def max(self):
-        return self.valueRange()[1]
+    def max(selforcls):
+        return selforcls.valueRange()[1]
 
     @mixedmethod
-    def displayValues(self, key = None, default = None):
+    def displayValues(selforcls, key = None, default = None):
         if key is None:
-            return self._displayValues
+            return selforcls._displayValues
         else:
-            return self._displayValues.get(key, default)
+            return selforcls._displayValues.get(key, default)
 
     @classproperty
     @classmethod
@@ -421,49 +453,6 @@ class ParameterFloat(ParameterNumerical):
     def generate(self, lower = None, upper = None, count = 1):
         return generateValues(self.generator(), self.valueRange(),
                                                 lower, upper, count)
-
-class ParameterString(ParameterBase):
-    """
-    String-based parameter class. The default value should be the first
-    item in the _valueRange list.
-    """
-    _valueRange = None #can be a list of valid values
-
-    @classmethod
-    def setValue(self, newValue):
-        testfor(newValue is not None,
-                DefaultValueError, "Default value is mandatory!")
-        self._value = str(newValue) #force cast into string datatype
-
-    @classmethod
-    def setValueRange(self, newRange):
-        testfor(isList(newRange), ValueRangeError,
-                "A value range for a string type parameter has to be a list!")
-        testfor(all([isString(v) for v in newRange]), ValueRangeError,
-                "A value range for a string has to be a list of strings!")
-        self._valueRange = newRange
-        if not (self._value in newRange):
-            #where are the default values?
-            self._value = self.newRange[0]
-
-    @mixedmethod
-    def valueRange(self):
-        if self._valueRange is None:
-            return ('')
-        return self._valueRange
-
-    @classproperty
-    @classmethod
-    def dtype(cls):
-        return str
-
-    @classmethod
-    def isDataType(cls, value):
-        """ParameterNumerical is a fallback for all number not being float."""
-        return isString(value) 
-
-    def __str__(self):
-        return (ParameterBase.__str__(self)) 
 
 class ParameterLog(ParameterFloat):
     """Used to select an UI input widget with logarithmic behaviour."""
