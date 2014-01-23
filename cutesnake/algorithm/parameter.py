@@ -425,6 +425,49 @@ class ParameterFloat(ParameterNumerical):
         return generateValues(self.generator(), self.valueRange(),
                                                 lower, upper, count)
 
+class ParameterString(ParameterBase):
+    """
+    String-based parameter class. The default value should be the first
+    item in the _valueRange list.
+    """
+    _valueRange = None #can be a list of valid values
+
+    @classmethod
+    def setValue(self, newValue):
+        testfor(newValue is not None,
+                DefaultValueError, "Default value is mandatory!")
+        self._value = str(newValue) #force cast into string datatype
+
+    @classmethod
+    def setValueRange(self, newRange):
+        testfor(isList(newRange), ValueRangeError,
+                "A value range for a string type parameter has to be a list!")
+        testfor(all([isString(v) for v in newRange]), ValueRangeError,
+                "A value range for a string has to be a list of strings!")
+        self._valueRange = newRange
+        if not (self._value in newRange):
+            #where are the default values?
+            self._value = self.newRange[0]
+
+    @mixedmethod
+    def valueRange(self):
+        if self._valueRange is None:
+            return ('')
+        return self._valueRange
+
+    @classproperty
+    @classmethod
+    def dtype(cls):
+        return str
+
+    @classmethod
+    def isDataType(cls, value):
+        """ParameterNumerical is a fallback for all number not being float."""
+        return isString(value) 
+
+    def __str__(self):
+        return (ParameterBase.__str__(self)) 
+
 class ParameterLog(ParameterFloat):
     """Used to select an UI input widget with logarithmic behaviour."""
     pass

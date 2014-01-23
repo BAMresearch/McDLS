@@ -13,7 +13,8 @@ __date__ = "2013-12-21"
 __status__ = "alpha"
 version = "0.0.1"
 
-from cutesnake.algorithm import (Parameter, ParameterFloat, ParameterBoolean, ParameterNumerical)
+from cutesnake.algorithm import (Parameter, ParameterFloat, 
+        ParameterBoolean, ParameterNumerical, ParameterString)
 import logging, json
 import os, inspect
 import numpy as np
@@ -41,7 +42,6 @@ class ExtendedEncoder(json.JSONEncoder):
                 return repr(obj)
 
         return json.JSONEncoder.default(self, obj)
-
 
 class cInfo(object):
     """
@@ -90,8 +90,8 @@ class cInfo(object):
             fname = self.parDefFile()
 
         with open(self.parDefFile(),'r') as jfile:
-            parDict=json.load(jfile)
             logging.info('loading parameters from file: {}'.format(fname))
+            parDict=json.load(jfile)
 
         if self.parameters is None:
             #create if it does not exist yet
@@ -117,6 +117,8 @@ class cInfo(object):
                 subDict.update(cls = ParameterFloat)
             elif cls == "bool": 
                 subDict.update(cls = ParameterBoolean)
+            elif cls == "str": 
+                subDict.update(cls = ParameterString)
             else:
                 logging.warning('parameter type {} for parameter {} not understood from {}'.format(cls, kw, self.parDefFile() ))
 
@@ -125,6 +127,7 @@ class cInfo(object):
                 self.set(kw,**subDict)
                 logging.info('successfully updated parameter: {}'.format(kw))
             else:
+                #logging.info('ingesting parameter {} with value {}'.format(name, value))
                 temp = Parameter(name, value, **subDict)
                 setattr(self.parameters,kw,temp)
                 self.parameterNames.append(kw)
