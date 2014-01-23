@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# plotResults.py
+# mcsas/plotting.py
 
 import numpy # For arrays
 from numpy import (size, log10)
 from cutesnake.utils import isList, isString
 from cutesnake.algorithm import Parameter
-from McSASParameters import McSASParameters 
+from mcsasparameters import McSASParameters 
 
 def plotResults(allRes, dataset, params,
                 axisMargin = 0.3, parameterIdx = None, figureTitle = None):

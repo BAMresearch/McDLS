@@ -1,5 +1,5 @@
 #!/usr/bin/env python                                                          
-#coding: utf8    
+# -*- coding: utf-8 -*-
 """
 carrier for settings  and info used for a McSAS run
 The instance can be imported, read and modified in a module after
@@ -22,7 +22,7 @@ __date__ = "2013-12-21"
 __status__ = "alpha"
 version = "0.0.1"
 
-from McSASDefaultCfg import cInfo
+from mcsas.mcsasdefaultcfg import cInfo
 
 # instantiate a parameters class filled with defaults
 parameters = cInfo()

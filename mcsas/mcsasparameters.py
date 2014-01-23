@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# McSAS.py
+# mcsas/mcsasparameters.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
 from utils.propertynames import PropertyNames

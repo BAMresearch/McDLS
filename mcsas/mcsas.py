@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# McSAS.py
+# mcsas/mcsas.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
 import numpy # For arrays
@@ -23,9 +23,9 @@ from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
 from cutesnake.utilsgui import processEventLoop
 
-from SASData import SASData
-from McSASParameters import McSASParameters
-from plotResults import plotResults
+from plotting import plotResults
+from sasdata import SASData
+from mcsasparameters import McSASParameters
 
 class McSAS(AlgorithmBase):
     r"""
@@ -356,7 +356,7 @@ class McSAS(AlgorithmBase):
         else:
             self.dataset = SASData("SAS data provided", None)
             self.dataset.prepared = data
-        McSASParameters.contribParamBounds = list(self.dataset.sizeBounds)
+        McSASParameters.contribParamBounds = list(self.dataset.sphericalSizeEst())
 
     def setParameter(self, kwargs):
         """Sets the supplied Parameters given in keyword-value pairs for known
