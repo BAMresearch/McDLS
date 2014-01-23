@@ -62,7 +62,11 @@ class DisplayException(QMessageBox):
             inClass = frame.f_locals.get('cls', type(None))
         else:
             inClass = type(inClass)
-        className = inClass.__name__
+        className = ""
+        if hasattr(inClass, "__name__"):
+            className = inClass.__name__
+        elif isinstance(inClass, super):
+            className = inClass.__self_class__.__name__
         if className == "NoneType":
             className = ""
         return className, trace[3]+"()"
