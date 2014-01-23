@@ -3,7 +3,7 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
-from cutesnake.algorithm import Parameter
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -33,7 +33,7 @@ class SphericalCoreShell(ScatteringModel):
                     displayName = "solvent SLD",
                     valueRange = (0, numpy.inf), suffix = "-"),
     )
-    parameters[0].isActive = True
+    parameters[0].setIsActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -63,19 +63,19 @@ class SphericalCoreShell(ScatteringModel):
         #unused:
 
         idx = 0
-        if self.radius.isActive:
+        if self.radius.isActive():
             radius = paramValues[:, idx]
             idx += 1
-        if self.t.isActive:
+        if self.t.isActive():
             t = paramValues[:, idx]
             idx += 1
-        if self.eta_c.isActive:
+        if self.eta_c.isActive():
             eta_c = paramValues[:, idx]
             idx += 1
-        if self.eta_s.isActive:
+        if self.eta_s.isActive():
             eta_s = paramValues[:, idx]
             idx += 1
-        if self.eta_sol.isActive:
+        if self.eta_sol.isActive():
             eta_sol = paramValues[:, idx]
             idx += 1
         #remaining parameters are never active fitting parameters    
@@ -116,10 +116,10 @@ class SphericalCoreShell(ScatteringModel):
         radius = numpy.array((self.radius.value(),))
         t = numpy.array((self.t.value(),))
 
-        if self.radius.isActive:
+        if self.radius.isActive():
             radius = paramValues[:, 0]
-        if self.t.isActive:
-            idx = int(self.radius.isActive)
+        if self.t.isActive():
+            idx = int(self.radius.isActive())
             t = paramValues[:, idx]
 
         v = 4./3 * pi * (radius + t)**3                                     
@@ -138,15 +138,15 @@ if __name__ == "__main__":
     pf = PDHFile("testData/SphCoreShell_R100_dR150_c3p16_s2p53.csv")
     model = SphericalCoreShell()
     model.radius.setValue(100.)
-    model.radius.isActive = False
+    model.radius.setIsActive(False)
     model.t.setValue(150.)
-    model.t.isActive = False
+    model.t.setIsActive(False)
     model.eta_c.setValue(3.16)
-    model.eta_c.isActive = False
+    model.eta_c.setIsActive(False)
     model.eta_s.setValue(2.53)
-    model.eta_s.isActive = False
+    model.eta_s.setIsActive(False)
     model.eta_sol.setValue(0.)
-    model.eta_sol.isActive = False
+    model.eta_sol.setIsActive(False)
     intensity = (model.ff(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

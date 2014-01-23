@@ -3,7 +3,7 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
-from cutesnake.algorithm import Parameter
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -37,7 +37,7 @@ class EllipsoidalCoreShell(ScatteringModel):
                     displayName = "orientation integration divisions",
                     valueRange = (0, 1e4), suffix = "-"),
     )
-    parameters[0].isActive = True
+    parameters[0].setIsActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -77,22 +77,22 @@ class EllipsoidalCoreShell(ScatteringModel):
         #unused:
 
         idx = 0
-        if self.a.isActive:
+        if self.a.isActive():
             a = paramValues[:, idx]
             idx += 1
-        if self.b.isActive:
+        if self.b.isActive():
             b = paramValues[:, idx]
             idx += 1
-        if self.t.isActive:
+        if self.t.isActive():
             t = paramValues[:, idx]
             idx += 1
-        if self.eta_c.isActive:
+        if self.eta_c.isActive():
             eta_c = paramValues[:, idx]
             idx += 1
-        if self.eta_s.isActive:
+        if self.eta_s.isActive():
             eta_s = paramValues[:, idx]
             idx += 1
-        if self.eta_sol.isActive:
+        if self.eta_sol.isActive():
             eta_sol = paramValues[:, idx]
             idx += 1
         #remaining parameters are never active fitting parameters    
@@ -140,13 +140,13 @@ class EllipsoidalCoreShell(ScatteringModel):
         b = numpy.array((self.b.value(),))
         t = numpy.array((self.t.value(),))
 
-        if self.a.isActive:
+        if self.a.isActive():
             a = paramValues[:, 0]
-        if self.b.isActive:
-            idx = int(self.a.isActive)
+        if self.b.isActive():
+            idx = int(self.a.isActive())
             b = paramValues[:, idx]
-        if self.t.isActive:
-            idx = int(self.a.isActive) + int(self.b.isActive)
+        if self.t.isActive():
+            idx = int(self.a.isActive()) + int(self.b.isActive())
             t = paramValues[:, idx]
 
         v = 4./3 * pi * (a + t) * (b + t)**2                                     
@@ -165,19 +165,19 @@ if __name__ == "__main__":
     pf = PDHFile("testData/EllCoreShell_a100_b150_t500_c3p16_s2p53_sol0.csv")
     model = EllipsoidalCoreShell()
     model.a.setValue(100.)
-    model.a.isActive = False
+    model.a.setIsActive(False)
     model.b.setValue(150.)
-    model.b.isActive = False
+    model.b.setIsActive(False)
     model.t.setValue(500.)
-    model.t.isActive = False
+    model.t.setIsActive(False)
     model.eta_c.setValue(3.16)
-    model.eta_c.isActive = False
+    model.eta_c.setIsActive(False)
     model.eta_s.setValue(2.53)
-    model.eta_s.isActive = False
+    model.eta_s.setIsActive(False)
     model.eta_sol.setValue(0.)
-    model.eta_sol.isActive = False
+    model.eta_sol.setIsActive(False)
     model.intDiv.setValue(100)
-    model.intDiv.isActive = False
+    model.intDiv.setIsActive(False)
     intensity = (model.ff(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

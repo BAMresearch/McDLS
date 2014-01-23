@@ -82,7 +82,7 @@ def plotResults(allRes, dataset, params,
         parameterId = [i
                        for p, i in zip(params,
                                        range(len(params)))
-                       if p.isActive]
+                       if p.isActive()]
     else:
         parameterId = [parameterIdx]
     #check how many histograms there are to plot

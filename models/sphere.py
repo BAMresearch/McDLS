@@ -4,7 +4,8 @@
 import logging
 import numpy
 from numpy import pi, sin, cos
-from cutesnake.algorithm import Parameter, RandomUniform
+from cutesnake.algorithm import RandomUniform
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 class Sphere(ScatteringModel):
@@ -14,7 +15,7 @@ class Sphere(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1), )
-    parameters[0].isActive = True
+    parameters[0].setIsActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -43,7 +44,7 @@ class Sphere(ScatteringModel):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         r = numpy.array((self.radius.value(),))
-        if self.radius.isActive:
+        if self.radius.isActive():
             r = paramValues[:, 0]
         result = (pi*4./3.) * r**(3. * compensationExponent)
         return result
@@ -51,7 +52,7 @@ class Sphere(ScatteringModel):
     def ff(self, dataset, paramValues):
         assert ScatteringModel.ff(self, dataset, paramValues)
         r = numpy.array((self.radius.value(),))
-        if self.radius.isActive:
+        if self.radius.isActive():
             r = paramValues[:, 0]
         q = dataset[:, 0]
         qr = numpy.outer(q, r)

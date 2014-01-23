@@ -3,7 +3,7 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
-from cutesnake.algorithm import Parameter
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -29,7 +29,7 @@ class CylindersIsotropic(ScatteringModel):
             Parameter("lengthIsAspect", True,
                     displayName = "length value indicates aspect ratio"),
     )
-    parameters[0].isActive = True
+    parameters[0].setIsActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -48,10 +48,10 @@ class CylindersIsotropic(ScatteringModel):
         #unused:
         psiAngle = numpy.array((self.psiAngle.value(),))
 
-        if self.radius.isActive:
+        if self.radius.isActive():
             radius = paramValues[:, 0]
-        if self.length.isActive:
-            idx = int(self.radius.isActive)
+        if self.length.isActive():
+            idx = int(self.radius.isActive())
             length = paramValues[:, idx]
         #remaining parameters are never active fitting parameters    
 
@@ -85,7 +85,7 @@ class CylindersIsotropic(ScatteringModel):
             compensationExponent = self.compensationExponent                   
         idx = 0
         radius=paramValues[:,0]                                                
-        if self.length.isActive:                                               
+        if self.length.isActive():
             idx+=1                                                             
             length =paramValues[:,idx]                                         
         else:                                                                  
@@ -105,13 +105,13 @@ if __name__ == "__main__":
     pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
     model = CylindersIsotropic()
     model.radius.setValue(1.)
-    model.radius.isActive = False
+    model.radius.setIsActive(False)
     model.length.setValue(100.)
-    model.length.isActive = False
+    model.length.setIsActive(False)
     model.psiAngle.setValue(1.)
-    model.psiAngle.isActive = False
+    model.psiAngle.setIsActive(False)
     model.psiAngleDivisions.setValue(303)
-    model.psiAngleDivisions.isActive = False
+    model.psiAngleDivisions.setIsActive(False)
     intensity = (model.ff(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

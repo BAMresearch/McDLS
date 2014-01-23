@@ -108,65 +108,90 @@ class DisplayValuesError(ParameterError):
 class ParameterGeneratorError(ParameterError):
     pass
 
-def setterName(attrName):
+def _makeGetter(varName):
+    def getter(selforcls):
+        return getattr(selforcls, varName)
+    return mixedmethod(getter)
+
+def _makeSetter(varName):
+    def setter(selforcls, value):
+        setattr(selforcls, varName, value)
+    return mixedmethod(setter)
+
+def _setterName(attrName):
     return "set" + attrName[0].upper() + attrName[1:]
 
 class ParameterBase(object):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
 
-    _name = None
-    _displayName = None
-    _value = None
-    isActive = False # TODO: does not fit here, move somewhere else eventually
-
+    # Be able to manage attributes programmatically also for derived classes
+    # while maintaining the order of attributes which is not preserved by
+    # pythons __dict__. Initialization of *decimals* has to occur after
+    # *valueRange*. Not sure, if this is a good idea but it reduces
+    # repetition/code drastically.
     @classmethod
-    def _base(cls):
-        lst = [b for b in cls.__bases__ if issubclass(b, ParameterBase)]
-        if not len(lst):
-            return None
-        return lst[0]
+    def setAttributes(cls, dictionary, *names, **namesAndValues):
+        """Sets an *ordered* list of attributes.
+        Initializes the private variable to None and sets a default getter
+        method for each name provided. Additionally, sets *attributeNames* to
+        return all attribute names."""
+        names += tuple(namesAndValues.keys())
+        for attrName in names:
+            varName = "_"+attrName
+            # set the class variable
+            dictionary[varName] = namesAndValues.get(attrName, None)
+            # default getter for the class var
+            dictionary[attrName] = _makeGetter(varName)
+            if attrName != "name": # do not create setName() method
+                dictionary[_setterName(attrName)] = _makeSetter(varName)
+        try:
+            # prepend attribute names of the base class
+            names = cls.attributeNames() + names
+        except:
+            pass
+        # sets the ordered names of attributes
+        dictionary["_attributeNames"] = names
+
+    setAttributes.__func__(None, locals(), "name", "value", "displayName")
 
     @classmethod
     def attributeNames(cls):
-        """Returns the names of data attributes in the order of inheritance."""
-        base = cls._base()
-        lst = ["name"] # name has to be the first, keep this order
-        if base is not None:
-            lst.extend(base.attributeNames())
-        cand = [name for name in dir(cls) if not name.startswith("__")]
-        for name in cand:
-            if not name.startswith("_"):
-                continue # get private members which store values
-            name = name[1:]
-            if name in lst:
-                continue # skip if found in base class
-            if setterName(name) in cand and name in cand:
-                lst.append(name)
-        return lst
+        """Returns an ordered list of attribute names considering multiple
+        inheritance and maintaining its order."""
+        mergedAttrNames = []
+        for baseCls in reversed(cls.__mro__):
+            if not hasattr(baseCls, "_attributeNames"):
+                continue
+            mergedAttrNames += [attrName
+                                for attrName in baseCls._attributeNames
+                                if attrName not in mergedAttrNames]
+        return mergedAttrNames
 
     @mixedmethod
     def attributes(selforcls):
-        """Returns a dictionary with key, value pairs of all attributes and
+        """Returns a dictionary with <key, value> pairs of all attributes and
         their values in this type or instance.
         Helps to avoid having explicit long argument lists"""
-        res = dict(cls = selforcls._base(),
-                   isActive = selforcls.isActive, # FIXME: soon ;)
-                   description = selforcls.__doc__)
+        base = selforcls
+        if isinstance(base, object):
+            base = type(base)
+        base = base.__mro__[1] # Parameter classes have only one direct subclass
+        res = dict(cls = base, description = selforcls.__doc__)
         for name in selforcls.attributeNames():
+            # if this throws an exception, there is a bug
             res[name] = getattr(selforcls, name)()
         return res
 
     @classmethod
-    def factory(pcls, **kwargs):
+    def factory(cls, **kwargs):
         """Returns this type with attribute values initialized in the ordering
         provided by attributeNames()"""
-        for key in pcls.attributeNames():
+        for key in cls.attributeNames():
             # make sure to provide None value of no key was found
             # this ensures that assertions for mandatory attr are verified
-            getattr(pcls, setterName(key))(kwargs.get(key, None))
-        pcls.isActive = kwargs.get("isActive", False)
-        return pcls
+            getattr(cls, _setterName(key))(kwargs.get(key, None))
+        return cls
 
     @classmethod
     def copy(self):
@@ -202,10 +227,6 @@ class ParameterBase(object):
         assertName(name, ParameterNameError)
         cls._name = name
 
-    @classmethod
-    def name(cls):
-        return cls._name
-
     @mixedmethod
     def setValue(selforcls, newValue):
         testfor(newValue is not None,
@@ -213,18 +234,10 @@ class ParameterBase(object):
         selforcls._value = newValue
 
     @mixedmethod
-    def value(self):
-        return self._value
-
-    @mixedmethod
     def setDisplayName(selforcls, newName):
         if (not isString(newName) or len(newName) <= 0):
             newName = selforcls.name()
         selforcls._displayName = newName
-
-    @mixedmethod
-    def displayName(self):
-        return self._displayName
 
     @classproperty
     @classmethod
@@ -265,11 +278,11 @@ class ParameterBoolean(ParameterBase):
         return bool
 
 class ParameterNumerical(ParameterBase):
-    _valueRange = None
-    _suffix = None
-    _stepping = None
-    _displayValues = None # dict maps values to text being displayed instead
-    _generator = None
+    # defines attributes for this parameter type and creates default
+    # getter/setter for them. For specialized versions they can be
+    # overridden as usual.
+    ParameterBase.setAttributes(locals(), "valueRange", "suffix",
+                  "stepping", "displayValues", "generator")
 
     @mixedmethod
     def setValue(selforcls, newValue):
@@ -351,23 +364,11 @@ class ParameterNumerical(ParameterBase):
         return self.valueRange()[1]
 
     @mixedmethod
-    def suffix(self):
-        return self._suffix
-
-    @mixedmethod
-    def stepping(self):
-        return self._stepping
-
-    @mixedmethod
     def displayValues(self, key = None, default = None):
         if key is None:
             return self._displayValues
         else:
             return self._displayValues.get(key, default)
-
-    @mixedmethod
-    def generator(self):
-        return self._generator
 
     @classproperty
     @classmethod
@@ -390,7 +391,7 @@ class ParameterNumerical(ParameterBase):
                                 ).astype(self.dtype)
 
 class ParameterFloat(ParameterNumerical):
-    _decimals = None
+    ParameterNumerical.setAttributes(locals(), "decimals")
 
     @mixedmethod
     def setDecimals(selforcls, newDecimals):
@@ -403,10 +404,6 @@ class ParameterFloat(ParameterNumerical):
         newDecimals = max(newDecimals, 0)
         newDecimals = min(newDecimals, sys.float_info.max_10_exp)
         selforcls._decimals = int(newDecimals)
-
-    @mixedmethod
-    def decimals(self):
-        return self._decimals
 
     @classproperty
     @classmethod
@@ -496,11 +493,14 @@ def factory(name, value, paramTypes = None, **kwargs):
     name = kwargs.get("name", None)
     assertName(name, ParameterNameError)
     value = kwargs.get("value", None)
-    cls = kwargs.get("cls", None)
+    cls = kwargs.pop("cls", None) # remove 'cls' keyword before forwarding
     if paramTypes is None:
         paramTypes = (ParameterBoolean, ParameterFloat,
                       ParameterNumerical, ParameterBase)
-    if cls is None or not issubclass(cls, ParameterBase):
+    if not (cls is not None and (
+                (isinstance(cls, super) and
+                 issubclass(cls.__thisclass__, ParameterBase)) or
+                 issubclass(cls, ParameterBase))):
         for cls in paramTypes[:-1]:
             if cls.isDataType(value):
                 break

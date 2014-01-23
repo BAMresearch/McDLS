@@ -3,7 +3,7 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis
-from cutesnake.algorithm import Parameter
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -28,10 +28,10 @@ class CylindersIsotropic(ScatteringModel):
                     displayName = "in-plane angle divisions",
                     valueRange = (0, numpy.inf), suffix = "-"),
     )
-    parameters[0].isActive = True
-    parameters[1].isActive = False#not expected to vary
-    parameters[2].isActive = True #better when random 
-    parameters[3].isActive = False #not expected to vary
+    parameters[0].setIsActive(True)
+    parameters[1].setIsActive(False) # not expected to vary
+    parameters[2].setIsActive(True)  # better when random 
+    parameters[3].setIsActive(False) # not expected to vary
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -49,23 +49,23 @@ class CylindersIsotropic(ScatteringModel):
         psiAngle = numpy.array((self.psiAngle.value(),))
         psiAngleDivisions = numpy.array((self.psiAngleDivisions.value(),))
 
-        if self.radius.isActive:
+        if self.radius.isActive():
             radius = paramValues[:, 0]
-        if self.aspect.isActive:
-            idx = int(self.radius.isActive)
+        if self.aspect.isActive():
+            idx = int(self.radius.isActive())
             aspect = paramValues[:, idx]
-        if self.psiAngle.isActive:
+        if self.psiAngle.isActive():
             #Question: can we nog simply do idx+=1 here?
             idx = numpy.sum((
-                    int(self.radius.isActive),
-                    int(self.aspect.isActive)))
+                    int(self.radius.isActive()),
+                    int(self.aspect.isActive())))
             psiAngle = paramValues[:, idx]
-        if self.psiAngleDivisions.isActive:
+        if self.psiAngleDivisions.isActive():
             #not expected to be variable.
             idx = numpy.sum((
-                    int(self.radius.isActive),
-                    int(self.aspect.isActive),
-                    int(self.psiAngle.isActive)))
+                    int(self.radius.isActive()),
+                    int(self.aspect.isActive()),
+                    int(self.psiAngle.isActive())))
             psiAngleDivisions = paramValues[:, idx]
 
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
@@ -108,7 +108,7 @@ class CylindersIsotropic(ScatteringModel):
             compensationExponent = self.compensationExponent                   
         idx = 0
         radius=paramValues[:,0]                                                
-        if self.aspect.isActive:                                               
+        if self.aspect.isActive():
             idx+=1                                                             
             aspect =paramValues[:,idx]                                         
         else:                                                                  
@@ -124,13 +124,13 @@ if __name__ == "__main__":
     pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
     model = CylindersIsotropic()
     model.radius.setValue(1.)
-    model.radius.isActive = False
+    model.radius.setIsActive(False)
     model.aspect.setValue(100.)
-    model.aspect.isActive = False
+    model.aspect.setIsActive(False)
     model.psiAngle.setValue(1.)
-    model.psiAngle.isActive = False
+    model.psiAngle.setIsActive(False)
     model.psiAngleDivisions.setValue(303)
-    model.psiAngleDivisions.isActive = False
+    model.psiAngleDivisions.setIsActive(False)
     intensity = model.ff(pf.data, None).reshape(-1)
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

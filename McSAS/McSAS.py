@@ -13,11 +13,16 @@ import logging
 logging.basicConfig(level = logging.INFO)
 
 from cutesnake.utils import isList, isFrozen
+from cutesnake.dataset import DataSet
+from cutesnake.utils import isList, isString, isFrozen
+from cutesnake.algorithm import (AlgorithmBase,
+                                 RandomUniform, RandomExponential)
+from utils.parameter import (Parameter, FitParameterBase)
+from utils.propertynames import PropertyNames
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
 from cutesnake.utilsgui import processEventLoop
 
-from cutesnake.algorithm import (AlgorithmBase, Parameter, ParameterBase)    
 from SASData import SASData
 from McSASParameters import McSASParameters
 from plotResults import plotResults
@@ -288,7 +293,7 @@ class McSAS(AlgorithmBase):
             return
         logging.info(
                 "\n".join(["Analysing parameters: "]+
-                    [str(p)+", active: "+str(p.isActive)
+                    [str(p)+", active: "+str(p.isActive())
                         for p in self.model.params()])
         )
         self.checkParameters() # checks histbins
@@ -362,7 +367,7 @@ class McSAS(AlgorithmBase):
         for key in kwargs.keys():
             found = False
             param = getattr(self, key, None)
-            if isinstance(param, ParameterBase):
+            if isinstance(param, FitParameterBase):
                 param.setValue(kwargs[key])
                 found = True
             for cls in McSASParameters, ScatteringModel:
@@ -507,7 +512,7 @@ class McSAS(AlgorithmBase):
         numContribs = self.numContribs.value()
         numReps = self.numReps.value()
         minConvergence = self.convergenceCriterion.value()
-        if not any([p.isActive for p in self.model.params()]):
+        if not any([p.isActive() for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
         contributions = zeros((numContribs, self.model.paramCount(), numReps))
@@ -984,7 +989,7 @@ class McSAS(AlgorithmBase):
         # we need to histogram separately.
         for paramIndex, param in enumerate(self.model.params()):
             #skip non-active parameters:
-            if not param.isActive:
+            if not param.isActive():
                 continue
 
             # Now bin whilst keeping track of which contribution ends up in

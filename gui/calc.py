@@ -95,7 +95,7 @@ class Calculator(object):
         log.removeHandler(logFile)
 
     def _writeStatistics(self):
-        paramIndex = [i for i, p in enumerate(self.modelParams()) if p.isActive]
+        paramIndex = [i for i, p in enumerate(self.modelParams()) if p.isActive()]
         if not len(paramIndex):
             return
         paramIndex = paramIndex[0]
@@ -162,7 +162,7 @@ class Calculator(object):
         sectionName = "Model Settings"
         config.add_section(sectionName)
         for p in self.modelParams():
-            if p.isActive:
+            if p.isActive():
                 config.set(sectionName, p.name()+"_min", p.min())
                 config.set(sectionName, p.name()+"_max", p.max())
             else:

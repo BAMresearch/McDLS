@@ -2,7 +2,7 @@
 # models/gaussianchain.py
 
 import numpy
-from cutesnake.algorithm import Parameter
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -35,7 +35,7 @@ class GaussianChain(ScatteringModel):
                     displayName = "volumetric scaling factor of Rg",
                     valueRange = (0., numpy.inf), suffix = "nm")
     )
-    parameters[0].isActive = True
+    parameters[0].setIsActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -51,19 +51,19 @@ class GaussianChain(ScatteringModel):
         # vectorized data and arguments
         q = dataset[:, 0]
         rg = numpy.array((self.rg.value(),))
-        if self.rg.isActive:
+        if self.rg.isActive():
             rg = paramValues[:, 0]
         bp = numpy.array((self.bp.value(),))
-        if self.bp.isActive:
-            idx = int(self.rg.isActive)
+        if self.bp.isActive():
+            idx = int(self.rg.isActive())
             bp = paramValues[:, idx]
         etas = numpy.array((self.etas.value(),))
-        if self.etas.isActive:
-            idx = int(self.rg.isActive) + int(self.bp.isActive)
+        if self.etas.isActive():
+            idx = int(self.rg.isActive()) + int(self.bp.isActive())
             etas = paramValues[:, idx]
         k = numpy.array((self.k.value(),))
-        if self.k.isActive:
-            idx = int(self.rg.isActive) + int(self.bp.isActive) + int(self.etas.isActive)
+        if self.k.isActive():
+            idx = int(self.rg.isActive()) + int(self.bp.isActive()) + int(self.etas.isActive())
             k = paramValues[:, idx]
 
         beta = bp - (k * rg**2) * etas
@@ -80,11 +80,11 @@ class GaussianChain(ScatteringModel):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         rg = numpy.array((self.rg.value(),))
-        if self.rg.isActive:
+        if self.rg.isActive():
             rg = paramValues[:, 0]
         k = numpy.array((self.k.value(),))
-        if self.k.isActive:
-            idx = sum([int(p.isActive) for p in self.rg, self.bp, self.etas])
+        if self.k.isActive():
+            idx = sum([int(p.isActive()) for p in self.rg, self.bp, self.etas])
             k = paramValues[:, idx]
         v = k * rg**2
         if len(v) <= 1 and len(v) < len(paramValues):
@@ -99,13 +99,13 @@ if __name__ == "__main__":
     pf = PDHFile("../brianpauw/sasfit_gauss2-5-1.5-2-1.dat")
     model = GaussianChain()
     model.rg.setValue(5.)
-    model.rg.isActive = False
+    model.rg.setIsActive(False)
     model.bp.setValue(1.5)
-    model.bp.isActive = False
+    model.bp.setIsActive(False)
     model.etas.setValue(1.)
-    model.etas.isActive = False
+    model.etas.setIsActive(False)
     model.k.setValue(0.08)
-    model.k.isActive = False
+    model.k.setIsActive(False)
     intensity = model.ff(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

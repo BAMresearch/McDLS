@@ -18,6 +18,8 @@ except:
 
 EPS = sys.float_info.epsilon
 
+from mixedmethod import mixedmethod
+
 # object tests
 
 def isList(obj):

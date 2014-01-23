@@ -23,7 +23,7 @@ from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.utils import isList
 from cutesnake.utilsgui.displayexception import DisplayException
-from cutesnake.algorithm import ParameterNumerical
+from utils.parameter import ParameterNumerical
 from version import version
 from calc import SASData, Calculator
 from McSAS import McSAS
@@ -191,8 +191,8 @@ class PropertyWidget(SettingsWidget):
             if minValue is not None and maxValue is not None:
                 p.setValueRange((minValue, maxValue))
             newActive = self.get(key+"active")
-            if isinstance(newActive, bool) and p.isActive != newActive:
-                p.isActive = newActive
+            if isinstance(newActive, bool) and p.isActive() != newActive:
+                p.setIsActive(newActive)
                 activeChanged = True
         # update algo settings
         for p in self._calculator.params():
@@ -230,7 +230,7 @@ class PropertyWidget(SettingsWidget):
         lbl.setWordWrap(True)
         layout.addWidget(lbl)
         minmax = None
-        if param.isActive and isinstance(param, ParameterNumerical):
+        if param.isActive() and isinstance(param, ParameterNumerical):
             minmax = type(param).min(), type(param).max()
             ntryMin = self._makeEntry(
                     param.name()+"min", param.dtype, param.min(), minmax)
@@ -255,7 +255,7 @@ class PropertyWidget(SettingsWidget):
             activeBtn = QPushButton("active", self)
             activeBtn.setObjectName(param.name()+"active")
             activeBtn.setCheckable(True)
-            activeBtn.setChecked(param.isActive)
+            activeBtn.setChecked(param.isActive())
             activeBtn.setFixedWidth(FIXEDWIDTH*.5)
             layout.addWidget(activeBtn)
             activeBtn.clicked.connect(self._updateModelParams)

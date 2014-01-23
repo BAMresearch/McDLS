@@ -5,7 +5,7 @@ import logging
 import time
 import numpy
 from numpy import pi
-from cutesnake.algorithm import Parameter
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -119,9 +119,9 @@ class Kholodenko(ScatteringModel):
                     displayName = "contour length",
                     valueRange = (0., numpy.inf), suffix = "nm")
     )
-    parameters[0].isActive = True
-    parameters[1].isActive = True
-    parameters[2].isActive = True
+    parameters[0].setIsActive(True)
+    parameters[1].setIsActive(True)
+    parameters[2].setIsActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -152,15 +152,15 @@ class Kholodenko(ScatteringModel):
         # vectorized data and arguments
         q = dataset[:, 0]
         radius = numpy.array((self.radius.value(),))
-        if self.radius.isActive:
+        if self.radius.isActive():
             radius = paramValues[:, 0]
         lenKuhn = numpy.array((self.lenKuhn.value(),))
-        if self.lenKuhn.isActive:
-            idx = int(self.radius.isActive)
+        if self.lenKuhn.isActive():
+            idx = int(self.radius.isActive())
             lenKuhn = paramValues[:, idx]
         lenContour = numpy.array((self.lenContour.value(),))
-        if self.lenContour.isActive:
-            idx = int(self.radius.isActive) + int(self.lenKuhn.isActive)
+        if self.lenContour.isActive():
+            idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
             lenContour = paramValues[:, idx]
         qr = numpy.outer(q, radius) # a matrix usually
         pcs = vectorizedPcs(qr)
@@ -181,11 +181,11 @@ class Kholodenko(ScatteringModel):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         radius = numpy.array((self.radius.value(),))
-        if self.radius.isActive:
+        if self.radius.isActive():
             radius = paramValues[:, 0]
         lenContour = numpy.array((self.lenContour.value(),))
-        if self.lenContour.isActive:
-            idx = int(self.radius.isActive) + int(self.lenKuhn.isActive)
+        if self.lenContour.isActive():
+            idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
             lenContour = paramValues[:, idx]
         volume = pi * radius*radius * lenContour
         if len(volume) <= 1 and len(volume) < len(paramValues):
@@ -200,11 +200,11 @@ if __name__ == "__main__":
     pf = PDHFile("sasfit_kho-1-10-1000.dat")
     model = Kholodenko()
     model.radius.setValue(1.)
-    model.radius.isActive = False
+    model.radius.setIsActive(False)
     model.lenKuhn.setValue(10.)
-    model.lenKuhn.isActive = False
+    model.lenKuhn.setIsActive(False)
     model.lenContour.setValue(1000.)
-    model.lenContour.isActive = False
+    model.lenContour.setIsActive(False)
     intensity = model.ff(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

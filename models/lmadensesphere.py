@@ -4,7 +4,8 @@
 import numpy
 from numpy import pi, sin, cos
 import logging
-from cutesnake.algorithm import Parameter, RandomUniform
+from cutesnake.algorithm import RandomUniform
+from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 
 class LMADenseSphere(ScatteringModel):
@@ -22,7 +23,7 @@ class LMADenseSphere(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1), )
-    parameters[0].isActive = True
+    parameters[0].setIsActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)

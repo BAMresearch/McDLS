@@ -47,7 +47,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
             # generate numbers in different range for each parameter
             #only for active parameters, otherwise it may try to generate
             #random values for a boolean-type parameter.
-            if param.isActive:
+            if param.isActive():
                 lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
