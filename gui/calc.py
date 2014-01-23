@@ -18,7 +18,7 @@ from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.log import timestamp, addHandler
 import cutesnake.log as log
-from McSAS import McSAS
+from McSAS.McSAS import McSAS
 from sasdata import SASData
 
 class Calculator(object):
