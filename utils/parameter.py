@@ -4,7 +4,7 @@
 from cutesnake.utils import mixedmethod
 from cutesnake.algorithm import (ParameterBase, ParameterFloat,
                                  ParameterNumerical, ParameterBoolean,
-                                 ParameterLog)
+                                 ParameterLog, ParameterString)
 from cutesnake.algorithm import Parameter as ParameterFactory
 
 class FitParameterBase(ParameterBase):
@@ -21,6 +21,9 @@ class FitParameterBase(ParameterBase):
         cls = super(FitParameterBase, cls).factory(**kwargs)
         cls.setIsActive(kwargs.get("isActive", False))
         return cls
+
+class FitParameterString(FitParameterBase, ParameterString):
+    pass
 
 class FitParameterBoolean(FitParameterBase, ParameterBoolean):
     pass
@@ -39,6 +42,7 @@ def Parameter(*args, **kwargs):
                 FitParameterBoolean,
                 FitParameterFloat,
                 FitParameterNumerical,
+                FitParameterString,
                 FitParameterBase
             ), **kwargs)
 
