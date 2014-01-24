@@ -204,6 +204,7 @@ class ParameterBase(object):
             getterFunc = getattr(self, key, default)
             return getterFunc()
         else:
+            #logging doesn't work here, not defined.
             logging.warning(
                     "parameter {n} attribute {k} not understood in get"
                     .format(n = self.name(), k = key))
@@ -215,6 +216,7 @@ class ParameterBase(object):
             setterFunc = getattr(self, _setterName(key))
             setterFunc(value)
         else:
+            #logging doesn't work here, not defined.
             logging.warning(
                     "parameter {n} attribute {k} not found in set"
                     .format(n = self.name(), k = key))

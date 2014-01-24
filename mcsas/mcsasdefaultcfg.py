@@ -51,7 +51,6 @@ class cInfo(object):
     parameters=None
     logging.getLogger('McSAScfg')
     logging.basicConfig(level = logging.DEBUG)
-    _paramDefFile=None
     parameterNames=list()
 
     def __init__(self,**kwargs):
@@ -67,7 +66,6 @@ class cInfo(object):
                 fname = "McSASParameters.json"
             else:
                 #try one more:
-                #determine the directory in which this module resides
                 #determine the directory in which McSASDefaultsCfg is located:
                 #settings should be in the same directory:
                 fdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -77,8 +75,7 @@ class cInfo(object):
             logging.error('no default parameter file found!')
             return false
 
-        self.setParDefFile(fname)
-        self.loadParams()
+        self.loadParams(fname = fname)
 
     def loadParams(self, fname = None):
         """
@@ -86,20 +83,13 @@ class cInfo(object):
         parameters to self.parameters
         Can also be used to update existing parameters from supplied filename
         """
-        if fname is None:
-            fname = self.parDefFile()
-
-        with open(self.parDefFile(),'r') as jfile:
+        with open(fname, 'r') as jfile:
             logging.info('loading parameters from file: {}'.format(fname))
             parDict=json.load(jfile)
 
         if self.parameters is None:
             #create if it does not exist yet
             self.parameters=lambda: None
-
-        #something like what is used in McSAS?
-        with open(self.parDefFile(),'r') as jfile:
-            parDict=json.load(jfile)
 
         #now we cast this information into the Parameter class:
         for kw in parDict.keys():
@@ -120,7 +110,7 @@ class cInfo(object):
             elif cls == "str": 
                 subDict.update(cls = ParameterString)
             else:
-                logging.warning('parameter type {} for parameter {} not understood from {}'.format(cls, kw, self.parDefFile() ))
+                logging.warning('parameter type {} for parameter {} not understood from {}'.format(cls, kw, fname ))
 
             if kw in self.parameterNames:
                 #value exists, should be updated with supplied kwargs
@@ -167,17 +157,6 @@ class cInfo(object):
             #pf.checkSize()
             #pf.clipValue()
             
-    def setParDefFile(self,value):
-        if os.path.exists(value):
-            self._paramDefFile=value
-        else:
-            logging.warning('invalid path to parameter definitions file')
-            return False
-        return True
-    
-    def parDefFile(self):
-        return self._paramDefFile
-
     def getPar(self,key):
         #returns the handle to the parameter defined by key or returns None
         #if it doesn't exist
@@ -199,15 +178,15 @@ class cInfo(object):
         parhandle = self.getPar(par)
         return parhandle.value()
 
-    def set(self,par,**kwargs):
-        """
-        sets one or more parameter attributes
-        not sure the "set" function works in Parameter as in imp2
-        TODO: update for McSAS
-        """
-        parhandle = self.getPar(par)
-        
-        for kw in kwargs:
-            parhandle.set(kw, kwargs[kw])
+    #def set(self,par,**kwargs):
+    #    """
+    #    sets one or more parameter attributes
+    #    not sure the "set" function works in Parameter as in imp2
+    #    TODO: update for McSAS
+    #    """
+    #    parhandle = self.getPar(par)
+    #    
+    #    for kw in kwargs:
+    #        parhandle.set(kw, kwargs[kw])
 
 
