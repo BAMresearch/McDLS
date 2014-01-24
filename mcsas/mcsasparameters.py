@@ -155,7 +155,7 @@ class McSASParameters(PropertyNames, cInfo):
                     parhandle.set(pkw, value[pkw])
             else:
                 logging.info('key: {k}, value {v}'.format(k = kw,v = value))
-                parhandle.set(kw, value)
+                parhandle.set("value", value)
 
     
 
