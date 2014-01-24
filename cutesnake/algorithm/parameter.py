@@ -55,6 +55,7 @@ from math import fabs as math_fabs
 from inspect import getmembers
 import numpy
 import sys
+import logging
 from cutesnake.utils import isString, isNumber, isList, isMap
 from cutesnake.utils.tests import testfor, assertName
 from cutesnake.utils.mixedmethod import mixedmethod
@@ -204,7 +205,6 @@ class ParameterBase(object):
             getterFunc = getattr(self, key, default)
             return getterFunc()
         else:
-            #logging doesn't work here, not defined.
             logging.warning(
                     "parameter {n} attribute {k} not understood in get"
                     .format(n = self.name(), k = key))
@@ -216,7 +216,6 @@ class ParameterBase(object):
             setterFunc = getattr(self, _setterName(key))
             setterFunc(value)
         else:
-            #logging doesn't work here, not defined.
             logging.warning(
                     "parameter {n} attribute {k} not found in set"
                     .format(n = self.name(), k = key))
