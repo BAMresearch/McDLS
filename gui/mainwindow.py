@@ -231,12 +231,7 @@ class PropertyWidget(SettingsWidget):
         lbl.setWordWrap(True)
         layout.addWidget(lbl)
         minmax = None
-        if not hasattr(param,"isActive"):
-            isActive = False
-            activeBtns = False #override
-        else:
-            isActive = param.isActive()
-        if isActive and isinstance(param, ParameterNumerical):
+        if param.isActive() and isinstance(param, ParameterNumerical):
             minmax = type(param).min(), type(param).max()
             ntryMin = self._makeEntry(
                     param.name()+"min", param.dtype, param.min(), minmax)

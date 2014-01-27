@@ -218,24 +218,24 @@ class McSAS(AlgorithmBase):
     model = None
     result = None
     shortName = "McSAS"
-    #(Parameter("numContribs", 200,
-    #                displayName = "number of contributions",
-    #                valueRange = (1, 1e6)),
-    #              Parameter("numReps", 100,
-    #                displayName = "number of repetitions",
-    #                valueRange = (1, 1e6)),
-    #              Parameter("maxIterations", 1e5,
-    #                displayName = "maximum iterations",
-    #                valueRange = (1, 1e100)),
-    #              Parameter("histogramBins", 50,
-    #                displayName = "number of histogram bins",
-    #                valueRange = (1, 1e6)),
-    #              Parameter("convergenceCriterion", 1.0,
-    #                displayName = "convergence criterion",
-    #                valueRange = (0., numpy.inf)),
-    #              Parameter("findBackground", True,
-    #                displayName = "find background level?"),
-    #)
+    parameters = (Parameter("numContribs", 200,
+                    displayName = "number of contributions",
+                    valueRange = (1, 1e6)),
+                  Parameter("numReps", 100,
+                    displayName = "number of repetitions",
+                    valueRange = (1, 1e6)),
+                  Parameter("maxIterations", 1e5,
+                    displayName = "maximum iterations",
+                    valueRange = (1, 1e100)),
+                  Parameter("histogramBins", 50,
+                    displayName = "number of histogram bins",
+                    valueRange = (1, 1e6)),
+                  Parameter("convergenceCriterion", 1.0,
+                    displayName = "convergence criterion",
+                    valueRange = (0., numpy.inf)),
+                  Parameter("findBackground", True,
+                    displayName = "find background level?"),
+    )
     figureTitle = None # FIXME: put this elsewhere, works for now
                        # set to output file name incl. timestamp, atm
 
@@ -265,8 +265,7 @@ class McSAS(AlgorithmBase):
         .. document private Functions
         .. automethod:: optimScalingAndBackground
         """
-        self.par = McSASParameters(**kwargs) #instantiate a set of parameters
-        #AlgorithmBase.__init__(self) #probably some overloaded stuff in here.
+        AlgorithmBase.__init__(self)
 
     def calc(self, **kwargs):
         # initialize
@@ -275,19 +274,19 @@ class McSAS(AlgorithmBase):
         # set data values
         self.setData(kwargs)
         # set supplied kwargs and passing on
-        self.par.set(**kwargs)
+        self.setParameter(kwargs)
         # apply q and psi limits and populate self.FitData
-        self.dataset.clip([self.par.qMin(), self.par.qMax()],
-                          [self.par.psiMin(), self.par.psiMax()],
-                          self.par.maskNegativeInt(),
-                          self.par.maskZeroInt())
-        if (self.par.model is None or
-            not isinstance(self.par.model, ScatteringModel)):
-            self.par.model = Sphere() # create instance
+        self.dataset.clip(McSASParameters.qBounds,
+                          McSASParameters.psiBounds,
+                          McSASParameters.maskNegativeInt,
+                          McSASParameters.maskZeroInt)
+        if (McSASParameters.model is None or
+            not isinstance(McSASParameters.model, ScatteringModel)):
+            McSASParameters.model = Sphere() # create instance
             logging.info("Default model not provided, setting to: {0}"
-                    .format(str(self.par.model.name())))
+                    .format(str(McSASParameters.model.name())))
         if self.model is None:
-            self.model = self.par.model
+            self.model = McSASParameters.model
         logging.info("Using model: {0}".format(str(self.model.name())))
         if not self.model.paramCount():
             logging.warning("No parameters to analyse given! Breaking up.")
@@ -298,7 +297,7 @@ class McSAS(AlgorithmBase):
                         for p in self.model.params()])
         )
         self.checkParameters() # checks histbins
-        #                       # (-> should go into custom parameter type)
+                               # (-> should go into custom parameter type)
         self.analyse()
         # continue if there are results only
         if not len(self.result):
@@ -310,7 +309,7 @@ class McSAS(AlgorithmBase):
             # TODO: test 2D mode
             self.gen2DIntensity()
 
-        if self.par.doPlot():
+        if McSASParameters.doPlot:
             self.plot()
 
     def setData(self, kwargs):
@@ -357,31 +356,31 @@ class McSAS(AlgorithmBase):
         else:
             self.dataset = SASData("SAS data provided", None)
             self.dataset.prepared = data
-        self.par.set(contribParamBounds = list(self.dataset.sphericalSizeEst()))
+        McSASParameters.contribParamBounds = list(self.dataset.sphericalSizeEst())
 
-    #def setParameter(self, kwargs):
-    #    """Sets the supplied Parameters given in keyword-value pairs for known
-    #    setting keywords (unknown key-value pairs are skipped).
-    #    If a supplied parameter is one of the function names, it is stored in
-    #    the self.Functions dict.
-    #    """
-    #    for key in kwargs.keys():
-    #        found = False
-    #        param = getattr(self, key, None)
-    #        if isinstance(param, FitParameterBase):
-    #            param.setValue(kwargs[key])
-    #            found = True
-    #        for cls in McSASParameters, ScatteringModel:
-    #            if key in cls.propNames():
-    #                value = kwargs[key]
-    #                setattr(cls, key, value)
-    #                found = True
-    #                break
-    #        if found:
-    #            del kwargs[key]
-    #        else:
-    #            logging.warning("Unknown McSAS parameter specified: '{0}'"
-    #                            .format(key))
+    def setParameter(self, kwargs):
+        """Sets the supplied Parameters given in keyword-value pairs for known
+        setting keywords (unknown key-value pairs are skipped).
+        If a supplied parameter is one of the function names, it is stored in
+        the self.Functions dict.
+        """
+        for key in kwargs.keys():
+            found = False
+            param = getattr(self, key, None)
+            if isinstance(param, FitParameterBase):
+                param.setValue(kwargs[key])
+                found = True
+            for cls in McSASParameters, ScatteringModel:
+                if key in cls.propNames():
+                    value = kwargs[key]
+                    setattr(cls, key, value)
+                    found = True
+                    break
+            if found:
+                del kwargs[key]
+            else:
+                logging.warning("Unknown McSAS parameter specified: '{0}'"
+                                .format(key))
 
     ######################################################################
     ##################### Pre-optimisation Functions #####################
@@ -391,7 +390,6 @@ class McSAS(AlgorithmBase):
         """Checks for the Parameters, for example to make sure
         histbins is defined for all, or to check if all Parameters fall
         within their limits.
-        TODO: this needs to move to mcsasParameters.
         For now, all I need is a check that McSASParameters.histogramBins is a 1D vector
         with n values, where n is the number of Parameters specifying
         a shape.
@@ -406,9 +404,10 @@ class McSAS(AlgorithmBase):
                 valueList.extend([valueList[0] for dummy in range(nMissing)])
             return valueList
 
-        self.par.set(histogramBins = fixLength(self.par.histogramBins()))
-        self.par.set(histogramXScale = fixLength(self.par.histogramXScale()))
-        self.model.updateParamBounds(self.par.contribParamBounds())
+        McSASParameters.histogramBins = fixLength(self.histogramBins.value())
+        McSASParameters.histogramXScale = fixLength(
+                                            McSASParameters.histogramXScale)
+        self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
     def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
             outputIntensity = False):
@@ -457,7 +456,7 @@ class McSAS(AlgorithmBase):
         intCalc = intCalc.flatten()
         intError = intError.flatten()
         # we need an McSAS instance anyway to call this method
-        background = self.par.findBackground()
+        background = self.findBackground.value()
         if ver == 2:
             """uses scipy.optimize.leastsqr"""
             if background:
@@ -507,9 +506,9 @@ class McSAS(AlgorithmBase):
         """
         data = self.dataset.prepared
         # get settings
-        priors = self.par.priors()
-        prior = self.par.prior()
-        maxRetries = self.par.maxRetries()
+        priors = McSASParameters.priors
+        prior = McSASParameters.prior
+        maxRetries = McSASParameters.maxRetries
         numContribs = self.numContribs.value()
         numReps = self.numReps.value()
         minConvergence = self.convergenceCriterion.value()
@@ -529,7 +528,7 @@ class McSAS(AlgorithmBase):
                 # this flag needs to be set as prior will be set after
                 # the first pass
                 priorsflag = True
-                self.par.set(prior = priors[:, :, nr%size(priors, 2)])
+                McSASParameters.prior = priors[:, :, nr%size(priors, 2)]
             # keep track of how many failed attempts there have been
             nt = 0
             # do that MC thing! 
@@ -595,7 +594,7 @@ class McSAS(AlgorithmBase):
             presentations.
         """
         data = self.dataset.prepared
-        prior = self.par.prior()
+        prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, self.model.paramCount()))
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
@@ -604,7 +603,7 @@ class McSAS(AlgorithmBase):
         q = data[:, 0]
         # generate initial set of spheres
         if size(prior) == 0:
-            if self.par.startFromMinimum():
+            if McSASParameters.startFromMinimum:
                 for idx, param in enumerate(self.model.params()):
                     mb = min(param.valueRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
@@ -635,7 +634,7 @@ class McSAS(AlgorithmBase):
             logging.info("size now: {}".format(rset.shape))
         
         vset = self.model.vol(rset)
-        if not self.par.lowMemoryFootprint():
+        if not McSASParameters.lowMemoryFootprint:
             # calculate their form factors
             ffset = self.model.ff(data, rset)
             # calculate the intensities
@@ -701,7 +700,7 @@ class McSAS(AlgorithmBase):
             itt = (ft**2 * vtt**2).flatten()
             # Calculate new total intensity
             itest = None
-            if not self.par.lowMemoryFootprint():
+            if not McSASParameters.lowMemoryFootprint:
                 # we do subtractions and additions, which give us another
                 # factor 2 improvement in speed over summation and is much
                 # more scalable
@@ -723,7 +722,7 @@ class McSAS(AlgorithmBase):
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
                 it, vset[ri], vst = itest, vtt, vstest
-                if not self.par.lowMemoryFootprint():
+                if not McSASParameters.lowMemoryFootprint:
                     iset[:, ri] = itt
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
@@ -905,7 +904,7 @@ class McSAS(AlgorithmBase):
             # compensated volume for each sphere in the set
             vset = self.model.vol(rset)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
-            if not self.par.lowMemoryFootprint():
+            if not McSASParameters.lowMemoryFootprint:
                 # Form factors, all normalized to 1 at q=0.
                 ffset = self.model.ff(data, rset)
                 # Calculate the intensities
@@ -947,7 +946,7 @@ class McSAS(AlgorithmBase):
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
             volumeFraction[:, ri] = (
-                    sc[0] * vsa**2/(vpa * self.par.deltaRhoSquared())
+                    sc[0] * vsa**2/(vpa * McSASParameters.deltaRhoSquared)
                     ).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
@@ -959,7 +958,7 @@ class McSAS(AlgorithmBase):
                 # NOTE: no need to compensate for p_c here, we work with
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
-                if not self.par.lowMemoryFootprint():
+                if not McSASParameters.lowMemoryFootprint:
                     # determine where this maximum observability is
                     # of contribution c (index)
                     qmi = numpy.argmax(iset[:, c]/it)
@@ -995,24 +994,24 @@ class McSAS(AlgorithmBase):
 
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
-            if self.par.histogramXScale()[paramIndex] == 'linear':
+            if McSASParameters.histogramXScale[paramIndex] == 'linear':
                 # histogramXLowerEdge contains #histogramBins+1 bin edges,
                 # or class limits.
                 histogramXLowerEdge = numpy.linspace(
                         min(param.valueRange()),
                         max(param.valueRange()),
-                        self.par.histogramBins()[paramIndex] + 1)
+                        McSASParameters.histogramBins[paramIndex] + 1)
             else:
                 histogramXLowerEdge = 10**numpy.linspace(
                         log10(min(param.valueRange())),
                         log10(max(param.valueRange())),
-                        self.par.histogramBins()[paramIndex] + 1)
+                        McSASParameters.histogramBins[paramIndex] + 1)
 
             def initHist(reps = 0):
                 """Helper for histogram array initialization"""
-                shp = self.par.histogramBins()[paramIndex]
+                shp = McSASParameters.histogramBins[paramIndex]
                 if reps > 0:
-                    shp = (self.par.histogramBins()[paramIndex], reps)
+                    shp = (McSASParameters.histogramBins[paramIndex], reps)
                 return numpy.zeros(shp)
 
             # total volume fraction contribution in a bin
@@ -1031,7 +1030,7 @@ class McSAS(AlgorithmBase):
             for ri in range(numReps):
                 # single set of R for this calculation
                 rset = contribs[:, paramIndex, ri]
-                for bini in range(self.par.histogramBins()[paramIndex]):
+                for bini in range(McSASParameters.histogramBins[paramIndex]):
                     # indexing which contributions fall into the radius bin
                     binMask = (  (rset >= histogramXLowerEdge[bini])
                                * (rset <  histogramXLowerEdge[bini + 1]))
@@ -1051,7 +1050,7 @@ class McSAS(AlgorithmBase):
                     if isnan(volHistRepY[bini, ri]):
                         volHistRepY[bini, ri] = 0.
                         numHistRepY[bini, ri] = 0.
-            for bini in range(self.par.histogramBins()[paramIndex]):
+            for bini in range(McSASParameters.histogramBins[paramIndex]):
                 histogramXMean[bini] = histogramXLowerEdge[bini:bini+2].mean()
                 vb = minReqVolBin[bini, :]
                 volHistMinReq[bini] = vb[vb < inf].max()
@@ -1112,7 +1111,7 @@ class McSAS(AlgorithmBase):
             # calculate their form factors
             vset = self.model.vol(rset)
             # calculate the intensities, same code as in mcfit(), see above
-            if not self.par.lowMemoryFootprint():
+            if not McSASParameters.lowMemoryFootprint:
                 # Form factors, all normalized to 1 at q=0.
                 ffset = self.model.ff(data, rset)
                 # Calculate the intensities
@@ -1136,10 +1135,10 @@ class McSAS(AlgorithmBase):
         intAvg /= numReps
         # mask (lifted from clipDataset)
         validIndices = SASData.clipMask(data,
-                                        [self.par.qMin(), self.par.qMax()],
-                                        [self.par.psiMin(), self.par.psiMax()],
-                                        self.par.maskNegativeInt(),
-                                        self.par.maskZeroInt())
+                                        McSASParameters.qBounds,
+                                        McSASParameters.psiBounds,
+                                        McSASParameters.maskNegativeInt,
+                                        McSASParameters.maskZeroInt)
         intAvg = intAvg[validIndices]
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)
@@ -1291,7 +1290,7 @@ class McSAS(AlgorithmBase):
         krt = numpy.zeros(numReps) # moments..
 
         if weighting is None:
-            weighting=self.par.histogramWeighting()
+            weighting=McSASParameters.histogramWeighting
         # loop over each repetition
         for ri in range(numReps):
             # the single set of R for this calculation
@@ -1344,7 +1343,7 @@ class McSAS(AlgorithmBase):
             # compensated volume for each sphere in the set
             # TODO: same code as in gen2dintensity and other places
             vset = self.model.vol(rset)
-            if not self.par.lowMemoryFootprint():
+            if not McSASParameters.lowMemoryFootprint:
                 # Form factors, all normalized to 1 at q=0.
                 ffset = self.model.ff(data, rset)
                 # Calculate the intensities

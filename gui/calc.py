@@ -39,8 +39,7 @@ class Calculator(object):
     def params(self):
         """Returns a sub set of parameters defined in paramNames()"""
         # access the property to be able to change it permanently
-        return [self._algo.par.getPar(pname) 
-                for pname in self.paramNames()]
+        return [getattr(self._algo, pname) for pname in self.paramNames()]
 
     @property
     def model(self):
