@@ -7,6 +7,7 @@ from QtGui import QMainWindow
 from QtCore import QSettings, QByteArray, QTimer
 from cutesnake.appversion import QAppVersion
 from cutesnake.utils.translate import tr
+from cutesnake.utils.signal import Signal
 from ui_mainwindow import Ui_MainWindow
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -16,6 +17,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     Provides functionality for storing and loading application settings,
     managing widgets.
     """
+    onStartupSignal = Signal()
     _appversion = None # QAppVersion
     _appsettings = None # AppSettings
 
@@ -30,7 +32,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.restoreSettings()
 
     def getCommandlineArguments(self):
-        # load command line arguments, if any
+        """Get command line arguments, if any."""
         arguments = sys.argv[1:]
         programName = self._appversion.name().lower()
         if (len(arguments) > 0 and
@@ -38,13 +40,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             arguments = arguments[1:]
         return arguments
 
-    def onStartup(self):
-        """Reimplement this to run custom code on program startup."""
-        pass
-
     def show(self):
         QMainWindow.show(self)
-        QTimer.singleShot(300, self.onStartup)
+        QTimer.singleShot(300, self.onStartupSignal.emit)
 
     def closeEvent(self, event):
         self.storeSettings()

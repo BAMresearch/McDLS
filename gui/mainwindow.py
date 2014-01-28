@@ -335,6 +335,7 @@ class MainWindow(MainWindowBase):
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.centralLayout)
         self.setCentralWidget(centralWidget)
+        self.onStartupSignal.connect(self.initUI)
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
@@ -373,7 +374,7 @@ class MainWindow(MainWindowBase):
                                  LastPath.get(), multiple = True)
         self.loadFiles(filenames)
 
-    def onStartup(self):
+    def initUI(self):
         self.propWidget.selectModel()
         self.fileWidget.loadData(self.getCommandlineArguments())
         self.onStartStopClick(False)
