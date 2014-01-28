@@ -13,13 +13,11 @@ class FitParameterBase(ParameterBase):
     @mixedmethod
     def attributes(selforcls):
         res = super(FitParameterBase, selforcls).attributes()
-        res.update(isActive = selforcls.isActive)
         return res
 
     @classmethod
     def factory(cls, **kwargs):
         cls = super(FitParameterBase, cls).factory(**kwargs)
-        cls.setIsActive(kwargs.get("isActive", False))
         return cls
 
 class FitParameterString(FitParameterBase, ParameterString):
