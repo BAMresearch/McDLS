@@ -33,6 +33,8 @@ def main(argv = None):
     parser.add_argument("-l", "--nolog", action = "store_true",
                         help = "Disable progress output during fit, "
                                "it's written to file in any case.")
+    parser.add_argument("-s", "--start", action = "store_true",
+                        help = "Start the calculation immediately.")
     parser.add_argument('fnames', nargs = '*', metavar = 'FILENAME',
                         action = "store",
                         help = "One or more data files to analyse")
@@ -46,7 +48,7 @@ def main(argv = None):
     if not args.text:
         from gui.mainwindow import eventLoop
         # run graphical user interface
-        return eventLoop()
+        return eventLoop(args)
     else:
         try:
             from gui import calc

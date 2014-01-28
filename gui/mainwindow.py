@@ -92,9 +92,10 @@ MODELS = {Sphere.name(): Sphere,
           }
 FIXEDWIDTH = 120
 
-def eventLoop():
+def eventLoop(args):
+    """Starts the UI event loop and get command line parser arguments."""
     app = QApplication(sys.argv)
-    mw = MainWindow()
+    mw = MainWindow(args = args)
     mw.show()
     return app.exec_()
 
@@ -282,10 +283,11 @@ class FileList(DataList):
 
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
-    _loadedData = None
+    _args = None # python command line arguments parser
 
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, args = None):
         MainWindowBase.__init__(self, version, parent) # calls setupUi() and restoreSettings()
+        self._args = args
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
@@ -376,8 +378,8 @@ class MainWindow(MainWindowBase):
 
     def initUI(self):
         self.propWidget.selectModel()
-        self.fileWidget.loadData(self.getCommandlineArguments())
-        self.onStartStopClick(False)
+        self.fileWidget.loadData(getattr(self._args, "fnames", []))
+        self.onStartStopClick(getattr(self._args, "start", False))
 
     def onStartStopClick(self, checked):
         if checked:
