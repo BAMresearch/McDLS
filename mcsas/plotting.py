@@ -4,7 +4,7 @@
 import numpy # For arrays
 from numpy import (size, log10)
 from cutesnake.utils import isList, isString
-from cutesnake.algorithm import Parameter
+from utils.parameter import Parameter
 from mcsasparameters import McSASParameters 
 
 def plotResults(allRes, dataset, params,

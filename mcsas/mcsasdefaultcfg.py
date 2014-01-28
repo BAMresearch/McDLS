@@ -13,7 +13,7 @@ __date__ = "2013-12-21"
 __status__ = "alpha"
 version = "0.0.1"
 
-from cutesnake.algorithm import (Parameter, ParameterFloat, 
+from utils.parameter import (Parameter, ParameterFloat,
         ParameterBoolean, ParameterNumerical, ParameterString)
 import logging, json
 import os, inspect
