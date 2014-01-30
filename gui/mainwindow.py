@@ -23,11 +23,10 @@ from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.utils import isList
 from cutesnake.utilsgui.displayexception import DisplayException
-from utils.parameter import ParameterNumerical
+from cutesnake.algorithm import ParameterNumerical
 from version import version
-from calc import Calculator
-from sasdata import SASData
-from mcsas.mcsas import McSAS
+from calc import SASData, Calculator
+from McSAS import McSAS
 
 INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
 
@@ -36,6 +35,26 @@ The convergence criterion can be set by the user. If it is not reached no output
 Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results."""
 
 CHANGESTEXT = (u"""
+Changes in 0.0.5:
+'Number-weighted distributions now come with correct-looking observability limits.'
+ https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
+
+Changes in 0.0.6:
+Fixed handling of negative values in PDH data files.
+
+Changes in 0.0.7:
+- Using restructured McSAS
+- building GUI for models and global settings dynamically
+- new model: Kholodenkos worm-like structure, verified against SASfit
+
+Changes in 0.0.8:
+- new model: GaussianChain, verified against SASfit:
+  http://sasfit.sf.net/manual/Gaussian_Chain#Gauss_2
+- fixed volume function exponent in Kholodenko
+  was v² instead of just v
+
+Changes in 0.0.9:
+- added GUI to public McSAS repository
 
 Changes in 0.0.10:
 - data file listing widget on top with short info
@@ -47,26 +66,12 @@ Changes in 0.0.10:
 - switch to enable/disable background level fit
 - multiple plot figures on Windows supported
 
-Changes in 0.0.9:
-- added GUI to public McSAS repository
-
-Changes in 0.0.8:
-- new model: GaussianChain, verified against SASfit:
-  http://sasfit.sf.net/manual/Gaussian_Chain#Gauss_2
-- fixed volume function exponent in Kholodenko
-  was v² instead of just v
-
-Changes in 0.0.7:
-- Using restructured McSAS
-- building GUI for models and global settings dynamically
-- new model: Kholodenkos worm-like structure, verified against SASfit
-
-Changes in 0.0.6:
-Fixed handling of negative values in PDH data files.
-
-Changes in 0.0.5:
-'Number-weighted distributions now come with correct-looking observability limits.'
- https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
+Changes in 0.0.11:
+- distribution statistics log output and writing to stats file
+- plain SAS evaluation (no fit) if no param is active
+- all output files with extensions and storing in settings
+- configuration file now *.cfg
+- single start/stop button
 
 """.replace('\n\n', '<hr />'))
 CHANGESTEXT = re.sub(r"(Changes in [0-9]+\.[0-9]+\.[0-9]+)",
@@ -79,23 +84,16 @@ from models.kholodenko import Kholodenko
 from models.gaussianchain import GaussianChain
 from models.lmadensesphere import LMADenseSphere
 from models.cylindersIsotropic import CylindersIsotropic
-from models.EllipsoidalCoreShell import EllipsoidalCoreShell
-from models.SphericalCoreShell import SphericalCoreShell
 
 MODELS = {Sphere.name(): Sphere,
           CylindersIsotropic.name(): CylindersIsotropic,
-          EllipsoidalCoreShell.name(): EllipsoidalCoreShell,
-          SphericalCoreShell.name(): SphericalCoreShell,
           GaussianChain.name(): GaussianChain,
-          LMADenseSphere.name(): LMADenseSphere,
-          Kholodenko.name(): Kholodenko
-          }
+          LMADenseSphere.name(): LMADenseSphere}
 FIXEDWIDTH = 120
 
-def eventLoop(args):
-    """Starts the UI event loop and get command line parser arguments."""
+def eventLoop():
     app = QApplication(sys.argv)
-    mw = MainWindow(args = args)
+    mw = MainWindow()
     mw.show()
     return app.exec_()
 
@@ -193,8 +191,8 @@ class PropertyWidget(SettingsWidget):
             if minValue is not None and maxValue is not None:
                 p.setValueRange((minValue, maxValue))
             newActive = self.get(key+"active")
-            if isinstance(newActive, bool) and p.isActive() != newActive:
-                p.setIsActive(newActive)
+            if isinstance(newActive, bool) and p.isActive != newActive:
+                p.isActive = newActive
                 activeChanged = True
         # update algo settings
         for p in self._calculator.params():
@@ -232,7 +230,7 @@ class PropertyWidget(SettingsWidget):
         lbl.setWordWrap(True)
         layout.addWidget(lbl)
         minmax = None
-        if param.isActive() and isinstance(param, ParameterNumerical):
+        if param.isActive and isinstance(param, ParameterNumerical):
             minmax = type(param).min(), type(param).max()
             ntryMin = self._makeEntry(
                     param.name()+"min", param.dtype, param.min(), minmax)
@@ -257,7 +255,7 @@ class PropertyWidget(SettingsWidget):
             activeBtn = QPushButton("active", self)
             activeBtn.setObjectName(param.name()+"active")
             activeBtn.setCheckable(True)
-            activeBtn.setChecked(param.isActive())
+            activeBtn.setChecked(param.isActive)
             activeBtn.setFixedWidth(FIXEDWIDTH*.5)
             layout.addWidget(activeBtn)
             activeBtn.clicked.connect(self._updateModelParams)
@@ -283,11 +281,11 @@ class FileList(DataList):
 
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
-    _args = None # python command line arguments parser
+    _loadedData = None
 
-    def __init__(self, parent = None, args = None):
-        MainWindowBase.__init__(self, version, parent) # calls setupUi() and restoreSettings()
-        self._args = args
+    def __init__(self, parent = None):
+        # calls setupUi() and restoreSettings()
+        MainWindowBase.__init__(self, version, parent)
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
@@ -337,7 +335,6 @@ class MainWindow(MainWindowBase):
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.centralLayout)
         self.setCentralWidget(centralWidget)
-        self.onStartupSignal.connect(self.initUI)
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
@@ -376,10 +373,11 @@ class MainWindow(MainWindowBase):
                                  LastPath.get(), multiple = True)
         self.loadFiles(filenames)
 
-    def initUI(self):
+    def onStartup(self):
         self.propWidget.selectModel()
-        self.fileWidget.loadData(getattr(self._args, "fnames", []))
-        self.onStartStopClick(getattr(self._args, "start", False))
+        self.fileWidget.loadData(self.getCommandlineArguments())
+        self.onStartStopClick(False)
+        self.logWidget.scrollToBottom()
 
     def onStartStopClick(self, checked):
         if checked:
