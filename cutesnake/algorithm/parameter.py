@@ -178,6 +178,7 @@ class ParameterBase(object):
         if isinstance(base, object):
             base = type(base)
         base = base.__mro__[1] # Parameter classes have only one direct subclass
+        # store the direct base class for duplication later
         res = dict(cls = base, description = selforcls.__doc__)
         for name in selforcls.attributeNames():
             # if this throws an exception, there is a bug
@@ -188,15 +189,21 @@ class ParameterBase(object):
     def factory(cls, **kwargs):
         """Returns this type with attribute values initialized in the ordering
         provided by attributeNames()"""
-        for key in cls.attributeNames():
-            # make sure to provide None value of no key was found
-            # this ensures that assertions for mandatory attr are verified
-            getattr(cls, _setterName(key))(kwargs.get(key, None))
+        for key, value in kwargs.iteritems():
+            # set the attributes for which we find setters
+            # the setter may raise exceptions for invalid data
+            setter = getattr(cls, _setterName(key), None)
+            if setter is not None: # key exists, check for method?
+                setter(value)
         return cls
 
     @classmethod
-    def copy(self):
-        return self.factory(**self.attributes())()
+    def copy(cls):
+        attr = cls.attributes()
+        other = attr.pop("cls") # remove duplicate first argument of factory()
+        if not issubclass(other, cls):
+            other = cls
+        return other.factory(**attr)()
 
     @classmethod
     def get(self, key, default = None):
