@@ -48,7 +48,7 @@ def main(argv = None):
     if not args.text:
         from gui.mainwindow import eventLoop
         # run graphical user interface
-        return eventLoop(args)
+        return eventLoop()
     else:
         try:
             from gui import calc

@@ -25,8 +25,9 @@ from cutesnake.utils import isList
 from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.algorithm import ParameterNumerical
 from version import version
-from calc import SASData, Calculator
-from McSAS import McSAS
+from gui.calc import Calculator
+from sasdata import SASData
+from mcsas.mcsas import McSAS
 
 INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
 
