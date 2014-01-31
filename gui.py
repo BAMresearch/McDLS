@@ -47,9 +47,10 @@ def main(argv = None):
 
     if not args.text:
         from gui.mainwindow import eventLoop
-        # run graphical user interface
-        return eventLoop()
+        # run graphical user interface, passing argument parser result
+        return eventLoop(args)
     else:
+        # TODO: fix command line run
         try:
             from gui import calc
             calc(args.fnames)
