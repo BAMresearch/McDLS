@@ -4,6 +4,7 @@
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import Parameter
+from cutesnake.algorithm import RandomUniform, RandomExponential
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -17,21 +18,27 @@ class EllipsoidalCoreShell(ScatteringModel):
     parameters = (
             Parameter("a", 1.0,
                     displayName = "Principal core radius",
+                    generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("b", 10.0,
                     displayName = "Equatorial core radius",
+                    generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("t", 1.0,
                     displayName = "Thickness of shell",
+                    generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("eta_c", 3.15,
                     displayName = "core SLD",
+                    generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
             Parameter("eta_s", 2.53,
                     displayName = "shell SLD",
+                    generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
             Parameter("eta_sol", 0.,
                     displayName = "solvent SLD",
+                    generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
             Parameter("intDiv", 100,
                     displayName = "orientation integration divisions",
