@@ -12,7 +12,7 @@ import pickle
 from cutesnake.qt import QtCore
 from QtCore import QUrl
 from cutesnake.dataset import DataSet, DisplayMixin
-from cutesnake.utils import isList
+from cutesnake.utils import isList, isString, testfor
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.utilsgui.displayexception import DisplayException
@@ -56,9 +56,16 @@ class Calculator(object):
     def stop(self):
         self._algo.stop = True
 
+    def _setBaseFilename(self, dataset):
+        self.basefn = "{fn}_{ts}".format(
+                fn = os.path.join(LastPath.get(), dataset.title),
+                ts = log.timestamp())
+
     def __call__(self, dataset):
         # start log file writing
-        self._title = dataset.title
+        testfor(isinstance(dataset, DataSet), StandardError,
+                "{cls} requires a DataSet!".format(cls = type(self)))
+        self._setBaseFilename(dataset)
         fn = self._getResultFilename("log", "this log")
         logFile = logging.FileHandler(fn, encoding = "utf8")
         oldHandler = log.log.handlers[0]
@@ -202,9 +209,7 @@ class Calculator(object):
         """Creates a file name from data base name, its directory and the
         current timestamp. It's created once so that all output files have
         the same base name and timestamp."""
-        if not hasattr(self, "basefn") or self.basefn is None:
-            self.basefn = "{0}_{1}".format(
-                    os.path.join(LastPath.get(), self._title), log.timestamp())
-        return "{0}_{1}{2}".format(self.basefn, kind, extension)
+        return "{fn}_{kind}{ext}".format(
+                fn = self.basefn, kind = kind, ext = extension)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
