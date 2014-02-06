@@ -128,7 +128,7 @@ class Calculator(object):
     def _writeContribs(self, mcResult):
         # Writes the contribution parameters to a pickled file.
         # Can be used to continue or reanalyse a previously fitted file
-        fn = self._getResultFilename("Contributions",
+        fn = self._getResultFilename("contributions",
                                      "Model contribution parameters",
                                      extension = '.pickle')
         with open(fn,'w') as fh:
