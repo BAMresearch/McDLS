@@ -133,46 +133,4 @@ class McSASParameters(PropertyNames):
 
         self.loadParameters(fname)
 
-
-        ##overwrite with custom values if necessary
-        #fname = kwargs.pop('paramFile', None)
-        #if not (fname is None):
-        #    self.par.loadParams(fname = fname)
-        ##overwrite with supplied kwargs
-        #self.set(**kwargs)
-
-        ##make convenience mappings, overwriting some of the old-style mappings
-        ##above:
-        #for pn in self.parameterNames:
-        #    setattr(self, pn, self.getPar(pn).value)
-        ##self.histogramBins = self.par.getPar('histogramBins').value
-        ##self.numContribs = self.par.getPar('numContribs').value
-
-    def set(self, **kwargs):
-        """
-        sets the value or attributes of a given parameter or set of 
-        parameters. input argument can be a set of keyword-value pairs, in 
-        which case the *value* of the parameter specified by keyword gets
-        set. Alternatively, input arguments can be keyword-dictionary 
-        pairs, in which case any parameter (indicated by keyword) attribute 
-        can be set through the dictionary.
-
-        Example:
-            >>> McSASParameters.set(histogramBins = 50, numContribs = {
-                "value":250, "description": "two hundred and fifty contributions"})
-        """
-        for kw in kwargs:
-            if not kw in self.parameterNames:
-                continue #skip
-            parhandle = self.getPar(kw)
-            value = kwargs[kw]
-            if isinstance(value, dict):
-                for pkw in value.keys():
-                    parhandle.set(pkw, value[pkw])
-            else:
-                logging.info('key: {k}, value {v}'.format(k = kw,v = value))
-                parhandle.set("value", value)
-
-    
-
 # vim: set ts=4 sts=4 sw=4 tw=0:
