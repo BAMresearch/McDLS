@@ -8,10 +8,12 @@ from mcsasdefaultcfg import cInfo
 import os
 import inspect
 import logging                                                                 
+import json
+from utils.parameter import Parameter
 logging.basicConfig(level = logging.INFO)                                      
                                                      
 
-class McSASParameters(PropertyNames, cInfo):
+class McSASParameters(PropertyNames):
     """Defines the static parameters used for the fitting procedure:
         - *model*: an instance of McSAS.model defining the fitting model
         - *contribParamBounds*: Bounds of the active (fitting) parameter
@@ -91,7 +93,26 @@ class McSASParameters(PropertyNames, cInfo):
     maskZeroInt = False
     lowMemoryFootprint = False
     doPlot = False
+    
+    #new defaults for loading parameters
+    parameters = list()
+    paramDefFile = "McSASParameters.json"
 
+    def loadParameters(self, filename):
+        if not os.path.exists(filename):
+            logging.error('no default parameter file found!')
+            return false
+
+        #load parameter definitions from file and add to list:
+        with open(filename, 'r') as jfile:
+            logging.info('loading parameters from file: {}'.format(filename))
+            parDict=json.load(jfile)
+        for pkey in parDict.keys():
+            default = parDict[pkey].pop('default')
+            self.parameters.append(
+                    Parameter(pkey, default,
+                        **parDict[pkey])
+                    )
 
     def __init__(self,**kwargs):
         """initialise the defaults and populate the database with values
@@ -101,36 +122,31 @@ class McSASParameters(PropertyNames, cInfo):
         McSASParameters.json should be in the same directory as this function
         """
         #new style, to gradually replace old style, instantiate defaults:
-        fname = kwargs.pop('paramDefFile', None)
-        if fname is None:
-            if os.path.exists("McSASParameters.json"):
-                fname = "McSASParameters.json"
-            else:
-                #try one more:
-                #determine the directory in which this module resides
-                #determine the directory in which McSASDefaultsCfg is located:
-                #settings should be in the same directory:
-                fdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-                fname = os.path.join(fdir, "McSASParameters.json")
+        fname = self.paramDefFile
+        if not(os.path.exists(fname)):
+            #try one more:
+            #determine the directory in which this module resides
+            #determine the directory in which McSASParameters is located:
+            #settings should be in the same directory:
+            fdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+            fname = os.path.join(fdir, "McSASParameters.json")
 
-        if not os.path.exists(fname):
-            logging.error('no default parameter file found!')
-            return false
+        self.loadParameters(fname)
 
-        self.loadParams(fname = fname)
-        #overwrite with custom values if necessary
-        fname = kwargs.pop('paramFile', None)
-        if not (fname is None):
-            self.par.loadParams(fname = fname)
-        #overwrite with supplied kwargs
-        self.set(**kwargs)
 
-        #make convenience mappings, overwriting some of the old-style mappings
-        #above:
-        for pn in self.parameterNames:
-            setattr(self, pn, self.getPar(pn).value)
-        #self.histogramBins = self.par.getPar('histogramBins').value
-        #self.numContribs = self.par.getPar('numContribs').value
+        ##overwrite with custom values if necessary
+        #fname = kwargs.pop('paramFile', None)
+        #if not (fname is None):
+        #    self.par.loadParams(fname = fname)
+        ##overwrite with supplied kwargs
+        #self.set(**kwargs)
+
+        ##make convenience mappings, overwriting some of the old-style mappings
+        ##above:
+        #for pn in self.parameterNames:
+        #    setattr(self, pn, self.getPar(pn).value)
+        ##self.histogramBins = self.par.getPar('histogramBins').value
+        ##self.numContribs = self.par.getPar('numContribs').value
 
     def set(self, **kwargs):
         """

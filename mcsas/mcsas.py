@@ -218,27 +218,27 @@ class McSAS(AlgorithmBase):
     model = None
     result = None
     shortName = "McSAS"
-    parameters = (Parameter("numContribs", 200,
-                    displayName = "number of contributions",
-                    valueRange = (1, 1e6)),
-                  Parameter("numReps", 100,
-                    displayName = "number of repetitions",
-                    valueRange = (1, 1e6)),
-                  Parameter("maxIterations", 1e5,
-                    displayName = "maximum iterations",
-                    valueRange = (1, 1e100)),
-                  Parameter("histogramBins", 50,
-                    displayName = "number of histogram bins",
-                    valueRange = (1, 1e6)),
-                  Parameter("convergenceCriterion", 1.0,
-                    displayName = "convergence criterion",
-                    valueRange = (0., numpy.inf)),
-                  Parameter("findBackground", True,
-                    displayName = "find background level?"),
-    )
+    #parameters = (Parameter("numContribs", 200,
+    #                displayName = "number of contributions",
+    #                valueRange = (1, 1e6)),
+    #              Parameter("numReps", 100,
+    #                displayName = "number of repetitions",
+    #                valueRange = (1, 1e6)),
+    #              Parameter("maxIterations", 1e5,
+    #                displayName = "maximum iterations",
+    #                valueRange = (1, 1e100)),
+    #              Parameter("histogramBins", 50,
+    #                displayName = "number of histogram bins",
+    #                valueRange = (1, 1e6)),
+    #              Parameter("convergenceCriterion", 1.0,
+    #                displayName = "convergence criterion",
+    #                valueRange = (0., numpy.inf)),
+    #              Parameter("findBackground", True,
+    #                displayName = "find background level?"),
+    #)
+    parameters = tuple()
     figureTitle = None # FIXME: put this elsewhere, works for now
                        # set to output file name incl. timestamp, atm
-
 
     def __init__(self, **kwargs):
         """
@@ -265,6 +265,9 @@ class McSAS(AlgorithmBase):
         .. document private Functions
         .. automethod:: optimScalingAndBackground
         """
+        #load parameter defaults:
+        self.parameters = tuple(McSASParameters().parameters)
+        #incorporate parameters:
         AlgorithmBase.__init__(self)
 
     def calc(self, **kwargs):
