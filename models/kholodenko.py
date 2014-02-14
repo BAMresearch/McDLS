@@ -7,6 +7,7 @@ import numpy
 from numpy import pi
 from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
+from cutesnake.algorithm import RandomUniform, RandomExponential               
 
 # parameters must not be inf
 
@@ -111,12 +112,16 @@ class Kholodenko(ScatteringModel):
     shortName = "Kholodenko Worm"
     parameters = (
             Parameter("radius", 1.0,
+                    displayName = "Radius",
+                    generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("lenKuhn", 1.0,
                     displayName = "kuhn length",
+                    generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("lenContour", 1.0,
                     displayName = "contour length",
+                    generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "nm")
     )
     parameters[0].setIsActive(True)

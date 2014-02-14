@@ -4,6 +4,7 @@
 import numpy
 from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
+from cutesnake.algorithm import RandomUniform, RandomExponential               
 
 # parameters must not be inf
 
@@ -24,15 +25,19 @@ class GaussianChain(ScatteringModel):
     parameters = (
             Parameter("rg", 1.0,
                     displayName = "radius of gyration, Rg",
+                    generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             Parameter("bp", 100.0,
                     displayName = "scattering length of the polymer",
+                    generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "cm"),
             Parameter("etas", 1.0,
                     displayName = "scattering length density of the solvent",
+                    generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "cm<sup>-1</sup>"),
             Parameter("k", 1.0,
                     displayName = "volumetric scaling factor of Rg",
+                    generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "nm")
     )
     parameters[0].setIsActive(True)

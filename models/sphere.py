@@ -12,6 +12,7 @@ class Sphere(ScatteringModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
     parameters = (Parameter("radius", 1.0,
+                    displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1), )

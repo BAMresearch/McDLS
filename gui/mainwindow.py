@@ -84,9 +84,9 @@ from models.sphere import Sphere
 from models.kholodenko import Kholodenko
 from models.gaussianchain import GaussianChain
 from models.lmadensesphere import LMADenseSphere
-from models.cylindersIsotropic import CylindersIsotropic
-from models.EllipsoidalCoreShell import EllipsoidalCoreShell
-from models.SphericalCoreShell import SphericalCoreShell
+from models.cylindersisotropic import CylindersIsotropic
+from models.ellipsoidalcoreshell import EllipsoidalCoreShell
+from models.sphericalcoreshell import SphericalCoreShell
 
 MODELS = {Sphere.name(): Sphere,
           CylindersIsotropic.name(): CylindersIsotropic,

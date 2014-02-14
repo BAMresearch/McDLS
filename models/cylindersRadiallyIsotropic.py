@@ -5,6 +5,7 @@ import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos
 from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
+from cutesnake.algorithm import RandomUniform, RandomExponential
 
 # parameters must not be inf
 
@@ -17,12 +18,15 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     parameters = (
             Parameter("radius", 1.0,
                     displayName = "Cylinder radius",
+                    generator = RandomExponential,
                     valueRange = (0.1, numpy.inf), suffix = "nm"),
             Parameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
+                    generator = RandomUniform,
                     valueRange = (0.1, numpy.inf), suffix = "-"),
             Parameter("psiAngle", 10.0,
                     displayName = "in-plane cylinder rotation",
+                    generator = RandomUniform,
                     valueRange = (0.1, 360.1), suffix = "deg."),
             Parameter("psiAngleDivisions", 303.,
                     displayName = "in-plane angle divisions",
