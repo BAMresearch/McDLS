@@ -667,19 +667,22 @@ class McSAS(AlgorithmBase):
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         if outputIterations:
-            # Output each iteration, starting with number 0. Iterations will
-            # be stored in details['paramDistrib'], details['intensityFitted'],
-            # details['convergenceValue'], details['scalingFactor'] and
-            # details['priorUnaccepted'] listing the unaccepted number of
-            # moves before the recorded accepted move.
+            logging.warning('outputIterations functionality inoperable')
+            #will not work, because of the different size of rset with multi-
+            #parameter models.
+            ## Output each iteration, starting with number 0. Iterations will
+            ## be stored in details['paramDistrib'], details['intensityFitted'],
+            ## details['convergenceValue'], details['scalingFactor'] and
+            ## details['priorUnaccepted'] listing the unaccepted number of
+            ## moves before the recorded accepted move.
 
-            # new iterations will (have to) be appended to this, cannot be
-            # zero-padded due to size constraints
-            details['paramDistrib'] = rset[:, newaxis]
-            details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis]
-            details['convergenceValue'] = conval[newaxis]
-            details['scalingFactor'] = sc[:, newaxis]
-            details['priorUnaccepted'] = numpy.array(0)[newaxis]
+            ## new iterations will (have to) be appended to this, cannot be
+            ## zero-padded due to size constraints
+            #details['paramDistrib'] = rset[:, newaxis]
+            #details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis]
+            #details['convergenceValue'] = conval[newaxis]
+            #details['scalingFactor'] = sc[:, newaxis]
+            #details['priorUnaccepted'] = numpy.array(0)[newaxis]
 
         # start the MC procedure
         intObs = data[:, 1]
@@ -1026,7 +1029,7 @@ class McSAS(AlgorithmBase):
             volHistMinReq = initHist()
             numHistMinReq = initHist()
 
-            print('shape contribs: {}, paramIndex: {}'.format(shape(contribs),paramIndex))
+            logging.debug('shape contribs: {}, paramIndex: {}'.format(shape(contribs),paramIndex))
             for ri in range(numReps):
                 # single set of R for this calculation
                 rset = contribs[:, paramIndex, ri]
