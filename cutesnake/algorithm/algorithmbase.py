@@ -69,7 +69,11 @@ class AlgorithmBase(object):
                     AlgorithmParameterError, "{name}: Name '{attr}' for "
                     "parameter {index} is already set!"
                     .format(name = cls.__name__, attr = p.name(), index = i))
-            setattr(cls, p.name().translate(None, ' \t\n\r'), p)
+            # char replacement for unicode
+            name = unicode(p.name())
+            replacements = dict([(ord(char), None) for char in u' \t\n\r'])
+            # set the clean name
+            setattr(cls, name.translate(replacements), p)
             ptypes.append(p)
         cls._parameters = tuple(ptypes)
 
