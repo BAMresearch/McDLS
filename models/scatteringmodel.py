@@ -29,14 +29,16 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         into account from input or preset parameters."""
         if self.paramCount() == 0 and paramValues is None:
             return True
-        return paramValues.shape[1] == self.paramCount()
+        # by definition, no vector input, would require complex model code
+        return len(paramValues) == self.paramCount()
 
     @abstractmethod
     def ff(self, dataset, paramValues = None):
         """Calculates the Rayleigh function of this model."""
         if self.paramCount() == 0 or paramValues is None:
             return True
-        return paramValues.shape[1] == self.paramCount()
+        # by definition, no vector input, would require complex model code
+        return len(paramValues) == self.paramCount()
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
