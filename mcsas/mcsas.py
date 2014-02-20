@@ -595,7 +595,7 @@ class McSAS(AlgorithmBase):
         """
         data = self.dataset.prepared
         prior = McSASParameters.prior
-        rset = numpy.zeros((numContribs, self.model.activeParamCount()))
+        rset = numpy.zeros((numContribs, self.model.paramCount()))
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
