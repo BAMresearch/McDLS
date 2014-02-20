@@ -217,58 +217,17 @@ class McSAS(AlgorithmBase):
     dataset = None # user provided data to work with
     model = None
     result = None
-    shortName = "McSAS"
-    #parameters = (Parameter("numContribs", 200,
-    #                displayName = "number of contributions",
-    #                valueRange = (1, 1e6)),
-    #              Parameter("numReps", 100,
-    #                displayName = "number of repetitions",
-    #                valueRange = (1, 1e6)),
-    #              Parameter("maxIterations", 1e5,
-    #                displayName = "maximum iterations",
-    #                valueRange = (1, 1e100)),
-    #              Parameter("histogramBins", 50,
-    #                displayName = "number of histogram bins",
-    #                valueRange = (1, 1e6)),
-    #              Parameter("convergenceCriterion", 1.0,
-    #                displayName = "convergence criterion",
-    #                valueRange = (0., numpy.inf)),
-    #              Parameter("findBackground", True,
-    #                displayName = "find background level?"),
-    #)
-    parameters = tuple()
     figureTitle = None # FIXME: put this elsewhere, works for now
                        # set to output file name incl. timestamp, atm
 
-    def __init__(self, **kwargs):
-        """
-        The constructor, takes keyword-value input Parameters. They can be
-        one of the aforementioned parameter keyword-value pairs.
-        This does the following:
-
-            1. Initialises the variables to the right type
-            2. Parses the input
-            3. Stores the supplied data twice, one original and one for fitting
-                (the latter of which may be clipped or otherwise adjusted)
-            4. Applies Q- and optional Psi- limits to the data
-            5. Reshapes FitData to 1-by-n dimensions
-            6. Sets the function references
-            7. Calculates the shape parameter bounds if not supplied
-            8. Peforms simple checks on validity of input
-            9. Runs the analyse() function which applies the MC fit multiple
-               times
-            10. Runs the histogram() procedure which processes the MC result
-            11. Optionally recalculates the resulting intensity in the same
-                shape as the original (for 2D Datasets)
-            12. Optionally displays the results graphically.
-
-        .. document private Functions
-        .. automethod:: optimScalingAndBackground
-        """
-        #load parameter defaults:
-        self.parameters = tuple(McSASParameters().parameters)
-        #incorporate parameters:
-        AlgorithmBase.__init__(self)
+    # there are several ways to accomplish this depending on where/when
+    # McSASParameters() should be called: when creating an instance or
+    # for creating different types with different settings ...
+    @classmethod
+    def factory(cls):
+        # calling factory of parent class which is AlgorithmBase currently
+        return super(McSAS, cls).factory("McSAS",
+                                         *McSASParameters().parameters)
 
     def calc(self, **kwargs):
         # initialize
