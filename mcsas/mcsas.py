@@ -990,10 +990,7 @@ class McSAS(AlgorithmBase):
         # now we histogram over each variable
         # for each variable parameter we define,
         # we need to histogram separately.
-        for paramIndex, param in enumerate(self.model.params()):
-            #skip non-active parameters:
-            if not param.isActive():
-                continue
+        for paramIndex, param in enumerate(self.model.activeParams()):
 
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
