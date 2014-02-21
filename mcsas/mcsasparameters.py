@@ -45,10 +45,6 @@ class McSASParameters(PropertyNames, cInfo):
             functionality in the McSAS.data molule. Setting this will ignore 
             datapoints with intensity values <0
         - *maskZeroInt*: similar to above, but for intensity values =0
-        - *lowMemoryFootprint*: can be used for models which require a lot 
-            of memory to calculate. Slows down fitting by about 30%, but 
-            reduces the memory requirements drastically as only a single 
-            contribution is calculated at a time
         - *doPlot*: sets whether to automatically plot or not
 
        Most of them should be moved to McSAS as dynamic parameters of type
@@ -89,7 +85,6 @@ class McSASParameters(PropertyNames, cInfo):
     maxRetries = 5
     maskNegativeInt = False
     maskZeroInt = False
-    lowMemoryFootprint = False
     doPlot = False
 
 

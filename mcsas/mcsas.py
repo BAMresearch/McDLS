@@ -96,12 +96,6 @@ class McSAS(AlgorithmBase):
         - *doPlot*: Bool, default: False
             If set to True, will generate a plot showing the data and fit, as
             well as the Resulting size histogram.
-        - *lowMemoryFootprint*: Bool, default: False
-            For 2D pattern fitting, or for fitting patterns with a very large
-            number of datapoints or contributions, it may make sense to turn
-            this option on in order for intensity generating functions not to
-            take up much memory. The cost for this is perhaps a 20-ish percent
-            reduction in speed.
 
     **Returns:**
 
