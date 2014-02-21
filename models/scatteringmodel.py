@@ -11,13 +11,6 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
     compensationExponent = 0.5 # default
 
-    def updateParamBounds(self, bounds):
-        if not isList(bounds):
-            bounds = [bounds,]
-        if not isinstance(bounds, list):
-            bounds = list(bounds)
-        return bounds
-
     # it doesn't belong to the model?
     # should be instrumentation geometry ...
     def smear(self, arg):
@@ -53,6 +46,13 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
                 lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
+
+    def updateParamBounds(self, bounds):
+        if not isList(bounds):
+            bounds = [bounds,]
+        if not isinstance(bounds, list):
+            bounds = list(bounds)
+        return bounds
 
     @mixedmethod
     def activeParams(setforcls):

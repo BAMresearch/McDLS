@@ -79,13 +79,10 @@ def plotResults(allRes, dataset, params,
     # indices to the to-plot paramters
     params = [Parameter(**attr) for attr in params]
     if parameterIdx is None: # use 'is': None is a singleton in python
-        parameterId = [i
-                       for p, i in zip(params,
-                                       range(len(params)))
-                       if p.isActive()]
+        parameterId = [i for i, p in enumerate(params) if p.isActive()]
     else:
         parameterId = [parameterIdx]
-    #check how many histograms there are to plot
+    # check how many histograms there are to plot
     nhists = len(parameterId)
 
     # set plot font
@@ -179,18 +176,18 @@ def plotResults(allRes, dataset, params,
           fontproperties = textfont, size = 'x-large')
     sizeAxis = list()
 
-    #plot histograms
+    # plot histograms
     for parami in range(len(parameterId)):
         # get data:
         res = allRes[parameterId[parami]]
         histXLowerEdge = res['histogramXLowerEdge']
         histXMean = res['histogramXMean']
         histXWidth = res['histogramXWidth']
-        if McSASParameters.histogramWeighting == 'volume':
+        if params[parameterId[parami]].histogram().weighting == 'vol':
             volHistYMean = res['volumeHistogramYMean']
             volHistMinReq = res['volumeHistogramMinimumRequired']
             volHistYStd = res['volumeHistogramYStd']
-        elif McSASParameters.histogramWeighting == 'number':
+        elif params[parameterId[parami]].histogram().weighting == 'num':
             volHistYMean = res['numberHistogramYMean']
             volHistMinReq = res['numberHistogramMinimumRequired']
             volHistYStd = res['numberHistogramYStd']
@@ -205,7 +202,7 @@ def plotResults(allRes, dataset, params,
         xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
 
         # prep axes
-        if McSASParameters.histogramXScale[parameterId[parami]] == 'log':
+        if params[parameterId[parami]].histogram().scaleX == 'log':
 
             xLim = (histXLowerEdge.min() * (1 - axisMargin), 
                     histXLowerEdge.max() * (1 + axisMargin))

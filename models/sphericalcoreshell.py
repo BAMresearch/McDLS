@@ -39,7 +39,7 @@ class SphericalCoreShell(ScatteringModel):
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
     )
-    parameters[0].setIsActive(True)
+    parameters[0].setActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -144,15 +144,15 @@ if __name__ == "__main__":
     pf = PDHFile("testData/SphCoreShell_R100_dR150_c3p16_s2p53.csv")
     model = SphericalCoreShell()
     model.radius.setValue(100.)
-    model.radius.setIsActive(False)
+    model.radius.setActive(False)
     model.t.setValue(150.)
-    model.t.setIsActive(False)
+    model.t.setActive(False)
     model.eta_c.setValue(3.16)
-    model.eta_c.setIsActive(False)
+    model.eta_c.setActive(False)
     model.eta_s.setValue(2.53)
-    model.eta_s.setIsActive(False)
+    model.eta_s.setActive(False)
     model.eta_sol.setValue(0.)
-    model.eta_sol.setIsActive(False)
+    model.eta_sol.setActive(False)
     intensity = (model.ff(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

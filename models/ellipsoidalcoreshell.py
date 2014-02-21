@@ -44,7 +44,7 @@ class EllipsoidalCoreShell(ScatteringModel):
                     displayName = "orientation integration divisions",
                     valueRange = (0, 1e4), suffix = "-"),
     )
-    parameters[0].setIsActive(True)
+    parameters[0].setActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -172,19 +172,19 @@ if __name__ == "__main__":
     pf = PDHFile("testData/EllCoreShell_a100_b150_t500_c3p16_s2p53_sol0.csv")
     model = EllipsoidalCoreShell()
     model.a.setValue(100.)
-    model.a.setIsActive(False)
+    model.a.setActive(False)
     model.b.setValue(150.)
-    model.b.setIsActive(False)
+    model.b.setActive(False)
     model.t.setValue(500.)
-    model.t.setIsActive(False)
+    model.t.setActive(False)
     model.eta_c.setValue(3.16)
-    model.eta_c.setIsActive(False)
+    model.eta_c.setActive(False)
     model.eta_s.setValue(2.53)
-    model.eta_s.setIsActive(False)
+    model.eta_s.setActive(False)
     model.eta_sol.setValue(0.)
-    model.eta_sol.setIsActive(False)
+    model.eta_sol.setActive(False)
     model.intDiv.setValue(100)
-    model.intDiv.setIsActive(False)
+    model.intDiv.setActive(False)
     intensity = (model.ff(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

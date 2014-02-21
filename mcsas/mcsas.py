@@ -384,23 +384,16 @@ class McSAS(AlgorithmBase):
         """Checks for the Parameters, for example to make sure
         histbins is defined for all, or to check if all Parameters fall
         within their limits.
-        For now, all I need is a check that McSASParameters.histogramBins is a 1D vector
-        with n values, where n is the number of Parameters specifying
-        a shape.
         """
-        def fixLength(valueList):
-            if not isList(valueList):
-                valueList = [valueList for dummy in range(self.model.paramCount())]
-            elif len(valueList) > self.model.paramCount():
-                del valueList[self.model.paramCount():]
-            elif len(valueList) < self.model.paramCount():
-                nMissing = self.model.paramCount() - len(valueList)
-                valueList.extend([valueList[0] for dummy in range(nMissing)])
-            return valueList
+        # set all parameters to be fitted to the same histogram setup
+        for p in self.model.activeParams():
+            p.histogram().binCount = self.histogramBins.value()
+            import sys
+            print >>sys.__stderr__, "McSASParameters.histogramXScale '{}'".format(McSASParameters.histogramXScale[:3])
+            p.histogram().scaleX = McSASParameters.histogramXScale[:3]
+            p.histogram().weighting = McSASParameters.histogramWeighting
 
-        McSASParameters.histogramBins = fixLength(self.histogramBins.value())
-        McSASParameters.histogramXScale = fixLength(
-                                            McSASParameters.histogramXScale)
+        # TODO: not sure about the model.updateParamBounds, is it still required here, atm?
         self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
     def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
@@ -941,24 +934,24 @@ class McSAS(AlgorithmBase):
 
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
-            if McSASParameters.histogramXScale[paramIndex] == 'linear':
+            if param.histogram().scaleX == 'lin':
                 # histogramXLowerEdge contains #histogramBins+1 bin edges,
                 # or class limits.
                 histogramXLowerEdge = numpy.linspace(
                         min(param.valueRange()),
                         max(param.valueRange()),
-                        McSASParameters.histogramBins[paramIndex] + 1)
+                        param.histogram().binCount + 1)
             else:
                 histogramXLowerEdge = 10**numpy.linspace(
                         log10(min(param.valueRange())),
                         log10(max(param.valueRange())),
-                        McSASParameters.histogramBins[paramIndex] + 1)
+                        param.histogram().binCount + 1)
 
             def initHist(reps = 0):
                 """Helper for histogram array initialization"""
-                shp = McSASParameters.histogramBins[paramIndex]
+                shp = param.histogram().binCount
                 if reps > 0:
-                    shp = (McSASParameters.histogramBins[paramIndex], reps)
+                    shp = (param.histogram().binCount, reps)
                 return numpy.zeros(shp)
 
             # total volume fraction contribution in a bin
@@ -977,7 +970,7 @@ class McSAS(AlgorithmBase):
             for ri in range(numReps):
                 # single set of R for this calculation
                 rset = contribs[:, paramIndex, ri]
-                for bini in range(McSASParameters.histogramBins[paramIndex]):
+                for bini in range(param.histogram().binCount):
                     # indexing which contributions fall into the radius bin
                     binMask = (  (rset >= histogramXLowerEdge[bini])
                                * (rset <  histogramXLowerEdge[bini + 1]))
@@ -997,7 +990,7 @@ class McSAS(AlgorithmBase):
                     if isnan(volHistRepY[bini, ri]):
                         volHistRepY[bini, ri] = 0.
                         numHistRepY[bini, ri] = 0.
-            for bini in range(McSASParameters.histogramBins[paramIndex]):
+            for bini in range(param.histogram().binCount):
                 histogramXMean[bini] = histogramXLowerEdge[bini:bini+2].mean()
                 vb = minReqVolBin[bini, :]
                 volHistMinReq[bini] = vb[vb < inf].max()
@@ -1177,7 +1170,7 @@ class McSAS(AlgorithmBase):
         else:
             plotResults(*plotArgs)
 
-    def rangeInfo(self, valueRange = [0, inf], paramIndex = 0, weighting=None):
+    def rangeInfo(self, valueRange = [0, inf], paramIndex = 0, weighting = None):
         """Calculates the total volume or number fraction of the MC result
         within a given range, and returns the total numer or volume fraction
         and its standard deviation over all nreps as well as the first four
@@ -1219,8 +1212,10 @@ class McSAS(AlgorithmBase):
         skw = numpy.zeros(numReps) # moments..
         krt = numpy.zeros(numReps) # moments..
 
+        param = self.model.activeParams()[paramIndex]
         if weighting is None:
-            weighting=McSASParameters.histogramWeighting
+            weighting = param.histogram().weighting
+        weighting = weighting[:3] # we need first three chars only
         # loop over each repetition
         for ri in range(numReps):
             # the single set of R for this calculation
@@ -1232,7 +1227,7 @@ class McSAS(AlgorithmBase):
             vset = volumeFraction[validRange, ri]
             nset = numberFraction[validRange, ri]
 
-            if weighting == 'volume':
+            if weighting == 'vol':
                 val[ri] = sum(vset)
                 mu[ri]  = sum(rset * vset)/sum(vset)
                 var[ri] = sum( (rset - mu[ri])**2 * vset )/sum(vset)
@@ -1241,7 +1236,7 @@ class McSAS(AlgorithmBase):
                            / (sum(vset) * sigma**3))
                 krt[ri] = ( sum( (rset-mu[ri])**4 * vset )
                            / (sum(vset) * sigma**3))
-            elif weighting == 'number':
+            elif weighting == 'num':
                 val[ri] = sum(nset)
                 mu[ri]  = sum(rset * nset)/sum(nset)
                 var[ri] = sum( (rset-mu[ri])**2 * nset )/sum(nset)

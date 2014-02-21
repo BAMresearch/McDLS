@@ -40,7 +40,7 @@ class GaussianChain(ScatteringModel):
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "nm")
     )
-    parameters[0].setIsActive(True)
+    parameters[0].setActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -104,13 +104,13 @@ if __name__ == "__main__":
     pf = PDHFile("../brianpauw/sasfit_gauss2-5-1.5-2-1.dat")
     model = GaussianChain()
     model.rg.setValue(5.)
-    model.rg.setIsActive(False)
+    model.rg.setActive(False)
     model.bp.setValue(1.5)
-    model.bp.setIsActive(False)
+    model.bp.setActive(False)
     model.etas.setValue(1.)
-    model.etas.setIsActive(False)
+    model.etas.setActive(False)
     model.k.setValue(0.08)
-    model.k.setIsActive(False)
+    model.k.setActive(False)
     intensity = model.ff(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

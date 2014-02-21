@@ -33,7 +33,7 @@ class CylindersIsotropic(ScatteringModel):
             Parameter("lengthIsAspect", True,
                     displayName = "length value indicates aspect ratio"),
     )
-    parameters[0].setIsActive(True)
+    parameters[0].setActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -109,13 +109,13 @@ if __name__ == "__main__":
     pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
     model = CylindersIsotropic()
     model.radius.setValue(1.)
-    model.radius.setIsActive(False)
+    model.radius.setActive(False)
     model.length.setValue(100.)
-    model.length.setIsActive(False)
+    model.length.setActive(False)
     model.psiAngle.setValue(1.)
-    model.psiAngle.setIsActive(False)
+    model.psiAngle.setActive(False)
     model.psiAngleDivisions.setValue(303)
-    model.psiAngleDivisions.setIsActive(False)
+    model.psiAngleDivisions.setActive(False)
     intensity = (model.ff(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

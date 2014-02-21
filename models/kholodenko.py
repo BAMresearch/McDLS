@@ -124,9 +124,9 @@ class Kholodenko(ScatteringModel):
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "nm")
     )
-    parameters[0].setIsActive(True)
-    parameters[1].setIsActive(True)
-    parameters[2].setIsActive(True)
+    parameters[0].setActive(True)
+    parameters[1].setActive(True)
+    parameters[2].setActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -205,11 +205,11 @@ if __name__ == "__main__":
     pf = PDHFile("sasfit_kho-1-10-1000.dat")
     model = Kholodenko()
     model.radius.setValue(1.)
-    model.radius.setIsActive(False)
+    model.radius.setActive(False)
     model.lenKuhn.setValue(10.)
-    model.lenKuhn.setIsActive(False)
+    model.lenKuhn.setActive(False)
     model.lenContour.setValue(1000.)
-    model.lenContour.setIsActive(False)
+    model.lenContour.setActive(False)
     intensity = model.ff(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

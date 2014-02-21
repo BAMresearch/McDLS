@@ -74,9 +74,29 @@ class Histogram(object):
     # serializable and also a classmethod which constructs it from serial data
 
 class FitParameterBase(ParameterBase):
-    ParameterBase.setAttributes(locals(), isActive = False)
+    """Deriving parameters for curve fitting from
+    cutesnake.algorithm.parameter to introduce more specific fit
+    related attributes."""
+    # soon, histogram will replace *isActive*
+    # by default it is not fitted, inactive
+    ParameterBase.setAttributes(locals(), histogram = None)
 
+    @mixedmethod
+    def isActive(selforcls):
+        """Tests if there is an histogram defined.
+        Provided for convenience."""
+        return isinstance(selforcls.histogram(), Histogram)
 
+    @mixedmethod
+    def setActive(selforcls, isActive):
+        """Sets this parameter as active. It will be fitted.
+        Temporary in replacement of setIsActive(). Can be removed later if
+        histgram setup for each parameter is implemented elsewhere"""
+        if isActive and not selforcls.isActive():
+            # set only if there is no histogram defined already
+            selforcls.setHistogram(Histogram())
+        else:
+            selforcls.setHistogram(None)
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
