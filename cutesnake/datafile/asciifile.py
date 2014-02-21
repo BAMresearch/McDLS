@@ -76,7 +76,7 @@ class AsciiFile(DataFile):
     @classmethod
     def readFile(cls, filename, dataType = float):
         fileData = []
-        with open(filename) as fd:
+        with open(filename, 'rU') as fd:
             linenr = 0
             for line in fd:
                 linenr += 1
