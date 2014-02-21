@@ -10,15 +10,7 @@ from cutesnake.algorithm import Parameter as ParameterFactory
 class FitParameterBase(ParameterBase):
     ParameterBase.setAttributes(locals(), isActive = False)
 
-    @mixedmethod
-    def attributes(selforcls):
-        res = super(FitParameterBase, selforcls).attributes()
-        return res
 
-    @classmethod
-    def factory(cls, **kwargs):
-        cls = super(FitParameterBase, cls).factory(**kwargs)
-        return cls
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
