@@ -557,7 +557,7 @@ class McSAS(AlgorithmBase):
         """
         data = self.dataset.prepared
         prior = McSASParameters.prior
-        rset = numpy.zeros((numContribs, self.model.paramCount()))
+        rset = numpy.zeros((numContribs, self.model.activeParamCount()))
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
@@ -594,23 +594,10 @@ class McSAS(AlgorithmBase):
                                                  size = numContribs)
             rset = prior[randomIndices, :]
             logging.info("size now: {}".format(rset.shape))
-        
-        vset = self.model.vol(rset)
-        if not McSASParameters.lowMemoryFootprint:
-            # calculate their form factors
-            ffset = self.model.ff(data, rset)
-            # calculate the intensities
-            iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]), vset**2)
-            # the total intensity - eq. (1)
-            # intensities for each q in a _row_
-            it = iset.sum(axis = 1)
-        else:
-            it = 0
-            for i in numpy.arange(rset.shape[0]):
-                # calculate their form factors
-                ffset = self.model.ff(data, rset[i].reshape((1, -1)))
-                # a set of intensities
-                it += ffset**2 * vset[i]**2
+
+        # call the model for each parameter value explicitly
+        # otherwise the model gets complex for multiple params incl. fitting
+        it, vset = self.calcModel(data, rset)
         vst = sum(vset**2) # total volume squared
 
         # Optimize the intensities and calculate convergence criterium
@@ -629,19 +616,22 @@ class McSAS(AlgorithmBase):
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         if outputIterations:
-            # Output each iteration, starting with number 0. Iterations will
-            # be stored in details['paramDistrib'], details['intensityFitted'],
-            # details['convergenceValue'], details['scalingFactor'] and
-            # details['priorUnaccepted'] listing the unaccepted number of
-            # moves before the recorded accepted move.
+            logging.warning('outputIterations functionality inoperable')
+            #will not work, because of the different size of rset with multi-
+            #parameter models.
+            ## Output each iteration, starting with number 0. Iterations will
+            ## be stored in details['paramDistrib'], details['intensityFitted'],
+            ## details['convergenceValue'], details['scalingFactor'] and
+            ## details['priorUnaccepted'] listing the unaccepted number of
+            ## moves before the recorded accepted move.
 
-            # new iterations will (have to) be appended to this, cannot be
-            # zero-padded due to size constraints
-            details['paramDistrib'] = rset[:, newaxis]
-            details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis]
-            details['convergenceValue'] = conval[newaxis]
-            details['scalingFactor'] = sc[:, newaxis]
-            details['priorUnaccepted'] = numpy.array(0)[newaxis]
+            ## new iterations will (have to) be appended to this, cannot be
+            ## zero-padded due to size constraints
+            #details['paramDistrib'] = rset[:, newaxis]
+            #details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis]
+            #details['convergenceValue'] = conval[newaxis]
+            #details['scalingFactor'] = sc[:, newaxis]
+            #details['priorUnaccepted'] = numpy.array(0)[newaxis]
 
         # start the MC procedure
         intObs = data[:, 1]
@@ -662,15 +652,11 @@ class McSAS(AlgorithmBase):
             itt = (ft**2 * vtt**2).flatten()
             # Calculate new total intensity
             itest = None
-            if not McSASParameters.lowMemoryFootprint:
-                # we do subtractions and additions, which give us another
-                # factor 2 improvement in speed over summation and is much
-                # more scalable
-                itest = (it - iset[:, ri] + itt)
-            else:
-                fo = self.model.ff(data, rset[ri].reshape((1, -1)))
-                io = (fo**2 * vset[ri]**2).flatten()
-                itest = (it.flatten() - io + itt)
+            # speed up by storing all intensities above, needs lots of memory
+            # itest = (it - iset[:, ri] + itt)
+            fo = self.model.ff(data, rset[ri].reshape((1, -1)))
+            io = (fo**2 * vset[ri]**2).flatten()
+            itest = (it.flatten() - io + itt)
 
             # SMEAR function goes here
             itest = self.model.smear(itest)
@@ -684,8 +670,6 @@ class McSAS(AlgorithmBase):
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
                 it, vset[ri], vst = itest, vtt, vstest
-                if not McSASParameters.lowMemoryFootprint:
-                    iset[:, ri] = itt
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
@@ -864,26 +848,7 @@ class McSAS(AlgorithmBase):
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
-            vset = self.model.vol(rset)
-            ## TODO: same code than in mcfit pre-loop around line 1225 ff.
-            if not McSASParameters.lowMemoryFootprint:
-                # Form factors, all normalized to 1 at q=0.
-                ffset = self.model.ff(data, rset)
-                # Calculate the intensities
-                # Intensity for each contribution as used in the MC calculation
-                iset = ffset**2 * numpy.outer(
-                                        numpy.ones(ffset.shape[0]),
-                                        vset**2)
-                # total intensity of the scattering pattern
-                it = iset.sum(axis = 1)
-            else:
-                it = 0
-                for i in numpy.arange(rset.shape[0]):
-                    # calculate their form factors
-                    ffset = self.model.ff(data, rset[i].reshape((1, -1)))
-                    # a set of intensities
-                    it += ffset**2 * vset[i]**2
-
+            it, vset = self.calcModel(data, rset)
             vst = sum(vset**2) # total compensated volume squared 
             it = self.model.smear(it)
             
@@ -897,7 +862,9 @@ class McSAS(AlgorithmBase):
             # compensated volume for each sphere in
             # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
             # Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
-            vpa = self.model.vol(rset, compensationExponent = 1.0) 
+            vpa = zeros(rset.shape[0])
+            for i in numpy.arange(rset.shape[0]):
+                vpa[i] = self.model.vol(rset[i].reshape((1, -1)), compensationExponent = 1.0)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
             sci = intensity.max() / it.max()
@@ -920,27 +887,16 @@ class McSAS(AlgorithmBase):
                 # NOTE: no need to compensate for p_c here, we work with
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
-                if not McSASParameters.lowMemoryFootprint:
-                    # determine where this maximum observability is
-                    # of contribution c (index)
-                    qmi = numpy.argmax(iset[:, c]/it)
-                    # point where the contribution of c is maximum
-                    qm[c, ri] = q[qmi]
-                    minReqVol[c, ri] = (
-                            intError * volumeFraction[c, ri]
-                                    / (sc[0] * iset[:, c])).min()
-                else:
-                    ffset = self.model.ff(data, rset[c].reshape((1, -1)))
-                    ir = (ffset**2 * vset[c]**2).flatten()
-                    # determine where this maximum observability is
-                    # of contribution c (index)
-                    qmi = numpy.argmax(ir.flatten()/it)
-                    # point where the contribution of c is maximum
-                    qm[c, ri] = q[qmi]
-                    minReqVol[c, ri] = (
-                            intError * volumeFraction[c, ri]
-                                    / (sc[0] * ir)).min() / vpa[c]
-
+                ffset = self.model.ff(data, rset[c].reshape((1, -1)))
+                ir = (ffset**2 * vset[c]**2).flatten()
+                # determine where this maximum observability is
+                # of contribution c (index)
+                qmi = numpy.argmax(ir.flatten()/it.flatten())
+                # point where the contribution of c is maximum
+                qm[c, ri] = q[qmi]
+                minReqVol[c, ri] = (
+                        intError * volumeFraction[c, ri]
+                                / (sc[0] * ir)).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / vpa[c]
 
             numberFraction[:, ri] /= totalNumberFraction[ri]
@@ -949,10 +905,7 @@ class McSAS(AlgorithmBase):
         # now we histogram over each variable
         # for each variable parameter we define,
         # we need to histogram separately.
-        for paramIndex, param in enumerate(self.model.params()):
-            #skip non-active parameters:
-            if not param.isActive():
-                continue
+        for paramIndex, param in enumerate(self.model.activeParams()):
 
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
@@ -988,7 +941,7 @@ class McSAS(AlgorithmBase):
             volHistMinReq = initHist()
             numHistMinReq = initHist()
 
-            print('shape contribs: {}, paramIndex: {}'.format(shape(contribs),paramIndex))
+            logging.debug('shape contribs: {}, paramIndex: {}'.format(shape(contribs),paramIndex))
             for ri in range(numReps):
                 # single set of R for this calculation
                 rset = contribs[:, paramIndex, ri]
@@ -1071,24 +1024,7 @@ class McSAS(AlgorithmBase):
             logging.info('regenerating set {} of {}'.format(ri, numReps-1))
             rset = contribs[:, :, ri]
             # calculate their form factors
-            vset = self.model.vol(rset)
-            # calculate the intensities, same code as in mcfit(), see above
-            if not McSASParameters.lowMemoryFootprint:
-                # Form factors, all normalized to 1 at q=0.
-                ffset = self.model.ff(data, rset)
-                # Calculate the intensities
-                # Intensity for each contribution as used in the MC calculation
-                iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]),
-                                              vset**2)
-                # the total intensity of the scattering pattern
-                it = iset.sum(axis = 1)
-            else:
-                it = 0
-                for i in numpy.arange(rset.shape[0]):
-                    # calculate their form factors
-                    ffset = self.model.ff(data, rset[i].reshape((1, -1)))
-                    # a set of intensities
-                    it += ffset**2 * vset[i]**2
+            it, vset = self.calcModel(data, rset)
             vst = sum(vset**2) # total volume squared
             # Optimize the intensities and calculate convergence criterium
             it = self.model.smear(it)
@@ -1303,24 +1239,7 @@ class McSAS(AlgorithmBase):
             # rset = rset[validRange][:, newaxis]
             rset = contribs[validRange,:,ri]
             # compensated volume for each sphere in the set
-            # TODO: same code as in gen2dintensity and other places
-            vset = self.model.vol(rset)
-            if not McSASParameters.lowMemoryFootprint:
-                # Form factors, all normalized to 1 at q=0.
-                ffset = self.model.ff(data, rset)
-                # Calculate the intensities
-                # Intensity for each contribution as used in the MC calculation
-                iset = ffset**2 * numpy.outer(numpy.ones(ffset.shape[0]),
-                                              vset**2)
-                # the total intensity of the scattering pattern
-                it = iset.sum(axis = 1)
-            else:
-                it = 0
-                for i in numpy.arange(rset.shape[0]):
-                    # calculate their form factors
-                    ffset = self.model.ff(data, rset[i].reshape((1, -1)))
-                    # a set of intensities
-                    it += ffset**2 * vset[i]**2
+            it, vset = self.calcModel(data, rset)
             it = self.model.smear(it)
             sc = scalingFactors[:, ri] # scaling and background for this repetition.
             # a set of volume fractions
@@ -1338,5 +1257,21 @@ class McSAS(AlgorithmBase):
         )
         self.result[paramIndex].update(rangeInfoResult)
         return rangeInfoResult
+
+    # move this to ScatteringModel eventually?
+    # which additional output might by useful/required?
+    # btw: called 4 times
+    def calcModel(self, data, rset):
+        """Calculates the total intensity and scatterer volume contributions
+        using the current model."""
+        it = 0
+        vset = zeros(rset.shape[0])
+        for i in numpy.arange(rset.shape[0]):
+            vset[i] = self.model.vol(rset[i].reshape((1, -1)))
+            # calculate their form factors
+            ffset = self.model.ff(data, rset[i].reshape((1, -1)))
+            # a set of intensities
+            it += ffset**2 * vset[i]**2
+        return it.flatten(), vset
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

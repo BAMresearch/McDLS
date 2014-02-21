@@ -83,12 +83,28 @@ class AlgorithmBase(object):
         return selforcls._parameters
 
     @mixedmethod
+    def activeParams(setforcls):
+        """returns all "active" parameters of this algorithm"""
+        aPars = []
+        for par in setforcls.params():
+            if not hasattr(par, "isActive"):
+                #skip
+                continue
+            if par.isActive():
+                aPars.append(par)
+        return tuple(aPars)
+
+    @mixedmethod
     def param(selforcls, index):
         return selforcls._parameters[index]
 
     @mixedmethod
     def paramCount(selforcls):
         return len(selforcls._parameters)
+
+    @mixedmethod
+    def activeParamCount(setforcls):
+        return len(setforcls.activeParams())
 
     @classmethod
     def factory(cls, name = None, *parameters):

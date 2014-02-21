@@ -29,28 +29,25 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         into account from input or preset parameters."""
         if self.paramCount() == 0 and paramValues is None:
             return True
-        # by definition, no vector input, would require complex model code
-        return len(paramValues) == self.paramCount()
+        return paramValues.shape[1] == self.paramCount()
 
     @abstractmethod
     def ff(self, dataset, paramValues = None):
         """Calculates the Rayleigh function of this model."""
         if self.paramCount() == 0 or paramValues is None:
             return True
-        # by definition, no vector input, would require complex model code
-        return len(paramValues) == self.paramCount()
+        return paramValues.shape[1] == self.paramCount()
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
         Parameter.generator. Allows for different random number distributions.
         """
-        lst = numpy.zeros((count, self.paramCount()))
-        for idx, param in enumerate(self.params()):
+        lst = numpy.zeros((count, self.activeParamCount()))
+        for idx, param in enumerate(self.activeParams()):
             # generate numbers in different range for each parameter
             #only for active parameters, otherwise it may try to generate
             #random values for a boolean-type parameter.
-            if param.isActive():
-                lst[:, idx] = param.generate(count = count)
+            lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
 

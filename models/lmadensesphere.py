@@ -20,6 +20,7 @@ class LMADenseSphere(ScatteringModel):
 
     shortName = "LMADenseSphere"
     parameters = (Parameter("radius", 1.0,
+                    displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1), )
