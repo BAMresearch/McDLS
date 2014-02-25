@@ -24,7 +24,7 @@ class LMADenseSphere(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1), )
-    parameters[0].setIsActive(True)
+    parameters[0].setActive(True)
 
     def __init__(self):
         ScatteringModel.__init__(self)

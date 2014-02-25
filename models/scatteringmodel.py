@@ -3,20 +3,13 @@
 
 from abc import ABCMeta, abstractmethod
 import numpy
-from cutesnake.utils import isList
+from cutesnake.utils import isList, mixedmethod
 from cutesnake.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
 
 class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
     compensationExponent = 0.5 # default
-
-    def updateParamBounds(self, bounds):
-        if not isList(bounds):
-            bounds = [bounds,]
-        if not isinstance(bounds, list):
-            bounds = list(bounds)
-        return bounds
 
     # it doesn't belong to the model?
     # should be instrumentation geometry ...
@@ -53,5 +46,22 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
                 lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
+
+    def updateParamBounds(self, bounds):
+        if not isList(bounds):
+            bounds = [bounds,]
+        if not isinstance(bounds, list):
+            bounds = list(bounds)
+        return bounds
+
+    @mixedmethod
+    def activeParams(setforcls):
+        """returns all "active" parameters of this algorithm"""
+        aPars = [par for par in setforcls.params() if par.isActive()]
+        return tuple(aPars)
+
+    @mixedmethod
+    def activeParamCount(setforcls):
+        return len(setforcls.activeParams())
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

@@ -32,10 +32,10 @@ class CylindersRadiallyIsotropic(ScatteringModel):
                     displayName = "in-plane angle divisions",
                     valueRange = (1, numpy.inf), suffix = "-"),
     )
-    parameters[0].setIsActive(True)
-    parameters[1].setIsActive(False) # not expected to vary
-    parameters[2].setIsActive(True)  # better when random 
-    parameters[3].setIsActive(False) # not expected to vary
+    parameters[0].setActive(True)
+    parameters[1].setActive(False) # not expected to vary
+    parameters[2].setActive(True)  # better when random 
+    parameters[3].setActive(False) # not expected to vary
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -129,13 +129,13 @@ if __name__ == "__main__":
     pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
     model = CylindersRadiallyIsotropic()
     model.radius.setValue(1.)
-    model.radius.setIsActive(False)
+    model.radius.setActive(False)
     model.aspect.setValue(100.)
-    model.aspect.setIsActive(False)
+    model.aspect.setActive(False)
     model.psiAngle.setValue(1.)
-    model.psiAngle.setIsActive(False)
+    model.psiAngle.setActive(False)
     model.psiAngleDivisions.setValue(303)
-    model.psiAngleDivisions.setIsActive(False)
+    model.psiAngleDivisions.setActive(False)
     intensity = model.ff(pf.data, None).reshape(-1)
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]

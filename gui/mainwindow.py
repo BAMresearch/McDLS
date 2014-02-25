@@ -200,7 +200,7 @@ class PropertyWidget(SettingsWidget):
                 p.setValueRange((minValue, maxValue))
             newActive = self.get(key+"active")
             if isinstance(newActive, bool) and p.isActive() != newActive:
-                p.setIsActive(newActive)
+                p.setActive(newActive)
                 activeChanged = True
         # update algo settings
         for p in self._calculator.params():
@@ -239,7 +239,9 @@ class PropertyWidget(SettingsWidget):
         layout.addWidget(lbl)
         minmax = None
         if param.isActive() and isinstance(param, ParameterNumerical):
+            # get default upper/lower bound from class
             minmax = type(param).min(), type(param).max()
+            # user specified min/max within default upper/lower
             ntryMin = self._makeEntry(
                     param.name()+"min", param.dtype, param.min(), minmax)
             ntryMin.setPrefix("min: ")

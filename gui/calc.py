@@ -19,6 +19,7 @@ from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.log import timestamp, addHandler
 import cutesnake.log as log
 from mcsas.mcsas import McSAS
+from utils.parameter import Histogram
 
 class Calculator(object):
     _algo = None # McSAS algorithm instance
@@ -100,13 +101,13 @@ class Calculator(object):
         log.removeHandler(logFile)
 
     def _writeStatistics(self):
-        paramIndex = [i for i, p in enumerate(self.modelParams()) if p.isActive()]
+        paramIndex = [i for i, p in enumerate(self.model.activeParams())]
         if not len(paramIndex):
             return
         paramIndex = paramIndex[0]
         stats = dict()
         columnNames = []
-        for weighting in 'volume', 'number':
+        for weighting in Histogram.availableWeighting():
             res = self._algo.rangeInfo(paramIndex = paramIndex,
                                        weighting = weighting)
             for key in ('totalValue',
