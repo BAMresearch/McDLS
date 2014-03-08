@@ -61,11 +61,11 @@ class SphericalCoreShell(ScatteringModel):
 
         # vectorized data and arguments
         q = dataset[:, 0]
-        radius = numpy.array((self.radius.value(),))
-        t = numpy.array((self.t.value(),))
-        eta_c = numpy.array((self.eta_c.value(),))
-        eta_s = numpy.array((self.eta_s.value(),))
-        eta_sol = numpy.array((self.eta_sol.value(),))
+        radius = numpy.array((self.radius(),))
+        t = numpy.array((self.t(),))
+        eta_c = numpy.array((self.eta_c(),))
+        eta_s = numpy.array((self.eta_s(),))
+        eta_sol = numpy.array((self.eta_sol(),))
         #unused:
 
         idx = 0
@@ -119,8 +119,8 @@ class SphericalCoreShell(ScatteringModel):
         if compensationExponent is None:                                       
             compensationExponent = self.compensationExponent                   
 
-        radius = numpy.array((self.radius.value(),))
-        t = numpy.array((self.t.value(),))
+        radius = numpy.array((self.radius(),))
+        t = numpy.array((self.t(),))
 
         if self.radius.isActive():
             radius = paramValues[:, 0]

@@ -60,12 +60,12 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
 
         # vectorized data and arguments
         q = dataset[:, 0]
-        radius = numpy.array((self.radius.value(),))
-        aspect = numpy.array((self.aspect.value(),))
-        psiAngle = numpy.array((self.psiAngle.value(),))
-        psiAngleDivisions = numpy.array((self.psiAngleDivisions.value(),))
-        phiDistWidth = numpy.array((self.phiDistWidth.value(),))
-        phiDistDivisions = numpy.array((self.phiDistDivisions.value(),))
+        radius = numpy.array((self.radius(),))
+        aspect = numpy.array((self.aspect(),))
+        psiAngle = numpy.array((self.psiAngle(),))
+        psiAngleDivisions = numpy.array((self.psiAngleDivisions(),))
+        phiDistWidth = numpy.array((self.phiDistWidth(),))
+        phiDistDivisions = numpy.array((self.phiDistDivisions(),))
 
         if self.radius.isActive():
             radius = paramValues[:, 0]
@@ -136,7 +136,7 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
             idx += 1
             aspect = paramValues[:,idx]
         else:                                                                  
-            aspect = self.aspect.value()                                         
+            aspect = self.aspect()                                         
 
         v = pi*radius**2*(2*radius*aspect)                                     
         return v**compensationExponent          

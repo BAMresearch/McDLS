@@ -74,13 +74,13 @@ class EllipsoidalCoreShell(ScatteringModel):
 
         # vectorized data and arguments
         q = dataset[:, 0]
-        a = numpy.array((self.a.value(),))
-        b = numpy.array((self.b.value(),))
-        t = numpy.array((self.t.value(),))
-        eta_c = numpy.array((self.eta_c.value(),))
-        eta_s = numpy.array((self.eta_s.value(),))
-        eta_sol = numpy.array((self.eta_sol.value(),))
-        intDiv = numpy.array((self.intDiv.value(),))
+        a = numpy.array((self.a(),))
+        b = numpy.array((self.b(),))
+        t = numpy.array((self.t(),))
+        eta_c = numpy.array((self.eta_c(),))
+        eta_s = numpy.array((self.eta_s(),))
+        eta_sol = numpy.array((self.eta_sol(),))
+        intDiv = numpy.array((self.intDiv(),))
         #unused:
 
         idx = 0
@@ -143,9 +143,9 @@ class EllipsoidalCoreShell(ScatteringModel):
         if compensationExponent is None:                                       
             compensationExponent = self.compensationExponent                   
 
-        a = numpy.array((self.a.value(),))
-        b = numpy.array((self.b.value(),))
-        t = numpy.array((self.t.value(),))
+        a = numpy.array((self.a(),))
+        b = numpy.array((self.b(),))
+        t = numpy.array((self.t(),))
 
         if self.a.isActive():
             a = paramValues[:, 0]

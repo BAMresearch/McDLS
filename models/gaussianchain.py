@@ -55,18 +55,18 @@ class GaussianChain(ScatteringModel):
 
         # vectorized data and arguments
         q = dataset[:, 0]
-        rg = numpy.array((self.rg.value(),))
+        rg = numpy.array((self.rg(),))
         if self.rg.isActive():
             rg = paramValues[:, 0]
-        bp = numpy.array((self.bp.value(),))
+        bp = numpy.array((self.bp(),))
         if self.bp.isActive():
             idx = int(self.rg.isActive())
             bp = paramValues[:, idx]
-        etas = numpy.array((self.etas.value(),))
+        etas = numpy.array((self.etas(),))
         if self.etas.isActive():
             idx = int(self.rg.isActive()) + int(self.bp.isActive())
             etas = paramValues[:, idx]
-        k = numpy.array((self.k.value(),))
+        k = numpy.array((self.k(),))
         if self.k.isActive():
             idx = int(self.rg.isActive()) + int(self.bp.isActive()) + int(self.etas.isActive())
             k = paramValues[:, idx]
@@ -84,10 +84,10 @@ class GaussianChain(ScatteringModel):
         assert ScatteringModel.vol(self, paramValues)
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        rg = numpy.array((self.rg.value(),))
+        rg = numpy.array((self.rg(),))
         if self.rg.isActive():
             rg = paramValues[:, 0]
-        k = numpy.array((self.k.value(),))
+        k = numpy.array((self.k(),))
         if self.k.isActive():
             idx = sum([int(p.isActive()) for p in self.rg, self.bp, self.etas])
             k = paramValues[:, idx]

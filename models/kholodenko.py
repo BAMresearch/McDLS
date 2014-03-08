@@ -156,14 +156,14 @@ class Kholodenko(ScatteringModel):
 
         # vectorized data and arguments
         q = dataset[:, 0]
-        radius = numpy.array((self.radius.value(),))
+        radius = numpy.array((self.radius(),))
         if self.radius.isActive():
             radius = paramValues[:, 0]
-        lenKuhn = numpy.array((self.lenKuhn.value(),))
+        lenKuhn = numpy.array((self.lenKuhn(),))
         if self.lenKuhn.isActive():
             idx = int(self.radius.isActive())
             lenKuhn = paramValues[:, idx]
-        lenContour = numpy.array((self.lenContour.value(),))
+        lenContour = numpy.array((self.lenContour(),))
         if self.lenContour.isActive():
             idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
             lenContour = paramValues[:, idx]
@@ -185,10 +185,10 @@ class Kholodenko(ScatteringModel):
         assert ScatteringModel.vol(self, paramValues)
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        radius = numpy.array((self.radius.value(),))
+        radius = numpy.array((self.radius(),))
         if self.radius.isActive():
             radius = paramValues[:, 0]
-        lenContour = numpy.array((self.lenContour.value(),))
+        lenContour = numpy.array((self.lenContour(),))
         if self.lenContour.isActive():
             idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
             lenContour = paramValues[:, idx]

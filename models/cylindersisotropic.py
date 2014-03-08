@@ -46,11 +46,11 @@ class CylindersIsotropic(ScatteringModel):
 
         # vectorized data and arguments
         q = dataset[:, 0]
-        radius = numpy.array((self.radius.value(),))
-        length = numpy.array((self.length.value(),))
-        psiAngleDivisions = numpy.array((self.psiAngleDivisions.value(),))
+        radius = numpy.array((self.radius(),))
+        length = numpy.array((self.length(),))
+        psiAngleDivisions = numpy.array((self.psiAngleDivisions(),))
         #unused:
-        psiAngle = numpy.array((self.psiAngle.value(),))
+        psiAngle = numpy.array((self.psiAngle(),))
 
         if self.radius.isActive():
             radius = paramValues[:, 0]
@@ -71,7 +71,7 @@ class CylindersIsotropic(ScatteringModel):
         Fcyl=zeros((len(q),len(radius)))
         for ri in range(len(radius)):
             radi=radius[ri%len(radius)]
-            if self.lengthIsAspect.value():
+            if self.lengthIsAspect():
                 halfLength=radi*length[ri%len(length)]
             else:
                 halfLength=0.5*length[ri%len(length)]
@@ -93,8 +93,8 @@ class CylindersIsotropic(ScatteringModel):
             idx+=1                                                             
             length =paramValues[:,idx]                                         
         else:                                                                  
-            length=self.length.value()                                         
-        if self.lengthIsAspect.value():
+            length=self.length()                                         
+        if self.lengthIsAspect():
             halfLength=radius*length
         else:
             halfLength=length/2.
