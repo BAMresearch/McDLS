@@ -47,16 +47,13 @@ class LMADenseSphere(ScatteringModel):
         #what is done below:
         self.radius.setValueRange((min(bounds), max(bounds)))
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         result = (pi*4./3.) * paramValues**(3. * compensationExponent)
         return result
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         structureFactorVolumeFraction = 0.2
         structureFactorStandoff = (0.634/structureFactorVolumeFraction)**(1./3)
         #no idea if this will work

@@ -55,9 +55,7 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
         self.radius.setValueRange((0.1, 1e3))
         self.aspect.setValueRange((1, 20))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
         q = dataset[:, 0]
         radius = numpy.array((self.radius(),))
@@ -126,8 +124,7 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
 
         return Fcyl
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         idx = 0
@@ -155,7 +152,7 @@ if __name__ == "__main__":
     model.psiAngle.setActive(False)
     model.psiAngleDivisions.setValue(303)
     model.psiAngleDivisions.setActive(False)
-    intensity = model.ff(pf.data, None).reshape(-1)
+    intensity = model.formfactor(pf.data, None).reshape(-1)
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)

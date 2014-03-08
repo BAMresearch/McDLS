@@ -50,9 +50,7 @@ class GaussianChain(ScatteringModel):
         self.etas.setValueRange((0.1, 10.))
         self.k.setValueRange((0.1, 10.))
 
-    def ff(self, dataset, paramValues = None):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues = None):
         # vectorized data and arguments
         q = dataset[:, 0]
         rg = numpy.array((self.rg(),))
@@ -80,8 +78,7 @@ class GaussianChain(ScatteringModel):
             result[i] = res * beta
         return result
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         rg = numpy.array((self.rg(),))
@@ -111,7 +108,7 @@ if __name__ == "__main__":
     model.etas.setActive(False)
     model.k.setValue(0.08)
     model.k.setActive(False)
-    intensity = model.ff(pf.data, None).reshape(-1)**2.
+    intensity = model.formfactor(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)

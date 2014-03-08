@@ -151,9 +151,7 @@ class Kholodenko(ScatteringModel):
                          "to: ({0}, {1}).".format(bounds[0], bounds[1]))
             self.radius.valueRange = (min(bounds), max(bounds))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
         q = dataset[:, 0]
         radius = numpy.array((self.radius(),))
@@ -181,8 +179,7 @@ class Kholodenko(ScatteringModel):
             logging.warning("\n".join(["numpy.quad integration messages: "] + list(LASTMSG)))
         return p0 * pcs # FIXME: must not be squared!
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         radius = numpy.array((self.radius(),))
@@ -210,7 +207,7 @@ if __name__ == "__main__":
     model.lenKuhn.setActive(False)
     model.lenContour.setValue(1000.)
     model.lenContour.setActive(False)
-    intensity = model.ff(pf.data, None).reshape(-1)**2.
+    intensity = model.formfactor(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)

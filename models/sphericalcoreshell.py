@@ -47,9 +47,7 @@ class SphericalCoreShell(ScatteringModel):
         self.radius.setValueRange((0.1, 1e3))
         self.t.setValueRange((0.1, 1e3))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         def K(Q, R, DEta):
             #modified K, taken out the volume scaling
             QR = numpy.outer(Q, R)
@@ -114,8 +112,7 @@ class SphericalCoreShell(ScatteringModel):
 
         return Fell
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
 
@@ -153,7 +150,7 @@ if __name__ == "__main__":
     model.eta_s.setActive(False)
     model.eta_sol.setValue(0.)
     model.eta_sol.setActive(False)
-    intensity = (model.ff(pf.data, None).reshape(-1))**2
+    intensity = (model.formfactor(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     #normalize

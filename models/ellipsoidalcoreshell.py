@@ -53,9 +53,7 @@ class EllipsoidalCoreShell(ScatteringModel):
         self.b.setValueRange((1., 1e4))
         self.t.setValueRange((0.1, 1e3))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         def j1(x):
             return ( sin(x) - x * cos(x) ) / (x**2)
 
@@ -138,8 +136,7 @@ class EllipsoidalCoreShell(ScatteringModel):
 
         return Fell
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
 
@@ -185,7 +182,7 @@ if __name__ == "__main__":
     model.eta_sol.setActive(False)
     model.intDiv.setValue(100)
     model.intDiv.setActive(False)
-    intensity = (model.ff(pf.data, None).reshape(-1))**2
+    intensity = (model.formfactor(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     #normalize

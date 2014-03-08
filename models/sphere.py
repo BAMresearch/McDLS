@@ -40,8 +40,7 @@ class Sphere(ScatteringModel):
     #    #what is done below:
     #    self.radius.setValueRange((min(bounds), max(bounds)))
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
         r = numpy.array((self.radius(),))
@@ -50,8 +49,7 @@ class Sphere(ScatteringModel):
         result = (pi*4./3.) * r**(3. * compensationExponent)
         return result
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
+    def formfactor(self, dataset, paramValues):
         r = numpy.array((self.radius(),))
         if self.radius.isActive():
             r = paramValues[:, 0]
