@@ -12,7 +12,7 @@ from cutesnake.algorithm import RandomExponential, RandomUniform
 class SphericalCoreShell(ScatteringModel):
     r"""Form factor for a spherical core shell structure
     as defined in the SASfit manual (par. 3.1.4, Spherical Shell III).
-    One modification is the ability to specify SLD for core, shell and 
+    One modification is the ability to specify SLD for core, shell and
     solvent, identical to the notation used in the Core-shell ellipsoid.
     Compared wiht a SASfit-generated model (both with and without distribution)
     """
@@ -84,16 +84,16 @@ class SphericalCoreShell(ScatteringModel):
         if self.eta_sol.isActive():
             eta_sol = paramValues[:, idx]
             idx += 1
-        #remaining parameters are never active fitting parameters    
+        #remaining parameters are never active fitting parameters
 
         dToR = pi / 180. #degrees to radian
-        
+
         Vc = 4./3 * pi * radius **3
         Vt = 4./3 * pi * (radius + t) ** 3
-        VRatio = Vc / Vt 
+        VRatio = Vc / Vt
         if not isinstance(VRatio, numpy.ndarray):
             VRatio = numpy.array(VRatio)
-        
+
         if paramValues is None:
             Fell=zeros((len(q), 1 ))
         else:
@@ -105,7 +105,7 @@ class SphericalCoreShell(ScatteringModel):
             etac = eta_c[ ri % len(eta_c) ]
             etas = eta_s[ ri % len(eta_s) ]
             etasol = eta_sol[ ri % len(eta_sol) ]
-            VRati = VRatio[ ri % len(VRatio) ] 
+            VRati = VRatio[ ri % len(VRatio) ]
             Ks = K(q, (rad + ti), (etas - etasol))
             Kc = K(q, rad, (etas - etac))
             Fell[:,ri] = ( Ks - VRati * Kc ).flatten()
@@ -114,10 +114,10 @@ class SphericalCoreShell(ScatteringModel):
 
         return Fell
 
-    def vol(self, paramValues, compensationExponent = None):                   
-        assert ScatteringModel.vol(self, paramValues)                          
-        if compensationExponent is None:                                       
-            compensationExponent = self.compensationExponent                   
+    def vol(self, paramValues, compensationExponent = None):
+        assert ScatteringModel.vol(self, paramValues)
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
 
         radius = numpy.array((self.radius(),))
         t = numpy.array((self.t(),))
@@ -128,8 +128,8 @@ class SphericalCoreShell(ScatteringModel):
             idx = int(self.radius.isActive())
             t = paramValues[:, idx]
 
-        v = 4./3 * pi * (radius + t)**3                                     
-        return v**compensationExponent          
+        v = 4./3 * pi * (radius + t)**3
+        return v**compensationExponent
 
 SphericalCoreShell.factory()
 

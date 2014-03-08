@@ -57,7 +57,7 @@ class CylindersIsotropic(ScatteringModel):
         if self.length.isActive():
             idx = int(self.radius.isActive())
             length = paramValues[:, idx]
-        #remaining parameters are never active fitting parameters    
+        #remaining parameters are never active fitting parameters
 
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
         #used in the equation for a cylinder from Pedersen, 1997
@@ -66,7 +66,7 @@ class CylindersIsotropic(ScatteringModel):
         psiRange=self.psiAngle.valueRange()
         psi=numpy.linspace(
                 psiRange[0],psiRange[1],psiAngleDivisions)
-        
+
         fsplit=zeros((len(q),len(psi)))
         Fcyl=zeros((len(q),len(radius)))
         for ri in range(len(radius)):
@@ -83,24 +83,24 @@ class CylindersIsotropic(ScatteringModel):
 
         return Fcyl
 
-    def vol(self, paramValues, compensationExponent = None):                   
-        assert ScatteringModel.vol(self, paramValues)                          
-        if compensationExponent is None:                                       
-            compensationExponent = self.compensationExponent                   
+    def vol(self, paramValues, compensationExponent = None):
+        assert ScatteringModel.vol(self, paramValues)
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
         idx = 0
-        radius=paramValues[:,0]                                                
+        radius=paramValues[:,0]
         if self.length.isActive():
-            idx+=1                                                             
-            length =paramValues[:,idx]                                         
-        else:                                                                  
-            length=self.length()                                         
+            idx+=1
+            length =paramValues[:,idx]
+        else:
+            length=self.length()
         if self.lengthIsAspect():
             halfLength=radius*length
         else:
             halfLength=length/2.
 
-        v = pi*radius**2*(halfLength*2)                                     
-        return v**compensationExponent          
+        v = pi*radius**2*(halfLength*2)
+        return v**compensationExponent
 
 CylindersIsotropic.factory()
 

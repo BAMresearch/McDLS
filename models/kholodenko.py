@@ -7,7 +7,7 @@ import numpy
 from numpy import pi
 from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
-from cutesnake.algorithm import RandomUniform, RandomExponential               
+from cutesnake.algorithm import RandomUniform, RandomExponential
 
 # parameters must not be inf
 
@@ -104,7 +104,7 @@ vectorizedPcs = numpy.vectorize(calcPcs)
 class Kholodenko(ScatteringModel):
     r"""Form factor of a worm-like structure after [Kholodenko93]_
 
-    .. [Kholodenko93] `A. L. Kholodenko. Analytical calculation of the 
+    .. [Kholodenko93] `A. L. Kholodenko. Analytical calculation of the
         scattering function for polymers of arbitrary flexibility using the
         dirac propagator. Macromolecules, 26:4179–4183, 1993.
         <http://dx.doi.org/10.1021/ma00068a017>`_

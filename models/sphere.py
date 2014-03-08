@@ -35,8 +35,8 @@ class Sphere(ScatteringModel):
     #    elif len(bounds) > 2:
     #        bounds = bounds[0:2]
     #    logging.info("Updating lower and upper contribution parameter bounds "
-    #                 "to: ({0}, {1}).".format(min(bounds), max(bounds))) 
-    #    #logging.info changed from bounds[0] and bounds[1] to reflect better 
+    #                 "to: ({0}, {1}).".format(min(bounds), max(bounds)))
+    #    #logging.info changed from bounds[0] and bounds[1] to reflect better
     #    #what is done below:
     #    self.radius.setValueRange((min(bounds), max(bounds)))
 

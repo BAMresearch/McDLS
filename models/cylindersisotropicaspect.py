@@ -30,7 +30,7 @@ class CylindersIsotropic(ScatteringModel):
     )
     parameters[0].setActive(True)
     parameters[1].setActive(False) # not expected to vary
-    parameters[2].setActive(True)  # better when random 
+    parameters[2].setActive(True)  # better when random
     parameters[3].setActive(False) # not expected to vary
 
     def __init__(self):
@@ -75,12 +75,12 @@ class CylindersIsotropic(ScatteringModel):
         psiRange=self.psiAngle.valueRange()
         psi=numpy.linspace(
                 psiRange[0],psiRange[1],psiAngleDivisions)
-        
+
         ##replicate so we cover all possible combinations of psi, phi and psi
-        #psiLong=psi[ numpy.sort( numpy.array( range( 
+        #psiLong=psi[ numpy.sort( numpy.array( range(
         #    (len(psi)*len(q))
         #    ) ) %len(psi) ) ] #indexed to 111222333444 etc
-        #qLong=q[ numpy.array( range( 
+        #qLong=q[ numpy.array( range(
         #    (len(psi)*len(q))
         #    ) ) %len(q) ] #indexed to 1234123412341234 etc
 
@@ -102,20 +102,20 @@ class CylindersIsotropic(ScatteringModel):
 
         return Fcyl
 
-    def vol(self, paramValues, compensationExponent = None):                   
-        assert ScatteringModel.vol(self, paramValues)                          
-        if compensationExponent is None:                                       
-            compensationExponent = self.compensationExponent                   
+    def vol(self, paramValues, compensationExponent = None):
+        assert ScatteringModel.vol(self, paramValues)
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
         idx = 0
-        radius=paramValues[:,0]                                                
+        radius=paramValues[:,0]
         if self.aspect.isActive():
-            idx+=1                                                             
-            aspect =paramValues[:,idx]                                         
-        else:                                                                  
-            aspect=self.aspect()                                         
+            idx+=1
+            aspect =paramValues[:,idx]
+        else:
+            aspect=self.aspect()
 
-        v = pi*radius**2*(2*radius*aspect)                                     
-        return v**compensationExponent          
+        v = pi*radius**2*(2*radius*aspect)
+        return v**compensationExponent
 
 CylindersIsotropic.factory()
 

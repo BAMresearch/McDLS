@@ -60,13 +60,13 @@ class EllipsoidalCoreShell(ScatteringModel):
             return ( sin(x) - x * cos(x) ) / (x**2)
 
         def xc(Q, a, b, mu):
-            sfact = sqrt( 
+            sfact = sqrt(
                     a**2 * mu**2 + b**2 * (1 - mu**2)
                     )
             return numpy.outer(Q, sfact)
 
         def xt(Q, a, b, t, mu):
-            sfact = sqrt( 
+            sfact = sqrt(
                     (a + t)**2 * mu**2 + (b + t)**2 * (1 - mu**2)
                     )
             return numpy.outer(Q, sfact)
@@ -102,17 +102,17 @@ class EllipsoidalCoreShell(ScatteringModel):
         if self.eta_sol.isActive():
             eta_sol = paramValues[:, idx]
             idx += 1
-        #remaining parameters are never active fitting parameters    
+        #remaining parameters are never active fitting parameters
 
         dToR = pi / 180. #degrees to radian
         intVal = numpy.linspace(0., 1., intDiv)
-        
+
         Vc = 4./3 * pi * a * b **2
         Vt = 4./3 * pi * (a + t) * (b + t) ** 2
-        VRatio = Vc / Vt 
+        VRatio = Vc / Vt
         if not isinstance(VRatio, numpy.ndarray):
             VRatio = numpy.array(VRatio)
-        
+
         if paramValues is None:
             Fell=zeros((len(q), 1 ))
         else:
@@ -127,10 +127,10 @@ class EllipsoidalCoreShell(ScatteringModel):
             etasol = eta_sol[ ri % len(eta_sol) ]
             Xc = xc(q, arad, brad, intVal)
             Xt = xt(q, arad, brad, ti, intVal)
-            fsplit = ( 
-                    (etac - etas) * VRatio[ri % len(VRatio)] * 
-                    ( 3 * j1( Xc ) / Xc ) + 
-                    (etas - etasol) * 1. * 
+            fsplit = (
+                    (etac - etas) * VRatio[ri % len(VRatio)] *
+                    ( 3 * j1( Xc ) / Xc ) +
+                    (etas - etasol) * 1. *
                     ( 3 * j1( Xt ) / Xt )
                     )
             #integrate over orientation
@@ -138,10 +138,10 @@ class EllipsoidalCoreShell(ScatteringModel):
 
         return Fell
 
-    def vol(self, paramValues, compensationExponent = None):                   
-        assert ScatteringModel.vol(self, paramValues)                          
-        if compensationExponent is None:                                       
-            compensationExponent = self.compensationExponent                   
+    def vol(self, paramValues, compensationExponent = None):
+        assert ScatteringModel.vol(self, paramValues)
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
 
         a = numpy.array((self.a(),))
         b = numpy.array((self.b(),))
@@ -156,8 +156,8 @@ class EllipsoidalCoreShell(ScatteringModel):
             idx = int(self.a.isActive()) + int(self.b.isActive())
             t = paramValues[:, idx]
 
-        v = 4./3 * pi * (a + t) * (b + t)**2                                     
-        return v**compensationExponent          
+        v = 4./3 * pi * (a + t) * (b + t)**2
+        return v**compensationExponent
 
 EllipsoidalCoreShell.factory()
 

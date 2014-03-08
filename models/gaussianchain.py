@@ -4,7 +4,7 @@
 import numpy
 from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
-from cutesnake.algorithm import RandomUniform, RandomExponential               
+from cutesnake.algorithm import RandomUniform, RandomExponential
 
 # parameters must not be inf
 
