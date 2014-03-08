@@ -23,7 +23,8 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         if self.paramCount() == 0 and paramValues is None:
             return True
         # by definition, no vector input, would require complex model code
-        return len(paramValues) == self.paramCount()
+        # compare the flat length
+        return paramValues.size == self.paramCount()
 
     @abstractmethod
     def ff(self, dataset, paramValues = None):
@@ -31,7 +32,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         if self.paramCount() == 0 or paramValues is None:
             return True
         # by definition, no vector input, would require complex model code
-        return len(paramValues) == self.paramCount()
+        return paramValues.size == self.paramCount()
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
