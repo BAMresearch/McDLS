@@ -1,6 +1,30 @@
 # -*- coding: utf-8 -*-
 # mcsas/sasdata.py
 
+"""
+Represents data associated with a measurement by small angle scattering (SAS).
+Some examples and tests.
+
+>>> import numpy
+>>> testdata = numpy.random.rand(4,4)
+>>> testtitle = "some title"
+>>> from sasdata import SASData
+
+Testing copy()
+>>> first = SASData(testtitle, testdata)
+>>> first.title == testtitle
+True
+>>> numpy.all(first.origin == testdata)
+True
+>>> second = first.copy()
+>>> second.title == testtitle
+True
+>>> numpy.all(second.origin == testdata)
+True
+>>> first == second
+True
+"""
+
 import os # Miscellaneous operating system interfaces
 import logging
 import numpy as np # For arrays
@@ -41,7 +65,7 @@ class SASData(DataSet, DisplayMixin):
     def setFilename(self, fn):
         """Stores the absolute path to this data file.
         Should be reviewed when data sets can be created from several files."""
-        if not os.path.isfile(fn):
+        if fn is None or not os.path.isfile(fn):
             return
         self._filename = os.path.abspath(fn)
 
@@ -62,6 +86,11 @@ class SASData(DataSet, DisplayMixin):
         sasData = cls(sasFile.name, sasFile.data)
         sasData.setFilename(sasFile.filename)
         return sasData
+
+    def copy(self):
+        cpy = SASData(self.title, self.origin)
+        cpy.setFilename(self.filename)
+        return cpy
 
     def q(self):
         return self.origin[:, 0]
@@ -90,6 +119,14 @@ class SASData(DataSet, DisplayMixin):
                                               abs(np.diff(self.q()).min()))
                                          ])
         self.prepareUncertainty()
+
+    def __eq__(self, other):
+        return (np.all(self.origin == other.origin)
+                and self.title == other.title
+                and self.filename == other.filename)
+
+    def __neq__(self, other):
+        return not self.__eq__(other)
 
     def sphericalSizeEst(self):
         return self._sizeEst
@@ -155,5 +192,9 @@ class SASData(DataSet, DisplayMixin):
             cutIndices(psi(validIndices) <= max(psiBounds))
 
         return validIndices
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
