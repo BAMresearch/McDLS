@@ -43,7 +43,7 @@ class CylindersIsotropic(ScatteringModel):
 
     def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
-        q = dataset[:, 0]
+        q = dataset.q
         radius = numpy.array((self.radius(),))
         length = numpy.array((self.length(),))
         psiAngleDivisions = numpy.array((self.psiAngleDivisions(),))
@@ -103,6 +103,7 @@ CylindersIsotropic.factory()
 
 if __name__ == "__main__":
     from cutesnake.datafile import PDHFile, AsciiFile
+    # FIXME: use SASData.load() instead
     pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
     model = CylindersIsotropic()
     model.radius.setValue(1.)

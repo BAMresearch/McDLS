@@ -52,7 +52,7 @@ class GaussianChain(ScatteringModel):
 
     def formfactor(self, dataset, paramValues = None):
         # vectorized data and arguments
-        q = dataset[:, 0]
+        q = dataset.q
         rg = numpy.array((self.rg(),))
         if self.rg.isActive():
             rg = paramValues[:, 0]
@@ -98,6 +98,7 @@ GaussianChain.factory()
 
 if __name__ == "__main__":
     from cutesnake.datafile import PDHFile, AsciiFile
+    # FIXME: use SASData.load() instead
     pf = PDHFile("../brianpauw/sasfit_gauss2-5-1.5-2-1.dat")
     model = GaussianChain()
     model.rg.setValue(5.)

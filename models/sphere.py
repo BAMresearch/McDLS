@@ -53,7 +53,7 @@ class Sphere(ScatteringModel):
         r = numpy.array((self.radius(),))
         if self.radius.isActive():
             r = paramValues[:, 0]
-        q = dataset[:, 0]
+        q = dataset.q
         qr = numpy.outer(q, r)
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         return result

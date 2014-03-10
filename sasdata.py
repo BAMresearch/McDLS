@@ -40,7 +40,6 @@ class SASData(DataSet, DisplayMixin):
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
-    _prepared = None
 
     @staticmethod
     def displayDataDescr():
@@ -92,11 +91,25 @@ class SASData(DataSet, DisplayMixin):
         cpy.setFilename(self.filename)
         return cpy
 
+    @property
     def q(self):
+        """Q-Vector at which the intensities are measured."""
         return self.origin[:, 0]
 
+    @property
     def i(self):
+        """Measured intensity at q."""
         return self.origin[:, 1]
+
+    @property
+    def e(self):
+        """Uncertainty or Error of the intensity at q."""
+        return self.origin[:, 2]
+
+    @property
+    def p(self):
+        """Psi-Vector."""
+        return self.origin[:, 3]
 
     @property
     def is2d(self):
@@ -105,20 +118,39 @@ class SASData(DataSet, DisplayMixin):
         return self.origin.shape[1] > 3 # psi column is present
 
     @property
-    def prepared(self):
-        return self._prepared
-
-    @prepared.setter
-    def prepared(self, data):
-        self._prepared = data
+    def hasError(self):
+        """Returns True if this data set has an error bar for its
+        intensities."""
+        return self.origin.shape[1] > 2
 
     def __init__(self, *args):
         DataSet.__init__(self, *args)
-        self._sizeEst = np.pi / np.array([self.q().max(),
-                                          min(abs(self.q().min()),
-                                              abs(np.diff(self.q()).min()))
+        self._sizeEst = np.pi / np.array([self.q.max(),
+                                          min(abs(self.q.min()),
+                                              abs(np.diff(self.q).min()))
                                          ])
-        self.prepareUncertainty()
+        self._prepareUncertainty()
+
+    def _prepareUncertainty(self):
+        self._uncertainty = self.minUncertainty() * self.i
+        minUncertaintyPercent = self.minUncertainty() * 100.
+        if not self.hasError:
+            logging.warning("No error column provided! Using {}% of intensity."
+                            .format(minUncertaintyPercent))
+        else:
+            count = sum(self._uncertainty > self.e)
+            if count > 0:
+                logging.warning("Minimum uncertainty ({}% of intensity) set "
+                                "for {} datapoints.".format(
+                                minUncertaintyPercent, count))
+            self._uncertainty = np.maximum(self._uncertainty, self.e)
+
+    def minUncertainty(self):
+        return self._emin
+
+    @property
+    def uncertainty(self):
+        return self._uncertainty
 
     def __eq__(self, other):
         return (np.all(self.origin == other.origin)
@@ -131,65 +163,38 @@ class SASData(DataSet, DisplayMixin):
     def sphericalSizeEst(self):
         return self._sizeEst
 
-    def minUncertainty(self):
-        return self._emin
-
-    def prepareUncertainty(self):
-        self._uncertainty = self.minUncertainty() * self.i()
-        minUncertaintyPercent = self.minUncertainty() * 100.
-        if self.origin.shape[1] < 3:
-            logging.warning("No error column provided! Using {}% of intensity."
-                            .format(minUncertaintyPercent))
-        else:
-            count = sum(self._uncertainty > self.origin[:, 2])
-            if count > 0:
-                logging.warning("Minimum uncertainty ({}% of intensity) set "
-                                "for {} datapoints.".format(
-                                minUncertaintyPercent, count))
-            self._uncertainty = np.maximum(self._uncertainty, self.origin[:, 2])
-
-    def uncertainty(self):
-        return self._uncertainty
-
     def clip(self, *args, **kwargs):
-        self.prepared = self.origin[
-                self.clipMask(self.origin, *args, **kwargs)]
+        """Returns the clipped dataset."""
+        clipped = self.copy()
+        clipped.setOrigin(self.origin[
+                self.clipMask(*args, **kwargs)])
+        return clipped
 
-    @staticmethod
-    def clipMask(data, qBounds = None, psiBounds = None,
-                        maskNegativeInt = False, maskZeroInt = False):
+    def clipMask(self, qBounds = None, psiBounds = None,
+                       maskNegativeInt = False, maskZeroInt = False):
         """If q and/or psi limits are supplied in self.Parameters,
         clips the Dataset to within the supplied limits. Copies data to
         :py:attr:`self.FitData` if no limits are set.
         """
-        # some shortcut functions, not performance critical as this function
-        # is called rarely
-        def q(indices):
-            return data[indices, 0]
-        def intensity(indices):
-            return data[indices, 1]
-        def psi(indices):
-            return data[indices, 3]
-
         # init indices: index array is more flexible than boolean masks
-        validIndices = np.where(np.isfinite(data[:, 0]))[0]
+        validIndices = np.where(np.isfinite(self.q))[0]
         def cutIndices(mask):
             validIndices = validIndices[mask]
 
         # Optional masking of negative intensity
         if maskZeroInt:
             # FIXME: compare with machine precision (EPS)?
-            cutIndices(intensity(validIndices) == 0.0)
+            cutIndices(self.i[validIndices] == 0.0)
         if maskNegativeInt:
-            cutIndices(intensity(validIndices) > 0.0)
+            cutIndices(self.i[validIndices] > 0.0)
         if isList(qBounds):
             # excluding the lower q limit may prevent q = 0 from appearing
-            cutIndices(q(validIndices) > min(qBounds))
-            cutIndices(q(validIndices) <= max(qBounds))
-        if isList(psiBounds) and data.shape[1] > 3: # psi in last column
+            cutIndices(self.q[validIndices] > min(qBounds))
+            cutIndices(self.q[validIndices] <= max(qBounds))
+        if isList(psiBounds) and self.is2d:
             # excluding the lower q limit may prevent q = 0 from appearing
-            cutIndices(psi(validIndices) > min(psiBounds))
-            cutIndices(psi(validIndices) <= max(psiBounds))
+            cutIndices(self.p[validIndices] > min(psiBounds))
+            cutIndices(self.p[validIndices] <= max(psiBounds))
 
         return validIndices
 

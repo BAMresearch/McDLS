@@ -58,7 +58,7 @@ class SphericalCoreShell(ScatteringModel):
 
 
         # vectorized data and arguments
-        q = dataset[:, 0]
+        q = dataset.q
         radius = numpy.array((self.radius(),))
         t = numpy.array((self.t(),))
         eta_c = numpy.array((self.eta_c(),))
@@ -138,6 +138,7 @@ if __name__ == "__main__":
     sys.path.append('../cutesnake')
     from cutesnake.datafile import PDHFile, AsciiFile
     from models.SphericalCoreShell import SphericalCoreShell
+    # FIXME: use SASData.load() instead
     pf = PDHFile("testData/SphCoreShell_R100_dR150_c3p16_s2p53.csv")
     model = SphericalCoreShell()
     model.radius.setValue(100.)

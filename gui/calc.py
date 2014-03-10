@@ -82,8 +82,8 @@ class Calculator(object):
         if self.nolog:
             log.removeHandler(oldHandler)
         self._algo.figureTitle = os.path.basename(self.basefn)
-        self._algo.calc(Q = dataset.q(), I = dataset.i(),
-                        IError = dataset.uncertainty(), **mcargs)
+        self._algo.calc(Q = dataset.q, I = dataset.i,
+                        IError = dataset.uncertainty, **mcargs)
         if self.nolog:
             log.addHandler(oldHandler)
 
@@ -163,7 +163,7 @@ class Calculator(object):
         config.set(sectionName, "model", self.model.name())
         # We don't have to do anything with these yet, but storing them for now:
         config.set(sectionName, "Q limits", 
-                np.array([np.min(dataset.q()),np.max(dataset.q())]) )
+                np.array([np.min(dataset.q),np.max(dataset.q)]) )
 
         sectionName = "Model Settings"
         config.add_section(sectionName)
