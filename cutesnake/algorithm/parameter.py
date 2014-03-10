@@ -278,6 +278,11 @@ class ParameterBase(object):
         """
         raise NotImplementedError
 
+    def __call__(self):
+        """Shortcut for Parameter.value().
+        For instances only (usually in model implementation)."""
+        return self.value()
+
 class ParameterBoolean(ParameterBase):
     @classproperty
     @classmethod

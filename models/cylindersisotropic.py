@@ -41,23 +41,21 @@ class CylindersIsotropic(ScatteringModel):
         self.radius.setValueRange((0.1, 1e3))
         self.length.setValueRange((1, numpy.inf))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
         q = dataset[:, 0]
-        radius = numpy.array((self.radius.value(),))
-        length = numpy.array((self.length.value(),))
-        psiAngleDivisions = numpy.array((self.psiAngleDivisions.value(),))
+        radius = numpy.array((self.radius(),))
+        length = numpy.array((self.length(),))
+        psiAngleDivisions = numpy.array((self.psiAngleDivisions(),))
         #unused:
-        psiAngle = numpy.array((self.psiAngle.value(),))
+        psiAngle = numpy.array((self.psiAngle(),))
 
         if self.radius.isActive():
             radius = paramValues[:, 0]
         if self.length.isActive():
             idx = int(self.radius.isActive())
             length = paramValues[:, idx]
-        #remaining parameters are never active fitting parameters    
+        #remaining parameters are never active fitting parameters
 
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
         #used in the equation for a cylinder from Pedersen, 1997
@@ -66,12 +64,12 @@ class CylindersIsotropic(ScatteringModel):
         psiRange=self.psiAngle.valueRange()
         psi=numpy.linspace(
                 psiRange[0],psiRange[1],psiAngleDivisions)
-        
+
         fsplit=zeros((len(q),len(psi)))
         Fcyl=zeros((len(q),len(radius)))
         for ri in range(len(radius)):
             radi=radius[ri%len(radius)]
-            if self.lengthIsAspect.value():
+            if self.lengthIsAspect():
                 halfLength=radi*length[ri%len(length)]
             else:
                 halfLength=0.5*length[ri%len(length)]
@@ -83,24 +81,23 @@ class CylindersIsotropic(ScatteringModel):
 
         return Fcyl
 
-    def vol(self, paramValues, compensationExponent = None):                   
-        assert ScatteringModel.vol(self, paramValues)                          
-        if compensationExponent is None:                                       
-            compensationExponent = self.compensationExponent                   
+    def volume(self, paramValues, compensationExponent = None):
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
         idx = 0
-        radius=paramValues[:,0]                                                
+        radius=paramValues[:,0]
         if self.length.isActive():
-            idx+=1                                                             
-            length =paramValues[:,idx]                                         
-        else:                                                                  
-            length=self.length.value()                                         
-        if self.lengthIsAspect.value():
+            idx+=1
+            length =paramValues[:,idx]
+        else:
+            length=self.length()
+        if self.lengthIsAspect():
             halfLength=radius*length
         else:
             halfLength=length/2.
 
-        v = pi*radius**2*(halfLength*2)                                     
-        return v**compensationExponent          
+        v = pi*radius**2*(halfLength*2)
+        return v**compensationExponent
 
 CylindersIsotropic.factory()
 
@@ -116,7 +113,7 @@ if __name__ == "__main__":
     model.psiAngle.setActive(False)
     model.psiAngleDivisions.setValue(303)
     model.psiAngleDivisions.setActive(False)
-    intensity = (model.ff(pf.data, None).reshape(-1))**2
+    intensity = (model.formfactor(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)

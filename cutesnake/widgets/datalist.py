@@ -41,7 +41,7 @@ class DataItem(QTreeWidgetItem):
     @staticmethod
     def hash32(data):
         """Avoids OverFlowError at setData() with PySide on MacOS."""
-        return hash(data) & 0xffffffff
+        return hash(data) & 0x7fffffff
 
     @property
     def isRemovable(self):

@@ -35,24 +35,22 @@ class Sphere(ScatteringModel):
     #    elif len(bounds) > 2:
     #        bounds = bounds[0:2]
     #    logging.info("Updating lower and upper contribution parameter bounds "
-    #                 "to: ({0}, {1}).".format(min(bounds), max(bounds))) 
-    #    #logging.info changed from bounds[0] and bounds[1] to reflect better 
+    #                 "to: ({0}, {1}).".format(min(bounds), max(bounds)))
+    #    #logging.info changed from bounds[0] and bounds[1] to reflect better
     #    #what is done below:
     #    self.radius.setValueRange((min(bounds), max(bounds)))
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        r = numpy.array((self.radius.value(),))
+        r = numpy.array((self.radius(),))
         if self.radius.isActive():
             r = paramValues[:, 0]
         result = (pi*4./3.) * r**(3. * compensationExponent)
         return result
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-        r = numpy.array((self.radius.value(),))
+    def formfactor(self, dataset, paramValues):
+        r = numpy.array((self.radius(),))
         if self.radius.isActive():
             r = paramValues[:, 0]
         q = dataset[:, 0]

@@ -53,20 +53,18 @@ class EllipsoidalCoreShell(ScatteringModel):
         self.b.setValueRange((1., 1e4))
         self.t.setValueRange((0.1, 1e3))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         def j1(x):
             return ( sin(x) - x * cos(x) ) / (x**2)
 
         def xc(Q, a, b, mu):
-            sfact = sqrt( 
+            sfact = sqrt(
                     a**2 * mu**2 + b**2 * (1 - mu**2)
                     )
             return numpy.outer(Q, sfact)
 
         def xt(Q, a, b, t, mu):
-            sfact = sqrt( 
+            sfact = sqrt(
                     (a + t)**2 * mu**2 + (b + t)**2 * (1 - mu**2)
                     )
             return numpy.outer(Q, sfact)
@@ -74,13 +72,13 @@ class EllipsoidalCoreShell(ScatteringModel):
 
         # vectorized data and arguments
         q = dataset[:, 0]
-        a = numpy.array((self.a.value(),))
-        b = numpy.array((self.b.value(),))
-        t = numpy.array((self.t.value(),))
-        eta_c = numpy.array((self.eta_c.value(),))
-        eta_s = numpy.array((self.eta_s.value(),))
-        eta_sol = numpy.array((self.eta_sol.value(),))
-        intDiv = numpy.array((self.intDiv.value(),))
+        a = numpy.array((self.a(),))
+        b = numpy.array((self.b(),))
+        t = numpy.array((self.t(),))
+        eta_c = numpy.array((self.eta_c(),))
+        eta_s = numpy.array((self.eta_s(),))
+        eta_sol = numpy.array((self.eta_sol(),))
+        intDiv = numpy.array((self.intDiv(),))
         #unused:
 
         idx = 0
@@ -102,17 +100,17 @@ class EllipsoidalCoreShell(ScatteringModel):
         if self.eta_sol.isActive():
             eta_sol = paramValues[:, idx]
             idx += 1
-        #remaining parameters are never active fitting parameters    
+        #remaining parameters are never active fitting parameters
 
         dToR = pi / 180. #degrees to radian
         intVal = numpy.linspace(0., 1., intDiv)
-        
+
         Vc = 4./3 * pi * a * b **2
         Vt = 4./3 * pi * (a + t) * (b + t) ** 2
-        VRatio = Vc / Vt 
+        VRatio = Vc / Vt
         if not isinstance(VRatio, numpy.ndarray):
             VRatio = numpy.array(VRatio)
-        
+
         if paramValues is None:
             Fell=zeros((len(q), 1 ))
         else:
@@ -127,10 +125,10 @@ class EllipsoidalCoreShell(ScatteringModel):
             etasol = eta_sol[ ri % len(eta_sol) ]
             Xc = xc(q, arad, brad, intVal)
             Xt = xt(q, arad, brad, ti, intVal)
-            fsplit = ( 
-                    (etac - etas) * VRatio[ri % len(VRatio)] * 
-                    ( 3 * j1( Xc ) / Xc ) + 
-                    (etas - etasol) * 1. * 
+            fsplit = (
+                    (etac - etas) * VRatio[ri % len(VRatio)] *
+                    ( 3 * j1( Xc ) / Xc ) +
+                    (etas - etasol) * 1. *
                     ( 3 * j1( Xt ) / Xt )
                     )
             #integrate over orientation
@@ -138,14 +136,13 @@ class EllipsoidalCoreShell(ScatteringModel):
 
         return Fell
 
-    def vol(self, paramValues, compensationExponent = None):                   
-        assert ScatteringModel.vol(self, paramValues)                          
-        if compensationExponent is None:                                       
-            compensationExponent = self.compensationExponent                   
+    def volume(self, paramValues, compensationExponent = None):
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
 
-        a = numpy.array((self.a.value(),))
-        b = numpy.array((self.b.value(),))
-        t = numpy.array((self.t.value(),))
+        a = numpy.array((self.a(),))
+        b = numpy.array((self.b(),))
+        t = numpy.array((self.t(),))
 
         if self.a.isActive():
             a = paramValues[:, 0]
@@ -156,8 +153,8 @@ class EllipsoidalCoreShell(ScatteringModel):
             idx = int(self.a.isActive()) + int(self.b.isActive())
             t = paramValues[:, idx]
 
-        v = 4./3 * pi * (a + t) * (b + t)**2                                     
-        return v**compensationExponent          
+        v = 4./3 * pi * (a + t) * (b + t)**2
+        return v**compensationExponent
 
 EllipsoidalCoreShell.factory()
 
@@ -185,7 +182,7 @@ if __name__ == "__main__":
     model.eta_sol.setActive(False)
     model.intDiv.setValue(100)
     model.intDiv.setActive(False)
-    intensity = (model.ff(pf.data, None).reshape(-1))**2
+    intensity = (model.formfactor(pf.data, None).reshape(-1))**2
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     #normalize

@@ -7,7 +7,7 @@ import numpy
 from numpy import pi
 from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
-from cutesnake.algorithm import RandomUniform, RandomExponential               
+from cutesnake.algorithm import RandomUniform, RandomExponential
 
 # parameters must not be inf
 
@@ -104,7 +104,7 @@ vectorizedPcs = numpy.vectorize(calcPcs)
 class Kholodenko(ScatteringModel):
     r"""Form factor of a worm-like structure after [Kholodenko93]_
 
-    .. [Kholodenko93] `A. L. Kholodenko. Analytical calculation of the 
+    .. [Kholodenko93] `A. L. Kholodenko. Analytical calculation of the
         scattering function for polymers of arbitrary flexibility using the
         dirac propagator. Macromolecules, 26:4179–4183, 1993.
         <http://dx.doi.org/10.1021/ma00068a017>`_
@@ -151,19 +151,17 @@ class Kholodenko(ScatteringModel):
                          "to: ({0}, {1}).".format(bounds[0], bounds[1]))
             self.radius.valueRange = (min(bounds), max(bounds))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
         q = dataset[:, 0]
-        radius = numpy.array((self.radius.value(),))
+        radius = numpy.array((self.radius(),))
         if self.radius.isActive():
             radius = paramValues[:, 0]
-        lenKuhn = numpy.array((self.lenKuhn.value(),))
+        lenKuhn = numpy.array((self.lenKuhn(),))
         if self.lenKuhn.isActive():
             idx = int(self.radius.isActive())
             lenKuhn = paramValues[:, idx]
-        lenContour = numpy.array((self.lenContour.value(),))
+        lenContour = numpy.array((self.lenContour(),))
         if self.lenContour.isActive():
             idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
             lenContour = paramValues[:, idx]
@@ -181,14 +179,13 @@ class Kholodenko(ScatteringModel):
             logging.warning("\n".join(["numpy.quad integration messages: "] + list(LASTMSG)))
         return p0 * pcs # FIXME: must not be squared!
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        radius = numpy.array((self.radius.value(),))
+        radius = numpy.array((self.radius(),))
         if self.radius.isActive():
             radius = paramValues[:, 0]
-        lenContour = numpy.array((self.lenContour.value(),))
+        lenContour = numpy.array((self.lenContour(),))
         if self.lenContour.isActive():
             idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
             lenContour = paramValues[:, idx]
@@ -210,7 +207,7 @@ if __name__ == "__main__":
     model.lenKuhn.setActive(False)
     model.lenContour.setValue(1000.)
     model.lenContour.setActive(False)
-    intensity = model.ff(pf.data, None).reshape(-1)**2.
+    intensity = model.formfactor(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)

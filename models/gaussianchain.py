@@ -4,7 +4,7 @@
 import numpy
 from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
-from cutesnake.algorithm import RandomUniform, RandomExponential               
+from cutesnake.algorithm import RandomUniform, RandomExponential
 
 # parameters must not be inf
 
@@ -50,23 +50,21 @@ class GaussianChain(ScatteringModel):
         self.etas.setValueRange((0.1, 10.))
         self.k.setValueRange((0.1, 10.))
 
-    def ff(self, dataset, paramValues = None):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues = None):
         # vectorized data and arguments
         q = dataset[:, 0]
-        rg = numpy.array((self.rg.value(),))
+        rg = numpy.array((self.rg(),))
         if self.rg.isActive():
             rg = paramValues[:, 0]
-        bp = numpy.array((self.bp.value(),))
+        bp = numpy.array((self.bp(),))
         if self.bp.isActive():
             idx = int(self.rg.isActive())
             bp = paramValues[:, idx]
-        etas = numpy.array((self.etas.value(),))
+        etas = numpy.array((self.etas(),))
         if self.etas.isActive():
             idx = int(self.rg.isActive()) + int(self.bp.isActive())
             etas = paramValues[:, idx]
-        k = numpy.array((self.k.value(),))
+        k = numpy.array((self.k(),))
         if self.k.isActive():
             idx = int(self.rg.isActive()) + int(self.bp.isActive()) + int(self.etas.isActive())
             k = paramValues[:, idx]
@@ -80,14 +78,13 @@ class GaussianChain(ScatteringModel):
             result[i] = res * beta
         return result
 
-    def vol(self, paramValues, compensationExponent = None):
-        assert ScatteringModel.vol(self, paramValues)
+    def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        rg = numpy.array((self.rg.value(),))
+        rg = numpy.array((self.rg(),))
         if self.rg.isActive():
             rg = paramValues[:, 0]
-        k = numpy.array((self.k.value(),))
+        k = numpy.array((self.k(),))
         if self.k.isActive():
             idx = sum([int(p.isActive()) for p in self.rg, self.bp, self.etas])
             k = paramValues[:, idx]
@@ -111,7 +108,7 @@ if __name__ == "__main__":
     model.etas.setActive(False)
     model.k.setValue(0.08)
     model.k.setActive(False)
-    intensity = model.ff(pf.data, None).reshape(-1)**2.
+    intensity = model.formfactor(pf.data, None).reshape(-1)**2.
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)

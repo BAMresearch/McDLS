@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # models/cylinders.py
 
-"""This model is a special case of the radially isotropic cylinders, where 
-the cylinders are also slightly tilted out of the plane parallel to the 
-detector. This out of plane tilt is described using a Gaussian. The 
+"""This model is a special case of the radially isotropic cylinders, where
+the cylinders are also slightly tilted out of the plane parallel to the
+detector. This out of plane tilt is described using a Gaussian. The
 integration over this tilt angle is done over several segments of the Gaussian
 PDF, with each segment occupying an equal cumulative probability. The centroid
-value used for the integration is the mass-weighted centre. 
+value used for the integration is the mass-weighted centre.
 """
 
 import numpy, scipy, scipy.special, scipy.stats
@@ -37,7 +37,7 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
             Parameter("phiDistWidth", 10.0,
                     displayName = "out-of-plane axis distribution width",
                     #with 90 degrees fully out-of-plane (parallel to beam):
-                    valueRange = (0.1, 90.1), suffix = "deg."), 
+                    valueRange = (0.1, 90.1), suffix = "deg."),
             Parameter("phiDistDivisions", 9.,
                     displayName = "out of plane integration divisions",
                     valueRange = (1, numpy.inf), suffix = "-"),
@@ -55,17 +55,15 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
         self.radius.setValueRange((0.1, 1e3))
         self.aspect.setValueRange((1, 20))
 
-    def ff(self, dataset, paramValues):
-        assert ScatteringModel.ff(self, dataset, paramValues)
-
+    def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
         q = dataset[:, 0]
-        radius = numpy.array((self.radius.value(),))
-        aspect = numpy.array((self.aspect.value(),))
-        psiAngle = numpy.array((self.psiAngle.value(),))
-        psiAngleDivisions = numpy.array((self.psiAngleDivisions.value(),))
-        phiDistWidth = numpy.array((self.phiDistWidth.value(),))
-        phiDistDivisions = numpy.array((self.phiDistDivisions.value(),))
+        radius = numpy.array((self.radius(),))
+        aspect = numpy.array((self.aspect(),))
+        psiAngle = numpy.array((self.psiAngle(),))
+        psiAngleDivisions = numpy.array((self.psiAngleDivisions(),))
+        phiDistWidth = numpy.array((self.phiDistWidth(),))
+        phiDistDivisions = numpy.array((self.phiDistDivisions(),))
 
         if self.radius.isActive():
             radius = paramValues[:, 0]
@@ -94,7 +92,7 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
         phiCtr=scipy.stats.norm.interval(x[:-1]+diff(x)/2.)[1]
         #each of these integration bins is equally probable. Can integrate
         #using mean function.
-        
+
         fsplit=zeros((len(q),len(psi)))
         Fcyl=zeros((len(q),len(radius)))
         for ri in range(len(radius)):
@@ -105,10 +103,10 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
             #ONLY FOR RADIAL SYMMETRY, NOT SPHERICAL.
             for pIdx in range(len(phiCtr)):
                 #TODO: Implementing from equations 3.263 in SASfit manual
-                #leave the cylinder axis arbitrary psi rotation out of it for now. 
+                #leave the cylinder axis arbitrary psi rotation out of it for now.
                 #calculate cos(gamma)
                 #since we do not want to describe theta, we use an angle
-                #omega describing cylinder axis projection in x-z plane (=psi), 
+                #omega describing cylinder axis projection in x-z plane (=psi),
                 #combined with
                 #phi describing cylinder axis projection onto x-y plane
                 #theta=omega/cos(phi) (probably)
@@ -126,20 +124,19 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
 
         return Fcyl
 
-    def vol(self, paramValues, compensationExponent = None):                   
-        assert ScatteringModel.vol(self, paramValues)                          
-        if compensationExponent is None:                                       
-            compensationExponent = self.compensationExponent                   
+    def volume(self, paramValues, compensationExponent = None):
+        if compensationExponent is None:
+            compensationExponent = self.compensationExponent
         idx = 0
-        radius=paramValues[:,0]                                                
-        if self.aspect.isActive():                                               
+        radius=paramValues[:,0]
+        if self.aspect.isActive():
             idx += 1
             aspect = paramValues[:,idx]
-        else:                                                                  
-            aspect = self.aspect.value()                                         
+        else:
+            aspect = self.aspect()
 
-        v = pi*radius**2*(2*radius*aspect)                                     
-        return v**compensationExponent          
+        v = pi*radius**2*(2*radius*aspect)
+        return v**compensationExponent
 
 CylindersRadiallyIsotropicTilted.factory()
 
@@ -155,7 +152,7 @@ if __name__ == "__main__":
     model.psiAngle.setActive(False)
     model.psiAngleDivisions.setValue(303)
     model.psiAngleDivisions.setActive(False)
-    intensity = model.ff(pf.data, None).reshape(-1)
+    intensity = model.formfactor(pf.data, None).reshape(-1)
     q = pf.data[:, 0]
     oldInt = pf.data[:, 1]
     delta = abs(oldInt - intensity)

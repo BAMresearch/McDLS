@@ -17,21 +17,35 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         return arg
 
     @abstractmethod
-    def vol(self, paramValues, compensationExponent = None):
+    def volume(self, paramValues, compensationExponent = None):
         """Calculates the volume of this model, taking compensationExponent
-        into account from input or preset parameters."""
-        if self.paramCount() == 0 and paramValues is None:
-            return True
+        into account from input or preset parameters.
+        Reimplement this for new models."""
+        raise NotImplemented
+
+    def vol(self, paramValues, compensationExponent = None):
+        if paramValues is None:
+            assert self.paramCount() == 0
         # by definition, no vector input, would require complex model code
-        return len(paramValues) == self.paramCount()
+        # compare the flat length
+        assert paramValues.size == self.paramCount()
+        # calling user provided custom model
+        return self.volume(paramValues, compensationExponent = None)
 
     @abstractmethod
+    def formfactor(self, dataset, paramValues = None):
+        """Calculates the Rayleigh function of this model.
+        Reimplement this for new models."""
+        raise NotImplemented
+
     def ff(self, dataset, paramValues = None):
-        """Calculates the Rayleigh function of this model."""
-        if self.paramCount() == 0 or paramValues is None:
-            return True
+        if paramValues is None:
+            assert self.paramCount() == 0
         # by definition, no vector input, would require complex model code
-        return len(paramValues) == self.paramCount()
+        # compare the flat length
+        assert paramValues.size == self.paramCount()
+        # calling user provided custom model
+        return self.formfactor(dataset, paramValues)
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
