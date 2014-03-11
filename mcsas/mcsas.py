@@ -208,7 +208,9 @@ class McSAS(AlgorithmBase):
 
     """
 
-    dataset = None # user provided data to work with
+    # user provided data to work with
+    dataOriginal = None
+    dataPrepared = None
     model = None
     result = None
     figureTitle = None # FIXME: put this elsewhere, works for now
@@ -232,10 +234,12 @@ class McSAS(AlgorithmBase):
         # set supplied kwargs and passing on
         self.setParameter(kwargs)
         # apply q and psi limits and populate self.FitData
-        self.dataset.clip(McSASParameters.qBounds,
-                          McSASParameters.psiBounds,
-                          McSASParameters.maskNegativeInt,
-                          McSASParameters.maskZeroInt)
+        if self.dataOriginal is not None:
+            self.dataPrepared = self.dataOriginal.clip(
+                              McSASParameters.qBounds,
+                              McSASParameters.psiBounds,
+                              McSASParameters.maskNegativeInt,
+                              McSASParameters.maskZeroInt)
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
@@ -260,7 +264,7 @@ class McSAS(AlgorithmBase):
             return
         self.histogram()
 
-        if self.dataset.is2d:
+        if self.dataPrepared.is2d:
             # 2D mode, regenerate intensity
             # TODO: test 2D mode
             self.gen2DIntensity()
@@ -307,12 +311,12 @@ class McSAS(AlgorithmBase):
         # selection of intensity is shorter this way: dataset[validIndices]
         # enforce a certain shape here (removed ReshapeFitdata)
         data = numpy.vstack([d for d in data if d is not None]).T
+        dataset = SASData("SAS data provided", data)
         if isOriginal:
-            self.dataset = SASData("SAS data provided", data)
+            self.dataOriginal = dataset
         else:
-            self.dataset = SASData("SAS data provided", None)
-            self.dataset.prepared = data
-        McSASParameters.contribParamBounds = list(self.dataset.sphericalSizeEst())
+            self.dataPrepared = dataset
+        McSASParameters.contribParamBounds = list(dataset.sphericalSizeEst())
 
     def setParameter(self, kwargs):
         """Sets the supplied Parameters given in keyword-value pairs for known
@@ -453,7 +457,7 @@ class McSAS(AlgorithmBase):
         (*numReps*) of times. If convergence is not achieved, it will try 
         again for a maximum of *maxRetries* attempts.
         """
-        data = self.dataset.prepared
+        data = self.dataPrepared
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
@@ -466,7 +470,7 @@ class McSAS(AlgorithmBase):
         # find out how many values a shape is defined by:
         contributions = zeros((numContribs, self.model.paramCount(), numReps))
         numIter = zeros(numReps)
-        contribIntensity = zeros([1, len(data), numReps])
+        contribIntensity = zeros([1, len(data.q), numReps])
         start = time.time() # for time estimation and reporting
 
         # This is the loop that repeats the MC optimization numReps times,
@@ -520,7 +524,7 @@ class McSAS(AlgorithmBase):
             contribs = contributions, # Rrep
             fitIntensityMean = contribIntensity.mean(axis = 2),
             fitIntensityStd = contribIntensity.std(axis = 2),
-            fitQ = data[:, 0],
+            fitQ = data.q,
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
 
@@ -542,14 +546,14 @@ class McSAS(AlgorithmBase):
             visualising the entire Monte Carlo optimisation procedure for
             presentations.
         """
-        data = self.dataset.prepared
+        data = self.dataPrepared
         prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, self.model.activeParamCount()))
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
         
-        q = data[:, 0]
+        q = data.q
         # generate initial set of spheres
         if size(prior) == 0:
             if McSASParameters.startFromMinimum:
@@ -590,8 +594,8 @@ class McSAS(AlgorithmBase):
         # Optimize the intensities and calculate convergence criterium
         # SMEAR function goes here
         it = self.model.smear(it)
-        intensity = data[:, 1]
-        intError = data[:, 2]
+        intensity = data.i
+        intError = data.e
         sci = intensity.max() / it.max() # init. guess for the scaling factor
         bgi = intensity.min()
         sc, conval = self.optimScalingAndBackground(
@@ -621,8 +625,8 @@ class McSAS(AlgorithmBase):
             #details['priorUnaccepted'] = numpy.array(0)[newaxis]
 
         # start the MC procedure
-        intObs = data[:, 1]
-        intError = data[:, 2]
+        intObs = data.i
+        intError = data.e
         start = time.time()
         numMoves = 0 # tracking the number of moves
         numNotAccepted = 0
@@ -826,10 +830,10 @@ class McSAS(AlgorithmBase):
 
         # data, store it in result too, enables to postprocess later
         # store the model instance too
-        data = self.dataset.prepared
-        q = data[:, 0]
-        intensity = data[:, 1]
-        intError = data[:, 2]
+        data = self.dataPrepared
+        q = data.q
+        intensity = data.i
+        intError = data.e
 
         # loop over each repetition
         for ri in range(numReps):
@@ -996,8 +1000,8 @@ class McSAS(AlgorithmBase):
         numContribs, dummy, numReps = contribs.shape
 
         # load original Dataset
-        data = self.dataset.origin
-        q = data[:, 0]
+        data = self.dataOriginal
+        q = data.q
         # we need to recalculate the result in two dimensions
         kansas = shape(q) # we will return to this shape
         q = q.flatten()
@@ -1019,11 +1023,10 @@ class McSAS(AlgorithmBase):
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
-        validIndices = SASData.clipMask(data,
-                                        McSASParameters.qBounds,
-                                        McSASParameters.psiBounds,
-                                        McSASParameters.maskNegativeInt,
-                                        McSASParameters.maskZeroInt)
+        validIndices = data.clipMask(McSASParameters.qBounds,
+                                     McSASParameters.psiBounds,
+                                     McSASParameters.maskNegativeInt,
+                                     McSASParameters.maskZeroInt)
         intAvg = intAvg[validIndices]
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)
@@ -1118,7 +1121,7 @@ class McSAS(AlgorithmBase):
         # keeps plot window open on windows
         # does not block if another calculation is started
         pickleParams = [p.attributes() for p in self.model.params()]
-        plotArgs = (self.result, self.dataset, pickleParams,
+        plotArgs = (self.result, self.dataPrepared, pickleParams,
                     axisMargin, parameterIdx, self.figureTitle)
         # on Windows the plot figure blocks the app until it is closed
         # -> we have to call matplotlib plot in another thread (1.3.1)
@@ -1219,7 +1222,7 @@ class McSAS(AlgorithmBase):
         partialIntensities = numpy.zeros(
                 (numReps, self.result[0]['fitQ'].shape[0]))
 
-        data = self.dataset.prepared
+        data = self.dataPrepared
         for ri in range(numReps):
             rset = contribs[:, paramIndex, ri]
             validRange = (  (rset > min(valueRange))

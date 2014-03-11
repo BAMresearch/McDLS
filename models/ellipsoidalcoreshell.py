@@ -71,7 +71,7 @@ class EllipsoidalCoreShell(ScatteringModel):
 
 
         # vectorized data and arguments
-        q = dataset[:, 0]
+        q = dataset.q
         a = numpy.array((self.a(),))
         b = numpy.array((self.b(),))
         t = numpy.array((self.t(),))
@@ -166,6 +166,7 @@ if __name__ == "__main__":
     sys.path.append('../cutesnake')
     from cutesnake.datafile import PDHFile, AsciiFile
     from models.EllipsoidalCoreShell import EllipsoidalCoreShell
+    # FIXME: use SASData.load() instead
     pf = PDHFile("testData/EllCoreShell_a100_b150_t500_c3p16_s2p53_sol0.csv")
     model = EllipsoidalCoreShell()
     model.a.setValue(100.)

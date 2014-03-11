@@ -73,7 +73,7 @@ class LMADenseSphere(ScatteringModel):
 
 
         r = paramValues.flatten()
-        q = dataset[:, 0]
+        q = dataset.q
         qr = numpy.outer(q, r)
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         #now we introduce the structure factor

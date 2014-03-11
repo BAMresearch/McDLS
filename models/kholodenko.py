@@ -153,7 +153,7 @@ class Kholodenko(ScatteringModel):
 
     def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
-        q = dataset[:, 0]
+        q = dataset.q
         radius = numpy.array((self.radius(),))
         if self.radius.isActive():
             radius = paramValues[:, 0]
@@ -199,6 +199,7 @@ Kholodenko.factory()
 
 if __name__ == "__main__":
     from cutesnake.datafile import PDHFile, AsciiFile
+    # FIXME: use SASData.load() instead
     pf = PDHFile("sasfit_kho-1-10-1000.dat")
     model = Kholodenko()
     model.radius.setValue(1.)
