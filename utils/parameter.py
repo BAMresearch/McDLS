@@ -95,8 +95,9 @@ class FitParameterBase(ParameterBase):
         if isActive and not selforcls.isActive():
             # set only if there is no histogram defined already
             selforcls.setHistogram(Histogram())
-        else:
+        elif not isActive:
             selforcls.setHistogram(None)
+            
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
