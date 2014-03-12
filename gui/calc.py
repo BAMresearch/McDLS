@@ -54,6 +54,10 @@ class Calculator(object):
         # access the property to change it permanently
         return [getattr(self.model, p.name()) for p in self.model.params()]
 
+    def modelActiveParams(self):
+        # access the property to change it permanently
+        return [getattr(self.model, p.name()) for p in self.model.activeParams()]
+
     def stop(self):
         self._algo.stop = True
 
@@ -114,7 +118,7 @@ class Calculator(object):
                         'mean', 'variance', 'skew', 'kurtosis'):
                 columnNames.append("{0}-{1}".format(weighting, key))
                 stats[columnNames[-1]] = res.get(key, None)
-        pname = self.modelParams()[paramIndex].name()
+        pname = self.modelActiveParams()[paramIndex].name()
         self._writeResultHelper(stats, "stats_"+pname, "distribution statistics",
                                 columnNames, extension = '.csv')
 
