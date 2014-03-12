@@ -94,21 +94,20 @@ class Calculator(object):
         if isList(self._algo.result) and len(self._algo.result):
             res = self._algo.result[0]
             if res is not None:
-                self._writeDistrib(res)
                 self._writeFit(res)
                 self._writeContribs(res)
-                self._writeStatistics()
                 self._algo.plot()
+            # quick hack for now, will get fixed with Parameter design
+            for i, p in enumerate(self.model.activeParams()):
+                res = self._algo.result[i]
+                self._writeDistrib(res, p.name())
+                self._writeStatistics(i)
         else:
             logging.info("No results available!")
 
         log.removeHandler(logFile)
 
-    def _writeStatistics(self):
-        paramIndex = [i for i, p in enumerate(self.model.activeParams())]
-        if not len(paramIndex):
-            return
-        paramIndex = paramIndex[0]
+    def _writeStatistics(self, paramIndex):
         stats = dict()
         columnNames = []
         for weighting in Histogram.availableWeighting():
@@ -128,8 +127,9 @@ class Calculator(object):
             extension = '.csv'
         )
 
-    def _writeDistrib(self, mcResult):
-        self._writeResultHelper(mcResult, "dist", "distributions",
+    def _writeDistrib(self, mcResult, paramName):
+        self._writeResultHelper(mcResult,
+            "dist_"+paramName, "distributions",
             ('histogramXMean', 'histogramXWidth', 'volumeHistogramYMean',
              'volumeHistogramYStd', 'volumeHistogramMinimumRequired',
              'numberHistogramYMean', 'numberHistogramYStd',
