@@ -1225,6 +1225,8 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, paramIndex, ri]
             validRange = (  (rset > min(valueRange))
                           * (rset < max(valueRange)))
+            if not any(validRange):
+                continue # what to do if validRange is empty?
             rset = rset[validRange]
             # compensated volume for each sphere in the set
             vset = volumeFraction[validRange, ri]
@@ -1268,6 +1270,8 @@ class McSAS(AlgorithmBase):
             # BP: this one did not work for multi-parameter models
             # rset = rset[validRange][:, newaxis]
             rset = contribs[validRange,:,ri]
+            if not any(validRange):
+                continue # what to do if validRange is empty?
             # compensated volume for each sphere in the set
             it, vset = self.calcModel(data, rset)
             it = self.model.smear(it)
