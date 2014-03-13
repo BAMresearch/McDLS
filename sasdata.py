@@ -178,23 +178,23 @@ class SASData(DataSet, DisplayMixin):
         """
         # init indices: index array is more flexible than boolean masks
         validIndices = np.where(np.isfinite(self.q))[0]
-        def cutIndices(mask):
+        def cutIndices(validIndices, mask):
             validIndices = validIndices[mask]
 
         # Optional masking of negative intensity
         if maskZeroInt:
             # FIXME: compare with machine precision (EPS)?
-            cutIndices(self.i[validIndices] == 0.0)
+            cutIndices(validIndices,self.i[validIndices] == 0.0)
         if maskNegativeInt:
-            cutIndices(self.i[validIndices] > 0.0)
+            cutIndices(validIndices,self.i[validIndices] > 0.0)
         if isList(qBounds):
             # excluding the lower q limit may prevent q = 0 from appearing
-            cutIndices(self.q[validIndices] > min(qBounds))
-            cutIndices(self.q[validIndices] <= max(qBounds))
+            cutIndices(validIndices,self.q[validIndices] > min(qBounds))
+            cutIndices(validIndices,self.q[validIndices] <= max(qBounds))
         if isList(psiBounds) and self.is2d:
             # excluding the lower q limit may prevent q = 0 from appearing
-            cutIndices(self.p[validIndices] > min(psiBounds))
-            cutIndices(self.p[validIndices] <= max(psiBounds))
+            cutIndices(validIndices,self.p[validIndices] > min(psiBounds))
+            cutIndices(validIndices,self.p[validIndices] <= max(psiBounds))
 
         return validIndices
 
