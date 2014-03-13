@@ -138,11 +138,11 @@ class McSAS(AlgorithmBase):
             all numReps Results (y-axis bar height).
         *numberHistogramYMean*: array
             Number-weighted analogue of the above *volumeHistogramYMean*.
-        *volumeHistogramRepetitionsY*: size array (McSASParameters.histogramBins x numReps)
+        *volumeHistogramRepetitionsY*: size array (self.histogramBins x numReps)
             Volume-weighted particle size distribution bin values for
             each fit repetition (the mean of which is *volumeHistogramYMean*, 
             and the sample standard deviation is *volumeHistogramYStd*).
-        *numberHistogramRepetitionsY*: size array (McSASParameters.histogramBins x numReps)
+        *numberHistogramRepetitionsY*: size array (self.histogramBins x numReps)
             Number-weighted particle size distribution bin values for
             each MC fit repetition.
         *volumeHistogramYStd*: array
@@ -236,10 +236,10 @@ class McSAS(AlgorithmBase):
         # apply q and psi limits and populate self.FitData
         if self.dataOriginal is not None:
             self.dataPrepared = self.dataOriginal.clip(
-                              McSASParameters.qBounds,
-                              McSASParameters.psiBounds,
-                              McSASParameters.maskNegativeInt,
-                              McSASParameters.maskZeroInt)
+                              [self.qMin(), self.qMax()],
+                              [self.psiMin(), self.psiMax()],
+                              self.maskNegativeInt(),
+                              self.maskZeroInt())
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
@@ -269,7 +269,7 @@ class McSAS(AlgorithmBase):
             # TODO: test 2D mode
             self.gen2DIntensity()
 
-        if McSASParameters.doPlot:
+        if self.doPlot():
             self.plot()
 
     def setData(self, kwargs):
@@ -353,11 +353,11 @@ class McSAS(AlgorithmBase):
         """
         # set all parameters to be fitted to the same histogram setup
         for p in self.model.activeParams():
-            p.histogram().binCount = self.histogramBins.value()
+            p.histogram().binCount = self.histogramBins()
             import sys
-            print >>sys.__stderr__, "McSASParameters.histogramXScale '{}'".format(McSASParameters.histogramXScale[:3])
-            p.histogram().scaleX = McSASParameters.histogramXScale[:3]
-            p.histogram().weighting = McSASParameters.histogramWeighting
+            print >>sys.__stderr__, "self.histogramXScale '{}'".format(self.histogramXScale()[:3])
+            p.histogram().scaleX = self.histogramXScale()[:3]
+            p.histogram().weighting = self.histogramWeighting()
 
         # TODO: not sure about the model.updateParamBounds, is it still required here, atm?
         self.model.updateParamBounds(McSASParameters.contribParamBounds)
@@ -461,10 +461,10 @@ class McSAS(AlgorithmBase):
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
-        maxRetries = McSASParameters.maxRetries
-        numContribs = self.numContribs.value()
-        numReps = self.numReps.value()
-        minConvergence = self.convergenceCriterion.value()
+        maxRetries = self.maxRetries()
+        numContribs = self.numContribs()
+        numReps = self.numReps()
+        minConvergence = self.convergenceCriterion()
         if not any([p.isActive() for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
@@ -556,7 +556,7 @@ class McSAS(AlgorithmBase):
         q = data.q
         # generate initial set of spheres
         if size(prior) == 0:
-            if McSASParameters.startFromMinimum:
+            if self.startFromMinimum():
                 for idx, param in enumerate(self.model.params()):
                     mb = min(param.valueRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
@@ -866,7 +866,7 @@ class McSAS(AlgorithmBase):
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
             volumeFraction[:, ri] = (
-                    sc[0] * vsa**2/(vpa * McSASParameters.deltaRhoSquared)
+                    sc[0] * vsa**2/(vpa * self.deltaRhoSquared())
                     ).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
@@ -1023,10 +1023,10 @@ class McSAS(AlgorithmBase):
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
-        validIndices = data.clipMask(McSASParameters.qBounds,
-                                     McSASParameters.psiBounds,
-                                     McSASParameters.maskNegativeInt,
-                                     McSASParameters.maskZeroInt)
+        validIndices = data.clipMask([self.qMin(), self.qMax()],
+                                     [self.psiMin(), self.psiMax()],
+                                     self.maskNegativeInt(),
+                                     self.maskZeroInt())
         intAvg = intAvg[validIndices]
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)

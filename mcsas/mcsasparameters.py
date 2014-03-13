@@ -73,21 +73,23 @@ class McSASParameters(PropertyNames):
     #set old-style defaults
     model = None
     contribParamBounds = ()
-    qBounds = None
-    psiBounds = None
     priors = () # of shape Rrep, to be used as initial guess for
                 # analyse(). It will pass on a Prior to MCFit.
     prior = ()  # of shape Rset, to be used as initial guess for
                 # MCFit function
-    histogramBins = 50
-    histogramXScale = 'log'
-    histogramWeighting = 'volume' # can be "volume" or "number"
-    deltaRhoSquared = 1.0
-    startFromMinimum = False
-    maxRetries = 5
-    maskNegativeInt = False
-    maskZeroInt = False
-    doPlot = False
+
+    #superseded by new style
+    #qBounds = None
+    #psiBounds = None
+    #deltaRhoSquared = 1.0
+    #histogramBins = 50
+    #maxRetries = 5
+    #maskNegativeInt = False
+    #maskZeroInt = False
+    #doPlot = False
+    #startFromMinimum = False
+    #histogramWeighting = 'volume' # can be "volume" or "number"
+    #histogramXScale = 'log'
     
     #new defaults for loading parameters
     parameters = list()
@@ -108,6 +110,7 @@ class McSASParameters(PropertyNames):
                     Parameter(pkey, default,
                         **parDict[pkey])
                     )
+            logging.debug('Parameter {} ingested'.format(pkey))
 
     def __init__(self,**kwargs):
         """initialise the defaults and populate the database with values
