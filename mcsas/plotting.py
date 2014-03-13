@@ -179,7 +179,7 @@ def plotResults(allRes, dataset, params,
     # plot histograms
     for parami in range(len(parameterId)):
         # get data:
-        res = allRes[parameterId[parami]]
+        res = allRes[parami]
         histXLowerEdge = res['histogramXLowerEdge']
         histXMean = res['histogramXMean']
         histXWidth = res['histogramXWidth']

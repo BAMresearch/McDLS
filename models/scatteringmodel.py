@@ -30,7 +30,10 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         # compare the flat length
         assert paramValues.size == self.paramCount()
         # calling user provided custom model
-        return self.volume(paramValues, compensationExponent = None)
+        v = self.volume(paramValues, compensationExponent = None)
+        # volume always returns a single value
+        assert v.size == 1
+        return v
 
     @abstractmethod
     def formfactor(self, dataset, paramValues = None):
@@ -45,7 +48,10 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         # compare the flat length
         assert paramValues.size == self.paramCount()
         # calling user provided custom model
-        return self.formfactor(dataset, paramValues)
+        i = self.formfactor(dataset, paramValues)
+        # there has to be one intensity value for each q-vector
+        assert i.size == dataset.q.size
+        return i
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
