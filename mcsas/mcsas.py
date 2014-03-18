@@ -236,7 +236,7 @@ class McSAS(AlgorithmBase):
                        # set to output file name incl. timestamp, atm
 
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         """
         The constructor, takes keyword-value input Parameters. They can be
         one of the aforementioned parameter keyword-value pairs.
