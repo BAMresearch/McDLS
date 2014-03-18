@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 # mcsas/plotting.py
+"""
+Add docstring
+"""
 
 import numpy # For arrays
-from numpy import (size, log10)
+from numpy import size, log10
 from cutesnake.utils import isList, isString
 from utils.parameter import Parameter
-from mcsasparameters import McSASParameters 
+#from mcsasparameters import McSASParameters 
 
 def plotResults(allRes, dataset, params,
                 axisMargin = 0.3, parameterIdx = None, figureTitle = None):
@@ -22,13 +25,12 @@ def plotResults(allRes, dataset, params,
         # use() gives an error if calling twice
         matplotlib.rcParams['backend'] = 'QT4Agg'
         matplotlib.rcParams['backend.qt4'] = 'PySide'
-    except:
+    except ImportError:
         pass # no pyside
     import matplotlib.font_manager as fm
-    import matplotlib.pyplot as pyplot
     from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
                                    plot, grid, legend, title, xlim, gca,
-                                   close, draw)
+                                   close, colorbar, imshow)
     from pylab import show
 
     fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
@@ -171,7 +173,7 @@ def plotResults(allRes, dataset, params,
                 q.max() * (1 + axisMargin)))
         gca().set_ylim((intensity[intensity != 0].min() * (1 - axisMargin),
                             intensity.max() * (1 + axisMargin) ))
-        leg = legend(loc = 1, fancybox = True, prop = textfont)
+        legend(loc = 1, fancybox = True, prop = textfont)
     title('Measured vs. Fitted intensity',
           fontproperties = textfont, size = 'x-large')
     sizeAxis = list()

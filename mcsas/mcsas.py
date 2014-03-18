@@ -393,12 +393,9 @@ class McSAS(AlgorithmBase):
         for p in self.model.activeParams():
             p.histogram().binCount = self.histogramBins.value()
             import sys
-            print >>sys.__stderr__, "McSASParameters.histogramXScale '{}'".format(McSASParameters.histogramXScale[:3])
+            #print >>sys.__stderr__, "McSASParameters.histogramXScale '{}'".format(McSASParameters.histogramXScale[:3])
             p.histogram().scaleX = McSASParameters.histogramXScale[:3]
             p.histogram().weighting = McSASParameters.histogramWeighting
-
-        # TODO: not sure about the model.updateParamBounds, is it still required here, atm?
-        self.model.updateParamBounds(McSASParameters.contribParamBounds)
 
     def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
             outputIntensity = False):
@@ -431,17 +428,17 @@ class McSAS(AlgorithmBase):
         """
         def csqr(sc, intObs, intCalc, intError):
             """Least-squares intError for use with scipy.optimize.leastsq"""
-            return (intObs - sc[0]*intCalc - sc[1]) / intError
+            return (intObs - sc[0] * intCalc - sc[1]) / intError
         
-        def csqr_nobg(sc, intObs, intCalc, intError):
+        def csqrNoBG(sc, intObs, intCalc, intError):
             """Least-squares intError for use with scipy.optimize.leastsq,
             without background """
-            return (intObs - sc[0]*intCalc) / intError
+            return (intObs - sc[0] * intCalc) / intError
 
-        def csqr_v1(intObs, intCalc, intError):
+        def csqrV1(intObs, intCalc, intError):
             """Least-squares for data with known intError,
             size of parameter-space not taken into account."""
-            return sum(((intObs - intCalc)/intError)**2) / size(intObs)
+            return (((intObs - intCalc) / intError)**2).sum() / size(intObs)
 
         intObs = intObs.flatten()
         intCalc = intCalc.flatten()
@@ -454,28 +451,25 @@ class McSAS(AlgorithmBase):
                 sc, dummySuccess = optimize.leastsq(
                         csqr, sc, args = (intObs, intCalc, intError),
                         full_output = False)
-                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
             else:
                 sc, dummySuccess = optimize.leastsq(
-                        csqr_nobg, sc, args = (intObs, intCalc, intError),
+                        csqrNoBG, sc, args = (intObs, intCalc, intError),
                         full_output = False)
                 sc[1] = 0.0
-                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
         else:
             """using scipy.optimize.fmin"""
             # Background can be set to False to just find the scaling factor.
             if background:
                 sc = optimize.fmin(
-                    lambda sc: csqr_v1(intObs, sc[0]*intCalc + sc[1], intError),
+                    lambda sc: csqrV1(intObs, sc[0]*intCalc + sc[1], intError),
                     sc, full_output = False, disp = 0)
-                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
             else:
                 sc = optimize.fmin(
-                    lambda sc: csqr_v1(intObs, sc[0]*intCalc, intError),
+                    lambda sc: csqrV1(intObs, sc[0]*intCalc, intError),
                     sc, full_output = False, disp = 0)
                 sc[1] = 0.0
-                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
 
+        conval = csqrV1(intObs, sc[0]*intCalc + sc[1], intError)
         if outputIntensity:
             return sc, conval, sc[0]*intCalc + sc[1]
         else:
