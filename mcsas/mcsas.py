@@ -264,6 +264,7 @@ class McSAS(AlgorithmBase):
         AlgorithmBase.__init__(self)
 
     def calc(self, **kwargs):
+        """Performs the Monte Carlo optimisation"""
         # initialize
         self.result = [] # TODO
         self.stop = False # TODO, move this into some simple result structure, eventually?
@@ -392,7 +393,7 @@ class McSAS(AlgorithmBase):
         # set all parameters to be fitted to the same histogram setup
         for p in self.model.activeParams():
             p.histogram().binCount = self.histogramBins.value()
-            import sys
+            #import sys
             #print >>sys.__stderr__, "McSASParameters.histogramXScale '{}'".format(McSASParameters.histogramXScale[:3])
             p.histogram().scaleX = McSASParameters.histogramXScale[:3]
             p.histogram().weighting = McSASParameters.histogramWeighting
