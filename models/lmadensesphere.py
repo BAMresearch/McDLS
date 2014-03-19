@@ -31,7 +31,7 @@ class LMADenseSphere(ScatteringModel):
                     generator = RandomUniform,
                     suffix = " ", decimals = 1),
             Parameter("mf", -1., #-1 is auto calculation
-                    displayName = "standoff multiplier",
+                    displayName = "standoff multiplier (-1 = auto)",
                     valueRange = (-1, 400.),
                     generator = RandomUniform,
                     suffix = " ", decimals = 1)
@@ -52,12 +52,11 @@ class LMADenseSphere(ScatteringModel):
 
     def formfactor(self, dataset, paramValues):
         
-        #no idea if this will work
-        if self.mf() == -1:
-            self.mf.setValue = (0.634 / self.volFrac()) **(1. / 3)
-
         SFmu = self.volFrac()
         SFmf = self.mf()
+        if SFmf == -1:
+            SFmf = (0.634 / SFmu) **(1. / 3)
+
 
         def SFG(A,SFmu):
             alpha = ( 1 + 2 * SFmu )**2 / ( 1 - SFmu )**4
