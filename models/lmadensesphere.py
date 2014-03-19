@@ -29,12 +29,12 @@ class LMADenseSphere(ScatteringModel):
                     displayName = "Volume fraction of spheres",
                     valueRange = (0, 1.),
                     generator = RandomUniform,
-                    suffix = "", decimals = 1),
+                    suffix = " ", decimals = 1),
             Parameter("mf", -1., #-1 is auto calculation
                     displayName = "standoff multiplier",
-                    valueRange = (-1, np.inf),
+                    valueRange = (-1, 400.),
                     generator = RandomUniform,
-                    suffix = "", decimals = 1)
+                    suffix = " ", decimals = 1)
             )
     parameters[0].setActive(True)
 
@@ -46,7 +46,8 @@ class LMADenseSphere(ScatteringModel):
     def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        result = (pi*4./3.) * paramValues**(3. * compensationExponent)
+
+        result = (pi*4./3.) * paramValues[:, 0]**(3. * compensationExponent)
         return result
 
     def formfactor(self, dataset, paramValues):
@@ -57,6 +58,7 @@ class LMADenseSphere(ScatteringModel):
 
         SFmu = self.volFrac()
         SFmf = self.mf()
+
         def SFG(A,SFmu):
             alpha = ( 1 + 2 * SFmu )**2 / ( 1 - SFmu )**4
             beta = -6 * SFmu * ( 1 + SFmu / 2 )**2 / ( 1 - SFmu )**2
@@ -70,7 +72,7 @@ class LMADenseSphere(ScatteringModel):
             return G
 
 
-        r = paramValues.flatten()
+        r = paramValues[:,0].flatten()
         q = dataset.q
         qr = numpy.outer(q, r)
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
