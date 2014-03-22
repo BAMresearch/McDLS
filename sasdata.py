@@ -53,7 +53,7 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def count(self):
-        return len(self.q())
+        return len(self.q)
 
     @property
     def sphericalSizeEstText(self):
@@ -62,21 +62,21 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qLimsString(self):
         return "min Q: {0:.4f}, max Q: {1:.4f}".format(
-                self.q().min(), self.q().max())
+                self.q.min(), self.q.max())
 
     @property
     def dataContent(self):
         """shows the content of the loaded data: Q, I, IErr, etc"""
-        content = ""
-        if self.q() is not None:
-            content += 'Q '
-        if self.I() is not None:
-            content += 'I '
-        if self.hasError():
-            content += 'IErr '
-        if self.is2d():
-            content += 'Psi'
-        return "{}".format(content)
+        content = []
+        if self.q is not None:
+            content.append('Q')
+        if self.i is not None:
+            content.append('I')
+        if self.hasError:
+            content.append('IErr')
+        if self.is2d:
+            content.append('Psi')
+        return ", ".join(content)
 
     @property
     def filename(self):
