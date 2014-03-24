@@ -17,7 +17,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         return arg
 
     @abstractmethod
-    def volume(self, paramValues, compensationExponent = None):
+    def volume(self, paramValues):
         """Calculates the volume of this model, taking compensationExponent
         into account from input or preset parameters.
         Reimplement this for new models."""
@@ -29,8 +29,12 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         # by definition, no vector input, would require complex model code
         # compare the flat length
         assert paramValues.size == self.paramCount()
+        self.compensationExponent = compensationExponent
+        if self.compensationExponent is None:
+            # get the exponent from class level of the particular model
+            self.compensationExponent = type(self).compensationExponent
         # calling user provided custom model
-        v = self.volume(paramValues, compensationExponent = None)
+        v = self.volume(paramValues)
         # volume always returns a single value
         assert v.size == 1
         return v

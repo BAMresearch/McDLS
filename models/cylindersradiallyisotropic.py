@@ -105,9 +105,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
 
         return Fcyl
 
-    def volume(self, paramValues, compensationExponent = None):
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
+    def volume(self, paramValues):
         idx = 0
         radius=paramValues[:,0]
         if self.aspect.isActive():
@@ -117,7 +115,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
             aspect=self.aspect()
 
         v = pi*radius**2*(2*radius*aspect)
-        return v**compensationExponent
+        return v**self.compensationExponent
 
 CylindersRadiallyIsotropic.factory()
 

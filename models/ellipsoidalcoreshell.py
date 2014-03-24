@@ -136,10 +136,7 @@ class EllipsoidalCoreShell(ScatteringModel):
 
         return Fell
 
-    def volume(self, paramValues, compensationExponent = None):
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
-
+    def volume(self, paramValues):
         a = numpy.array((self.a(),))
         b = numpy.array((self.b(),))
         t = numpy.array((self.t(),))
@@ -154,7 +151,7 @@ class EllipsoidalCoreShell(ScatteringModel):
             t = paramValues[:, idx]
 
         v = 4./3 * pi * (a + t) * (b + t)**2
-        return v**compensationExponent
+        return v**self.compensationExponent
 
 EllipsoidalCoreShell.factory()
 

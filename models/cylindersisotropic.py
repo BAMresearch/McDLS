@@ -81,9 +81,7 @@ class CylindersIsotropic(ScatteringModel):
 
         return Fcyl
 
-    def volume(self, paramValues, compensationExponent = None):
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
+    def volume(self, paramValues):
         idx = 0
         radius=paramValues[:,0]
         if self.length.isActive():
@@ -97,7 +95,7 @@ class CylindersIsotropic(ScatteringModel):
             halfLength=length/2.
 
         v = pi*radius**2*(halfLength*2)
-        return v**compensationExponent
+        return v**self.compensationExponent
 
 CylindersIsotropic.factory()
 

@@ -78,9 +78,7 @@ class GaussianChain(ScatteringModel):
             result[i] = res * beta
         return result
 
-    def volume(self, paramValues, compensationExponent = None):
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
+    def volume(self, paramValues):
         rg = numpy.array((self.rg(),))
         if self.rg.isActive():
             rg = paramValues[:, 0]
@@ -92,7 +90,7 @@ class GaussianChain(ScatteringModel):
         if len(v) <= 1 and len(v) < len(paramValues):
             # duplicates of single value for dimension compatibility
             v = numpy.ones(len(paramValues)) * v
-        return v**compensationExponent
+        return v**self.compensationExponent
 
 GaussianChain.factory()
 

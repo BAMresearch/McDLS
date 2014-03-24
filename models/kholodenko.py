@@ -179,9 +179,7 @@ class Kholodenko(ScatteringModel):
             logging.warning("\n".join(["numpy.quad integration messages: "] + list(LASTMSG)))
         return p0 * pcs # FIXME: must not be squared!
 
-    def volume(self, paramValues, compensationExponent = None):
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
+    def volume(self, paramValues):
         radius = numpy.array((self.radius(),))
         if self.radius.isActive():
             radius = paramValues[:, 0]
@@ -193,7 +191,7 @@ class Kholodenko(ScatteringModel):
         if len(volume) <= 1 and len(volume) < len(paramValues):
             # duplicates of single value for dimension compatibility
             volume = numpy.ones(len(paramValues)) * volume
-        return volume**compensationExponent
+        return volume**self.compensationExponent
 
 Kholodenko.factory()
 
