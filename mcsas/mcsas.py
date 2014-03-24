@@ -393,8 +393,6 @@ class McSAS(AlgorithmBase):
         # set all parameters to be fitted to the same histogram setup
         for p in self.model.activeParams():
             p.histogram().binCount = self.histogramBins.value()
-            #import sys
-            #print >>sys.__stderr__, "McSASParameters.histogramXScale '{}'".format(McSASParameters.histogramXScale[:3])
             p.histogram().scaleX = McSASParameters.histogramXScale[:3]
             p.histogram().weighting = McSASParameters.histogramWeighting
 
@@ -619,8 +617,7 @@ class McSAS(AlgorithmBase):
             rset = prior[randomIndices, :]
             logging.info("size now: {}".format(rset.shape))
 
-        # call the model for each parameter value explicitly
-        # otherwise the model gets complex for multiple params incl. fitting
+        # NOTE: put prior into each Parameter, initially
         it, vset = self.calcModel(data, rset)
         vst = sum(vset**2) # total volume squared
 
@@ -671,16 +668,17 @@ class McSAS(AlgorithmBase):
                numIter < self.maxIterations.value() and
                not self.stop):
             rt = self.model.generateParameters()
-            ft = self.model.ff(data, rt)
-            vtt = self.model.vol(rt)
-            itt = (ft**2 * vtt**2).flatten()
+            itt, vtt = self.calcModel(data, rt)
             # Calculate new total intensity
             itest = None
             # speed up by storing all intensities above, needs lots of memory
             # itest = (it - iset[:, ri] + itt)
-            fo = self.model.ff(data, rset[ri].reshape((1, -1)))
-            io = (fo**2 * vset[ri]**2).flatten()
-            itest = (it.flatten() - io + itt)
+            io, dummy = self.calcModel(data, rset[ri].reshape((1, -1)))
+            itest = (it.flatten() - io + itt) # is this numerically stable?
+            # my NOTE: for this test, it'd be a good idea to store all indiv.
+            # intensities (see above) instead of summing them up above,
+            # but memory problem ...
+            # what about storing partial sums instead?
 
             # SMEAR function goes here
             itest = self.model.smear(itest)
@@ -886,9 +884,7 @@ class McSAS(AlgorithmBase):
             # compensated volume for each sphere in
             # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
             # Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
-            vpa = zeros(rset.shape[0])
-            for i in numpy.arange(rset.shape[0]):
-                vpa[i] = self.model.vol(rset[i].reshape((1, -1)), compensationExponent = 1.0)
+            dummy, vpa = self.calcModel(data, rset, compensationExponent = 1.0)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
             sci = intensity.max() / it.max()
@@ -911,8 +907,8 @@ class McSAS(AlgorithmBase):
                 # NOTE: no need to compensate for p_c here, we work with
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
-                ffset = self.model.ff(data, rset[c].reshape((1, -1)))
-                ir = (ffset**2 * vset[c]**2).flatten()
+                # again, partial intensities for this size only required
+                ir, dummy = self.calcModel(data, rset[c].reshape((1, -1)))
                 # determine where this maximum observability is
                 # of contribution c (index)
                 qmi = numpy.argmax(ir.flatten()/it.flatten())
@@ -1289,14 +1285,16 @@ class McSAS(AlgorithmBase):
 
     # move this to ScatteringModel eventually?
     # which additional output might by useful/required?
-    # btw: called 4 times
-    def calcModel(self, data, rset):
+    def calcModel(self, data, rset, compensationExponent = None):
         """Calculates the total intensity and scatterer volume contributions
         using the current model."""
         it = 0
         vset = zeros(rset.shape[0])
+        # call the model for each parameter value explicitly
+        # otherwise the model gets complex for multiple params incl. fitting
         for i in numpy.arange(rset.shape[0]):
-            vset[i] = self.model.vol(rset[i].reshape((1, -1)))
+            vset[i] = self.model.vol(rset[i].reshape((1, -1)),
+                                     compensationExponent)
             # calculate their form factors
             ffset = self.model.ff(data, rset[i].reshape((1, -1)))
             # a set of intensities
