@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # models/sphere.py
 
-import logging
 import numpy
 from numpy import pi, sin, cos
 from cutesnake.algorithm import RandomUniform
@@ -23,22 +22,6 @@ class Sphere(ScatteringModel):
         # this only works for people
         # defining lengths in angstrom or nm, not m.
         self.radius.setValueRange((1.0, 1e4))
-
-    #def updateParamBounds(self, bounds):
-    #    bounds = ScatteringModel.updateParamBounds(self, bounds)
-    #    if len(bounds) < 1:
-    #        return
-    #    if len(bounds) == 1:
-    #        logging.warning("Only one bound provided, "
-    #                        "assuming it denotes the maximum.")
-    #        bounds.insert(0, self.radius.valueRange(0))
-    #    elif len(bounds) > 2:
-    #        bounds = bounds[0:2]
-    #    logging.info("Updating lower and upper contribution parameter bounds "
-    #                 "to: ({0}, {1}).".format(min(bounds), max(bounds)))
-    #    #logging.info changed from bounds[0] and bounds[1] to reflect better
-    #    #what is done below:
-    #    self.radius.setValueRange((min(bounds), max(bounds)))
 
     def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:

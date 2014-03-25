@@ -7,8 +7,6 @@ from utils.parameter import Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomExponential, RandomUniform
 
-# parameters must not be inf
-
 class SphericalCoreShell(ScatteringModel):
     r"""Form factor for a spherical core shell structure
     as defined in the SASfit manual (par. 3.1.4, Spherical Shell III).
@@ -84,7 +82,7 @@ class SphericalCoreShell(ScatteringModel):
             idx += 1
         #remaining parameters are never active fitting parameters
 
-        dToR = pi / 180. #degrees to radian
+        #dToR = pi / 180. #degrees to radian
 
         Vc = 4./3 * pi * radius **3
         Vt = 4./3 * pi * (radius + t) ** 3

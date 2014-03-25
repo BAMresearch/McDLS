@@ -19,11 +19,23 @@ class LMADenseSphere(ScatteringModel):
     """
 
     shortName = "LMADenseSphere"
-    parameters = (Parameter("radius", 1.0,
+    parameters = (
+            Parameter("radius", 1.0,
                     displayName = "Sphere radius",
-                    valueRange = (0., numpy.inf),
+                    valueRange = (0., 1e3),
                     generator = RandomUniform,
-                    suffix = "nm", decimals = 1), )
+                    suffix = "nm", decimals = 1),
+            Parameter("volFrac", 0.1,
+                    displayName = "Volume fraction of spheres",
+                    valueRange = (0, 1.),
+                    generator = RandomUniform,
+                    suffix = " ", decimals = 1),
+            Parameter("mf", -1., #-1 is auto calculation
+                    displayName = "standoff multiplier (-1 = auto)",
+                    valueRange = (-1, 400.),
+                    generator = RandomUniform,
+                    suffix = " ", decimals = 1)
+            )
     parameters[0].setActive(True)
 
     def __init__(self):
@@ -31,34 +43,21 @@ class LMADenseSphere(ScatteringModel):
         self.radius.setValueRange((1.0, 1e4)) #this only works for people
         #defining lengths in angstrom or nm, not m.
 
-    def updateParamBounds(self, bounds):
-        bounds = ScatteringModel.updateParamBounds(self, bounds)
-        if len(bounds) < 1:
-            return
-        if len(bounds) == 1:
-            logging.warning("Only one bound provided, "
-                            "assuming it denotes the maximum.")
-            bounds.insert(0, self.radius.valueRange(0))
-        elif len(bounds) > 2:
-            bounds = bounds[0:2]
-        logging.info("Updating lower and upper contribution parameter bounds "
-                     "to: ({0}, {1}).".format(min(bounds), max(bounds)))
-        #logging.info changed from bounds[0] and bounds[1] to reflect better
-        #what is done below:
-        self.radius.setValueRange((min(bounds), max(bounds)))
-
     def volume(self, paramValues, compensationExponent = None):
         if compensationExponent is None:
             compensationExponent = self.compensationExponent
-        result = (pi*4./3.) * paramValues**(3. * compensationExponent)
+
+        result = (pi*4./3.) * paramValues[:, 0]**(3. * compensationExponent)
         return result
 
     def formfactor(self, dataset, paramValues):
-        structureFactorVolumeFraction = 0.2
-        structureFactorStandoff = (0.634/structureFactorVolumeFraction)**(1./3)
-        #no idea if this will work
-        SFmu=structureFactorVolumeFraction
-        SFmf=structureFactorStandoff
+        
+        SFmu = self.volFrac()
+        SFmf = self.mf()
+        if SFmf == -1:
+            SFmf = (0.634 / SFmu) **(1. / 3)
+
+
         def SFG(A,SFmu):
             alpha = ( 1 + 2 * SFmu )**2 / ( 1 - SFmu )**4
             beta = -6 * SFmu * ( 1 + SFmu / 2 )**2 / ( 1 - SFmu )**2
@@ -72,7 +71,7 @@ class LMADenseSphere(ScatteringModel):
             return G
 
 
-        r = paramValues.flatten()
+        r = paramValues[:,0].flatten()
         q = dataset.q
         qr = numpy.outer(q, r)
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
