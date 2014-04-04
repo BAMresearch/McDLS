@@ -8,6 +8,7 @@ Utils for testing something.
 import collections
 import platform
 import numpy
+import sys
 
 try:
     from cutesnake.qt import QtCore
