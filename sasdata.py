@@ -146,10 +146,12 @@ class SASData(DataSet, DisplayMixin):
 
     def __init__(self, *args):
         DataSet.__init__(self, *args)
+        #self._sizeEst = np.pi / np.array([self.q.max(),
+        #                                  min(abs(self.q.min()),
+        #                                      abs(np.diff(self.q).min()))
+        #                                 ])
         self._sizeEst = np.pi / np.array([self.q.max(),
-                                          min(abs(self.q.min()),
-                                              abs(np.diff(self.q).min()))
-                                         ])
+                                          abs(self.q.min()) ])
         self._prepareUncertainty()
 
     def _prepareUncertainty(self):
