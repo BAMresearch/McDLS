@@ -43,11 +43,8 @@ class LMADenseSphere(ScatteringModel):
         self.radius.setValueRange((1.0, 1e4)) #this only works for people
         #defining lengths in angstrom or nm, not m.
 
-    def volume(self, paramValues, compensationExponent = None):
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
-
-        result = (pi*4./3.) * paramValues[:, 0]**(3. * compensationExponent)
+    def volume(self, paramValues):
+        result = (pi*4./3.) * paramValues[:, 0]**(3. * self.compensationExponent)
         return result
 
     def formfactor(self, dataset, paramValues):

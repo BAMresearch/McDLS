@@ -110,10 +110,7 @@ class SphericalCoreShell(ScatteringModel):
 
         return Fell
 
-    def volume(self, paramValues, compensationExponent = None):
-        if compensationExponent is None:
-            compensationExponent = self.compensationExponent
-
+    def volume(self, paramValues):
         radius = numpy.array((self.radius(),))
         t = numpy.array((self.t(),))
 
@@ -124,7 +121,7 @@ class SphericalCoreShell(ScatteringModel):
             t = paramValues[:, idx]
 
         v = 4./3 * pi * (radius + t)**3
-        return v**compensationExponent
+        return v**self.compensationExponent
 
 SphericalCoreShell.factory()
 
