@@ -1220,31 +1220,22 @@ class McSAS(AlgorithmBase):
                 continue # what to do if validRange is empty?
             rset = rset[validRange]
             # compensated volume for each sphere in the set
-            vset = volumeFraction[validRange, ri]
-            nset = numberFraction[validRange, ri]
-
             if weighting == 'vol':
-                val[ri] = sum(vset)
-                mu[ri]  = sum(rset * vset)/sum(vset)
-                var[ri] = sum( (rset - mu[ri])**2 * vset )/sum(vset)
-                sigma   = numpy.sqrt(abs(var[ri]))
-                skw[ri] = (  sum( (rset-mu[ri])**3 * vset )
-                           / (sum(vset) * sigma**3))
-                krt[ri] = ( sum( (rset-mu[ri])**4 * vset )
-                           / (sum(vset) * sigma**3))
+                frac = volumeFraction[validRange, ri]
             elif weighting == 'num':
-                val[ri] = sum(nset)
-                mu[ri]  = sum(rset * nset)/sum(nset)
-                var[ri] = sum( (rset-mu[ri])**2 * nset )/sum(nset)
-                sigma   = numpy.sqrt(abs(var[ri]))
-                skw[ri] = ( sum( (rset-mu[ri])**3 * nset )
-                           / (sum(nset) * sigma**3))
-                krt[ri] = ( sum( (rset-mu[ri])**4 * nset )
-                           / (sum(nset) * sigma**4))
+                frac = numberFraction[validRange, ri]
             else:
-                logging.error("Moment calculation: "
-                              "unrecognised histogramWeighting value!")
+                logging.error("Could not calculate moment for histogram "
+                              "weighting '{0}'!".format(weighting))
                 return None
+            val[ri] = sum(frac)
+            mu[ri]  = sum(rset * frac)/sum(frac)
+            var[ri] = sum( (rset-mu[ri])**2 * frac )/sum(frac)
+            sigma   = numpy.sqrt(abs(var[ri]))
+            skw[ri] = ( sum( (rset-mu[ri])**3 * frac )
+                       / (sum(frac) * sigma**3))
+            krt[ri] = ( sum( (rset-mu[ri])**4 * frac )
+                       / (sum(frac) * sigma**4))
 
         # now we can calculate the intensity contribution by the subset of
         # spheres highlighted by the range:
