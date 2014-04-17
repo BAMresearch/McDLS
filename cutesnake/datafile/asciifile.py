@@ -20,9 +20,15 @@ class AsciiFile(DataFile):
         return data
 
     @classmethod
+    def formatValue(cls, value):
+        try:
+            return cls.valueFormat.format(value)
+        except ValueError:
+            return "{0}".format(value)
+
+    @classmethod
     def formatRow(cls, row, **kwargs):
-        return cls.separator.join([cls.valueFormat.format(value)
-                                   for value in row])
+        return cls.separator.join([cls.formatValue(value) for value in row])
 
     @classmethod
     def formatData(cls, data, **kwargs):
