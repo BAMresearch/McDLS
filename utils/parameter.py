@@ -117,7 +117,6 @@ class RangeStats(object):
         """
         # now we can calculate the intensity contribution by the subset of
         # spheres highlighted by the range:
-        logging.info("Calculating partial intensity contribution of range")
         numContribs, numParams, numReps = contribs.shape
         data = algo.dataPrepared
         # loop over each repetition
@@ -144,6 +143,8 @@ class Histogram(object):
     The results too, eventually(?)
     Stores&calculates rangeInfo() results for all available weighting options.
     """
+    # back reference of the FitParameter this histogram belongs to
+    _param      = None
     _binCount   = None
     _scaleX     = None
     _ranges     = None # list of tuples/pairs
@@ -214,6 +215,11 @@ class Histogram(object):
                     fraction = algo.result[paramIndex]['volumeFraction']
                 elif weighting == 'num':
                     fraction = algo.result[paramIndex]['numberFraction']
+                logging.info("Calculating {weighting} weighted distribution "
+                             "statistics of {param} within {range} ..."
+                             .format(weighting = weighting.upper(),
+                                     param = self._param.name(),
+                                     range = valueRange))
                 allWeighting.append(RangeStats(paramIndex, valueRange,
                                                 fraction, algo))
             self._stats.append(allWeighting)
@@ -228,8 +234,9 @@ class Histogram(object):
             for weighting, weightingStats in zip(self.weighting(), rangeStats):
                 yield valueRange, weighting, weightingStats
 
-    def __init__(self, binCount = 10):
+    def __init__(self, param, binCount = 10):
         """Creates an histogram with default bin count, will be updated later."""
+        self._param = param # parameter we belong to is mandatory
         self.binCount = binCount # bin count is mandatory
         self.scaleX = None # sets it to the first available option by default
         self._ranges = [] # no ranges at least, defaults to [0,inf] somewhere
@@ -258,7 +265,7 @@ class FitParameterBase(ParameterBase):
         histgram setup for each parameter is implemented elsewhere"""
         if isActive and not selforcls.isActive():
             # set only if there is no histogram defined already
-            selforcls.setHistogram(Histogram())
+            selforcls.setHistogram(Histogram(selforcls))
         elif not isActive:
             selforcls.setHistogram(None)
             

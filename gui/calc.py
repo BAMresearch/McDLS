@@ -117,7 +117,6 @@ class Calculator(object):
         param.histogram().addRange(0, numpy.inf)
         param.histogram().calcStats(paramIndex, self._algo)
         for valueRange, weighting, rangeStats in param.histogram().iterStats():
-            print >>sys.__stderr__, valueRange, weighting, rangeStats
             values = valueRange + (weighting,) + rangeStats.fields
             for name, value in zip(columnNames, values):
                 if stats.get(name) is None:
