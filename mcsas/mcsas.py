@@ -138,11 +138,11 @@ class McSAS(AlgorithmBase):
             all numReps Results (y-axis bar height).
         *numberHistogramYMean*: array
             Number-weighted analogue of the above *volumeHistogramYMean*.
-        *volumeHistogramRepetitionsY*: size array (McSASParameters.histogramBins x numReps)
+        *volumeHistogramRepetitionsY*: size array (self.histogramBins x numReps)
             Volume-weighted particle size distribution bin values for
             each fit repetition (the mean of which is *volumeHistogramYMean*, 
             and the sample standard deviation is *volumeHistogramYStd*).
-        *numberHistogramRepetitionsY*: size array (McSASParameters.histogramBins x numReps)
+        *numberHistogramRepetitionsY*: size array (self.histogramBins x numReps)
             Number-weighted particle size distribution bin values for
             each MC fit repetition.
         *volumeHistogramYStd*: array
@@ -213,58 +213,19 @@ class McSAS(AlgorithmBase):
     dataPrepared = None
     model = None
     result = None
-    shortName = "McSAS"
-    parameters = (Parameter("numContribs", 200,
-                    displayName = "number of contributions",
-                    valueRange = (1, 1e6)),
-                  Parameter("numReps", 100,
-                    displayName = "number of repetitions",
-                    valueRange = (1, 1e6)),
-                  Parameter("maxIterations", 1e5,
-                    displayName = "maximum iterations",
-                    valueRange = (1, 1e100)),
-                  Parameter("histogramBins", 50,
-                    displayName = "number of histogram bins",
-                    valueRange = (1, 1e6)),
-                  Parameter("convergenceCriterion", 1.0,
-                    displayName = "convergence criterion",
-                    valueRange = (0., numpy.inf)),
-                  Parameter("findBackground", True,
-                    displayName = "find background level?"),
-    )
     figureTitle = None # FIXME: put this elsewhere, works for now
                        # set to output file name incl. timestamp, atm
 
-
-    def __init__(self):
-        """
-        The constructor, takes keyword-value input Parameters. They can be
-        one of the aforementioned parameter keyword-value pairs.
-        This does the following:
-
-            1. Initialises the variables to the right type
-            2. Parses the input
-            3. Stores the supplied data twice, one original and one for fitting
-                (the latter of which may be clipped or otherwise adjusted)
-            4. Applies Q- and optional Psi- limits to the data
-            5. Reshapes FitData to 1-by-n dimensions
-            6. Sets the function references
-            7. Calculates the shape parameter bounds if not supplied
-            8. Peforms simple checks on validity of input
-            9. Runs the analyse() function which applies the MC fit multiple
-               times
-            10. Runs the histogram() procedure which processes the MC result
-            11. Optionally recalculates the resulting intensity in the same
-                shape as the original (for 2D Datasets)
-            12. Optionally displays the results graphically.
-
-        .. document private Functions
-        .. automethod:: optimScalingAndBackground
-        """
-        AlgorithmBase.__init__(self)
+    # there are several ways to accomplish this depending on where/when
+    # McSASParameters() should be called: when creating an instance or
+    # for creating different types with different settings ...
+    @classmethod
+    def factory(cls):
+        # calling factory of parent class which is AlgorithmBase currently
+        return super(McSAS, cls).factory("McSAS",
+                                         *McSASParameters().parameters)
 
     def calc(self, **kwargs):
-        """Performs the Monte Carlo optimisation"""
         # initialize
         self.result = [] # TODO
         self.stop = False # TODO, move this into some simple result structure, eventually?
@@ -275,10 +236,10 @@ class McSAS(AlgorithmBase):
         # apply q and psi limits and populate self.FitData
         if self.dataOriginal is not None:
             self.dataPrepared = self.dataOriginal.clip(
-                              McSASParameters.qBounds,
-                              McSASParameters.psiBounds,
-                              McSASParameters.maskNegativeInt,
-                              McSASParameters.maskZeroInt)
+                              [self.qMin(), self.qMax()],
+                              [self.psiMin(), self.psiMax()],
+                              self.maskNegativeInt(),
+                              self.maskZeroInt())
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
@@ -308,7 +269,7 @@ class McSAS(AlgorithmBase):
             # TODO: test 2D mode
             self.gen2DIntensity()
 
-        if McSASParameters.doPlot:
+        if self.doPlot():
             self.plot()
 
     def setData(self, kwargs):
@@ -392,8 +353,8 @@ class McSAS(AlgorithmBase):
         """
         # set all parameters to be fitted to the same histogram setup
         for p in self.model.activeParams():
-            p.histogram().binCount = self.histogramBins.value()
-            p.histogram().scaleX = McSASParameters.histogramXScale[:3]
+            p.histogram().binCount = self.histogramBins()
+            p.histogram().scaleX = self.histogramXScale()[:3]
 
     def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
             outputIntensity = False):
@@ -426,17 +387,17 @@ class McSAS(AlgorithmBase):
         """
         def csqr(sc, intObs, intCalc, intError):
             """Least-squares intError for use with scipy.optimize.leastsq"""
-            return (intObs - sc[0] * intCalc - sc[1]) / intError
+            return (intObs - sc[0]*intCalc - sc[1]) / intError
         
-        def csqrNoBG(sc, intObs, intCalc, intError):
+        def csqr_nobg(sc, intObs, intCalc, intError):
             """Least-squares intError for use with scipy.optimize.leastsq,
             without background """
-            return (intObs - sc[0] * intCalc) / intError
+            return (intObs - sc[0]*intCalc) / intError
 
-        def csqrV1(intObs, intCalc, intError):
+        def csqr_v1(intObs, intCalc, intError):
             """Least-squares for data with known intError,
             size of parameter-space not taken into account."""
-            return (((intObs - intCalc) / intError)**2).sum() / size(intObs)
+            return sum(((intObs - intCalc)/intError)**2) / size(intObs)
 
         intObs = intObs.flatten()
         intCalc = intCalc.flatten()
@@ -449,25 +410,28 @@ class McSAS(AlgorithmBase):
                 sc, dummySuccess = optimize.leastsq(
                         csqr, sc, args = (intObs, intCalc, intError),
                         full_output = False)
+                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
             else:
                 sc, dummySuccess = optimize.leastsq(
-                        csqrNoBG, sc, args = (intObs, intCalc, intError),
+                        csqr_nobg, sc, args = (intObs, intCalc, intError),
                         full_output = False)
                 sc[1] = 0.0
+                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
         else:
             """using scipy.optimize.fmin"""
             # Background can be set to False to just find the scaling factor.
             if background:
                 sc = optimize.fmin(
-                    lambda sc: csqrV1(intObs, sc[0]*intCalc + sc[1], intError),
+                    lambda sc: csqr_v1(intObs, sc[0]*intCalc + sc[1], intError),
                     sc, full_output = False, disp = 0)
+                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
             else:
                 sc = optimize.fmin(
-                    lambda sc: csqrV1(intObs, sc[0]*intCalc, intError),
+                    lambda sc: csqr_v1(intObs, sc[0]*intCalc, intError),
                     sc, full_output = False, disp = 0)
                 sc[1] = 0.0
+                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
 
-        conval = csqrV1(intObs, sc[0]*intCalc + sc[1], intError)
         if outputIntensity:
             return sc, conval, sc[0]*intCalc + sc[1]
         else:
@@ -491,10 +455,10 @@ class McSAS(AlgorithmBase):
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
-        maxRetries = McSASParameters.maxRetries
-        numContribs = self.numContribs.value()
-        numReps = self.numReps.value()
-        minConvergence = self.convergenceCriterion.value()
+        maxRetries = self.maxRetries()
+        numContribs = self.numContribs()
+        numReps = self.numReps()
+        minConvergence = self.convergenceCriterion()
         if not any([p.isActive() for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
@@ -586,7 +550,7 @@ class McSAS(AlgorithmBase):
         q = data.q
         # generate initial set of spheres
         if size(prior) == 0:
-            if McSASParameters.startFromMinimum:
+            if self.startFromMinimum():
                 for idx, param in enumerate(self.model.params()):
                     mb = min(param.valueRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
@@ -894,7 +858,7 @@ class McSAS(AlgorithmBase):
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
             volumeFraction[:, ri] = (
-                    sc[0] * vsa**2/(vpa * McSASParameters.deltaRhoSquared)
+                    sc[0] * vsa**2/(vpa * self.deltaRhoSquared())
                     ).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
@@ -1051,10 +1015,10 @@ class McSAS(AlgorithmBase):
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
-        validIndices = data.clipMask(McSASParameters.qBounds,
-                                     McSASParameters.psiBounds,
-                                     McSASParameters.maskNegativeInt,
-                                     McSASParameters.maskZeroInt)
+        validIndices = data.clipMask([self.qMin(), self.qMax()],
+                                     [self.psiMin(), self.psiMax()],
+                                     self.maskNegativeInt(),
+                                     self.maskZeroInt())
         intAvg = intAvg[validIndices]
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)

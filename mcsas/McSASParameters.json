@@ -1,7 +1,6 @@
 {
     "numContribs" : {
         "displayName" : "number of contributions",
-        "cls" : "int",
         "description" : "Total number of contributions making up a scattering pattern",
         "valueRange" : [1,1e6],
         "default" : 200,
@@ -9,7 +8,6 @@
     },
     "numReps" : {
         "displayName" : "number of repetitions",
-        "cls" : "int",
         "description" : "Number of independent McSAS results to compute, from which averages and uncertainties are estimated",
         "default" : 100,
         "valueRange" : [1,1e6],
@@ -18,7 +16,6 @@
     "maxIterations" : {
         "displayName" : "maximum iterations",
         "valueRange" : [1,1e100],
-        "cls" : "int",
 	    "default" : 1e5,
         "description" : "Maximum number of iterations allowed before failing.",
         "isActive" : false 
@@ -26,7 +23,6 @@
     "histogramBins" : {
         "displayName" : "number of histogram bins",
         "valueRange" : [1,1e6],
-        "cls" : "int",
 	    "default" : 50,
         "description" : "Amount of histogram bins used for distribution visualisation",
         "isActive" : false 
@@ -34,21 +30,18 @@
     "convergenceCriterion" : {
         "displayName" : "convergence criterion",
         "valueRange" : [0,Infinity],
-        "cls" : "float",
         "description" : "Reduced Chi-squared value to reach for optimisation success.",
         "default" : 1.0,
         "isActive" : false 
     },
     "findBackground" : {
         "displayName" : "find background level?",
-        "cls" : "bool",
         "description" : "Adds a constant background level to the model fitting.",
         "default" : true,
         "isActive" : false 
     },
     "histogramXScale" : {
         "displayName" : "X-axis scaling of the histogram",
-        "cls" : "str",
         "valueRange" : ["linear","log"],
         "description" : "can be 'linear' or 'log' ",
         "default" : "log",
@@ -56,7 +49,6 @@
     },
     "histogramWeighting" : {
         "displayName" : "Number-weighted or Volume weighted distributions",
-        "cls" : "str",
         "valueRange" : ["number","volume"],
         "description" : "Can be 'number' or 'volume' ",
         "default" : "volume",
@@ -65,14 +57,12 @@
     "deltaRhoSquared" : {
         "displayName" : "Electron density contrast squared",
         "valueRange" : [0,Infinity],
-        "cls" : "float",
         "description" : "Squared electron density contrast (mind the units!)",
         "default" : 1.0,
         "isActive" : false 
     },
     "startFromMinimum" : {
         "displayName" : "depreciated",
-        "cls" : "bool",
         "description" : "Sets the initial guess to minimal values rather than a uniform dist.",
         "default" : false,
         "isActive" : false 
@@ -80,35 +70,30 @@
     "maxRetries" : {
         "displayName" : "Maximum no. of allowed retries",
         "valueRange" : [1,100],
-        "cls" : "int",
 	    "default" : 5,
         "description" : "When the MC method cannot reach convergence, it will try again this number of times.",
         "isActive" : false 
     },
     "maskNegativeInt" : {
         "displayName" : "Masks negative intensity values",
-        "cls" : "bool",
         "description" : "Renders negative intensity values invalid for fitting",
         "default" : false,
         "isActive" : false 
     },
     "maskZeroInt" : {
         "displayName" : "Masks intensity values of 0",
-        "cls" : "bool",
         "description" : "Renders intensity values that are zero invalid for fitting",
         "default" : false,
         "isActive" : false 
     },
     "lowMemoryFootprint" : {
         "displayName" : "Trade speed for a drastically reduced memory footprint",
-        "cls" : "bool",
         "description" : "Should be used when fitting large 2D datasets",
         "default" : false,
         "isActive" : false 
     },
     "doPlot" : {
         "displayName" : "Automatically plot result",
-        "cls" : "bool",
         "description" : "Automatically plots the result upon success",
         "default" : false,
         "isActive" : false 
@@ -116,7 +101,6 @@
     "qMin" : {
         "displayName" : "Lower Q-limit",
         "valueRange" : [0,Infinity],
-        "cls" : "float",
         "description" : "Lower bound of the Q-limits in between which the MC fit should be applied.",
         "default" : 0,
         "isActive" : false 
@@ -124,7 +108,6 @@
     "qMax" : {
         "displayName" : "Upper Q-limit",
         "valueRange" : [0,Infinity],
-        "cls" : "float",
         "description" : "Upper bound of the Q-limits in between which the MC fit should be applied.",
         "default" : Infinity,
         "isActive" : false 
@@ -132,7 +115,6 @@
     "psiMin" : {
         "displayName" : "Lower Psi-limit (2D only)",
         "valueRange" : [0,Infinity],
-        "cls" : "float",
         "description" : "Lower bound of the Psi-limits in between which the MC fit should be applied (2D only)",
         "default" : 0,
         "isActive" : false 
@@ -140,7 +122,6 @@
     "psiMax" : {
         "displayName" : "Upper Psi-limit (2D only)",
         "valueRange" : [0,Infinity],
-        "cls" : "float",
         "description" : "Upper bound of the Psi-limits in between which the MC fit should be applied (2D only)",
         "default" : Infinity,
         "isActive" : false 
