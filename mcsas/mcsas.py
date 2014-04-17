@@ -17,7 +17,7 @@ from cutesnake.dataset import DataSet
 from cutesnake.utils import isList, isString, isFrozen
 from cutesnake.algorithm import (AlgorithmBase,
                                  RandomUniform, RandomExponential)
-from utils.parameter import (Parameter, FitParameterBase)
+from utils.parameter import (Parameter, FitParameterBase, Histogram)
 from utils.propertynames import PropertyNames
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
@@ -394,7 +394,6 @@ class McSAS(AlgorithmBase):
         for p in self.model.activeParams():
             p.histogram().binCount = self.histogramBins.value()
             p.histogram().scaleX = McSASParameters.histogramXScale[:3]
-            p.histogram().weighting = McSASParameters.histogramWeighting
 
     def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
             outputIntensity = False):
@@ -1188,89 +1187,31 @@ class McSAS(AlgorithmBase):
         Returns a 4-by-2 array, with the values and their sample standard
         deviations over all *numRepetitions*.
         """
-        contribs = self.result[0]['contribs']
-        numContribs, dummy, numReps = contribs.shape
-
-        volumeFraction = self.result[paramIndex]['volumeFraction']
-        numberFraction = self.result[paramIndex]['numberFraction']
-
-        val = numpy.zeros(numReps) # total value
-        mu  = numpy.zeros(numReps) # moments..
-        var = numpy.zeros(numReps) # moments..
-        skw = numpy.zeros(numReps) # moments..
-        krt = numpy.zeros(numReps) # moments..
-
         param = self.model.activeParams()[paramIndex]
-        if weighting is None:
-            weighting = param.histogram().weighting
-        weighting = weighting[:3] # we need first three chars only
-        # loop over each repetition
-        for ri in range(numReps):
-            # the single set of R for this calculation
-            rset = contribs[:, paramIndex, ri]
-            validRange = (  (rset > min(valueRange))
-                          * (rset < max(valueRange)))
-            if not any(validRange):
-                continue # what to do if validRange is empty?
-            rset = rset[validRange]
-            # compensated volume for each sphere in the set
-            if weighting == 'vol':
-                frac = volumeFraction[validRange, ri]
-            elif weighting == 'num':
-                frac = numberFraction[validRange, ri]
-            else:
-                logging.error("Could not calculate moment for histogram "
-                              "weighting '{0}'!".format(weighting))
-                return None
-            val[ri] = sum(frac)
-            mu[ri]  = sum(rset * frac)/sum(frac)
-            var[ri] = sum( (rset-mu[ri])**2 * frac )/sum(frac)
-            sigma   = numpy.sqrt(abs(var[ri]))
-            skw[ri] = ( sum( (rset-mu[ri])**3 * frac )
-                       / (sum(frac) * sigma**3))
-            krt[ri] = ( sum( (rset-mu[ri])**4 * frac )
-                       / (sum(frac) * sigma**4))
-
-        # now we can calculate the intensity contribution by the subset of
-        # spheres highlighted by the range:
-        logging.info("Calculating partial intensity contribution of range")
-        # loop over each repetition
-        partialIntensities = numpy.zeros(
-                (numReps, self.result[0]['fitQ'].shape[0]))
-        # Intensity scaling factors for matching to the experimental
-        # scattering pattern (Amplitude A and flat background term b,
-        # defined in the paper)
-        scalingFactors = self.result[paramIndex]['scalingFactors']
-
-        data = self.dataPrepared
-        for ri in range(numReps):
-            rset = contribs[:, paramIndex, ri]
-            validRange = (  (rset > min(valueRange))
-                          * (rset < max(valueRange)))
-            if not any(validRange):
-                continue # what to do if validRange is empty?
-            # BP: this one did not work for multi-parameter models
-            # rset = rset[validRange][:, newaxis]
-            rset = contribs[validRange,:,ri]
-            # compensated volume for each sphere in the set
-            it, vset = self.calcModel(data, rset)
-            it = self.model.smear(it)
-            # scaling and background for this repetition.
-            sc = scalingFactors[:, ri]
-            # a set of volume fractions
-            partialIntensities[ri, :] = it.flatten() * sc[0]
+        rangeIndex = param.histogram().addRange(*valueRange)
+        stats = param.histogram().calcStats(paramIndex, self)
+        weighting = str(weighting).lower()[0:3]
+        # find index of the chosen weighting
+        weightingIndex = 0
+        for i, w in enumerate(param.histogram().weighting()):
+            if weighting == w:
+                weightingIndex = i
+                break
+        # get the desired statistics
+        stats = stats[rangeIndex][weightingIndex]
 
         rangeInfoResult = dict(
-                partialIntensityMean = partialIntensities.mean(axis = 0),
-                partialIntensityStd  = partialIntensities.std(axis = 0),
-                partialQ             = self.result[0]['fitQ'].flatten(),
-                totalValue           = [val.mean(), val.std(ddof = 1)],
-                mean                 = [ mu.mean(),  mu.std(ddof = 1)],
-                variance             = [var.mean(), var.std(ddof = 1)],
-                skew                 = [skw.mean(), skw.std(ddof = 1)],
-                kurtosis             = [krt.mean(), krt.std(ddof = 1)]
+            partialIntensityMean = stats.intensity[0],
+            partialIntensityStd  = stats.intensity[1],
+            partialQ             = self.result[0]['fitQ'].flatten(),
+            totalValue           = stats.total,
+            mean                 = stats.mean,
+            variance             = stats.variance,
+            skew                 = stats.skew,
+            kurtosis             = stats.kurtosis
         )
-        self.result[paramIndex].update(rangeInfoResult)
+        # doesn't make sense anymore for several weighting/range options
+        # self.result[paramIndex].update(rangeInfoResult)
         return rangeInfoResult
 
     # move this to ScatteringModel eventually?

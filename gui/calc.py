@@ -19,7 +19,7 @@ from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.log import timestamp, addHandler
 import cutesnake.log as log
 from mcsas.mcsas import McSAS
-from utils.parameter import Histogram
+from utils.parameter import Histogram, RangeStats
 
 class Calculator(object):
     _algo = None # McSAS algorithm instance
@@ -109,16 +109,22 @@ class Calculator(object):
 
     def _writeStatistics(self, paramIndex):
         stats = dict()
-        columnNames = []
-        for weighting in Histogram.availableWeighting():
-            res = self._algo.rangeInfo(paramIndex = paramIndex,
-                                       weighting = weighting)
-            for key in ('totalValue',
-                        'mean', 'variance', 'skew', 'kurtosis'):
-                columnNames.append("{0}-{1}".format(weighting, key))
-                stats[columnNames[-1]] = res.get(key, None)
-        pname = self.modelActiveParams()[paramIndex].name()
-        self._writeResultHelper(stats, "stats_"+pname, "distribution statistics",
+        columnNames = (("lower", "upper", "weighting")
+                        + RangeStats.fieldNames())
+        for cn in columnNames:
+            stats[cn] = []
+        param = self.modelActiveParams()[paramIndex]
+        param.histogram().addRange(0, numpy.inf)
+        param.histogram().calcStats(paramIndex, self._algo)
+        for valueRange, weighting, rangeStats in param.histogram().iterStats():
+            print >>sys.__stderr__, valueRange, weighting, rangeStats
+            values = valueRange + (weighting,) + rangeStats.fields
+            for name, value in zip(columnNames, values):
+                if stats.get(name) is None:
+                    stats[name] = []
+                stats[name].append(AsciiFile.formatValue(value))
+        self._writeResultHelper(stats, "stats_"+param.name(),
+                                "distribution statistics",
                                 columnNames, extension = '.csv')
 
     def _writeFit(self, mcResult):
