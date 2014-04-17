@@ -1193,12 +1193,6 @@ class McSAS(AlgorithmBase):
 
         volumeFraction = self.result[paramIndex]['volumeFraction']
         numberFraction = self.result[paramIndex]['numberFraction']
-        totalVolumeFraction = self.result[paramIndex]['totalVolumeFraction']
-        totalNumberFraction = self.result[paramIndex]['totalNumberFraction']
-        # Intensity scaling factors for matching to the experimental
-        # scattering pattern (Amplitude A and flat background term b,
-        # defined in the paper)
-        scalingFactors = self.result[paramIndex]['scalingFactors']
 
         val = numpy.zeros(numReps) # total value
         mu  = numpy.zeros(numReps) # moments..
@@ -1243,21 +1237,26 @@ class McSAS(AlgorithmBase):
         # loop over each repetition
         partialIntensities = numpy.zeros(
                 (numReps, self.result[0]['fitQ'].shape[0]))
+        # Intensity scaling factors for matching to the experimental
+        # scattering pattern (Amplitude A and flat background term b,
+        # defined in the paper)
+        scalingFactors = self.result[paramIndex]['scalingFactors']
 
         data = self.dataPrepared
         for ri in range(numReps):
             rset = contribs[:, paramIndex, ri]
             validRange = (  (rset > min(valueRange))
                           * (rset < max(valueRange)))
+            if not any(validRange):
+                continue # what to do if validRange is empty?
             # BP: this one did not work for multi-parameter models
             # rset = rset[validRange][:, newaxis]
             rset = contribs[validRange,:,ri]
-            if not any(validRange):
-                continue # what to do if validRange is empty?
             # compensated volume for each sphere in the set
             it, vset = self.calcModel(data, rset)
             it = self.model.smear(it)
-            sc = scalingFactors[:, ri] # scaling and background for this repetition.
+            # scaling and background for this repetition.
+            sc = scalingFactors[:, ri]
             # a set of volume fractions
             partialIntensities[ri, :] = it.flatten() * sc[0]
 
