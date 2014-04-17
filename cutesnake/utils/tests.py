@@ -77,7 +77,7 @@ def isFrozen():
 
 # utilities
 
-def testfor(condition, exception, errorMessage):
+def testfor(condition, exception, errorMessage = ""):
     if __debug__ and not condition:
         raise exception(errorMessage)
 
