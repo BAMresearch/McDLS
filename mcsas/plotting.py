@@ -185,17 +185,20 @@ def plotResults(allRes, dataset, params,
         histXLowerEdge = res['histogramXLowerEdge']
         histXMean = res['histogramXMean']
         histXWidth = res['histogramXWidth']
-        if params[parameterId[parami]].histogram().weighting == 'vol':
-            volHistYMean = res['volumeHistogramYMean']
-            volHistMinReq = res['volumeHistogramMinimumRequired']
-            volHistYStd = res['volumeHistogramYStd']
-        elif params[parameterId[parami]].histogram().weighting == 'num':
-            volHistYMean = res['numberHistogramYMean']
-            volHistMinReq = res['numberHistogramMinimumRequired']
-            volHistYStd = res['numberHistogramYStd']
-        else: 
-            "Incorrect value for histWeighting: "\
-                  "should be either 'volume' or 'number'"
+        # plot volume weighted by default, both would be good
+        # can we plot both weightings? perhaps, with different colors?
+        # e.g. red/orange (current) and blue/lightblue?
+#        if params[parameterId[parami]].histogram().hasWeighting('vol'):
+        volHistYMean = res['volumeHistogramYMean']
+        volHistMinReq = res['volumeHistogramMinimumRequired']
+        volHistYStd = res['volumeHistogramYStd']
+#        elif params[parameterId[parami]].histogram().hasWeighting('num'):
+#            volHistYMean = res['numberHistogramYMean']
+#            volHistMinReq = res['numberHistogramMinimumRequired']
+#            volHistYStd = res['numberHistogramYStd']
+#        else: 
+#            "Incorrect value for histWeighting: "\
+#                  "should be either 'volume' or 'number'"
 
 
         #get information for labels:
