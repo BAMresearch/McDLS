@@ -36,26 +36,21 @@ The convergence criterion can be set by the user. If it is not reached no output
 Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results."""
 
 CHANGESTEXT = (u"""
-Changes in 0.0.5:
-'Number-weighted distributions now come with correct-looking observability limits.'
- https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
-
-Changes in 0.0.6:
-Fixed handling of negative values in PDH data files.
-
-Changes in 0.0.7:
-- Using restructured McSAS
-- building GUI for models and global settings dynamically
-- new model: Kholodenkos worm-like structure, verified against SASfit
-
-Changes in 0.0.8:
-- new model: GaussianChain, verified against SASfit:
-  http://sasfit.sf.net/manual/Gaussian_Chain#Gauss_2
-- fixed volume function exponent in Kholodenko
-  was v² instead of just v
-
-Changes in 0.0.9:
-- added GUI to public McSAS repository
+Latest changes:
+- More information shown in data list
+- Correct handling when fitting multiple files
+- Range estimate now uses minimum Q by itself, no longer considers Q-spacing
+- LMA Dense Spheres, spherical and ellipsoidal core shell models work again
+- Stability improvements and code cleanup
+- Extended internal parameter functionality, using JSON defaults file
+- Improvements towards implementing RangeInfo in the GUI
+        
+Changes in 0.0.11:
+- distribution statistics log output and writing to stats file
+- plain SAS evaluation (no fit) if no param is active
+- all output files with extensions and storing in settings
+- configuration file now *.cfg
+- single start/stop button
 
 Changes in 0.0.10:
 - data file listing widget on top with short info
@@ -67,12 +62,26 @@ Changes in 0.0.10:
 - switch to enable/disable background level fit
 - multiple plot figures on Windows supported
 
-Changes in 0.0.11:
-- distribution statistics log output and writing to stats file
-- plain SAS evaluation (no fit) if no param is active
-- all output files with extensions and storing in settings
-- configuration file now *.cfg
-- single start/stop button
+Changes in 0.0.9:
+- added GUI to public McSAS repository
+
+Changes in 0.0.8:
+- new model: GaussianChain, verified against SASfit:
+  http://sasfit.sf.net/manual/Gaussian_Chain#Gauss_2
+- fixed volume function exponent in Kholodenko
+  was v² instead of just v
+
+Changes in 0.0.7:
+- Using restructured McSAS
+- building GUI for models and global settings dynamically
+- new model: Kholodenkos worm-like structure, verified against SASfit
+
+Changes in 0.0.6:
+Fixed handling of negative values in PDH data files.
+
+Changes in 0.0.5:
+'Number-weighted distributions now come with correct-looking observability limits.'
+ https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
 
 """.replace('\n\n', '<hr />'))
 CHANGESTEXT = re.sub(r"(Changes in [0-9]+\.[0-9]+\.[0-9]+)",
