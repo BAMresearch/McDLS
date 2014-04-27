@@ -21,7 +21,7 @@
         "isActive" : false 
     },
     "histogramBins" : {
-        "displayName" : "number of histogram bins",
+        "displayName" : "number of hist. bins",
         "valueRange" : [1,1e6],
 	    "default" : 50,
         "description" : "Amount of histogram bins used for distribution visualisation",
