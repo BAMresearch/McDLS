@@ -228,7 +228,7 @@ class McSAS(AlgorithmBase):
     def calc(self, **kwargs):
         # initialize
         self.result = [] # TODO
-        self.stop = False # TODO, move this into some simple result structure, eventually?
+        self.stop = False # TODO, move this into some simple result structure
         # set data values
         self.setData(kwargs)
         # set supplied kwargs and passing on
@@ -405,7 +405,7 @@ class McSAS(AlgorithmBase):
         # we need an McSAS instance anyway to call this method
         background = self.findBackground.value()
         if ver == 2:
-            """uses scipy.optimize.leastsqr"""
+            # uses scipy.optimize.leastsqr
             if background:
                 sc, dummySuccess = optimize.leastsq(
                         csqr, sc, args = (intObs, intCalc, intError),
@@ -418,7 +418,7 @@ class McSAS(AlgorithmBase):
                 sc[1] = 0.0
                 conval = csqr_v1(intObs, sc[0]*intCalc, intError)
         else:
-            """using scipy.optimize.fmin"""
+            # using scipy.optimize.fmin
             # Background can be set to False to just find the scaling factor.
             if background:
                 sc = optimize.fmin(
@@ -684,14 +684,15 @@ class McSAS(AlgorithmBase):
                 numNotAccepted = 0
             else:
                 # number of non-accepted moves,
-                # resets to zero after on accepted move
+                # resets to zero after an accepted move
                 numNotAccepted += 1
             if time.time() - lastUpdate > 0.25:
                 # update twice a sec max -> speedup for fast models
                 # because output takes much time especially in GUI
                 # process events, check for user input
-                # TODO: don't need this, if we calc in separate processes (multiprocessing)
-                # the gui would have an own thread and will not be blocked by calc
+                # TODO: don't need this:
+                # if we calc in separate processes (multiprocessing) the gui 
+                # would have its own thread and will not be blocked by calc
                 processEventLoop()
                 lastUpdate = time.time()
             # move to next sphere in list, loop if last sphere
@@ -924,7 +925,8 @@ class McSAS(AlgorithmBase):
             volHistMinReq = initHist()
             numHistMinReq = initHist()
 
-            logging.debug('shape contribs: {}, paramIndex: {}'.format(shape(contribs),paramIndex))
+            logging.debug('shape contribs: {}, paramIndex: {}'
+                    .format(shape(contribs),paramIndex))
             for ri in range(numReps):
                 # single set of R for this calculation
                 rset = contribs[:, paramIndex, ri]
@@ -998,7 +1000,7 @@ class McSAS(AlgorithmBase):
         kansas = shape(q) # we will return to this shape
         q = q.flatten()
 
-        logging.info("Recalculating final 2D intensity, this may take some time")
+        logging.info("Recalculating 2D intensity, please wait")
         # for each Result
         intAvg = zeros(shape(q))
         # TODO: for which parameter?
@@ -1119,15 +1121,17 @@ class McSAS(AlgorithmBase):
         # -> we have to call matplotlib plot in another thread (1.3.1)
         # on linux it does not block, can show multiple figures (1.0.1)
         if sys.platform.lower().startswith("win") and not isFrozen():
-            # does not work in linux: UI has to run in main thread (X server error)
-            # -> move (headless) calculations to another
+            # does not work on linux: 
+            # UI has to run in main thread (X server error)
+            # -> move (headless) calculations to another thread
             from multiprocessing import Process
             proc = Process(target = plotResults, args = plotArgs)
             proc.start()
         else:
             plotResults(*plotArgs)
 
-    def rangeInfo(self, valueRange = [0, inf], paramIndex = 0, weighting = None):
+    def rangeInfo(self, 
+            valueRange = [0, inf], paramIndex = 0, weighting = None):
         """Calculates the total volume or number fraction of the MC result
         within a given range, and returns the total numer or volume fraction
         and its standard deviation over all nreps as well as the first four
