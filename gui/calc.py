@@ -199,7 +199,10 @@ class Calculator(object):
             peek = np.ravel(mcResult[cn])
             if len(peek) < 3:
                 for value in peek[0:2]:
-                    msg += " {0: .4e}".format(value)
+                    try:
+                        msg += " {0: .4e}".format(value)
+                    except ValueError:
+                        msg += str(value)
             logging.info(msg)
         # write header:
         AsciiFile.writeHeaderLine(fn, columnNames)
