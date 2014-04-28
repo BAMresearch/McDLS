@@ -129,6 +129,9 @@ class ContextMenuWidget(object):
     def menuEntries(self, stateName):
         return self._states.get(stateName, [])[:] # copy!
 
+    def action(self, name):
+        return self._actions.get(name)
+
     def updateMenu(self, widget = None):
         if widget is None:
             widget = self
