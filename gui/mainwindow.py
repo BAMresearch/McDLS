@@ -114,6 +114,122 @@ def eventLoop(args):
     mw.show()
     return app.exec_()
 
+from cutesnake.dataset import DataSet, DisplayMixin
+class ParameterRange(DataSet, DisplayMixin):
+    """Represents a range tuple for a parameter of a model.
+    Required for proper GUI construction."""
+    _range = None
+
+    @staticmethod
+    def displayDataDescr():
+        return ("lower", "upper")
+
+    @property
+    def displayData(self):
+        return self.displayDataDescr()
+
+    @property
+    def lower(self):
+        return self._range[0]
+
+    @property
+    def upper(self):
+        return self._range[1]
+
+    @classmethod
+    def create(cls, *args):
+        paramRange = cls(*args)
+        return paramRange
+
+    @staticmethod
+    def sanitize(valueRange):
+        return (min(valueRange), max(valueRange))
+
+    def __init__(self, valueRange):
+        self._range = self.sanitize(valueRange)
+        DataSet.__init__(self, "({0}, {1})"
+                               .format(*self._range), None)
+
+    def __eq__(self, other):
+        """Compares with another ParameterRange or tuple."""
+        try:
+            return self.lower == other.lower and self.upper == other.upper
+        except AttributeError:
+            return self._range == other
+
+    def __neq__(self, other):
+        return not self.__eq__(other)
+
+from numpy import inf as numpy_inf
+from QtGui import QDialog, QDoubleSpinBox
+class RangeList(DataList):
+    def addRange(self):
+        """Creates a modal dialog window to ask the user for a range to be
+        added. Returns a list of tuples (only one for now) or an empty list.
+        """
+        dialog = QDialog(self)
+        dialog.setObjectName("AddRangeDialog")
+        dialog.setWindowTitle("Add Range")
+        dialog.setWindowModality(Qt.WindowModal)
+        vlayout = QVBoxLayout(dialog)
+        vlayout.setObjectName("vlayout")
+        entryWidget = QWidget(self)
+        btnWidget = QWidget(self)
+        vlayout.addWidget(entryWidget)
+        entryLayout = QHBoxLayout(entryWidget)
+        lentry = QDoubleSpinBox(dialog)
+        lentry.setPrefix("lower: ")
+        lentry.setRange(-1e100, +1e100) # FIXME: float input format
+        uentry = QDoubleSpinBox(dialog)
+        uentry.setPrefix("upper: ")
+        uentry.setRange(-1e100, +1e100)
+        entryLayout.addWidget(lentry)
+        entryLayout.addWidget(uentry)
+        entryWidget.setLayout(entryLayout)
+        vlayout.addWidget(btnWidget)
+        btnLayout = QHBoxLayout(btnWidget)
+        okBtn = QPushButton("add", self)
+        okBtn.clicked.connect(dialog.accept)
+        cancelBtn = QPushButton("cancel", self)
+        cancelBtn.clicked.connect(dialog.reject)
+        btnLayout.addWidget(okBtn)
+        btnLayout.addWidget(cancelBtn)
+        btnWidget.setLayout(btnLayout)
+        dialog.setLayout(vlayout)
+        lentry.selectAll() # select the first input by default
+        if not dialog.exec_() or lentry.value() == uentry.value():
+            return []
+        return [(lentry.value(), uentry.value())]
+
+    def loadData(self, ranges = None):
+        """Overridden base class method for adding entries to the list."""
+        # add only one item at a time into the list
+        if ranges is None:
+            ranges = self.addRange()
+        # do not add duplicates
+        ranges = [r for r in ranges if r not in self.data()]
+        DataList.loadData(self, sourceList = ranges, showProgress = False,
+                          processSourceFunc = ParameterRange.create)
+        # align text to the right
+        if len(self.topLevelItems()) > 0:
+            item = self.topLevelItems()[-1]
+            item.setTextAlignment(0, Qt.AlignRight)
+            item.setTextAlignment(1, Qt.AlignRight)
+
+    def isRemovableSelected(self):
+        """Decides if selected items can be removed.
+        Allow remove only if there is at least one item left."""
+        return (len(self) - len(self.listWidget.selectedItems())) > 0
+
+    def __init__(self, *args, **kwargs):
+        DataList.__init__(self, *args, **kwargs)
+        self.action("load").setText("add range") # fix default action name
+        self.loadData([(0., numpy_inf)]) # default range
+        self.listWidget.clearSelection()
+        # note: derive the default range from parameters?
+        # -> works only if statistics ranges are defined
+        # per parameter individually, not for all as it is now
+
 class PropertyWidget(SettingsWidget):
     _calculator = None
 
@@ -173,6 +289,18 @@ class PropertyWidget(SettingsWidget):
         layout.addWidget(modelSettings)
         self.modelBox.setCurrentIndex(-1)
         self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
+
+        rangeStats = QGroupBox("Range Statistics")
+        rangeLayout = QVBoxLayout(rangeStats)
+        rangeLayout.setObjectName("rangeLayout")
+        self.rangeWidget = RangeList(self, title = "ranges", withBtn = False)
+        self.rangeWidget.setHeader(ParameterRange.displayDataDescr())
+        #self.rangeWidget.setMaximumHeight(100)
+        rangeLayout.addWidget(self.rangeWidget)
+        rangeLayout.addStretch()
+        rangeStats.setLayout(rangeLayout)
+        layout.addWidget(rangeStats)
+
         self.setLayout(layout)
         self.sigValuesChanged.connect(self._updateModelParams)
 
@@ -211,6 +339,11 @@ class PropertyWidget(SettingsWidget):
             if isinstance(newActive, bool) and p.isActive() != newActive:
                 p.setActive(newActive)
                 activeChanged = True
+            if p.isActive():
+                # sync parameter ranges for statistics after calc
+                p.histogram().resetRanges()
+                for r in self.rangeWidget.data():
+                    p.histogram().addRange(r.lower, r.upper)
         # update algo settings
         for p in self._calculator.params():
             value = self.get(p.name())
