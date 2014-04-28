@@ -202,7 +202,7 @@ class Calculator(object):
                     try:
                         msg += " {0: .4e}".format(value)
                     except ValueError:
-                        msg += str(value)
+                        msg += " {0: >14s}".format(value)
             logging.info(msg)
         # write header:
         AsciiFile.writeHeaderLine(fn, columnNames)
