@@ -449,19 +449,6 @@ class MainWindow(MainWindowBase):
         self.fileWidget.setToolTip(
                 "Double click to use the estimated size for the model.")
 
-        # set up buttons
-        self.loadBtn = QPushButton("load files ...")
-        self.loadBtn.pressed.connect(self.fileWidget.loadData)
-        self.startStopBtn = QPushButton()
-        self.startStopBtn.setCheckable(True)
-        self.startStopBtn.clicked[bool].connect(self.onStartStopClick)
-        btnLayout = QVBoxLayout()
-        for btn in self.loadBtn, self.startStopBtn:
-            btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-            btnLayout.addWidget(btn)
-        btnWidget = QWidget(self)
-        btnWidget.setLayout(btnLayout)
-
         # set up property widget with settings
         self.propWidget = PropertyWidget(self)
         self.propWidget.setSizePolicy(QSizePolicy.Preferred,
@@ -469,12 +456,12 @@ class MainWindow(MainWindowBase):
         self.fileWidget.sigSphericalSizeRange.connect(
                         self.propWidget.setSphericalSizeRange)
         ctrlLayout = QHBoxLayout()
-        ctrlLayout.addWidget(btnWidget)
         ctrlLayout.addWidget(self.propWidget)
         settingsWidget = QWidget(self)
         settingsWidget.setLayout(ctrlLayout)
 
-        self._setupLogWidget()
+        # put the log widget at the bottom
+        self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.West)
@@ -483,7 +470,9 @@ class MainWindow(MainWindowBase):
 
         # set up central widget of the main window
         self.centralLayout = QVBoxLayout()
+        # put buttons in central widget
         self.centralLayout.addWidget(self.tabWidget)
+        self.centralLayout.addWidget(self._setupButtons())
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.centralLayout)
         self.setCentralWidget(centralWidget)
@@ -500,8 +489,24 @@ class MainWindow(MainWindowBase):
         if len(CHANGESTEXT):
             logWidget.append(CHANGESTEXT)
         logWidget.append("\n\r")
-        self.addDockWidget(Qt.BottomDockWidgetArea, logDock)
         self.logWidget = logWidget
+        return logDock
+
+    def _setupButtons(self):
+        """Set up buttons."""
+        self.loadBtn = QPushButton("load files ...")
+        self.loadBtn.pressed.connect(self.fileWidget.loadData)
+        self.startStopBtn = QPushButton()
+        self.startStopBtn.setCheckable(True)
+        self.startStopBtn.clicked[bool].connect(self.onStartStopClick)
+        btnLayout = QHBoxLayout()
+        btnLayout.setContentsMargins(0, 0, 0, 0)
+        for btn in self.loadBtn, self.startStopBtn:
+            btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+            btnLayout.addWidget(btn)
+        btnWidget = QWidget(self)
+        btnWidget.setLayout(btnLayout)
+        return btnWidget
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
