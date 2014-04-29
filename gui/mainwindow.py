@@ -14,7 +14,7 @@ from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
-                   QTreeWidgetItem, QTreeWidget, QTabWidget)
+                   QTreeWidgetItem, QTreeWidget, QToolBox)
 from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.widgets.datalist import DataList
@@ -445,10 +445,9 @@ class MainWindow(MainWindowBase):
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
         # file widget at the top
-        self.setTabPosition(Qt.TopDockWidgetArea, QTabWidget.West)
-        self.addDockWidget(Qt.TopDockWidgetArea, self._setupFileWidget())
-        self.addDockWidget(Qt.TopDockWidgetArea, self._setupSettings())
-        self.tabifyDockWidget(self.fileDock, self.settingsDock)
+        self.toolbox = QToolBox(self)
+        self._addToolboxItem(self._setupFileWidget())
+        self._addToolboxItem(self._setupSettings())
         self.fileWidget.sigSphericalSizeRange.connect(
                         self.propWidget.setSphericalSizeRange)
         # put the log widget at the bottom
@@ -457,6 +456,7 @@ class MainWindow(MainWindowBase):
         # set up central widget of the main window
         self.centralLayout = QVBoxLayout()
         # put buttons in central widget
+        self.centralLayout.addWidget(self.toolbox)
         self.centralLayout.addWidget(self._setupButtons())
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.centralLayout)
@@ -464,23 +464,26 @@ class MainWindow(MainWindowBase):
         self.setCentralWidget(centralWidget)
         self.onStartupSignal.connect(self.initUI)
 
+    def _addToolboxItem(self, widget):
+        self.toolbox.addItem(widget, "{n}. {t}"
+                                     .format(n = self.toolbox.count()+1,
+                                             t = widget.title()))
+        widget.layout().setContentsMargins(0, 0, 0, 0)
+
     def _setupSettings(self):
         """Set up property widget with settings."""
-        self.settingsDock = DockWidget(self, PropertyWidget)
-        propWidget = self.settingsDock.child
+        propWidget = PropertyWidget(self)
         self.propWidget = propWidget
-        return self.settingsDock
+        return propWidget
 
     def _setupFileWidget(self):
         # set up file widget
-        self.fileDock = DockWidget(self, FileList,
-                                   title = "data files", withBtn = False)
-        fileWidget = self.fileDock.child
+        fileWidget = FileList(self, title = "data files", withBtn = False)
         fileWidget.setHeader(SASData.displayDataDescr())
         fileWidget.setToolTip(
                 "Double click to use the estimated size for the model.")
         self.fileWidget = fileWidget
-        return self.fileDock
+        return fileWidget
 
     def _setupLogWidget(self):
         """Set up widget for logging output."""
@@ -555,7 +558,6 @@ class MainWindow(MainWindowBase):
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
         self.logWidget.scrollToTop()
-        self.fileDock.raise_()
 
     def onStartStopClick(self, checked):
         if checked:
