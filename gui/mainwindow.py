@@ -14,10 +14,11 @@ from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
-                   QTreeWidgetItem, QTreeWidget)
+                   QTreeWidgetItem, QTreeWidget, QTabWidget)
 from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.widgets.datalist import DataList
+from cutesnake.widgets.dockwidget import DockWidget
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
@@ -295,7 +296,6 @@ class PropertyWidget(SettingsWidget):
         rangeLayout.setObjectName("rangeLayout")
         self.rangeWidget = RangeList(self, title = "ranges", withBtn = False)
         self.rangeWidget.setHeader(ParameterRange.displayDataDescr())
-        #self.rangeWidget.setMaximumHeight(100)
         rangeLayout.addWidget(self.rangeWidget)
         rangeLayout.addStretch()
         rangeStats.setLayout(rangeLayout)
@@ -441,6 +441,7 @@ class MainWindow(MainWindowBase):
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
+        # set up file widget
         self.fileWidget = FileList(self, title = "data files",
                                    withBtn = False)
         self.fileWidget.setHeader(SASData.displayDataDescr())
@@ -448,6 +449,7 @@ class MainWindow(MainWindowBase):
         self.fileWidget.setToolTip(
                 "Double click to use the estimated size for the model.")
 
+        # set up buttons
         self.loadBtn = QPushButton("load files ...")
         self.loadBtn.pressed.connect(self.fileWidget.loadData)
         self.startStopBtn = QPushButton()
@@ -459,6 +461,8 @@ class MainWindow(MainWindowBase):
             btnLayout.addWidget(btn)
         btnWidget = QWidget(self)
         btnWidget.setLayout(btnLayout)
+
+        # set up property widget with settings
         self.propWidget = PropertyWidget(self)
         self.propWidget.setSizePolicy(QSizePolicy.Preferred,
                                       QSizePolicy.Maximum)
@@ -470,7 +474,9 @@ class MainWindow(MainWindowBase):
         settingsWidget = QWidget(self)
         settingsWidget.setLayout(ctrlLayout)
 
-        self.logWidget = LogWidget(self, appversion = version)
+        # set up widget for logging output
+        self.logDock = DockWidget(self, LogWidget, appversion = version)
+        self.logWidget = self.logDock.child
         self.onCloseSignal.connect(self.logWidget.onCloseSlot)
         self.logWidget.setSizePolicy(QSizePolicy.Preferred,
                                      QSizePolicy.Expanding)
@@ -478,12 +484,16 @@ class MainWindow(MainWindowBase):
         if len(CHANGESTEXT):
             self.logWidget.append(CHANGESTEXT)
         self.logWidget.append("\n\r")
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.logDock)
 
+        self.tabWidget = QTabWidget(self)
+        self.tabWidget.setTabPosition(QTabWidget.West)
+        self.tabWidget.addTab(self.fileWidget, "data")
+        self.tabWidget.addTab(settingsWidget, "settings")
+
+        # set up central widget of the main window
         self.centralLayout = QVBoxLayout()
-        self.centralLayout.addWidget(self.fileWidget)
-        self.centralLayout.addWidget(settingsWidget)
-        self.centralLayout.addWidget(self.logWidget)
-
+        self.centralLayout.addWidget(self.tabWidget)
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.centralLayout)
         self.setCentralWidget(centralWidget)
