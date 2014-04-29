@@ -19,6 +19,7 @@ from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.widgets.datalist import DataList
 from cutesnake.widgets.dockwidget import DockWidget
+from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
@@ -258,6 +259,7 @@ class PropertyWidget(SettingsWidget):
 
     def __init__(self, parent):
         SettingsWidget.__init__(self, parent)
+        self.title = TitleHandler.setup(self, "settings")
         self._calculator = Calculator()
         layout = QHBoxLayout(self)
         layout.setObjectName("layout")
@@ -442,42 +444,43 @@ class MainWindow(MainWindowBase):
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
-        # set up file widget
-        self.fileWidget = FileList(self, title = "data files",
-                                   withBtn = False)
-        self.fileWidget.setHeader(SASData.displayDataDescr())
-        self.fileWidget.setMaximumHeight(100)
-        self.fileWidget.setToolTip(
-                "Double click to use the estimated size for the model.")
-
-        # set up property widget with settings
-        self.propWidget = PropertyWidget(self)
-        self.propWidget.setSizePolicy(QSizePolicy.Preferred,
-                                      QSizePolicy.Maximum)
+        # file widget at the top
+        self.setTabPosition(Qt.TopDockWidgetArea, QTabWidget.West)
+        self.addDockWidget(Qt.TopDockWidgetArea, self._setupFileWidget())
+        self.addDockWidget(Qt.TopDockWidgetArea, self._setupSettings())
+        self.tabifyDockWidget(self.fileDock, self.settingsDock)
         self.fileWidget.sigSphericalSizeRange.connect(
                         self.propWidget.setSphericalSizeRange)
-        ctrlLayout = QHBoxLayout()
-        ctrlLayout.addWidget(self.propWidget)
-        settingsWidget = QWidget(self)
-        settingsWidget.setLayout(ctrlLayout)
-
         # put the log widget at the bottom
         self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
-
-        self.tabWidget = QTabWidget(self)
-        self.tabWidget.setTabPosition(QTabWidget.West)
-        self.tabWidget.addTab(self.fileWidget, "data")
-        self.tabWidget.addTab(settingsWidget, "settings")
 
         # set up central widget of the main window
         self.centralLayout = QVBoxLayout()
         # put buttons in central widget
-        self.centralLayout.addWidget(self.tabWidget)
         self.centralLayout.addWidget(self._setupButtons())
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.centralLayout)
+        centralWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self.setCentralWidget(centralWidget)
         self.onStartupSignal.connect(self.initUI)
+
+    def _setupSettings(self):
+        """Set up property widget with settings."""
+        self.settingsDock = DockWidget(self, PropertyWidget)
+        propWidget = self.settingsDock.child
+        self.propWidget = propWidget
+        return self.settingsDock
+
+    def _setupFileWidget(self):
+        # set up file widget
+        self.fileDock = DockWidget(self, FileList,
+                                   title = "data files", withBtn = False)
+        fileWidget = self.fileDock.child
+        fileWidget.setHeader(SASData.displayDataDescr())
+        fileWidget.setToolTip(
+                "Double click to use the estimated size for the model.")
+        self.fileWidget = fileWidget
+        return self.fileDock
 
     def _setupLogWidget(self):
         """Set up widget for logging output."""
@@ -506,6 +509,7 @@ class MainWindow(MainWindowBase):
             btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
             btnLayout.addWidget(btn)
         btnWidget = QWidget(self)
+        btnWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         btnWidget.setLayout(btnLayout)
         return btnWidget
 
@@ -551,6 +555,7 @@ class MainWindow(MainWindowBase):
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
         self.logWidget.scrollToTop()
+        self.fileDock.raise_()
 
     def onStartStopClick(self, checked):
         if checked:
