@@ -376,6 +376,7 @@ class PropertyWidget(SettingsWidget):
     def _makeSettingWidget(self, entries, param, activeBtns = False):
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
         lbl = self._makeLabel(param.displayName())
         lbl.setWordWrap(True)
         layout.addWidget(lbl)
