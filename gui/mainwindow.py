@@ -45,7 +45,7 @@ Latest changes:
 - Stability improvements and code cleanup
 - Extended internal parameter functionality, using JSON defaults file
 - Improvements towards implementing RangeInfo in the GUI
-        
+
 Changes in 0.0.11:
 - distribution statistics log output and writing to stats file
 - plain SAS evaluation (no fit) if no param is active
@@ -85,7 +85,7 @@ Changes in 0.0.5:
  https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
 
 """.replace('\n\n', '<hr />'))
-CHANGESTEXT = re.sub(r"(Changes in [0-9]+\.[0-9]+\.[0-9]+)",
+CHANGESTEXT = re.sub(r"([\s\w]*[cC]hanges.*\:)",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
 
@@ -474,17 +474,7 @@ class MainWindow(MainWindowBase):
         settingsWidget = QWidget(self)
         settingsWidget.setLayout(ctrlLayout)
 
-        # set up widget for logging output
-        self.logDock = DockWidget(self, LogWidget, appversion = version)
-        self.logWidget = self.logDock.child
-        self.onCloseSignal.connect(self.logWidget.onCloseSlot)
-        self.logWidget.setSizePolicy(QSizePolicy.Preferred,
-                                     QSizePolicy.Expanding)
-        self.logWidget.append(INFOTEXT)
-        if len(CHANGESTEXT):
-            self.logWidget.append(CHANGESTEXT)
-        self.logWidget.append("\n\r")
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.logDock)
+        self._setupLogWidget()
 
         self.tabWidget = QTabWidget(self)
         self.tabWidget.setTabPosition(QTabWidget.West)
@@ -498,6 +488,20 @@ class MainWindow(MainWindowBase):
         centralWidget.setLayout(self.centralLayout)
         self.setCentralWidget(centralWidget)
         self.onStartupSignal.connect(self.initUI)
+
+    def _setupLogWidget(self):
+        """Set up widget for logging output."""
+        logDock = DockWidget(self, LogWidget, appversion = version)
+        logWidget = logDock.child
+        self.onCloseSignal.connect(logWidget.onCloseSlot)
+        logWidget.setSizePolicy(QSizePolicy.Preferred,
+                                QSizePolicy.Expanding)
+        logWidget.append(INFOTEXT)
+        if len(CHANGESTEXT):
+            logWidget.append(CHANGESTEXT)
+        logWidget.append("\n\r")
+        self.addDockWidget(Qt.BottomDockWidgetArea, logDock)
+        self.logWidget = logWidget
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
@@ -540,7 +544,7 @@ class MainWindow(MainWindowBase):
         self.propWidget.selectModel()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
-        self.logWidget.scrollToBottom()
+        self.logWidget.scrollToTop()
 
     def onStartStopClick(self, checked):
         if checked:
