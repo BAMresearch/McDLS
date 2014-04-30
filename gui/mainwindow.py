@@ -24,6 +24,7 @@ from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBase
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.utils import isList
+from cutesnake.utils.tests import testfor
 from cutesnake.utilsgui.displayexception import DisplayException
 from utils.parameter import ParameterNumerical
 from version import version
@@ -233,8 +234,14 @@ class RangeList(DataList):
         # per parameter individually, not for all as it is now
 
 class SettingsWidget(SettingsWidgetBase):
+
     def __init__(self, parent):
         SettingsWidgetBase.__init__(self, parent)
+        self.sigValueChanged.connect(self.updateParam)
+
+    def updateParam(self, pname):
+        """Override this in child classes to write settings back."""
+        raise NotImplementedError
 
     @staticmethod
     def _makeLabel(name):
@@ -242,19 +249,23 @@ class SettingsWidget(SettingsWidgetBase):
         lbl.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
         return lbl
 
-    def _makeEntry(self, name, dtype, value, minmax = None):
-        ntry = self.getInputWidget(dtype)(self)
-        ntry.setObjectName(name)
+    def _makeEntry(self, name, dtype, value, minmax = None, widget = None):
+        testfor(name not in self.keys(), KeyError,
+            "Input widget '{w}' exists already in '{s}'"
+            .format(w = name, s = self.objectName()))
+        if widget is None:
+            widget = self.getInputWidget(dtype)(self)
+        widget.setObjectName(name)
         if dtype is bool:
-            ntry.setChecked(value)
+            widget.setChecked(value)
         else:
-            ntry.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            widget.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
             if isList(minmax) and len(minmax):
-                ntry.setMinimum(min(minmax))
-                ntry.setMaximum(max(minmax))
-            ntry.setValue(value)
-        self.connectInputWidgets(ntry)
-        return ntry
+                widget.setMinimum(min(minmax))
+                widget.setMaximum(max(minmax))
+            widget.setValue(value)
+        self.connectInputWidgets(widget)
+        return widget
 
     def makeSetting(self, entries, param, activeBtns = False):
         """entries: Extended list of input widgets, for taborder elsewhere."""
@@ -290,13 +301,11 @@ class SettingsWidget(SettingsWidgetBase):
             entries.append(ntry)
         if activeBtns:
             activeBtn = QPushButton("active", self)
-            activeBtn.setObjectName(param.name()+"active")
             activeBtn.setCheckable(True)
-            activeBtn.setChecked(param.isActive())
             activeBtn.setFixedWidth(FIXEDWIDTH*.5)
+            self._makeEntry(param.name()+"active", bool,
+                            param.isActive(), widget = activeBtn)
             layout.addWidget(activeBtn)
-            activeBtn.clicked.connect(self._updateModelParams)
-            self.connectInputWidgets(activeBtn)
         widget.setLayout(layout)
         return widget
 
@@ -309,15 +318,26 @@ class SettingsWidget(SettingsWidgetBase):
         QWidget().setLayout(self.layout()) # removes layout
 
 class AlgorithmWidget(SettingsWidget):
+    _algo = None # algorithm instance associated
+
     def __init__(self, parent, calculator = None):
         SettingsWidget.__init__(self, parent)
         self.title = TitleHandler.setup(self, "Algorithm Settings")
         if not isinstance(calculator, Calculator):
             return
+        self._algo = calculator.algo
         self._widgets = []
         for i, p in enumerate(calculator.params()):
             container = self.makeSetting([], p)
             self._widgets.append(container)
+
+    def updateParam(self, pname):
+        if self._algo is None:
+            return
+        value = self.get(pname)
+        if value is None:
+            return
+        getattr(self._algo, pname).setValue(value)
 
     def resizeEvent(self, resizeEvent):
         """Creates a new layout with appropriate row/column count."""
@@ -423,10 +443,6 @@ class PropertyWidget(SettingsWidgetBase):
 
         self.setLayout(layout)
         self.sigValuesChanged.connect(self._updateModelParams)
-        self.sigValueChanged.connect(self._test)
-
-    def _test(self, key):
-        print >>sys.__stderr__, "changed:", key
 
     def _selectModelSlot(self, key = None):
         model = MODELS.get(str(key), None)
@@ -483,19 +499,20 @@ class PropertyWidget(SettingsWidgetBase):
         lbl.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
         return lbl
 
-    def _makeEntry(self, name, dtype, value, minmax = None):
-        ntry = self.getInputWidget(dtype)(self)
-        ntry.setObjectName(name)
+    def _makeEntry(self, name, dtype, value, minmax = None, widget = None):
+        if widget is None:
+            widget = self.getInputWidget(dtype)(self)
+        widget.setObjectName(name)
         if dtype is bool:
-            ntry.setChecked(value)
+            widget.setChecked(value)
         else:
-            ntry.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            widget.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
             if isList(minmax) and len(minmax):
-                ntry.setMinimum(min(minmax))
-                ntry.setMaximum(max(minmax))
-            ntry.setValue(value)
-        self.connectInputWidgets(ntry)
-        return ntry
+                widget.setMinimum(min(minmax))
+                widget.setMaximum(max(minmax))
+            widget.setValue(value)
+        self.connectInputWidgets(widget)
+        return widget
 
     def _makeSettingWidget(self, entries, param, activeBtns = False):
         """entries: Extended list of input widgets, for taborder elsewhere."""
@@ -531,13 +548,11 @@ class PropertyWidget(SettingsWidgetBase):
             entries.append(ntry)
         if activeBtns:
             activeBtn = QPushButton("active", self)
-            activeBtn.setObjectName(param.name()+"active")
             activeBtn.setCheckable(True)
-            activeBtn.setChecked(param.isActive())
             activeBtn.setFixedWidth(FIXEDWIDTH*.5)
+            self._makeEntry(param.name()+"active", bool,
+                            param.isActive(), widget = activeBtn)
             layout.addWidget(activeBtn)
-            activeBtn.clicked.connect(self._updateModelParams)
-            self.connectInputWidgets(activeBtn)
         widget.setLayout(layout)
         return widget
 
@@ -659,11 +674,14 @@ class MainWindow(MainWindowBase):
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
         settings = self.appSettings()
-        for name in self.propWidget.keys():
-            if self.propWidget.get(name) is None:
-                continue # no UI element for this setting
-            val = settings.value(name)
-            self.propWidget.set(name, settings.value(name))
+        for settingsWidget in self.propWidget, self.algoWidget:
+            settings.beginGroup(settingsWidget.objectName())
+            for name in settingsWidget.keys():
+                if settingsWidget.get(name) is None:
+                    continue # no UI element for this setting
+                val = settings.value(name)
+                settingsWidget.set(name, val)
+            settings.endGroup()
         try:
             value = unicode(settings.value("lastpath").toString())
         except AttributeError: # QVariant
@@ -674,11 +692,14 @@ class MainWindow(MainWindowBase):
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
         settings = self.appSettings()
-        for name in self.propWidget.keys():
-            value = self.propWidget.get(name)
-            if value is None:
-                continue # no UI element for this setting
-            settings.setValue(name, value)
+        for settingsWidget in self.propWidget, self.algoWidget:
+            settings.beginGroup(settingsWidget.objectName())
+            for name in settingsWidget.keys():
+                value = settingsWidget.get(name)
+                if value is None:
+                    continue # no UI element for this setting
+                settings.setValue(name, value)
+            settings.endGroup()
         settings.setValue("lastpath", LastPath.get())
         settings.sync()
         tempSettings = QSettings("/tmp/qsettings.test", QSettings.IniFormat)
