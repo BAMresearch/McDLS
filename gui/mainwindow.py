@@ -14,10 +14,12 @@ from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
-                   QTreeWidgetItem, QTreeWidget)
+                   QTreeWidgetItem, QTreeWidget, QToolBox)
 from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.widgets.datalist import DataList
+from cutesnake.widgets.dockwidget import DockWidget
+from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget
 from cutesnake.utils.lastpath import LastPath
@@ -44,7 +46,7 @@ Latest changes:
 - Stability improvements and code cleanup
 - Extended internal parameter functionality, using JSON defaults file
 - Improvements towards implementing RangeInfo in the GUI
-        
+
 Changes in 0.0.11:
 - distribution statistics log output and writing to stats file
 - plain SAS evaluation (no fit) if no param is active
@@ -84,7 +86,7 @@ Changes in 0.0.5:
  https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
 
 """.replace('\n\n', '<hr />'))
-CHANGESTEXT = re.sub(r"(Changes in [0-9]+\.[0-9]+\.[0-9]+)",
+CHANGESTEXT = re.sub(r"([\s\w]*[cC]hanges.*\:)",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
 
@@ -257,6 +259,7 @@ class PropertyWidget(SettingsWidget):
 
     def __init__(self, parent):
         SettingsWidget.__init__(self, parent)
+        self.title = TitleHandler.setup(self, "settings")
         self._calculator = Calculator()
         layout = QHBoxLayout(self)
         layout.setObjectName("layout")
@@ -295,7 +298,6 @@ class PropertyWidget(SettingsWidget):
         rangeLayout.setObjectName("rangeLayout")
         self.rangeWidget = RangeList(self, title = "ranges", withBtn = False)
         self.rangeWidget.setHeader(ParameterRange.displayDataDescr())
-        #self.rangeWidget.setMaximumHeight(100)
         rangeLayout.addWidget(self.rangeWidget)
         rangeLayout.addStretch()
         rangeStats.setLayout(rangeLayout)
@@ -376,6 +378,7 @@ class PropertyWidget(SettingsWidget):
     def _makeSettingWidget(self, entries, param, activeBtns = False):
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
         lbl = self._makeLabel(param.displayName())
         lbl.setWordWrap(True)
         layout.addWidget(lbl)
@@ -441,53 +444,77 @@ class MainWindow(MainWindowBase):
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
-        self.fileWidget = FileList(self, title = "data files",
-                                   withBtn = False)
-        self.fileWidget.setHeader(SASData.displayDataDescr())
-        self.fileWidget.setMaximumHeight(100)
-        self.fileWidget.setToolTip(
-                "Double click to use the estimated size for the model.")
+        # file widget at the top
+        self.toolbox = QToolBox(self)
+        self._addToolboxItem(self._setupFileWidget())
+        self._addToolboxItem(self._setupSettings())
+        self.fileWidget.sigSphericalSizeRange.connect(
+                        self.propWidget.setSphericalSizeRange)
+        # put the log widget at the bottom
+        self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
 
+        # set up central widget of the main window
+        self.centralLayout = QVBoxLayout()
+        # put buttons in central widget
+        self.centralLayout.addWidget(self.toolbox)
+        self.centralLayout.addWidget(self._setupButtons())
+        centralWidget = QWidget(self)
+        centralWidget.setLayout(self.centralLayout)
+        centralWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        self.setCentralWidget(centralWidget)
+        self.onStartupSignal.connect(self.initUI)
+
+    def _addToolboxItem(self, widget):
+        self.toolbox.addItem(widget, "{n}. {t}"
+                                     .format(n = self.toolbox.count()+1,
+                                             t = widget.title()))
+        widget.layout().setContentsMargins(0, 0, 0, 0)
+
+    def _setupSettings(self):
+        """Set up property widget with settings."""
+        propWidget = PropertyWidget(self)
+        self.propWidget = propWidget
+        return propWidget
+
+    def _setupFileWidget(self):
+        # set up file widget
+        fileWidget = FileList(self, title = "data files", withBtn = False)
+        fileWidget.setHeader(SASData.displayDataDescr())
+        fileWidget.setToolTip(
+                "Double click to use the estimated size for the model.")
+        self.fileWidget = fileWidget
+        return fileWidget
+
+    def _setupLogWidget(self):
+        """Set up widget for logging output."""
+        logDock = DockWidget(self, LogWidget, appversion = version)
+        logWidget = logDock.child
+        self.onCloseSignal.connect(logWidget.onCloseSlot)
+        logWidget.setSizePolicy(QSizePolicy.Preferred,
+                                QSizePolicy.Expanding)
+        logWidget.append(INFOTEXT)
+        if len(CHANGESTEXT):
+            logWidget.append(CHANGESTEXT)
+        logWidget.append("\n\r")
+        self.logWidget = logWidget
+        return logDock
+
+    def _setupButtons(self):
+        """Set up buttons."""
         self.loadBtn = QPushButton("load files ...")
         self.loadBtn.pressed.connect(self.fileWidget.loadData)
         self.startStopBtn = QPushButton()
         self.startStopBtn.setCheckable(True)
         self.startStopBtn.clicked[bool].connect(self.onStartStopClick)
-        btnLayout = QVBoxLayout()
+        btnLayout = QHBoxLayout()
+        btnLayout.setContentsMargins(0, 0, 0, 0)
         for btn in self.loadBtn, self.startStopBtn:
             btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
             btnLayout.addWidget(btn)
         btnWidget = QWidget(self)
+        btnWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         btnWidget.setLayout(btnLayout)
-        self.propWidget = PropertyWidget(self)
-        self.propWidget.setSizePolicy(QSizePolicy.Preferred,
-                                      QSizePolicy.Maximum)
-        self.fileWidget.sigSphericalSizeRange.connect(
-                        self.propWidget.setSphericalSizeRange)
-        ctrlLayout = QHBoxLayout()
-        ctrlLayout.addWidget(btnWidget)
-        ctrlLayout.addWidget(self.propWidget)
-        settingsWidget = QWidget(self)
-        settingsWidget.setLayout(ctrlLayout)
-
-        self.logWidget = LogWidget(self, appversion = version)
-        self.onCloseSignal.connect(self.logWidget.onCloseSlot)
-        self.logWidget.setSizePolicy(QSizePolicy.Preferred,
-                                     QSizePolicy.Expanding)
-        self.logWidget.append(INFOTEXT)
-        if len(CHANGESTEXT):
-            self.logWidget.append(CHANGESTEXT)
-        self.logWidget.append("\n\r")
-
-        self.centralLayout = QVBoxLayout()
-        self.centralLayout.addWidget(self.fileWidget)
-        self.centralLayout.addWidget(settingsWidget)
-        self.centralLayout.addWidget(self.logWidget)
-
-        centralWidget = QWidget(self)
-        centralWidget.setLayout(self.centralLayout)
-        self.setCentralWidget(centralWidget)
-        self.onStartupSignal.connect(self.initUI)
+        return btnWidget
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
@@ -530,7 +557,7 @@ class MainWindow(MainWindowBase):
         self.propWidget.selectModel()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
-        self.logWidget.scrollToBottom()
+        self.logWidget.scrollToTop()
 
     def onStartStopClick(self, checked):
         if checked:

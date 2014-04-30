@@ -193,6 +193,10 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         else:
             scroll.setValue(scroll.maximum())
 
+    def scrollToTop(self):
+        scroll = self.verticalScrollBar()
+        scroll.setValue(scroll.minimum())
+
     def scrollToBottom(self):
         scroll = self.verticalScrollBar()
         scroll.setValue(scroll.maximum())

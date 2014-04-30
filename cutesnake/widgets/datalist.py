@@ -9,7 +9,7 @@ from time import time as timestamp
 from cutesnake.utils.signal import Signal
 from cutesnake.utils.error import EmptySelection
 from cutesnake.utilsgui.displayexception import DisplayException
-from cutesnake.dataset import DataSet, TitleMixin, HierachicalDataSet, DisplayMixin
+from cutesnake.dataset import DataSet, HierachicalDataSet, DisplayMixin
 from cutesnake.utils import isList, isMap, isString
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.utils.translate import tr
@@ -19,6 +19,7 @@ from QtGui import (QWidget, QAction, QTreeWidget, QTreeWidgetItem,
                    QVBoxLayout, QPushButton, QAbstractItemView, QKeySequence)
 from mixins.dropwidget import DropWidget
 from mixins.contextmenuwidget import ContextMenuWidget
+from mixins.titlehandler import TitleHandler
 
 class DataItem(QTreeWidgetItem):
     """Generates a QTreeWidgetItem from arbitrary python objects.
@@ -148,7 +149,7 @@ class DataItem(QTreeWidgetItem):
             pass
         return False
 
-class DataList(QWidget, DropWidget, ContextMenuWidget, TitleMixin):
+class DataList(QWidget, DropWidget, ContextMenuWidget):
     """
     Manages all loaded spectra.
 
@@ -181,7 +182,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget, TitleMixin):
     def __init__(self, parent = None, title = None, withBtn = True):
         QWidget.__init__(self, parent)
         ContextMenuWidget.__init__(self)
-        TitleMixin.__init__(self, title)
+        self.title = TitleHandler.setup(self, title)
         self._setupUi(withBtn)
         self._setupActions()
         QMetaObject.connectSlotsByName(self)
@@ -189,7 +190,6 @@ class DataList(QWidget, DropWidget, ContextMenuWidget, TitleMixin):
     def _setupUi(self, withBtn):
         self.setObjectName("DataList")
         self.setAcceptDrops(True)
-        self.setWindowTitle(self.title)
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.setObjectName("verticalLayout")
         if withBtn:
