@@ -16,7 +16,8 @@ class TitleHandler(TitleMixin):
         th = cls(title)
         th.registerUpdateFunc(parent.setWindowTitle)
         th.update(title)
-        parent.setObjectName(th.title)
+        objectName = th.title.title().replace(" ","")
+        parent.setObjectName(objectName)
         return th
 
     def __init__(self, title):
