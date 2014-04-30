@@ -8,7 +8,7 @@ import pickle
 import logging
 import numpy
 
-from McSAS import McSAS
+from mcsas.mcsas import McSAS
 
 TOL = 1e-16 # usual eps value for 64bit float
 FN_TEST_DATA = "test_data.pydat"
@@ -83,7 +83,7 @@ def test():
     settings, expected = getSettings(FN_TEST_DATA, FN_EXPECTED_DATA)
 
     # run the monte carlo routine
-    mcsas = McSAS()
+    mcsas = McSAS.factory()
     mcsas.calc(**settings)
     result = mcsas.result[0]
 
