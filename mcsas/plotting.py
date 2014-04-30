@@ -181,8 +181,8 @@ def plotResults(allRes, dataset, params,
         legend(loc = 1, fancybox = True, prop = textfont)
     title('Measured vs. Fitted intensity',
           fontproperties = textfont, size = 'x-large')
-    sizeAxis = list()
 
+    sizeAxis = list()
     # plot histograms
     for parami in range(nHists):
         # get data:
@@ -193,18 +193,16 @@ def plotResults(allRes, dataset, params,
         # plot volume weighted by default, both would be good
         # can we plot both weightings? perhaps, with different colors?
         # e.g. red/orange (current) and blue/lightblue?
-#        if params[parameterId[parami]].histogram().hasWeighting('vol'):
         volHistYMean = res['volumeHistogramYMean']
         volHistMinReq = res['volumeHistogramMinimumRequired']
         volHistYStd = res['volumeHistogramYStd']
-#        elif params[parameterId[parami]].histogram().hasWeighting('num'):
-#            volHistYMean = res['numberHistogramYMean']
-#            volHistMinReq = res['numberHistogramMinimumRequired']
-#            volHistYStd = res['numberHistogramYStd']
-#        else: 
-#            "Incorrect value for histWeighting: "\
-#                  "should be either 'volume' or 'number'"
-
+        #elif params[parameterId[parami]].histogram().hasWeighting('num'):
+        #    volHistYMean = res['numberHistogramYMean']
+        #    volHistMinReq = res['numberHistogramMinimumRequired']
+        #    volHistYStd = res['numberHistogramYStd']
+        #else: 
+        #    "Incorrect value for histWeighting: "\
+        #    "should be either 'volume' or 'number'"
 
         #get information for labels:
         plotPar = params[parameterId[parami]]
