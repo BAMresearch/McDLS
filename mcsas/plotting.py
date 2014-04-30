@@ -111,7 +111,7 @@ def plotResults(allRes, dataset, params,
     else:
         parameterId = [parameterIdx]
 
-    fig = figInit(nHists, figureTitle):
+    fig = figInit(nHists, figureTitle)
 
     #plot intensity fit:
     if dataset.is2d:
