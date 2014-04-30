@@ -10,6 +10,7 @@ except ImportError:
         toInt, toDouble, toBool, toString = None, None, None, None
 
 from QtGui import QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox
+from QtCore import QSignalMapper
 from cutesnake.widgets.expdoublespinbox import ExpDoubleSpinBox
 from cutesnake.utils.signal import Signal
 from cutesnake.utils import isList
@@ -20,7 +21,9 @@ class SettingsWidget(QWidget):
 
     Call get('<objectname>') to get an input widget value.
     """
-    sigValuesChanged = Signal()
+    sigValuesChanged = Signal() # signals a change of any child widget
+    sigValueChanged = Signal(str) # signals a change of a specific widget
+    _signalMapper = None
     _isUpdateRequired = None
     _inputWidget = { int:   QSpinBox,
                      float: QDoubleSpinBox,
@@ -36,6 +39,8 @@ class SettingsWidget(QWidget):
 
     def __init__(self, parent = None):
         QWidget.__init__(self, parent)
+        self._signalMapper = QSignalMapper()
+        self._signalMapper.mapped[str].connect(self._editingFinishedSlot)
         try:
             self.setupUi(self)
         except AttributeError:
@@ -108,11 +113,12 @@ class SettingsWidget(QWidget):
                         for widgetType in self._inputWidget.values()])
         if not isInputWidget(widget):
             return
+        self._signalMapper.setMapping(widget, widget.objectName())
         if isinstance(widget, QCheckBox):
-            widget.clicked.connect(self._editingFinishedSlot)
+            widget.clicked.connect(self._signalMapper.map)
             widget.stateChanged.connect(self._valueChangedSlot)
         else:
-            widget.editingFinished.connect(self._editingFinishedSlot)
+            widget.editingFinished.connect(self._signalMapper.map)
             if isinstance(widget, QLineEdit): # no valueChanged signal
                 widget.textChanged.connect(self._valueChangedSlot)
             else:
@@ -120,11 +126,14 @@ class SettingsWidget(QWidget):
 
     connectInputWidgets = _connectInputWidget
 
-    def _editingFinishedSlot(self):
+    def _editingFinishedSlot(self, key):
+        """Called after input widget looses focus,
+        usually only one at a time."""
         if not self._isUpdateRequired:
             return
         self._isUpdateRequired = False
         self.sigValuesChanged.emit()
+        self.sigValueChanged.emit(key)
 
     def _valueChangedSlot(self, dummy):
         self._isUpdateRequired = True
