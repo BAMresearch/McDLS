@@ -21,7 +21,7 @@ from cutesnake.widgets.datalist import DataList
 from cutesnake.widgets.dockwidget import DockWidget
 from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.utilsgui.filedialog import getOpenFiles
-from cutesnake.widgets.settingswidget import SettingsWidget
+from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBase
 from cutesnake.utils.lastpath import LastPath
 from cutesnake.utils import isList
 from cutesnake.utilsgui.displayexception import DisplayException
@@ -232,7 +232,125 @@ class RangeList(DataList):
         # -> works only if statistics ranges are defined
         # per parameter individually, not for all as it is now
 
-class PropertyWidget(SettingsWidget):
+class SettingsWidget(SettingsWidgetBase):
+    def __init__(self, parent):
+        SettingsWidgetBase.__init__(self, parent)
+
+    @staticmethod
+    def _makeLabel(name):
+        lbl = QLabel(name + ":")
+        lbl.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        return lbl
+
+    def _makeEntry(self, name, dtype, value, minmax = None):
+        ntry = self.getInputWidget(dtype)(self)
+        ntry.setObjectName(name)
+        if dtype is bool:
+            ntry.setChecked(value)
+        else:
+            ntry.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
+            if isList(minmax) and len(minmax):
+                ntry.setMinimum(min(minmax))
+                ntry.setMaximum(max(minmax))
+            ntry.setValue(value)
+        self.connectInputWidgets(ntry)
+        return ntry
+
+    def makeSetting(self, entries, param, activeBtns = False):
+        """entries: Extended list of input widgets, for taborder elsewhere."""
+        widget = QWidget(self)
+        layout = QHBoxLayout(widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        lbl = self._makeLabel(param.displayName())
+        lbl.setWordWrap(True)
+        layout.addWidget(lbl)
+        minmax = None
+        if param.isActive() and isinstance(param, ParameterNumerical):
+            # get default upper/lower bound from class
+            minmax = type(param).min(), type(param).max()
+            # user specified min/max within default upper/lower
+            ntryMin = self._makeEntry(
+                    param.name()+"min", param.dtype, param.min(), minmax)
+            ntryMin.setPrefix("min: ")
+            layout.addWidget(ntryMin)
+            ntryMax = self._makeEntry(
+                    param.name()+"max", param.dtype, param.max(), minmax)
+            ntryMax.setPrefix("max: ")
+            layout.addWidget(ntryMax)
+            ntryMin.setFixedWidth(FIXEDWIDTH)
+            ntryMax.setFixedWidth(FIXEDWIDTH)
+            entries.extend((ntryMax, ntryMin)) # reversed order, see above
+        else:
+            if isinstance(param, ParameterNumerical):
+                minmax = param.min(), param.max()
+            ntry = self._makeEntry(param.name(), param.dtype, param.value(),
+                                   minmax)
+            ntry.setFixedWidth(FIXEDWIDTH)
+            layout.addWidget(ntry)
+            entries.append(ntry)
+        if activeBtns:
+            activeBtn = QPushButton("active", self)
+            activeBtn.setObjectName(param.name()+"active")
+            activeBtn.setCheckable(True)
+            activeBtn.setChecked(param.isActive())
+            activeBtn.setFixedWidth(FIXEDWIDTH*.5)
+            layout.addWidget(activeBtn)
+            activeBtn.clicked.connect(self._updateModelParams)
+            self.connectInputWidgets(activeBtn)
+        widget.setLayout(layout)
+        return widget
+
+    def removeLayout(self):
+        if self.layout() is None:
+            return
+        for i in reversed(range(self.layout().count())):
+            # reversed removal avoids renumbering eventually
+            self.layout().takeAt(i)
+        QWidget().setLayout(self.layout()) # removes layout
+
+class AlgorithmWidget(SettingsWidget):
+    def __init__(self, parent, calculator = None):
+        SettingsWidget.__init__(self, parent)
+        self.title = TitleHandler.setup(self, "Algorithm Settings")
+        if not isinstance(calculator, Calculator):
+            return
+        self._widgets = []
+        for i, p in enumerate(calculator.params()):
+            container = self.makeSetting([], p)
+            self._widgets.append(container)
+
+    def resizeEvent(self, resizeEvent):
+        """Creates a new layout with appropriate row/column count."""
+        # basically, reacts to the size change by spawning scroll bar
+        scrollArea = self.parent().parent()
+        targetWidth = resizeEvent.size().width()
+        def getNumCols():
+            width = 0
+            for i, w in enumerate(self._widgets):
+                width += w.sizeHint().width()
+                if width > targetWidth:
+                    return i
+            return len(self._widgets)
+
+        numCols = getNumCols()
+        if self.layout() is not None:
+            if numCols and self.layout().columnCount() != numCols:
+                self.removeLayout()
+            else:
+                return
+        # create a new layout
+        layout = QGridLayout(self)
+        layout.setObjectName("algorithmLayout")
+        layout.setContentsMargins(0, 0, 0, 0)
+        # add them again with new column count
+        for i, w in enumerate(self._widgets):
+            layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
+        # add empty spacer at the bottom
+        layout.addWidget(QWidget(), layout.rowCount(), 0)
+        layout.setRowStretch(layout.rowCount() - 1, 1)
+        self.setLayout(layout)
+
+class PropertyWidget(SettingsWidgetBase):
     _calculator = None
 
     def selectModel(self):
@@ -258,7 +376,7 @@ class PropertyWidget(SettingsWidget):
             self.set(keymax, maxVal)
 
     def __init__(self, parent):
-        SettingsWidget.__init__(self, parent)
+        SettingsWidgetBase.__init__(self, parent)
         self.title = TitleHandler.setup(self, "settings")
         self._calculator = Calculator()
         layout = QHBoxLayout(self)
@@ -305,6 +423,10 @@ class PropertyWidget(SettingsWidget):
 
         self.setLayout(layout)
         self.sigValuesChanged.connect(self._updateModelParams)
+        self.sigValueChanged.connect(self._test)
+
+    def _test(self, key):
+        print >>sys.__stderr__, "changed:", key
 
     def _selectModelSlot(self, key = None):
         model = MODELS.get(str(key), None)
@@ -376,6 +498,7 @@ class PropertyWidget(SettingsWidget):
         return ntry
 
     def _makeSettingWidget(self, entries, param, activeBtns = False):
+        """entries: Extended list of input widgets, for taborder elsewhere."""
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -437,16 +560,26 @@ class FileList(DataList):
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
     _args = None # python command line arguments parser
+    _calculator = None # calculator calling algorithm on all data
 
     def __init__(self, parent = None, args = None):
-        MainWindowBase.__init__(self, version, parent) # calls setupUi() and restoreSettings()
+        # calls setupUi() and restoreSettings()
+        MainWindowBase.__init__(self, version, parent)
         self._args = args
+
+    @property
+    def calculator(self):
+        """Returns a calculator object."""
+        if self._calculator is None:
+            self._calculator = Calculator()
+        return self._calculator
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
         # file widget at the top
         self.toolbox = QToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
+        self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupSettings())
         self.fileWidget.sigSphericalSizeRange.connect(
                         self.propWidget.setSphericalSizeRange)
@@ -468,7 +601,9 @@ class MainWindow(MainWindowBase):
         self.toolbox.addItem(widget, "{n}. {t}"
                                      .format(n = self.toolbox.count()+1,
                                              t = widget.title()))
-        widget.layout().setContentsMargins(0, 0, 0, 0)
+        try:
+            widget.layout().setContentsMargins(0, 0, 0, 0)
+        except: pass
 
     def _setupSettings(self):
         """Set up property widget with settings."""
@@ -484,6 +619,11 @@ class MainWindow(MainWindowBase):
                 "Double click to use the estimated size for the model.")
         self.fileWidget = fileWidget
         return fileWidget
+
+    def _setupAlgoWidget(self):
+        """Set up property widget with settings."""
+        self.algoWidget = AlgorithmWidget(self, self.calculator)
+        return self.algoWidget
 
     def _setupLogWidget(self):
         """Set up widget for logging output."""
