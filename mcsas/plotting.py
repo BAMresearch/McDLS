@@ -11,7 +11,8 @@ from utils.parameter import Parameter
 #from mcsasparameters import McSASParameters 
 
 def plotResults(allRes, dataset, params,
-                axisMargin = 0.3, parameterIdx = None, figureTitle = None):
+                axisMargin = 0.3, parameterIdx = None, figureTitle = None,
+                mcsasInstance = None):
     """
     This function plots the output of the Monte-Carlo procedure in two
     windows, with the left window the measured signal versus the fitted
@@ -36,7 +37,7 @@ def plotResults(allRes, dataset, params,
     fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
     fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
     def setAxis(ah):
-        """Sets the axes Parameters. axtyp can be one of 'q' or 'R'"""
+        """Sets the axes Parameters."""
         plotfont = fm.FontProperties(
                     # this only works for macs, doesn't it?
                     # family = 'Courier New Bold',
@@ -79,13 +80,13 @@ def plotResults(allRes, dataset, params,
 
     # check how many result plots we need to generate, and find the 
     # indices to the to-plot paramters
+    nhists = mcsasInstance.model.activeParamCount()
+
     params = [Parameter(**attr) for attr in params]
     if parameterIdx is None: # use 'is': None is a singleton in python
         parameterId = [i for i, p in enumerate(params) if p.isActive()]
     else:
         parameterId = [parameterIdx]
-    # check how many histograms there are to plot
-    nhists = len(parameterId)
 
     # set plot font
     plotfont = fm.FontProperties(
@@ -120,8 +121,6 @@ def plotResults(allRes, dataset, params,
                 (psi >   0) * (psi <=  90)]
         intShow[(psi > 180) * (psi <= 270)] = intensity2d[
                 (psi > 180) * (psi <= 270)]
-        # xalimits=(-numpy.min(q[:,0]),numpy.max(q[:,-1]))
-        # yalimits=(-numpy.min(q[0,:]),numpy.max(q[-1,:]))
         xmidi = int(round(size(q, 1)/2))
         ymidi = int(round(size(q, 0)/2))
         QX = numpy.array([-q[ymidi, 0], q[ymidi, -1]])

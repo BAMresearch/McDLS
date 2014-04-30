@@ -1116,7 +1116,7 @@ class McSAS(AlgorithmBase):
         # does not block if another calculation is started
         pickleParams = [p.attributes() for p in self.model.params()]
         plotArgs = (self.result, self.dataPrepared, pickleParams,
-                    axisMargin, parameterIdx, self.figureTitle)
+                    axisMargin, parameterIdx, self.figureTitle, self)
         # on Windows the plot figure blocks the app until it is closed
         # -> we have to call matplotlib plot in another thread (1.3.1)
         # on linux it does not block, can show multiple figures (1.0.1)
