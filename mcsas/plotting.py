@@ -34,8 +34,6 @@ def plotResults(allRes, dataset, params,
                                    close, colorbar, imshow)
     from pylab import show
 
-    fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
-    fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
     def setAxis(ah):
         """Sets the axes Parameters."""
         plotfont = fm.FontProperties(
@@ -73,6 +71,31 @@ def plotResults(allRes, dataset, params,
         yticks(locs, map(lambda x: "%g" % x, locs))
         return ah
 
+    def figInit(nHists, figureTitle):
+        # initialize figure 
+        # TODO: add settings to window title? (next to figure_xy)
+        fig = figure(figsize = (7*(nHists+1), 7), dpi = 80,
+                     facecolor = 'w', edgecolor = 'k')
+        if isString(figureTitle):
+            fig.canvas.set_window_title(figureTitle)
+        return fig
+
+    # set plot font
+    fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
+    fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
+    plotfont = fm.FontProperties(
+                size = 'large',
+                family = fontFamilyArial)
+    textfont = fm.FontProperties(
+                size = 'large',
+                family = fontFamilyTimes)
+
+    # load original Dataset
+    data = dataset.origin
+    q = data[:, 0]
+    intensity = data[:, 1]
+    intError = data[:, 2]
+
     if not isList(allRes) or not len(allRes):
         logging.info("There are no results to plot, breaking up.")
         return
@@ -80,7 +103,7 @@ def plotResults(allRes, dataset, params,
 
     # check how many result plots we need to generate, and find the 
     # indices to the to-plot paramters
-    nhists = mcsasInstance.model.activeParamCount()
+    nHists = mcsasInstance.model.activeParamCount()
 
     params = [Parameter(**attr) for attr in params]
     if parameterIdx is None: # use 'is': None is a singleton in python
@@ -88,25 +111,7 @@ def plotResults(allRes, dataset, params,
     else:
         parameterId = [parameterIdx]
 
-    # set plot font
-    plotfont = fm.FontProperties(
-                size = 'large',
-                family = fontFamilyArial)
-    textfont = fm.FontProperties(
-                # Baskerville.ttc does not work when saving to eps
-                size = 'large',
-                family = fontFamilyTimes)
-    # initialize figure and axes
-    # TODO: add settings to window title? (next to figure_xy)
-    fig = figure(figsize = (7*(nhists+1), 7), dpi = 80,
-                 facecolor = 'w', edgecolor = 'k')
-    if isString(figureTitle):
-        fig.canvas.set_window_title(figureTitle)
-    # load original Dataset
-    data = dataset.origin
-    q = data[:, 0]
-    intensity = data[:, 1]
-    intError = data[:, 2]
+    fig = figInit(nHists, figureTitle):
 
     #plot intensity fit:
     if dataset.is2d:
@@ -127,15 +132,16 @@ def plotResults(allRes, dataset, params,
         QY = numpy.array([-q[0, xmidi], q[-1, xmidi]])
         extent = (QX[0], QX[1], QY[0], QY[1])
 
-        qAxis = fig.add_subplot(1, (nhists+1), 1, axisbg = (.95, .95, .95),
+        qAxis = fig.add_subplot(1, (nHists+1), 1, axisbg = (.95, .95, .95),
                                xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
                                ylabel = 'q_y, 1_m')
         imshow(log10(intShow), extent = extent, origin = 'lower')
         qAxis = setAxis(qAxis)
         colorbar()
     else:
+        #1D data
         qAxis = fig.add_subplot(
-                    1, (nhists+1), 1,
+                    1, (nHists+1), 1,
                     axisbg = (.95, .95, .95),
                     xlim = (q.min() * (1 - axisMargin),
                             q.max() * (1 + axisMargin)),
@@ -178,7 +184,7 @@ def plotResults(allRes, dataset, params,
     sizeAxis = list()
 
     # plot histograms
-    for parami in range(len(parameterId)):
+    for parami in range(nHists):
         # get data:
         res = allRes[parami]
         histXLowerEdge = res['histogramXLowerEdge']
@@ -219,7 +225,7 @@ def plotResults(allRes, dataset, params,
 
         yLim = (0, volHistYMean.max() * (1 + axisMargin) )
         sizeAxis.append(fig.add_subplot(
-                            1, (nhists + 1), parami + 2,
+                            1, (nHists + 1), parami + 2,
                             axisbg = (.95, .95, .95),
                             xlim = xLim,
                             ylim = yLim,
