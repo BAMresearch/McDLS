@@ -65,10 +65,6 @@ class AlgorithmBase(object):
                     AlgorithmParameterError, "{name}: Expected a "
                     "ParameterBase for parameter {index}, got {type}!"
                     .format(name = cls.__name__, index = i, type = type(p)))
-            testfor(not hasattr(cls, p.name()),
-                    AlgorithmParameterError, "{name}: Name '{attr}' for "
-                    "parameter {index} is already set!"
-                    .format(name = cls.__name__, attr = p.name(), index = i))
             # char replacement for unicode
             name = unicode(p.name())
             replacements = dict([(ord(char), None) for char in u' \t\n\r'])
