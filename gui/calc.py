@@ -43,6 +43,10 @@ class Calculator(object):
         return [getattr(self._algo, pname) for pname in self.paramNames()]
 
     @property
+    def algo(self):
+        return self._algo
+
+    @property
     def model(self):
         return self._algo.model
 
