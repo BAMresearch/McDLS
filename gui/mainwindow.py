@@ -371,6 +371,12 @@ class AlgorithmWidget(SettingsWidget):
         layout.setRowStretch(layout.rowCount() - 1, 1)
         self.setLayout(layout)
 
+class PostWidget(SettingsWidget):
+
+    def __init__(self, parent):
+        SettingsWidget.__init__(self, parent)
+        self.title = TitleHandler.setup(self, "Post-MC Analysis Settings")
+
 class PropertyWidget(SettingsWidgetBase):
     _calculator = None
 
@@ -601,6 +607,7 @@ class MainWindow(MainWindowBase):
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupSettings())
+        self._addToolboxItem(self._setupPostWidget())
         self.fileWidget.sigSphericalSizeRange.connect(
                         self.propWidget.setSphericalSizeRange)
         # put the log widget at the bottom
@@ -645,6 +652,11 @@ class MainWindow(MainWindowBase):
         """Set up property widget with settings."""
         self.algoWidget = AlgorithmWidget(self, self.calculator)
         return self.algoWidget
+
+    def _setupPostWidget(self):
+        """Set up property widget with settings."""
+        self.postWidget = PostWidget(self)
+        return self.postWidget
 
     def _setupLogWidget(self):
         """Set up widget for logging output."""
