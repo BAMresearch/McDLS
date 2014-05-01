@@ -397,7 +397,7 @@ class PropertyWidget(SettingsWidgetBase):
 
     def __init__(self, parent):
         SettingsWidgetBase.__init__(self, parent)
-        self.title = TitleHandler.setup(self, "settings")
+        self.title = TitleHandler.setup(self, "Model Settings")
         self._calculator = Calculator()
         layout = QHBoxLayout(self)
         layout.setObjectName("layout")
