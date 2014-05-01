@@ -607,7 +607,7 @@ class MainWindow(MainWindowBase):
         self.centralLayout = QVBoxLayout()
         # put buttons in central widget
         self.centralLayout.addWidget(self.toolbox)
-        self.centralLayout.addWidget(self._setupButtons())
+        self.centralLayout.addWidget(self._setupStartButton())
         centralWidget = QWidget(self)
         centralWidget.setLayout(self.centralLayout)
         centralWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
@@ -656,6 +656,33 @@ class MainWindow(MainWindowBase):
         logWidget.append("\n\r")
         self.logWidget = logWidget
         return logDock
+
+    def _setupFileButton(self):
+        """Set up "load files..." - button."""
+        self.loadBtn = QPushButton("load files ...")
+        self.loadBtn.pressed.connect(self.fileWidget.loadData)
+        btnLayout = QHBoxLayout()
+        btnLayout.setContentsMargins(0, 0, 0, 0)
+        self.loadBtn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        btnLayout.addWidget(self.loadBtn)
+        btnWidget = QWidget(self)
+        btnWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        btnWidget.setLayout(btnLayout)
+        return btnWidget
+
+    def _setupStartButton(self):
+        """Set up "Start/Stop" - button."""
+        self.startStopBtn = QPushButton()
+        self.startStopBtn.setCheckable(True)
+        self.startStopBtn.clicked[bool].connect(self.onStartStopClick)
+        btnLayout = QHBoxLayout()
+        btnLayout.setContentsMargins(0, 0, 0, 0)
+        self.startStopBtn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        btnLayout.addWidget(self.startStopBtn)
+        btnWidget = QWidget(self)
+        btnWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        btnWidget.setLayout(btnLayout)
+        return btnWidget
 
     def _setupButtons(self):
         """Set up buttons."""
