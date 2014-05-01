@@ -184,7 +184,7 @@ def plotResults(allRes, dataset, params,
 
     sizeAxis = list()
     # plot histograms
-    for parami in range(nHists):
+    for parami, plotPar in enumerate(mcsasInstance.model.activeParams()):
         # get data:
         res = allRes[parami]
         histXLowerEdge = res['histogramXLowerEdge']
@@ -205,12 +205,11 @@ def plotResults(allRes, dataset, params,
         #    "should be either 'volume' or 'number'"
 
         #get information for labels:
-        plotPar = params[parameterId[parami]]
         plotTitle = plotPar.displayName()
         xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
 
         # prep axes
-        if params[parameterId[parami]].histogram().scaleX == 'log':
+        if plotPar.histogram().scaleX == 'log':
 
             xLim = (histXLowerEdge.min() * (1 - axisMargin), 
                     histXLowerEdge.max() * (1 + axisMargin))
