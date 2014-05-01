@@ -628,7 +628,7 @@ class MainWindow(MainWindowBase):
 
     def _setupFileWidget(self):
         # set up file widget
-        fileWidget = FileList(self, title = "data files", withBtn = False)
+        fileWidget = FileList(self, title = "Data Files", withBtn = False)
         fileWidget.setHeader(SASData.displayDataDescr())
         fileWidget.setToolTip(
                 "Double click to use the estimated size for the model.")
