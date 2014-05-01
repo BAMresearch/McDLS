@@ -140,7 +140,7 @@ class RangeStats(object):
 # put this sketch here, for the moment can be placed in a separate file later
 class Histogram(object):
     """Stores histogram related settings of a parameter.
-    The results too, eventually(?)
+    The results too, eventually(?). yes, please.
     Stores&calculates rangeInfo() results for all available weighting options.
     """
     # back reference of the FitParameter this histogram belongs to
@@ -251,6 +251,8 @@ class FitParameterBase(ParameterBase):
     # soon, histogram will replace *isActive*
     # by default it is not fitted, inactive
     ParameterBase.setAttributes(locals(), histogram = None)
+    #store values if active in the parameter itself
+    ParameterBase.setAttributes(locals(), _activeValues = None)
 
     @mixedmethod
     def isActive(selforcls):
@@ -269,6 +271,32 @@ class FitParameterBase(ParameterBase):
         elif not isActive:
             selforcls.setHistogram(None)
             
+    @mixedmethod
+    def activeVal(selforcls, val, index = None):
+        """gets a particular value for use during MC procedure. 
+        If index = None, the entire active values array is returned.
+        """
+        if index is None:
+            return selforcls._activeValues
+        else:
+            return selforcls._activeValues[index%len(selforcls.activeVal())]
+
+    @mixedmethod
+    def setActiveVal(selforcls, val, index = None):
+        """Sets a particular value during MC procedure. If index = None,
+        the entire active values array is replaced with input val. This can
+        be used to initialize the values.
+        """
+        if not isActive:
+            logging.error(
+            'value of parameter cannot be set, parameter not active')
+            return
+        if index is None:
+            selforcls._activeValues = np.array(val)
+        else:
+            selforcls._activeValues[index%len(selforcls.activeVal())] = val
+
+
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
