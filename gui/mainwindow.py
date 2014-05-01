@@ -437,6 +437,9 @@ class PropertyWidget(SettingsWidgetBase):
         rangeLayout = QVBoxLayout(rangeStats)
         rangeLayout.setObjectName("rangeLayout")
         self.rangeWidget = RangeList(self, title = "ranges", withBtn = False)
+        self.rangeWidget.setToolTip(
+                "Right-click to add additional ranges.\n" +
+                "Keeping full range (0, inf) is highly recommended.")
         self.rangeWidget.setHeader(ParameterRange.displayDataDescr())
         rangeLayout.addWidget(self.rangeWidget)
         rangeLayout.addStretch()
