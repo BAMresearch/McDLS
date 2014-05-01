@@ -4,13 +4,13 @@
 Add docstring
 """
 
-import numpy # For arrays
+import numpy as np # For arrays
 from numpy import size, log10
 from cutesnake.utils import isList, isString
 from utils.parameter import Parameter
 #from mcsasparameters import McSASParameters 
 
-def plotResults(allRes, dataset, params,
+def plotResults(allRes, dataset, 
                 axisMargin = 0.3, parameterIdx = None, figureTitle = None,
                 mcsasInstance = None):
     """
@@ -29,9 +29,10 @@ def plotResults(allRes, dataset, params,
     except ImportError:
         pass # no pyside
     import matplotlib.font_manager as fm
-    from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
-                                   plot, grid, legend, title, xlim, gca,
-                                   close, colorbar, imshow)
+    from matplotlib import gridspec
+    from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar, 
+            text, plot, grid, legend, title, xlim, ylim, gca, axis,
+            close, colorbar, imshow, subplot, axes)
     from pylab import show
 
     def setAxis(ah):
@@ -71,14 +72,38 @@ def plotResults(allRes, dataset, params,
         yticks(locs, map(lambda x: "%g" % x, locs))
         return ah
 
-    def figInit(nHists, figureTitle):
-        # initialize figure 
-        # TODO: add settings to window title? (next to figure_xy)
-        fig = figure(figsize = (7*(nHists+1), 7), dpi = 80,
+    def figInit(nHists, figureTitle, nR = 1):
+        """initialize figure and initialise axes using GridSpec.
+        Each rangeinfo (nR) contains two rows and nHists + 1 columns.
+        the top row axes are for placing text objects: settings and stats.
+        The bottom row axes are for plotting the fits and the histograms
+        TODO: add settings to window title? (next to figure_xy)"""
+        ah = list() #list of axes handles from top left to bottom right.
+
+        fig = figure(figsize = (7 * (nHists + 1), 7 * nR), dpi = 80,
                      facecolor = 'w', edgecolor = 'k')
         if isString(figureTitle):
             fig.canvas.set_window_title(figureTitle)
-        return fig
+
+        gs = gridspec.GridSpec(2 * nR, nHists + 1,
+                height_ratios = np.repeat([1,6],nR ) )
+        #update margins
+        gs.update(left = 0.08, bottom = 0.10,
+                            right = 0.96, top = 0.95,
+                            wspace = 0.23, hspace = 0.13)
+
+        for ai in range((nHists + 1) * nR * 2 ):
+            #initialise axes 
+            ah.append(subplot(gs[ai]))
+            if ai%((nHists + 1) * 2) < (nHists + 1) : 
+                #text box settings:
+                textAxDict = {
+                        'frame_on' : False,
+                        'yticks' : [],
+                        'xticks' : [],
+                        }
+                ah[-1].update(textAxDict)
+        return fig, ah
 
     # set plot font
     fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
@@ -103,22 +128,42 @@ def plotResults(allRes, dataset, params,
 
     # check how many result plots we need to generate, and find the 
     # indices to the to-plot paramters
+    # number of histograms:
     nHists = mcsasInstance.model.activeParamCount()
-
-    params = [Parameter(**attr) for attr in params]
-    if parameterIdx is None: # use 'is': None is a singleton in python
-        parameterId = [i for i, p in enumerate(params) if p.isActive()]
+    # number of ranges: 
+    if nHists > 0:
+        nR = len( mcsasInstance.model.activeParams()[0].histogram().ranges )
     else:
-        parameterId = [parameterIdx]
+        nR = 1 # no active parameters
+    # initialise figure:
+    fig, ah = figInit(nHists, figureTitle, nR)
 
-    fig = figInit(nHists, figureTitle)
+    #general axes settings:
+    AxDict = {'axis_bgcolor' : (.95, .95, .95), 
+            'xscale' : 'log', 
+            'yscale' : 'log',
+            }
 
+    #settings for Q-axes (override previous settings where appropriate):
+    xLim = (q.min() * (1 - axisMargin), q.max() * (1 + axisMargin))
+    yLim = (intensity[intensity != 0].min() * (1 - axisMargin), 
+            intensity.max() * (1 + axisMargin))
+    qAxDict = AxDict.copy()
+    qAxDict.update({
+            'xlim' : xLim,
+            'ylim' : yLim,
+            'xlabel' : 'q, 1/m', 
+            'ylabel' : 'intensity, 1/(m sr)'
+            })
+
+    # quickFix for now, to be modified later for showing more ranges:
+    rangei = 0
+    
     #plot intensity fit:
     if dataset.is2d:
         # 2D data
         psi = data[:, 3]
         # we need to recalculate the result in two dimensions
-        # done by gen2DIntensity function
         intensity2d = allRes['intensity2d']
         intShow = intensity.copy()
         # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
@@ -128,31 +173,26 @@ def plotResults(allRes, dataset, params,
                 (psi > 180) * (psi <= 270)]
         xmidi = int(round(size(q, 1)/2))
         ymidi = int(round(size(q, 0)/2))
-        QX = numpy.array([-q[ymidi, 0], q[ymidi, -1]])
-        QY = numpy.array([-q[0, xmidi], q[-1, xmidi]])
+        QX = np.array([-q[ymidi, 0], q[ymidi, -1]])
+        QY = np.array([-q[0, xmidi], q[-1, xmidi]])
         extent = (QX[0], QX[1], QY[0], QY[1])
 
-        qAxis = fig.add_subplot(1, (nHists+1), 1, axisbg = (.95, .95, .95),
+        # indexing probably wrong:
+        qAxis = ax[nHists + nR]
+        qAxis.update( axisbg = (.95, .95, .95),
                                xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
                                ylabel = 'q_y, 1_m')
+        qAxis = ax[nHists + nR]
         imshow(log10(intShow), extent = extent, origin = 'lower')
         qAxis = setAxis(qAxis)
         colorbar()
     else:
-        #1D data
-        qAxis = fig.add_subplot(
-                    1, (nHists+1), 1,
-                    axisbg = (.95, .95, .95),
-                    xlim = (q.min() * (1 - axisMargin),
-                            q.max() * (1 + axisMargin)),
-                    ylim = (intensity[intensity != 0].min()
-                                * (1 - axisMargin),
-                            intensity.max()
-                                * (1 + axisMargin)
-                    ),
-                    xscale = 'log', yscale = 'log',
-                    xlabel = 'q, 1/m', ylabel = 'intensity, 1/(m sr)'
-                )
+        # 1D data
+        print('len ah: {}, nHists: {}, nR: {}'.format(len(ah), nHists, nR))
+        qAxis = ah[(rangei + 1) * (nHists + 1) ]
+        #make active:
+        axes(qAxis)
+        qAxis.update(qAxDict)
         qAxis = setAxis(qAxis)
         errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
@@ -160,32 +200,42 @@ def plotResults(allRes, dataset, params,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
              dash_capstyle = 'round', zorder = -1)
-        aq = numpy.sort(result['fitQ'])
+        aq = np.sort(result['fitQ'])
         aI = result['fitIntensityMean'][0, 
-                numpy.argsort(result['fitQ'])]
+                np.argsort(result['fitQ'])]
         plot(aq, aI, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
         try:
-            plot(aq, numpy.mean(result['scalingFactors'][1, :]) + 0*aq,
+            plot(aq, np.mean(result['scalingFactors'][1, :]) + 0*aq,
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})'
-                         .format(numpy.mean(result['scalingFactors'][1, :])),
+                         .format(np.mean(result['scalingFactors'][1, :])),
                  zorder = 3)
         except:
             pass
-        #for some reason, the axis settings are not set using the above
-        #call, and need repeating:
-        gca().set_xlim((q.min() * (1 - axisMargin),
-                q.max() * (1 + axisMargin)))
-        gca().set_ylim((intensity[intensity != 0].min() * (1 - axisMargin),
-                            intensity.max() * (1 + axisMargin) ))
         legend(loc = 1, fancybox = True, prop = textfont)
     title('Measured vs. Fitted intensity',
           fontproperties = textfont, size = 'x-large')
+    # reapply limits, necessary for some reason:
+    xlim(xLim)
+    ylim(yLim)
+
+    # Information on the settings can be shown here:
+    InfoAxis = ah[rangei * (nHists + 1)]
+    # make active:
+    axes(InfoAxis)
+    text(0,0,'Algorithm settings \n go here...', bbox = 
+            {'facecolor' : 'white', 'alpha': 0.5},
+            fontproperties = textfont)
+    axis('tight')
+
 
     sizeAxis = list()
     # plot histograms
+    # histogram axes settings:
+    hAxDict = AxDict.copy()
     for parami, plotPar in enumerate(mcsasInstance.model.activeParams()):
         # get data:
+        # histogram axis index:
         res = allRes[parami]
         histXLowerEdge = res['histogramXLowerEdge']
         histXMean = res['histogramXMean']
@@ -208,9 +258,7 @@ def plotResults(allRes, dataset, params,
         plotTitle = plotPar.displayName()
         xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
 
-        # prep axes
         if plotPar.histogram().scaleX == 'log':
-
             xLim = (histXLowerEdge.min() * (1 - axisMargin), 
                     histXLowerEdge.max() * (1 + axisMargin))
             xScale = 'log'
@@ -221,24 +269,35 @@ def plotResults(allRes, dataset, params,
             xScale = 'linear'
 
         yLim = (0, volHistYMean.max() * (1 + axisMargin) )
-        sizeAxis.append(fig.add_subplot(
-                            1, (nHists + 1), parami + 2,
-                            axisbg = (.95, .95, .95),
-                            xlim = xLim,
-                            ylim = yLim,
-                            xlabel = xLabel,
-                            xscale = xScale,
-                            ylabel = '[Rel.] Volume Fraction'))
-
+        # prep axes:
+        hAxis = ah[(rangei + 1) * nHists + 2 + parami]
+        #make active:
+        axes(hAxis)
+        # change axis settigns:
+        hAxDict.update({
+            'xlim' : xLim,
+            'ylim' : yLim,
+            'xlabel' : xLabel,
+            'xscale' : xScale,
+            'yscale' : 'linear',
+            'ylabel' : '[Rel.] Volume Fraction' })
+        # update axes settings:
+        hAxis.update(hAxDict)
+        # store in list of histogram axes (maybe depreciated soon):
+        sizeAxis.append(hAxis)
+        # change axis settings not addressible through dictionary:
         sizeAxis[parami] = setAxis(sizeAxis[parami])
         # fill axes
+        # plot histogram:
         bar(histXLowerEdge[0:-1], volHistYMean, 
                 width = histXWidth, color = 'orange',
                 edgecolor = 'black', linewidth = 1, zorder = 2,
                 label = 'MC size histogram')
+        # plot observability limit
         plot(histXMean, volHistMinReq, 'ro', 
                 ms = 5, markeredgecolor = 'r',
                 label = 'Minimum visibility limit', zorder = 3)
+        # plot uncertainties
         errorbar(histXMean, volHistYMean, volHistYStd,
                 zorder = 4, fmt = 'k.', ecolor = 'k',
                 elinewidth = 2, capsize = 4, ms = 0, lw = 2,
@@ -250,9 +309,16 @@ def plotResults(allRes, dataset, params,
         xlim((histXLowerEdge.min() * (1 - axisMargin),
               histXLowerEdge.max() * (1 + axisMargin)))
 
-    fig.subplots_adjust(left = 0.1, bottom = 0.11,
-                        right = 0.96, top = 0.95,
-                        wspace = 0.23, hspace = 0.13)
+        #put the rangeInfo in the plot above
+        InfoAxis = ah[(rangei) * nHists + 1 + parami]
+        #make active:
+        axes(InfoAxis)
+        text(0,0,'Range statistics \n go here...', bbox = 
+                {'facecolor' : 'white', 'alpha': 0.5},
+                fontproperties = textfont)
+        axis('tight')
+
+
     # trigger plot window popup
     show()
 
