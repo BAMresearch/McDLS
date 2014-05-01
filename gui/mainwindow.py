@@ -330,6 +330,7 @@ class AlgorithmWidget(SettingsWidget):
         for i, p in enumerate(calculator.params()):
             container = self.makeSetting([], p)
             self._widgets.append(container)
+        #TODO: link widgets. 
 
     def updateParam(self, pname):
         if self._algo is None:
@@ -402,6 +403,7 @@ class PropertyWidget(SettingsWidgetBase):
         layout = QHBoxLayout(self)
         layout.setObjectName("layout")
 
+        #TODO: disable section once link of "Algorithm Settings" is complete
         mcsasSettings = QGroupBox("McSAS settings")
         mcsasLayout = QVBoxLayout(mcsasSettings)
         mcsasLayout.setObjectName("mcsasLayout")
