@@ -55,10 +55,14 @@ class Calculator(object):
         self._algo.model = newModel
 
     def modelParams(self):
+        if self.model is None:
+            return []
         # access the property to change it permanently
         return [getattr(self.model, p.name()) for p in self.model.params()]
 
     def modelActiveParams(self):
+        if self.model is None:
+            return []
         # access the property to change it permanently
         return [getattr(self.model, p.name()) for p in self.model.activeParams()]
 
@@ -71,6 +75,9 @@ class Calculator(object):
                 ts = log.timestamp())
 
     def __call__(self, dataset):
+        if self.model is None:
+            logging.warning("No model set!")
+            return
         # start log file writing
         testfor(isinstance(dataset, DataSet), StandardError,
                 "{cls} requires a DataSet!".format(cls = type(self)))
@@ -156,6 +163,8 @@ class Calculator(object):
             pickle.dump(mcResult['contribs'],fh)
 
     def _writeSettings(self, mcargs, dataset):
+        if self.model is None:
+            return []
         fn = self._getResultFilename("settings", "algorithm settings", 
                                      extension = '.cfg')
         config = ConfigParser.RawConfigParser()
