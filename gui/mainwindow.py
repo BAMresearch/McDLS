@@ -234,29 +234,106 @@ class RangeList(DataList):
         # per parameter individually, not for all as it is now
 
 class SettingsWidget(SettingsWidgetBase):
+    _calculator = None # calculator instance associated
 
-    def __init__(self, parent):
+    def __init__(self, parent, calculator = None):
         SettingsWidgetBase.__init__(self, parent)
-        self.sigValueChanged.connect(self.updateParam)
+        self.sigValueChanged.connect(self._updateParam)
+        if isinstance(calculator, Calculator):
+            self._calculator = calculator
 
-    def updateParam(self, pname):
-        """Override this in child classes to write settings back."""
+    @property
+    def calculator(self):
+        return self._calculator
+
+    @property
+    def algorithm(self):
+        """Retrieves AlgorithmBase object containing all parameters
+        for this settings."""
         raise NotImplementedError
+
+    def _updateParam(self, widget):
+        print >>sys.__stderr__, "updateParam base", widget, widget.parent()
+        # get the parameter instance associated with this widget
+        if self.algorithm is None:
+            return
+        p = None
+        try:
+            p = getattr(self.algorithm, widget.parameterName)
+        except AttributeError:
+            p = None
+        if p is None:
+            return
+        print p.name()
+        self.updateParam(widget, p)
+
+    def updateParam(self, widget, p):
+        """Write UI settings back to the algorithm."""
+        print >>sys.__stderr__, "updateParam2", widget, widget.parent(), p.name()
+        activeChanged = False
+        # persistent name due to changes to the class instead of instance
+        key = p.name()
+        # get the parent of the updated widget and other input for this param
+        parent = widget.parent()
+        valueWidget = parent.findChild(QWidget, key)
+        # get changed value range if any
+        minValue = self.get(key+"min")
+        maxValue = self.get(key+"max")
+        print 1, minValue, maxValue
+        if minValue is not None and maxValue is not None:
+            # update value range for numerical parameters
+            p.setValueRange((minValue, maxValue))
+            # update bounds of the value input widget
+            valueWidget.setMinimum(p.min())
+            valueWidget.setMaximum(p.max())
+        # update the value input widget itself
+        newValue = self.get(key)
+        print 0, newValue
+        if newValue is not None:
+            p.setValue(newValue)
+        # fit parameter related updates
+        newActive = self.get(key+"active")
+        print 2, newActive, p.isActive()
+        minWidget = parent.findChild(QWidget, key+"min")
+        maxWidget = parent.findChild(QWidget, key+"max")
+        if isinstance(newActive, bool):
+            # update active state for fit parameters
+            p.setActive(newActive)
+            if p.isActive():
+                valueWidget.hide()
+                minWidget.show()
+                maxWidget.show()
+                # sync parameter ranges for statistics after calc
+#                p.histogram().resetRanges()
+#                for r in self.rangeWidget.data():
+#                    p.histogram().addRange(r.lower, r.upper)
+        if not isinstance(newActive, bool) or not newActive:
+            valueWidget.show()
+            try:
+                minWidget.hide()
+                maxWidget.hide()
+            except: pass
 
     @staticmethod
     def _makeLabel(name):
         lbl = QLabel(name + ":")
         lbl.setAlignment(Qt.AlignLeft|Qt.AlignVCenter)
+        lbl.setWordWrap(True)
         return lbl
 
-    def _makeEntry(self, name, dtype, value, minmax = None, widget = None):
+    def _makeEntry(self, name, dtype, value, minmax = None,
+                   widgetType = None, parent = None):
         testfor(name not in self.keys(), KeyError,
             "Input widget '{w}' exists already in '{s}'"
             .format(w = name, s = self.objectName()))
-        if widget is None:
-            widget = self.getInputWidget(dtype)(self)
+        if widgetType is None:
+            widgetType = self.getInputWidget(dtype)
+        if parent is None:
+            parent = self
+        widget = widgetType(parent)
         widget.setObjectName(name)
         if dtype is bool:
+            widget.setCheckable(True)
             widget.setChecked(value)
         else:
             widget.setAlignment(Qt.AlignRight|Qt.AlignVCenter)
@@ -264,6 +341,7 @@ class SettingsWidget(SettingsWidgetBase):
                 widget.setMinimum(min(minmax))
                 widget.setMaximum(max(minmax))
             widget.setValue(value)
+        print "_makeEntry", widget
         self.connectInputWidgets(widget)
         return widget
 
@@ -272,73 +350,86 @@ class SettingsWidget(SettingsWidgetBase):
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
-        lbl = self._makeLabel(param.displayName())
-        lbl.setWordWrap(True)
-        layout.addWidget(lbl)
-        minmax = None
-        if param.isActive() and isinstance(param, ParameterNumerical):
-            # get default upper/lower bound from class
-            minmax = type(param).min(), type(param).max()
-            # user specified min/max within default upper/lower
-            ntryMin = self._makeEntry(
-                    param.name()+"min", param.dtype, param.min(), minmax)
-            ntryMin.setPrefix("min: ")
-            layout.addWidget(ntryMin)
-            ntryMax = self._makeEntry(
-                    param.name()+"max", param.dtype, param.max(), minmax)
-            ntryMax.setPrefix("max: ")
-            layout.addWidget(ntryMax)
-            ntryMin.setFixedWidth(FIXEDWIDTH)
-            ntryMax.setFixedWidth(FIXEDWIDTH)
-            entries.extend((ntryMax, ntryMin)) # reversed order, see above
-        else:
-            if isinstance(param, ParameterNumerical):
-                minmax = param.min(), param.max()
-            ntry = self._makeEntry(param.name(), param.dtype, param.value(),
-                                   minmax)
-            ntry.setFixedWidth(FIXEDWIDTH)
-            layout.addWidget(ntry)
-            entries.append(ntry)
-        if activeBtns:
-            activeBtn = QPushButton("active", self)
-            activeBtn.setCheckable(True)
-            activeBtn.setFixedWidth(FIXEDWIDTH*.5)
-            self._makeEntry(param.name()+"active", bool,
-                            param.isActive(), widget = activeBtn)
-            layout.addWidget(activeBtn)
+        layout.addWidget(self._makeLabel(param.displayName()))
         widget.setLayout(layout)
+        minmaxValue, widgets = None, []
+        # TODO: instead of create/remove widgets, show/hide them on active toggle
+        # -> keys() get out of sync when switching models back&forth
+        # -> we have to create the same widgets again ...
+        print "param.isActive", param.isActive()
+        if isinstance(param, ParameterNumerical):
+            # create input boxes for user specified min/max
+            # within default upper/lower from class definition
+            minmaxValue = type(param).min(), type(param).max()
+            for bound in "min", "max":
+                w = self._makeEntry(param.name() + bound, param.dtype,
+                                       getattr(param, bound)(),
+                                       minmax = minmaxValue, parent = widget)
+                w.setPrefix(bound + ": ")
+                w.setFixedWidth(FIXEDWIDTH)
+                widgets.append(w)
+        # create scalar value input widget
+        w = self._makeEntry(param.name(), param.dtype, param.value(),
+                                      minmax = minmaxValue, parent = widget)
+        w.setFixedWidth(FIXEDWIDTH)
+        widgets.insert(len(widgets)/2, w)
+        if activeBtns:
+            w = self._makeEntry(param.name()+"active", bool,
+                                param.isActive(),
+                                widgetType = QPushButton,
+                                parent = widget)
+            w.setText("active")
+            w.setFixedWidth(FIXEDWIDTH*.5)
+            widgets.append(w)
+        # add input widgets to the layout
+        for w in widgets:
+            layout.addWidget(w)
+            entries.append(w)
+            # store the parameter name
+            w.parameterName = param.name()
+        self.updateParam(widgets[-1], param)
         return widget
 
-    def removeLayout(self):
-        if self.layout() is None:
+    @staticmethod
+    def removeLayout(layout):
+        """Removes all child widgets and detaches the current widget from the
+        given layout."""
+        SettingsWidget.clearLayout(layout)
+        QWidget().setLayout(layout) # removes layout
+
+    @staticmethod
+    def clearLayout(layout, newParent = None):
+        """Removes all widgets from the given layout and reparents them if
+        *newParent* is a sub class of QWidget"""
+        if layout is None:
             return
-        for i in reversed(range(self.layout().count())):
+        assert isinstance(layout, QLayout)
+        if not isinstance(newParent, QWidget):
+            newParent = None
+        for i in reversed(range(layout.count())):
             # reversed removal avoids renumbering eventually
-            self.layout().takeAt(i)
-        QWidget().setLayout(self.layout()) # removes layout
+            widget = layout.takeAt(i)
+            if newParent is not None:
+                try:
+                    widget.setParent(newParent)
+                except: pass
 
 class AlgorithmWidget(SettingsWidget):
-    _algo = None # algorithm instance associated
 
-    def __init__(self, parent, calculator = None):
-        SettingsWidget.__init__(self, parent)
+    def __init__(self, *args, **kwargs):
+        SettingsWidget.__init__(self, *args, **kwargs)
         self.title = TitleHandler.setup(self, "Algorithm Settings")
-        if not isinstance(calculator, Calculator):
-            return
-        self._algo = calculator.algo
         self._widgets = []
-        for i, p in enumerate(calculator.params()):
+        for i, p in enumerate(self.calculator.params()):
+            # creates settings for the calculator parameters allowed in
+            # Calculator.paramNames()
+            # FIXME: move it here
             container = self.makeSetting([], p)
             self._widgets.append(container)
-        #TODO: link widgets. 
 
-    def updateParam(self, pname):
-        if self._algo is None:
-            return
-        value = self.get(pname)
-        if value is None:
-            return
-        getattr(self._algo, pname).setValue(value)
+    @property
+    def algorithm(self):
+        return self.calculator.algo
 
     def resizeEvent(self, resizeEvent):
         """Creates a new layout with appropriate row/column count."""
@@ -353,10 +444,10 @@ class AlgorithmWidget(SettingsWidget):
                     return i
             return len(self._widgets)
 
-        numCols = getNumCols()
+        numCols = max(1, getNumCols())
         if self.layout() is not None:
             if numCols and self.layout().columnCount() != numCols:
-                self.removeLayout()
+                self.removeLayout(self.layout())
             else:
                 return
         # create a new layout
@@ -370,6 +461,62 @@ class AlgorithmWidget(SettingsWidget):
         layout.addWidget(QWidget(), layout.rowCount(), 0)
         layout.setRowStretch(layout.rowCount() - 1, 1)
         self.setLayout(layout)
+
+class ModelWidget(SettingsWidget):
+
+    def __init__(self, *args, **kwargs):
+        SettingsWidget.__init__(self, *args, **kwargs)
+        self.title = TitleHandler.setup(self, "Model Settings")
+        self._widgets = []
+
+        layout = QVBoxLayout(self)
+        layout.setObjectName("modelLayout")
+        self.setLayout(layout)
+
+        self.modelBox = QComboBox(self)
+        for name in MODELS.iterkeys():
+            self.modelBox.addItem(name)
+        self.modelBox.setFixedWidth(FIXEDWIDTH)
+        layout.addWidget(self.modelBox)
+
+        self.modelWidget = QWidget(self)
+        paramLayout = QVBoxLayout(self.modelWidget)
+        self.modelWidget.setLayout(paramLayout)
+        layout.addWidget(self.modelWidget)
+
+        self.modelBox.setCurrentIndex(-1)
+        self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
+
+    def selectSphere(self):
+        index = [i for i in range(0, self.modelBox.count())
+                    if self.modelBox.itemText(i) == "Sphere"][0]
+        self.modelBox.setCurrentIndex(index)
+
+    def _selectModelSlot(self, key = None):
+        print "_selectModelSlot"
+        model = MODELS.get(str(key), None)
+        if (key is not None and model is not None and
+            issubclass(model, ScatteringModel)):
+            self.calculator.model = model()
+        layout = self.modelWidget.layout()
+        # remove parameter widgets from layout
+        self.clearLayout(layout, QWidget())
+        # create new parameter widget based on current selection
+        entries = [self.modelBox]
+        for p in self.algorithm.params():
+            widget = self.makeSetting(entries, p,
+                                      activeBtns = True)
+            layout.addWidget(widget)
+        layout.addStretch()
+        # fix order of input focus change by <TAB> key presses
+        for i in range(1, len(entries)):
+            self.modelWidget.setTabOrder(entries[i-1], entries[i])
+
+    @property
+    def algorithm(self):
+        if self.calculator is None:
+            return None
+        return self.calculator.model
 
 class PostWidget(SettingsWidget):
 
@@ -606,6 +753,7 @@ class MainWindow(MainWindowBase):
         self.toolbox = QToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupAlgoWidget())
+        self._addToolboxItem(self._setupModelWidget())
         self._addToolboxItem(self._setupSettings())
         self._addToolboxItem(self._setupPostWidget())
         self.fileWidget.sigSphericalSizeRange.connect(
@@ -652,6 +800,11 @@ class MainWindow(MainWindowBase):
         """Set up property widget with settings."""
         self.algoWidget = AlgorithmWidget(self, self.calculator)
         return self.algoWidget
+
+    def _setupModelWidget(self):
+        """Set up property widget with settings."""
+        self.modelWidget = ModelWidget(self, self.calculator)
+        return self.modelWidget
 
     def _setupPostWidget(self):
         """Set up property widget with settings."""
@@ -719,7 +872,7 @@ class MainWindow(MainWindowBase):
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
         settings = self.appSettings()
-        for settingsWidget in self.propWidget, self.algoWidget:
+        for settingsWidget in self.propWidget, self.algoWidget, self.modelWidget:
             settings.beginGroup(settingsWidget.objectName())
             for name in settingsWidget.keys():
                 if settingsWidget.get(name) is None:
@@ -737,7 +890,7 @@ class MainWindow(MainWindowBase):
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
         settings = self.appSettings()
-        for settingsWidget in self.propWidget, self.algoWidget:
+        for settingsWidget in self.propWidget, self.algoWidget, self.modelWidget:
             settings.beginGroup(settingsWidget.objectName())
             for name in settingsWidget.keys():
                 value = settingsWidget.get(name)
@@ -761,6 +914,7 @@ class MainWindow(MainWindowBase):
 
     def initUI(self):
         self.propWidget.selectModel()
+        self.modelWidget.selectSphere()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
         self.logWidget.scrollToTop()
@@ -771,7 +925,7 @@ class MainWindow(MainWindowBase):
             self.startStopBtn.setChecked(True)
             self.calc()
         # run this also for 'start' after calculation
-        self.propWidget.calculator().stop()
+        self.calculator.stop()
         self.startStopBtn.setText("start")
         self.startStopBtn.setChecked(False)
 
@@ -779,8 +933,7 @@ class MainWindow(MainWindowBase):
         if len(self.fileWidget) <= 0:
             return
         self.logWidget.clear()
-        calculator = self.propWidget.calculator()
-        self.fileWidget.updateData(updateFunc = calculator,
+        self.fileWidget.updateData(updateFunc = self.calculator,
                                    showProgress = False)
 
     def closeEvent(self, closeEvent):
