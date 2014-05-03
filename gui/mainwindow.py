@@ -293,7 +293,6 @@ class SettingsWidget(SettingsWidgetBase):
             p.setValue(newValue)
         # fit parameter related updates
         newActive = self.get(key+"active")
-        print 2, newActive, p.isActive()
         minWidget = parent.findChild(QWidget, key+"min")
         maxWidget = parent.findChild(QWidget, key+"max")
         if isinstance(newActive, bool):
@@ -356,7 +355,6 @@ class SettingsWidget(SettingsWidgetBase):
         # TODO: instead of create/remove widgets, show/hide them on active toggle
         # -> keys() get out of sync when switching models back&forth
         # -> we have to create the same widgets again ...
-        print "param.isActive", param.isActive()
         if isinstance(param, ParameterNumerical):
             # create input boxes for user specified min/max
             # within default upper/lower from class definition
@@ -754,10 +752,11 @@ class MainWindow(MainWindowBase):
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
-        self._addToolboxItem(self._setupSettings())
+#        self._addToolboxItem(self._setupSettings())
         self._addToolboxItem(self._setupPostWidget())
-        self.fileWidget.sigSphericalSizeRange.connect(
-                        self.propWidget.setSphericalSizeRange)
+#        self.fileWidget.sigSphericalSizeRange.connect(
+# FIXME
+#                        self.propWidget.setSphericalSizeRange)
         # put the log widget at the bottom
         self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
 
@@ -872,7 +871,7 @@ class MainWindow(MainWindowBase):
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
         settings = self.appSettings()
-        for settingsWidget in self.propWidget, self.algoWidget, self.modelWidget:
+        for settingsWidget in self.algoWidget, self.modelWidget:
             settings.beginGroup(settingsWidget.objectName())
             for name in settingsWidget.keys():
                 if settingsWidget.get(name) is None:
@@ -890,7 +889,7 @@ class MainWindow(MainWindowBase):
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
         settings = self.appSettings()
-        for settingsWidget in self.propWidget, self.algoWidget, self.modelWidget:
+        for settingsWidget in self.algoWidget, self.modelWidget:
             settings.beginGroup(settingsWidget.objectName())
             for name in settingsWidget.keys():
                 value = settingsWidget.get(name)
@@ -913,7 +912,6 @@ class MainWindow(MainWindowBase):
         self.loadFiles(filenames)
 
     def initUI(self):
-        self.propWidget.selectModel()
         self.modelWidget.selectSphere()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
