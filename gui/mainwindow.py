@@ -417,13 +417,23 @@ class AlgorithmWidget(SettingsWidget):
     def __init__(self, *args, **kwargs):
         SettingsWidget.__init__(self, *args, **kwargs)
         self.title = TitleHandler.setup(self, "Algorithm Settings")
-        self._widgets = []
-        for i, p in enumerate(self.calculator.params()):
-            # creates settings for the calculator parameters allowed in
-            # Calculator.paramNames()
-            # FIXME: move it here
-            container = self.makeSetting([], p)
+        self._widgets = [] # containers for all inputs of one param
+        entries = []
+        # create inputs for a subset of calculator parameters
+        # allowed parameters could be configurable from file too
+        for i, p in enumerate(("convergenceCriterion", "histogramBins",
+                              "numReps", "numContribs", "findBackground")):
+            p = getattr(self.algorithm, p)
+            container = self.makeSetting(entries, p)
             self._widgets.append(container)
+        # set order of input widget traversal on <TAB> press
+        count = len(entries)
+        # TODO 1
+        print "  tab order start"
+        for i in range(0, count):
+            print entries[i].objectName(), entries[(i+1)%count].objectName()
+            self.setTabOrder(entries[i], entries[(i+1)%count])
+        print "  tab order end"
 
     @property
     def algorithm(self):

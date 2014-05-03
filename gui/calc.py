@@ -27,20 +27,8 @@ class Calculator(object):
     indent = "    "
     nolog = False
 
-    @staticmethod
-    def paramNames():
-        """Names of parameters which will be configurable by the user in a UI.
-        """
-        return ("convergenceCriterion", "histogramBins", "numReps",
-                "numContribs", "findBackground")
-
     def __init__(self):
         self._algo = McSAS.factory()()
-
-    def params(self):
-        """Returns a sub set of parameters defined in paramNames()"""
-        # access the property to be able to change it permanently
-        return [getattr(self._algo, pname) for pname in self.paramNames()]
 
     @property
     def algo(self):
