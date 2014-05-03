@@ -397,13 +397,6 @@ class SettingsWidget(SettingsWidgetBase):
         return widget
 
     @staticmethod
-    def removeLayout(layout):
-        """Removes all child widgets and detaches the current widget from the
-        given layout."""
-        SettingsWidget.clearLayout(layout)
-        QWidget().setLayout(layout) # removes layout
-
-    @staticmethod
     def clearLayout(layout, newParent = None):
         """Removes all widgets from the given layout and reparents them if
         *newParent* is a sub class of QWidget"""
@@ -414,17 +407,35 @@ class SettingsWidget(SettingsWidgetBase):
             newParent = None
         for i in reversed(range(layout.count())):
             # reversed removal avoids renumbering eventually
-            widget = layout.takeAt(i)
+            item = layout.takeAt(i)
+            print "took", item, item.widget(),
             if newParent is not None:
                 try:
-                    widget.setParent(newParent)
+                    item.widget().setParent(newParent)
                 except: pass
+            print item.widget()
+
+    @staticmethod
+    def removeChildren(widget):
+        SettingsWidget.clearLayout(widget.layout(), QWidget())
+        for i in range(widget.layout().count()):
+            w = widget.layout().takeAt(i)
+            print w, w.objectName()
+        for o in widget.children():
+            print "o", o, o.objectName()
+        for w in widget.findChildren(QWidget):
+            print "w", w, w.objectName()
 
 class AlgorithmWidget(SettingsWidget):
 
     def __init__(self, *args, **kwargs):
         SettingsWidget.__init__(self, *args, **kwargs)
         self.title = TitleHandler.setup(self, "Algorithm Settings")
+        # create a new layout
+        layout = QGridLayout(self)
+        layout.setObjectName("algorithmLayout")
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
         self._widgets = [] # containers for all inputs of one param
         entries = []
         # create inputs for a subset of calculator parameters
@@ -460,23 +471,18 @@ class AlgorithmWidget(SettingsWidget):
                     return i
             return len(self._widgets)
 
+        layout = self.layout()
         numCols = max(1, getNumCols())
-        if self.layout() is not None:
-            if numCols and self.layout().columnCount() != numCols:
-                self.removeLayout(self.layout())
-            else:
-                return
-        # create a new layout
-        layout = QGridLayout(self)
-        layout.setObjectName("algorithmLayout")
-        layout.setContentsMargins(0, 0, 0, 0)
+        if layout.count() <= 0 or layout.columnCount() != numCols:
+            self.clearLayout(layout)
+        else:
+            return
         # add them again with new column count
         for i, w in enumerate(self._widgets):
             layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
         # add empty spacer at the bottom
         layout.addWidget(QWidget(), layout.rowCount(), 0)
         layout.setRowStretch(layout.rowCount() - 1, 1)
-        self.setLayout(layout)
 
 class ModelWidget(SettingsWidget):
 
@@ -516,7 +522,9 @@ class ModelWidget(SettingsWidget):
             self.calculator.model = model()
         layout = self.modelWidget.layout()
         # remove parameter widgets from layout
-        self.clearLayout(layout, QWidget())
+        print 4, [k for k in self.keys]
+        self.removeChildren(self.modelWidget)
+        print 5, [k for k in self.keys]
         # create new parameter widget based on current selection
         entries = [self.modelBox]
         for p in self.algorithm.params():
