@@ -18,7 +18,6 @@ class SettingsWidget(QWidget):
     sigValuesChanged = Signal()       # signals a change of any child widget
     sigValueChanged = Signal(QWidget) # signals a change of a specific widget
     _signalMapper = None
-    _keys = None                  # objectNames of connected input widgets
     _isUpdateRequired = None
     _inputWidget = { int:   QSpinBox,
                      float: QDoubleSpinBox,
@@ -31,7 +30,6 @@ class SettingsWidget(QWidget):
         QWidget.__init__(self, parent)
         self._signalMapper = QSignalMapper()
         self._signalMapper.mapped[QObject].connect(self._editingFinishedSlot)
-        self._keys = set()
         try:
             self.setupUi(self)
         except AttributeError:
@@ -41,10 +39,6 @@ class SettingsWidget(QWidget):
 
     def getInputWidget(self, datatype):
         return self._inputWidget.get(datatype, QLineEdit)
-
-    def keys(self):
-        """Returns a list of all registered input widget object names."""
-        return list(self._keys)
 
     def get(self, key, defaultValue = None):
         child = self.findChild(QWidget, key)
@@ -116,8 +110,6 @@ class SettingsWidget(QWidget):
         try: # QSpinbox
             widget.valueChanged.connect(self._valueChangedSlot)
         except AttributeError: pass
-        # remember input widget keys/names
-        self._keys.add(widget.objectName())
 
     connectInputWidgets = _connectInputWidget
 

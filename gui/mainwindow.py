@@ -252,6 +252,15 @@ class SettingsWidget(SettingsWidgetBase):
         for this settings."""
         raise NotImplementedError
 
+    @property
+    def keys(self):
+        """Returns all existing input names (for store/restore)."""
+        if self.algorithm is None:
+            return
+        for p in self.algorithm.params():
+            for w in self.findChildren(QWidget, QRegExp(p.name()+".*")):
+                yield w.objectName()
+
     def _updateParam(self, widget):
         print >>sys.__stderr__, "updateParam base", widget, widget.parent()
         # get the parameter instance associated with this widget
@@ -322,7 +331,7 @@ class SettingsWidget(SettingsWidgetBase):
 
     def _makeEntry(self, name, dtype, value, minmax = None,
                    widgetType = None, parent = None):
-        testfor(name not in self.keys(), KeyError,
+        testfor(name not in self.keys, KeyError,
             "Input widget '{w}' exists already in '{s}'"
             .format(w = name, s = self.objectName()))
         if widgetType is None:
@@ -352,9 +361,7 @@ class SettingsWidget(SettingsWidgetBase):
         layout.addWidget(self._makeLabel(param.displayName()))
         widget.setLayout(layout)
         minmaxValue, widgets = None, []
-        # TODO: instead of create/remove widgets, show/hide them on active toggle
-        # -> keys() get out of sync when switching models back&forth
-        # -> we have to create the same widgets again ...
+        # instead of create/remove widgets, show/hide them on active toggle
         if isinstance(param, ParameterNumerical):
             # create input boxes for user specified min/max
             # within default upper/lower from class definition
@@ -385,6 +392,7 @@ class SettingsWidget(SettingsWidgetBase):
             entries.append(w)
             # store the parameter name
             w.parameterName = param.name()
+        # configure UI accordingly (hide/show widgets)
         self.updateParam(widgets[-1], param)
         return widget
 
@@ -519,6 +527,7 @@ class ModelWidget(SettingsWidget):
         # fix order of input focus change by <TAB> key presses
         for i in range(1, len(entries)):
             self.modelWidget.setTabOrder(entries[i-1], entries[i])
+        # finally, load last known user input (from persistent app settings)
 
     @property
     def algorithm(self):
@@ -763,7 +772,7 @@ class MainWindow(MainWindowBase):
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
 #        self._addToolboxItem(self._setupSettings())
-        self._addToolboxItem(self._setupPostWidget())
+#        self._addToolboxItem(self._setupPostWidget())
 #        self.fileWidget.sigSphericalSizeRange.connect(
 # FIXME
 #                        self.propWidget.setSphericalSizeRange)
@@ -883,9 +892,7 @@ class MainWindow(MainWindowBase):
         settings = self.appSettings()
         for settingsWidget in self.algoWidget, self.modelWidget:
             settings.beginGroup(settingsWidget.objectName())
-            for name in settingsWidget.keys():
-                if settingsWidget.get(name) is None:
-                    continue # no UI element for this setting
+            for name in settingsWidget.keys:
                 val = settings.value(name)
                 settingsWidget.set(name, val)
             settings.endGroup()
