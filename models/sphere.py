@@ -4,13 +4,13 @@
 import numpy
 from numpy import pi, sin, cos
 from cutesnake.algorithm import RandomUniform
-from utils.parameter import Parameter
+from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
-    parameters = (Parameter("radius", 1.0,
+    parameters = (FitParameter("radius", 1.0,
                     displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,

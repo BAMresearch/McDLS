@@ -17,7 +17,7 @@ from cutesnake.dataset import DataSet
 from cutesnake.utils import isList, isString, isFrozen
 from cutesnake.algorithm import (AlgorithmBase,
                                  RandomUniform, RandomExponential)
-from utils.parameter import (Parameter, FitParameterBase, Histogram)
+from utils.parameter import ParameterBase, Histogram
 from utils.propertynames import PropertyNames
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
@@ -327,7 +327,7 @@ class McSAS(AlgorithmBase):
         for key in kwargs.keys():
             found = False
             param = getattr(self, key, None)
-            if isinstance(param, FitParameterBase):
+            if isinstance(param, ParameterBase):
                 param.setValue(kwargs[key])
                 found = True
             for cls in McSASParameters, ScatteringModel:

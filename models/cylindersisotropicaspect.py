@@ -3,7 +3,7 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis
-from utils.parameter import Parameter
+from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -15,16 +15,16 @@ class CylindersIsotropic(ScatteringModel):
     """
     shortName = "Cylinders defined by aspect ratio"
     parameters = (
-            Parameter("radius", 1.0,
+            FitParameter("radius", 1.0,
                     displayName = "Cylinder radius",
                     valueRange = (0., numpy.inf), suffix = "nm"),
-            Parameter("aspect", 10.0,
+            FitParameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
                     valueRange = (0., numpy.inf), suffix = "-"),
-            Parameter("psiAngle", 10.0,
+            FitParameter("psiAngle", 10.0,
                     displayName = "in-plane cylinder rotation",
                     valueRange = (0., 180.), suffix = "deg."),
-            Parameter("psiAngleDivisions", 303.,
+            FitParameter("psiAngleDivisions", 303.,
                     displayName = "in-plane angle divisions",
                     valueRange = (0, numpy.inf), suffix = "-"),
     )

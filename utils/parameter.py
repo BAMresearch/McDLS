@@ -6,7 +6,7 @@ from cutesnake.utils.tests import testfor, isInteger
 from cutesnake.algorithm import (ParameterBase, ParameterFloat,
                                  ParameterNumerical, ParameterBoolean,
                                  ParameterLog, ParameterString)
-from cutesnake.algorithm import Parameter as ParameterFactory
+from cutesnake.algorithm import Parameter
 
 import logging
 import numpy
@@ -313,8 +313,8 @@ class FitParameterFloat(FitParameterBase, ParameterFloat):
 class FitParameterLog(FitParameterBase, ParameterLog):
     pass
 
-def Parameter(*args, **kwargs):
-    return ParameterFactory(*args, paramTypes = (
+def FitParameter(*args, **kwargs):
+    return Parameter(*args, paramTypes = (
                 FitParameterBoolean,
                 FitParameterFloat,
                 FitParameterNumerical,

@@ -7,8 +7,6 @@ Add docstring
 import numpy as np # For arrays
 from numpy import size, log10
 from cutesnake.utils import isList, isString
-from utils.parameter import Parameter
-#from mcsasparameters import McSASParameters 
 
 def plotResults(allRes, dataset, 
                 axisMargin = 0.3, parameterIdx = None, figureTitle = None,

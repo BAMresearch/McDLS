@@ -5,7 +5,7 @@ import logging
 import time
 import numpy
 from numpy import pi
-from utils.parameter import Parameter
+from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
 
@@ -111,15 +111,15 @@ class Kholodenko(ScatteringModel):
     """
     shortName = "Kholodenko Worm"
     parameters = (
-            Parameter("radius", 1.0,
+            FitParameter("radius", 1.0,
                     displayName = "Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
-            Parameter("lenKuhn", 1.0,
+            FitParameter("lenKuhn", 1.0,
                     displayName = "kuhn length",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "nm"),
-            Parameter("lenContour", 1.0,
+            FitParameter("lenContour", 1.0,
                     displayName = "contour length",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf), suffix = "nm")

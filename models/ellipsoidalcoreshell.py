@@ -3,7 +3,7 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
-from utils.parameter import Parameter
+from utils.parameter import FitParameter, Parameter
 from cutesnake.algorithm import RandomUniform, RandomExponential
 from scatteringmodel import ScatteringModel
 
@@ -16,31 +16,31 @@ class EllipsoidalCoreShell(ScatteringModel):
     """
     shortName = "Core-shell ellipsoid"
     parameters = (
-            Parameter("a", 1.0,
+            FitParameter("a", 1.0,
                     displayName = "Principal core radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
-            Parameter("b", 10.0,
+            FitParameter("b", 10.0,
                     displayName = "Equatorial core radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
-            Parameter("t", 1.0,
+            FitParameter("t", 1.0,
                     displayName = "Thickness of shell",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
-            Parameter("eta_c", 3.15,
+            FitParameter("eta_c", 3.15,
                     displayName = "core SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
-            Parameter("eta_s", 2.53,
+            FitParameter("eta_s", 2.53,
                     displayName = "shell SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
-            Parameter("eta_sol", 0.,
+            FitParameter("eta_sol", 0.,
                     displayName = "solvent SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
-            Parameter("intDiv", 100,
+            FitParameter("intDiv", 100,
                     displayName = "orientation integration divisions",
                     valueRange = (0, 1e4), suffix = "-"),
     )

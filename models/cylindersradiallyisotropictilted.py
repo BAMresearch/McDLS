@@ -11,7 +11,7 @@ value used for the integration is the mass-weighted centre.
 
 import numpy, scipy, scipy.special, scipy.stats
 from numpy import pi, zeros, sin, cos, linspace, diff, sinc
-from utils.parameter import Parameter
+from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 
 # parameters must not be inf
@@ -22,23 +22,23 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
     """
     shortName = "Cylinders defined by aspect ratio"
     parameters = (
-            Parameter("radius", 1.0,
+            FitParameter("radius", 1.0,
                     displayName = "Cylinder radius",
                     valueRange = (0.1, numpy.inf), suffix = "nm"),
-            Parameter("aspect", 10.0,
+            FitParameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
                     valueRange = (0.1, numpy.inf), suffix = "-"),
-            Parameter("psiAngle", 0.1,
+            FitParameter("psiAngle", 0.1,
                     displayName = "in-plane cylinder rotation",
                     valueRange = (0.1, 180.1), suffix = "deg."),
-            Parameter("psiAngleDivisions", 303.,
+            FitParameter("psiAngleDivisions", 303.,
                     displayName = "in-plane angle divisions",
                     valueRange = (1, numpy.inf), suffix = "-"),
-            Parameter("phiDistWidth", 10.0,
+            FitParameter("phiDistWidth", 10.0,
                     displayName = "out-of-plane axis distribution width",
                     #with 90 degrees fully out-of-plane (parallel to beam):
                     valueRange = (0.1, 90.1), suffix = "deg."),
-            Parameter("phiDistDivisions", 9.,
+            FitParameter("phiDistDivisions", 9.,
                     displayName = "out of plane integration divisions",
                     valueRange = (1, numpy.inf), suffix = "-"),
     )

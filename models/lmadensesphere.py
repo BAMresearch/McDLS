@@ -5,7 +5,7 @@ import numpy
 from numpy import pi, sin, cos
 import logging
 from cutesnake.algorithm import RandomUniform
-from utils.parameter import Parameter
+from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 
 class LMADenseSphere(ScatteringModel):
@@ -20,17 +20,17 @@ class LMADenseSphere(ScatteringModel):
 
     shortName = "LMADenseSphere"
     parameters = (
-            Parameter("radius", 1.0,
+            FitParameter("radius", 1.0,
                     displayName = "Sphere radius",
                     valueRange = (0., 1e3),
                     generator = RandomUniform,
                     suffix = "nm", decimals = 1),
-            Parameter("volFrac", 0.1,
+            FitParameter("volFrac", 0.1,
                     displayName = "Volume fraction of spheres",
                     valueRange = (0, 1.),
                     generator = RandomUniform,
                     suffix = " ", decimals = 1),
-            Parameter("mf", -1., #-1 is auto calculation
+            FitParameter("mf", -1., #-1 is auto calculation
                     displayName = "standoff multiplier (-1 = auto)",
                     valueRange = (-1, 400.),
                     generator = RandomUniform,

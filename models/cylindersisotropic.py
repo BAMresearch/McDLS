@@ -3,7 +3,7 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
-from utils.parameter import Parameter
+from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomExponential, RandomUniform
 
@@ -15,22 +15,22 @@ class CylindersIsotropic(ScatteringModel):
     """
     shortName = "Isotropic Cylinders"
     parameters = (
-            Parameter("radius", 1.0,
+            FitParameter("radius", 1.0,
                     displayName = "Cylinder radius",
                     generator = RandomExponential,
                     valueRange = (0.1, numpy.inf), suffix = "nm"),
-            Parameter("length", 10.0,
+            FitParameter("length", 10.0,
                     displayName = "length L of the cylinder",
                     generator = RandomExponential,
                     valueRange = (0.1, numpy.inf), suffix = "nm"),
-            Parameter("psiAngle", 0.0,
+            FitParameter("psiAngle", 0.0,
                     displayName = "internal parameter -- ignore",
                     generator = RandomUniform,
                     valueRange = (0.01, 180.01), suffix = "deg."),
-            Parameter("psiAngleDivisions", 303.,
+            FitParameter("psiAngleDivisions", 303.,
                     displayName = "orientation integration divisions",
                     valueRange = (1, numpy.inf), suffix = "-"),
-            Parameter("lengthIsAspect", True,
+            FitParameter("lengthIsAspect", True,
                     displayName = "length value indicates aspect ratio"),
     )
     parameters[0].setActive(True)
