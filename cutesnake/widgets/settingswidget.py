@@ -60,6 +60,8 @@ class SettingsWidget(QWidget):
         return value
 
     def set(self, key, value):
+        if value is None:
+            return
         child = self.findChild(QWidget, key)
         if child is None:
             return
