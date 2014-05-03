@@ -235,12 +235,22 @@ class RangeList(DataList):
 
 class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
+    _appSettings = None
 
     def __init__(self, parent, calculator = None):
         SettingsWidgetBase.__init__(self, parent)
         self.sigValueChanged.connect(self._updateParam)
-        if isinstance(calculator, Calculator):
-            self._calculator = calculator
+        assert isinstance(calculator, Calculator)
+        self._calculator = calculator
+
+    @property
+    def appSettings(self):
+        return self._appSettings
+
+    @appSettings.setter
+    def appSettings(self, settings):
+        assert isinstance(settings, QSettings)
+        self._appSettings = settings
 
     @property
     def calculator(self):
@@ -260,6 +270,19 @@ class SettingsWidget(SettingsWidgetBase):
         for p in self.algorithm.params():
             for w in self.findChildren(QWidget, QRegExp(p.name()+".*")):
                 yield w.objectName()
+
+    def storeSession(self, section = None):
+        """Stores current UI configuration to persistent application settings.
+        """
+        if self.appSettings is None:
+            return
+        if section is None:
+            section = self.objectName()
+        self.appSettings.beginGroup(section)
+        for key in self.keys:
+            value = self.get(key)
+            self.appSettings.setValue(key, value)
+        self.appSettings.endGroup()
 
     def _updateParam(self, widget):
         print >>sys.__stderr__, "updateParam base", widget, widget.parent()
@@ -506,14 +529,25 @@ class ModelWidget(SettingsWidget):
                     if self.modelBox.itemText(i) == "Sphere"][0]
         self.modelBox.setCurrentIndex(index)
 
+    def storeSession(self, section = None):
+        if self.appSettings is None or self.algorithm is None:
+            return
+        model = self.algorithm.name()
+        self.appSettings.beginGroup(self.objectName())
+        self.appSettings.setValue("model", model)
+        super(ModelWidget, self).storeSession(model)
+        self.appSettings.endGroup()
+
     def _selectModelSlot(self, key = None):
         print "_selectModelSlot"
         model = MODELS.get(str(key), None)
-        if (key is not None and model is not None and
-            issubclass(model, ScatteringModel)):
-            self.calculator.model = model()
-        layout = self.modelWidget.layout()
+        if model is None or not issubclass(model, ScatteringModel):
+            return
+        # store current settings before changing the model
+        self.storeSession()
+        self.calculator.model = model()
         # remove parameter widgets from layout
+        layout = self.modelWidget.layout()
         self.removeWidgets(self.modelWidget)
         # create new parameter widget based on current selection
         entries = [self.modelBox]
@@ -884,11 +918,16 @@ class MainWindow(MainWindowBase):
         btnWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
         btnWidget.setLayout(btnLayout)
         return btnWidget
-
+# pass qsettings to settingswidget:
+# after building input widgets with defaults from backend,
+# restore from previous session -> within backend bounds!?
+# before switching model/algo store current session
+# for each model/algo: own section/group
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
         settings = self.appSettings()
         for settingsWidget in self.algoWidget, self.modelWidget:
+            settingsWidget.appSettings = self.appSettings()
             settings.beginGroup(settingsWidget.objectName())
             for name in settingsWidget.keys:
                 val = settings.value(name)
@@ -905,13 +944,7 @@ class MainWindow(MainWindowBase):
         MainWindowBase.storeSettings(self)
         settings = self.appSettings()
         for settingsWidget in self.algoWidget, self.modelWidget:
-            settings.beginGroup(settingsWidget.objectName())
-            for name in settingsWidget.keys():
-                value = settingsWidget.get(name)
-                if value is None:
-                    continue # no UI element for this setting
-                settings.setValue(name, value)
-            settings.endGroup()
+            settingsWidget.storeSession()
         settings.setValue("lastpath", LastPath.get())
         settings.sync()
         tempSettings = QSettings("/tmp/qsettings.test", QSettings.IniFormat)
