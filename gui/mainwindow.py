@@ -408,23 +408,15 @@ class SettingsWidget(SettingsWidgetBase):
         for i in reversed(range(layout.count())):
             # reversed removal avoids renumbering eventually
             item = layout.takeAt(i)
-            print "took", item, item.widget(),
             if newParent is not None:
                 try:
                     item.widget().setParent(newParent)
                 except: pass
-            print item.widget()
 
     @staticmethod
-    def removeChildren(widget):
+    def removeWidgets(widget):
+        """Removes all widgets from the layout of the given widget."""
         SettingsWidget.clearLayout(widget.layout(), QWidget())
-        for i in range(widget.layout().count()):
-            w = widget.layout().takeAt(i)
-            print w, w.objectName()
-        for o in widget.children():
-            print "o", o, o.objectName()
-        for w in widget.findChildren(QWidget):
-            print "w", w, w.objectName()
 
 class AlgorithmWidget(SettingsWidget):
 
@@ -522,9 +514,7 @@ class ModelWidget(SettingsWidget):
             self.calculator.model = model()
         layout = self.modelWidget.layout()
         # remove parameter widgets from layout
-        print 4, [k for k in self.keys]
-        self.removeChildren(self.modelWidget)
-        print 5, [k for k in self.keys]
+        self.removeWidgets(self.modelWidget)
         # create new parameter widget based on current selection
         entries = [self.modelBox]
         for p in self.algorithm.params():
