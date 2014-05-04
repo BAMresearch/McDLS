@@ -23,7 +23,7 @@ from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBase
 from cutesnake.utils.lastpath import LastPath
-from cutesnake.utils import isList
+from cutesnake.utils import isList, isString
 from cutesnake.utils.tests import testfor
 from cutesnake.utilsgui.displayexception import DisplayException
 from utils.parameter import ParameterNumerical
@@ -284,6 +284,19 @@ class SettingsWidget(SettingsWidgetBase):
             self.appSettings.setValue(key, value)
         self.appSettings.endGroup()
 
+    def restoreSession(self, section = None):
+        print " ## restoreSession", section
+        if self.appSettings is None:
+            return
+        if section is None:
+            section = self.objectName()
+        self.appSettings.beginGroup(section)
+        for key in self.keys:
+            print "  ##", key
+            value = self.appSettings.value(key)
+            self.set(key, value)
+        self.appSettings.endGroup()
+
     def _updateParam(self, widget):
         print >>sys.__stderr__, "updateParam base", widget, widget.parent()
         # get the parameter instance associated with this widget
@@ -327,7 +340,7 @@ class SettingsWidget(SettingsWidgetBase):
         newActive = self.get(key+"active")
         minWidget = parent.findChild(QWidget, key+"min")
         maxWidget = parent.findChild(QWidget, key+"max")
-        if isinstance(newActive, bool):
+        if isinstance(newActive, bool): # None for non-fit parameters
             # update active state for fit parameters
             p.setActive(newActive)
             if p.isActive():
@@ -524,11 +537,6 @@ class ModelWidget(SettingsWidget):
         self.modelBox.setCurrentIndex(-1)
         self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
 
-    def selectSphere(self):
-        index = [i for i in range(0, self.modelBox.count())
-                    if self.modelBox.itemText(i) == "Sphere"][0]
-        self.modelBox.setCurrentIndex(index)
-
     def storeSession(self, section = None):
         if self.appSettings is None or self.algorithm is None:
             return
@@ -538,13 +546,33 @@ class ModelWidget(SettingsWidget):
         super(ModelWidget, self).storeSession(model)
         self.appSettings.endGroup()
 
+    def restoreSession(self, model = None):
+        """Load last known user settings from persistent app settings."""
+        print " ## restoreSession", model, self.appSettings, self.algorithm
+        if self.appSettings is None:
+            return
+        if model is None:
+            # get the last model used and select it
+            self.appSettings.beginGroup(self.objectName())
+            model = self.appSettings.value("model")
+            self.appSettings.endGroup()
+            # calls restoreSession(model) and storeSession()
+            # mind the QSettings.group()
+            if not isString(model): # default model if none set
+                model = "Sphere"
+            self.selectModel(model)
+        else:
+            self.appSettings.beginGroup(self.objectName())
+            super(ModelWidget, self).restoreSession(model)
+            self.appSettings.endGroup()
+
     def _selectModelSlot(self, key = None):
-        print "_selectModelSlot"
+        print "_selectModelSlot", key
         model = MODELS.get(str(key), None)
         if model is None or not issubclass(model, ScatteringModel):
             return
         # store current settings before changing the model
-        self.storeSession()
+        self.storeSession() # FIXME: writes preselected model = Sphere!
         self.calculator.model = model()
         # remove parameter widgets from layout
         layout = self.modelWidget.layout()
@@ -559,7 +587,17 @@ class ModelWidget(SettingsWidget):
         # fix order of input focus change by <TAB> key presses
         for i in range(1, len(entries)):
             self.modelWidget.setTabOrder(entries[i-1], entries[i])
-        # finally, load last known user input (from persistent app settings)
+        # restore user settings for this model
+        self.restoreSession(self.calculator.model.name())
+
+    def selectModel(self, model):
+        """*model*: string containing the name of the model to select."""
+        if not isString(model):
+            return
+        for i in range(0, self.modelBox.count()):
+            if self.modelBox.itemText(i).lower() == model.lower().strip():
+                self.modelBox.setCurrentIndex(i)
+                break
 
     @property
     def algorithm(self):
@@ -928,11 +966,7 @@ class MainWindow(MainWindowBase):
         settings = self.appSettings()
         for settingsWidget in self.algoWidget, self.modelWidget:
             settingsWidget.appSettings = self.appSettings()
-            settings.beginGroup(settingsWidget.objectName())
-            for name in settingsWidget.keys:
-                val = settings.value(name)
-                settingsWidget.set(name, val)
-            settings.endGroup()
+            settingsWidget.restoreSession()
         try:
             value = unicode(settings.value("lastpath").toString())
         except AttributeError: # QVariant
@@ -960,7 +994,6 @@ class MainWindow(MainWindowBase):
         self.loadFiles(filenames)
 
     def initUI(self):
-        self.modelWidget.selectSphere()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
         self.logWidget.scrollToTop()
