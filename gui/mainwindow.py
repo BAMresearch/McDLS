@@ -268,7 +268,12 @@ class SettingsWidget(SettingsWidgetBase):
         if self.algorithm is None:
             return
         for p in self.algorithm.params():
-            for w in self.findChildren(QWidget, QRegExp(p.name()+".*")):
+            query = p.name()
+            try:
+                p.isActive() # fails for non-FitParameters
+                query = QRegExp(p.name()+".*")
+            except: pass
+            for w in self.findChildren(QWidget, query):
                 yield w.objectName()
 
     def storeSession(self, section = None):
