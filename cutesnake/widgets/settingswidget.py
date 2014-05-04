@@ -7,7 +7,7 @@ from QtGui import (QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox,
 from QtCore import QSignalMapper, QObject
 from cutesnake.widgets.expdoublespinbox import ExpDoubleSpinBox
 from cutesnake.utils.signal import Signal
-from cutesnake.utils import isList
+from cutesnake.utils import isList, isString
 
 class SettingsWidget(QWidget):
     """
@@ -64,7 +64,7 @@ class SettingsWidget(QWidget):
             setterName = "set" + attr.title()
             try:
                 setter = getattr(child, setterName)
-                oldValue = getattr(child, attr)()
+                oldValue = child.property(attr)
                 dtype = type(oldValue)
             except AttributeError:
                 continue
@@ -72,6 +72,10 @@ class SettingsWidget(QWidget):
                 if dtype is not None:
                     break
         try:
+            if (issubclass(dtype, bool) and
+                isString(value) and
+                value.lower() == "false"):
+                value = ""
             setter(dtype(value))
         except TypeError:
             raise IndexError("Could not set widget '{0}' to '{1}'!".
