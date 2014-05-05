@@ -218,6 +218,11 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.verticalLayout.addWidget(self.listWidget)
         self.sigReceivedUrls.connect(self.loadData)
         self.clearSelection = self.listWidget.clearSelection
+        self.setupUi()
+
+    def setupUi(self):
+        """Reimplement this in child classes for custom UI configuration."""
+        pass
 
     def _setupActions(self):
         self.addMenuEntry(
@@ -331,7 +336,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         # select the next item after the removed ones
         self.listWidget.clearSelection()
         if index >= len(self):
-            index = len(self)-1
+            index = len(self) - 1
         if index >= 0:
             self.listWidget.setCurrentIndex(
                     self.listWidget.indexFromItem(
