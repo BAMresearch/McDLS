@@ -49,9 +49,9 @@ class DataItem(QTreeWidgetItem):
         return bool(self._isRemovable)
 
     def __init__(self, data):
-        QTreeWidgetItem.__init__(self)
+        super(DataItem, self).__init__()
         self.setChildIndicatorPolicy(
-                QTreeWidgetItem.DontShowIndicatorWhenChildless)
+            QTreeWidgetItem.DontShowIndicatorWhenChildless)
         assert isinstance(data, DisplayMixin)
         self._isRemovable = data.isRemovable
         self.setData(0, Qt.UserRole, self.hash32(data))
@@ -110,7 +110,7 @@ class DataItem(QTreeWidgetItem):
 
     def data(self, *args):
         if len(args) > 1:
-            return QTreeWidgetItem.data(self, *args)
+            return super(DataItem, self).data(*args)
         return self._store.get(self.dataId(), None)
 
     def listIndex(self):
