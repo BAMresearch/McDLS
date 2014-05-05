@@ -610,12 +610,6 @@ class ModelWidget(SettingsWidget):
             return None
         return self.calculator.model
 
-class PostWidget(SettingsWidget):
-
-    def __init__(self, parent):
-        SettingsWidget.__init__(self, parent)
-        self.title = TitleHandler.setup(self, "Post-MC Analysis Settings")
-
 class PropertyWidget(SettingsWidgetBase):
     _calculator = None
 
@@ -847,7 +841,7 @@ class MainWindow(MainWindowBase):
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
 #        self._addToolboxItem(self._setupSettings())
-#        self._addToolboxItem(self._setupPostWidget())
+        self._addToolboxItem(self._setupStatsWidget())
 #        self.fileWidget.sigSphericalSizeRange.connect(
 # FIXME
 #                        self.propWidget.setSphericalSizeRange)
@@ -899,10 +893,21 @@ class MainWindow(MainWindowBase):
         self.modelWidget = ModelWidget(self, self.calculator)
         return self.modelWidget
 
-    def _setupPostWidget(self):
+    def _setupStatsWidget(self):
         """Set up property widget with settings."""
-        self.postWidget = PostWidget(self)
-        return self.postWidget
+        # setup similar to the file widget
+        self.statsWidget = RangeList(self,
+                                     title = "Set up Statistics",
+                                     withBtn = False)
+        self.statsWidget.setToolTip(
+                "Right-click to add additional ranges.\n" +
+                "Keeping full range (0, inf) is highly recommended.")
+        self.statsWidget.setHeader(ParameterRange.displayDataDescr())
+        try:
+            self.modelWidget.statsWidget = self.statsWidget
+        except:
+            logging.warning("Failed to set statsWidget on modelWidget!")
+        return self.statsWidget
 
     def _setupLogWidget(self):
         """Set up widget for logging output."""
