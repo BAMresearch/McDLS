@@ -163,6 +163,11 @@ class ParameterRange(DataSet, DisplayMixin):
     def __neq__(self, other):
         return not self.__eq__(other)
 
+    def __str__(self):
+        return str(self._range)
+
+    __repr__ = __str__
+
 from numpy import inf as numpy_inf
 from QtGui import QDialog, QDoubleSpinBox
 class RangeList(DataList):
