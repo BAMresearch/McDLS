@@ -36,34 +36,28 @@ def plotResults(allRes, dataset,
     def setAxis(ah):
         """Sets the axes Parameters."""
         plotfont = fm.FontProperties(
-                    # this only works for macs, doesn't it?
-                    # family = 'Courier New Bold',
-                    # fname = '/Library/Fonts/Courier New Bold.ttf')
                     family = fontFamilyArial)
         textfont = fm.FontProperties(
-                    # Baskerville.ttc does not work when saving to eps
-                    # family = 'Times New Roman',
-                    # fname = '/Library/Fonts/Times New Roman.ttf')
                     family = fontFamilyTimes)
         # setAxis font and ticks
         ah.set_yticklabels(ah.get_yticks(), fontproperties = plotfont,
-                           size = 'large')
+                size = 'large')
         ah.set_xticklabels(ah.get_xticks(), fontproperties = plotfont,
-                           size = 'large')
+                size = 'large')
         ah.set_xlabel(ah.get_xlabel(), fontproperties = textfont,
-                      size = 'x-large')
+                size = 'x-large')
         ah.set_ylabel(ah.get_ylabel(), fontproperties = textfont,
-                      size = 'x-large')
+                size = 'x-large')
         ah.spines['bottom'].set_lw(2)
         ah.spines['top'].set_lw(2)
         ah.spines['left'].set_lw(2)
         ah.spines['right'].set_lw(2)
         ah.tick_params(axis = 'both', colors = 'black', width = 2,
-                       which = 'major', direction = 'in', length = 6)
+                which = 'major', direction = 'in', length = 6)
         ah.tick_params(axis = 'x', colors = 'black', width = 2,
-                       which = 'minor', direction = 'in', length = 3)
+                which = 'minor', direction = 'in', length = 3)
         ah.tick_params(axis = 'y', colors = 'black', width = 2,
-                       which = 'minor', direction = 'in', length = 3)
+                which = 'minor', direction = 'in', length = 3)
         locs, labels = xticks()
         xticks(locs, map(lambda x: "%g" % x, locs))
         locs, labels = yticks()
@@ -186,7 +180,6 @@ def plotResults(allRes, dataset,
         colorbar()
     else:
         # 1D data
-        print('len ah: {}, nHists: {}, nR: {}'.format(len(ah), nHists, nR))
         qAxis = ah[(rangei + 1) * (nHists + 1) ]
         #make active:
         axes(qAxis)
@@ -225,7 +218,6 @@ def plotResults(allRes, dataset,
             {'facecolor' : 'white', 'alpha': 0.5},
             fontproperties = textfont)
     axis('tight')
-
 
     sizeAxis = list()
     # plot histograms
@@ -315,7 +307,6 @@ def plotResults(allRes, dataset,
                 {'facecolor' : 'white', 'alpha': 0.5},
                 fontproperties = textfont)
         axis('tight')
-
 
     # trigger plot window popup
     show()
