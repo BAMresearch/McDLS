@@ -178,6 +178,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
     sigUpdatedData = Signal((object,))
     sigRemovedData = Signal(list)
     sigReceivedUrls = Signal(list)
+    sigEditingFinished = Signal()
     _nestedItems = None # are nested items allowed? (plain list behaviour)
 
     def __init__(self, parent = None, title = None, withBtn = True,
@@ -188,6 +189,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self._nestedItems = nestedItems
         self._setupUi(withBtn)
         self._setupActions()
+        self.setupUi()
         QMetaObject.connectSlotsByName(self)
 
     def _setupUi(self, withBtn):
@@ -218,11 +220,6 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.verticalLayout.addWidget(self.listWidget)
         self.sigReceivedUrls.connect(self.loadData)
         self.clearSelection = self.listWidget.clearSelection
-        self.setupUi()
-
-    def setupUi(self):
-        """Reimplement this in child classes for custom UI configuration."""
-        pass
 
     def _setupActions(self):
         self.addMenuEntry(
@@ -254,6 +251,13 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
     def _updateColumnWidths(self, *args):
         for c in range(0, self.listWidget.columnCount()):
             self.listWidget.resizeColumnToContents(c)
+
+    def setupUi(self):
+        """Reimplement this in child classes for custom UI configuration."""
+        pass
+
+    def leaveEvent(self, event):
+        self.sigEditingFinished.emit()
 
     def clear(self):
         self.listWidget.clear()

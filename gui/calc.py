@@ -168,7 +168,7 @@ class Calculator(object):
         config.add_section(sectionName)
         for key, value in mcargs.iteritems():
             config.set(sectionName, key, value)
-        for p in self.params():
+        for p in self.algo.params():
             config.set(sectionName, p.name(), p.value())
         config.set(sectionName, "model", self.model.name())
         # We don't have to do anything with these yet, but storing them for now:

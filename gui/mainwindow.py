@@ -229,11 +229,14 @@ class RangeList(DataList):
         Allow remove only if there is at least one item left."""
         return (len(self) - len(self.listWidget.selectedItems())) > 0
 
-    def __init__(self, *args, **kwargs):
-        DataList.__init__(self, *args, **kwargs)
+    def setupUi(self):
+        self.clearSelection()
+        self.listWidget.setRootIsDecorated(False)
+        self.listWidget.setUniformRowHeights(True)
+        self.listWidget.setItemsExpandable(False)
+        self.listWidget.setAlternatingRowColors(True)
         self.action("load").setText("add range") # fix default action name
         self.loadData([(0., numpy_inf)]) # default range
-        self.listWidget.clearSelection()
         # note: derive the default range from parameters?
         # -> works only if statistics ranges are defined
         # per parameter individually, not for all as it is now
@@ -358,15 +361,34 @@ class SettingsWidget(SettingsWidgetBase):
                 minWidget.show()
                 maxWidget.show()
                 # sync parameter ranges for statistics after calc
-#                p.histogram().resetRanges()
-#                for r in self.rangeWidget.data():
-#                    p.histogram().addRange(r.lower, r.upper)
+                self._updateStatsRanges()
         if not isinstance(newActive, bool) or not newActive:
             valueWidget.show()
             try:
                 minWidget.hide()
                 maxWidget.hide()
             except: pass
+
+    def setStatsWidget(self, statsWidget):
+        """Sets the statistics widget to use for updating ranges."""
+        assert(isinstance(statsWidget, DataList))
+        self._statsWidget = statsWidget
+        statsWidget.sigEditingFinished.connect(self._updateStatsRanges)
+
+    def _updateStatsRanges(self, count = None, index = None):
+        """Sets all statistics ranges to all parameters in the associated
+        algorithm. Uses the previously configured statistics widget."""
+        print "_updateStatsRanges", count, index, self._statsWidget.data()
+        if self._statsWidget is None:
+            return
+        for p in self.algorithm.params():
+            try:
+                # works for active FitParameters only
+                p.histogram().resetRanges()
+            except:
+                continue
+            for r in self._statsWidget.data():
+                p.histogram().addRange(r.lower, r.upper)
 
     @staticmethod
     def _makeLabel(name):
@@ -527,7 +549,6 @@ class ModelWidget(SettingsWidget):
     def __init__(self, *args, **kwargs):
         SettingsWidget.__init__(self, *args, **kwargs)
         self.title = TitleHandler.setup(self, "Model Settings")
-        self._widgets = []
 
         layout = QVBoxLayout(self)
         layout.setObjectName("modelLayout")
@@ -905,15 +926,12 @@ class MainWindow(MainWindowBase):
         # setup similar to the file widget
         self.statsWidget = RangeList(self,
                                      title = "Set up Statistics",
-                                     withBtn = False)
+                                     withBtn = False, nestedItems = False)
         self.statsWidget.setToolTip(
                 "Right-click to add additional ranges.\n" +
                 "Keeping full range (0, inf) is highly recommended.")
         self.statsWidget.setHeader(ParameterRange.displayDataDescr())
-        try:
-            self.modelWidget.statsWidget = self.statsWidget
-        except:
-            logging.warning("Failed to set statsWidget on modelWidget!")
+        self.modelWidget.setStatsWidget(self.statsWidget)
         return self.statsWidget
 
     def _setupLogWidget(self):
