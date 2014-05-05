@@ -680,7 +680,8 @@ class PropertyWidget(SettingsWidgetBase):
         rangeStats = QGroupBox("Range Statistics")
         rangeLayout = QVBoxLayout(rangeStats)
         rangeLayout.setObjectName("rangeLayout")
-        self.rangeWidget = RangeList(self, title = "ranges", withBtn = False)
+        self.rangeWidget = RangeList(self, title = "ranges",
+                                     withBtn = False, nestedItems = False)
         self.rangeWidget.setToolTip(
                 "Right-click to add additional ranges.\n" +
                 "Keeping full range (0, inf) is highly recommended.")
@@ -880,7 +881,8 @@ class MainWindow(MainWindowBase):
 
     def _setupFileWidget(self):
         # set up file widget
-        fileWidget = FileList(self, title = "Data Files", withBtn = False)
+        fileWidget = FileList(self, title = "Data Files",
+                              withBtn = False, nestedItems = False)
         fileWidget.setHeader(SASData.displayDataDescr())
         fileWidget.setToolTip(
                 "Right-click to add datafiles.\n" +

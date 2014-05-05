@@ -178,11 +178,14 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
     sigUpdatedData = Signal((object,))
     sigRemovedData = Signal(list)
     sigReceivedUrls = Signal(list)
+    _nestedItems = None # are nested items allowed? (plain list behaviour)
 
-    def __init__(self, parent = None, title = None, withBtn = True):
+    def __init__(self, parent = None, title = None, withBtn = True,
+                 nestedItems = True):
         QWidget.__init__(self, parent)
         ContextMenuWidget.__init__(self)
         self.title = TitleHandler.setup(self, title)
+        self._nestedItems = nestedItems
         self._setupUi(withBtn)
         self._setupActions()
         QMetaObject.connectSlotsByName(self)
@@ -345,6 +348,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
 
     def add(self, data):
         item = DataItem(data)
+        if not self._nestedItems:
+            item.setFlags(int(item.flags()) - int(Qt.ItemIsDropEnabled))
         self.listWidget.addTopLevelItem(item)
         return item
 
