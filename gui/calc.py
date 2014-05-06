@@ -97,15 +97,16 @@ class Calculator(object):
 
         if isList(self._algo.result) and len(self._algo.result):
             res = self._algo.result[0]
-            if res is not None:
-                self._writeFit(res)
-                self._writeContribs(res)
-                self._algo.plot()
             # quick hack for now, will get fixed with Parameter design
             for i, p in enumerate(self.model.activeParams()):
                 res = self._algo.result[i]
                 self._writeDistrib(res, p.name())
                 self._writeStatistics(i)
+            #plotting last so calcStats is already executed.
+            if res is not None:
+                self._writeFit(res)
+                self._writeContribs(res)
+                self._algo.plot()
         else:
             logging.info("No results available!")
 
