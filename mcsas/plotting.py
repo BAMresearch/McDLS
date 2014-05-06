@@ -49,13 +49,13 @@ def plotResults(allRes, dataset,
                 pStatFieldName = pStatFieldNames[si]
                 pStatField = pStatFields[si]
                 pStatFieldSTD = pStatFields[si + 1]
-                oString += '{}: {} +/- {}'.format(
+                oString += '{0}: {1:0.03e} +/- {2:0.03e} \n'.format(
                         pStatFieldName,
                         pStatField,
                         pStatFieldSTD)
 
         print('{}'.format(oString))
-        #oString += parameter.stats()[ri]
+        return oString
 
     def setAxis(ah):
         """Sets the axes Parameters."""
@@ -329,8 +329,8 @@ def plotResults(allRes, dataset,
         InfoAxis = ah[(rangei) * nHists + 1 + parami]
         #make active:
         axes(InfoAxis)
-        formatRangeInfo(parHist, rangei, mcsasInstance)
-        text(0,0,'Range statistics \n go here...', bbox = 
+        oString = formatRangeInfo(parHist, rangei, mcsasInstance)
+        text(0.,0.,oString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.5},
                 fontproperties = textfont)
         axis('tight')
