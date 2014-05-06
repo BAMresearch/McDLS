@@ -948,19 +948,6 @@ class MainWindow(MainWindowBase):
         self.logWidget = logWidget
         return logDock
 
-    def _setupFileButton(self):
-        """Set up "load files..." - button."""
-        self.loadBtn = QPushButton("load files ...")
-        self.loadBtn.pressed.connect(self.fileWidget.loadData)
-        btnLayout = QHBoxLayout()
-        btnLayout.setContentsMargins(0, 0, 0, 0)
-        self.loadBtn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        btnLayout.addWidget(self.loadBtn)
-        btnWidget = QWidget(self)
-        btnWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-        btnWidget.setLayout(btnLayout)
-        return btnWidget
-
     def _setupStartButton(self):
         """Set up "Start/Stop" - button."""
         self.startStopBtn = QPushButton()
@@ -975,27 +962,6 @@ class MainWindow(MainWindowBase):
         btnWidget.setLayout(btnLayout)
         return btnWidget
 
-    def _setupButtons(self):
-        """Set up buttons."""
-        self.loadBtn = QPushButton("load files ...")
-        self.loadBtn.pressed.connect(self.fileWidget.loadData)
-        self.startStopBtn = QPushButton()
-        self.startStopBtn.setCheckable(True)
-        self.startStopBtn.clicked[bool].connect(self.onStartStopClick)
-        btnLayout = QHBoxLayout()
-        btnLayout.setContentsMargins(0, 0, 0, 0)
-        for btn in self.loadBtn, self.startStopBtn:
-            btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-            btnLayout.addWidget(btn)
-        btnWidget = QWidget(self)
-        btnWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
-        btnWidget.setLayout(btnLayout)
-        return btnWidget
-# pass qsettings to settingswidget:
-# after building input widgets with defaults from backend,
-# restore from previous session -> within backend bounds!?
-# before switching model/algo store current session
-# for each model/algo: own section/group
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
         settings = self.appSettings()
