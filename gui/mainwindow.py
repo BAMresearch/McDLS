@@ -506,10 +506,6 @@ class AlgorithmWidget(SettingsWidget):
             p = getattr(self.algorithm, p)
             container = self.makeSetting(entries, p)
             self._widgets.append(container)
-        # set order of input widget traversal on <TAB> press
-        count = len(entries)
-        for i in range(0, count):
-            self.setTabOrder(entries[i], entries[(i+1)%count])
 
     @property
     def algorithm(self):
@@ -610,9 +606,6 @@ class ModelWidget(SettingsWidget):
                                       activeBtns = True)
             layout.addWidget(widget)
         layout.addStretch()
-        # fix order of input focus change by <TAB> key presses
-        for i in range(1, len(entries)):
-            self.modelWidget.setTabOrder(entries[i-1], entries[i])
         # restore user settings for this model
         self.restoreSession(self.calculator.model.name())
 
