@@ -308,20 +308,17 @@ class SettingsWidget(SettingsWidgetBase):
         self.appSettings.endGroup()
 
     def restoreSession(self, section = None):
-        print " ## restoreSession", section
         if self.appSettings is None:
             return
         if section is None:
             section = self.objectName()
         self.appSettings.beginGroup(section)
         for key in self.keys:
-            print "  ##", key
             value = self.appSettings.value(key)
             self.set(key, value)
         self.appSettings.endGroup()
 
     def _updateParam(self, widget):
-        print >>sys.__stderr__, "updateParam base", widget, widget.parent()
         # get the parameter instance associated with this widget
         if self.algorithm is None:
             return
@@ -332,12 +329,10 @@ class SettingsWidget(SettingsWidgetBase):
             p = None
         if p is None:
             return
-        print p.name()
         self.updateParam(widget, p)
 
     def updateParam(self, widget, p):
         """Write UI settings back to the algorithm."""
-        print >>sys.__stderr__, "updateParam2", widget, widget.parent(), p.name()
         activeChanged = False
         # persistent name due to changes to the class instead of instance
         key = p.name()
@@ -347,7 +342,6 @@ class SettingsWidget(SettingsWidgetBase):
         # get changed value range if any
         minValue = self.get(key+"min")
         maxValue = self.get(key+"max")
-        print 1, minValue, maxValue
         if minValue is not None and maxValue is not None:
             # update value range for numerical parameters
             p.setValueRange((minValue, maxValue))
@@ -356,7 +350,6 @@ class SettingsWidget(SettingsWidgetBase):
             valueWidget.setMaximum(p.max())
         # update the value input widget itself
         newValue = self.get(key)
-        print 0, newValue
         if newValue is not None:
             p.setValue(newValue)
         # fit parameter related updates
@@ -388,7 +381,6 @@ class SettingsWidget(SettingsWidgetBase):
     def _updateStatsRanges(self, count = None, index = None):
         """Sets all statistics ranges to all parameters in the associated
         algorithm. Uses the previously configured statistics widget."""
-        print "_updateStatsRanges", count, index, self._statsWidget.data()
         if self._statsWidget is None:
             return
         for p in self.algorithm.params():
@@ -427,7 +419,6 @@ class SettingsWidget(SettingsWidgetBase):
                 widget.setMinimum(min(minmax))
                 widget.setMaximum(max(minmax))
             widget.setValue(value)
-        print "_makeEntry", widget
         self.connectInputWidgets(widget)
         return widget
 
@@ -517,12 +508,8 @@ class AlgorithmWidget(SettingsWidget):
             self._widgets.append(container)
         # set order of input widget traversal on <TAB> press
         count = len(entries)
-        # TODO 1
-        print "  tab order start"
         for i in range(0, count):
-            print entries[i].objectName(), entries[(i+1)%count].objectName()
             self.setTabOrder(entries[i], entries[(i+1)%count])
-        print "  tab order end"
 
     @property
     def algorithm(self):
@@ -589,7 +576,6 @@ class ModelWidget(SettingsWidget):
 
     def restoreSession(self, model = None):
         """Load last known user settings from persistent app settings."""
-        print " ## restoreSession", model, self.appSettings, self.algorithm
         if self.appSettings is None:
             return
         if model is None:
@@ -608,7 +594,6 @@ class ModelWidget(SettingsWidget):
             self.appSettings.endGroup()
 
     def _selectModelSlot(self, key = None):
-        print "_selectModelSlot", key
         model = MODELS.get(str(key), None)
         if model is None or not issubclass(model, ScatteringModel):
             return
