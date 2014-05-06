@@ -35,6 +35,28 @@ def plotResults(allRes, dataset,
             close, colorbar, imshow, subplot, axes)
     from pylab import show
 
+    def formatRangeInfo(parameter, RI, mcsasInstance):
+        """Preformats the rangeInfo results ready for printing"""
+        for wi, weighting in enumerate(parameter.weighting()):
+            oString = 'Range {} to {}, {}-weighted \n'.format(
+                    parameter.ranges[RI][0],
+                    parameter.ranges[RI][1],
+                    weighting)
+            pStat = parameter.stats[RI][wi]
+            pStatFields = pStat.fields
+            pStatFieldNames = pStat.fieldNames()
+            for si in np.arange(0,10,2):
+                pStatFieldName = pStatFieldNames[si]
+                pStatField = pStatFields[si]
+                pStatFieldSTD = pStatFields[si + 1]
+                oString += '{}: {} +/- {}'.format(
+                        pStatFieldName,
+                        pStatField,
+                        pStatFieldSTD)
+
+        print('{}'.format(oString))
+        #oString += parameter.stats()[ri]
+
     def setAxis(ah):
         """Sets the axes Parameters."""
         plotfont = fm.FontProperties(
@@ -226,6 +248,8 @@ def plotResults(allRes, dataset,
     # histogram axes settings:
     hAxDict = AxDict.copy()
     for parami, plotPar in enumerate(mcsasInstance.model.activeParams()):
+        # histogram data:
+        parHist = plotPar.histogram()
         # get data:
         # histogram axis index:
         res = allRes[parami]
@@ -250,7 +274,7 @@ def plotResults(allRes, dataset,
         plotTitle = plotPar.displayName()
         xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
 
-        if plotPar.histogram().scaleX == 'log':
+        if parHist.scaleX == 'log':
             xLim = (histXLowerEdge.min() * (1 - axisMargin), 
                     histXLowerEdge.max() * (1 + axisMargin))
             xScale = 'log'
@@ -305,6 +329,7 @@ def plotResults(allRes, dataset,
         InfoAxis = ah[(rangei) * nHists + 1 + parami]
         #make active:
         axes(InfoAxis)
+        formatRangeInfo(parHist, rangei, mcsasInstance)
         text(0,0,'Range statistics \n go here...', bbox = 
                 {'facecolor' : 'white', 'alpha': 0.5},
                 fontproperties = textfont)
