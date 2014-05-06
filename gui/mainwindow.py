@@ -672,8 +672,6 @@ class PropertyWidget(SettingsWidgetBase):
         return self._calculator
 
     def setSphericalSizeRange(self, minVal, maxVal):
-        if self.modelBox.currentText() != "Sphere":
-            return
         key = "radius"
         keymin, keymax = key+"min", key+"max"
         if self.get(keymin) is not None and self.get(keymax) is not None:
