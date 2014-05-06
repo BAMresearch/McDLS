@@ -122,10 +122,11 @@ class ParameterRange(DataSet, DisplayMixin):
     """Represents a range tuple for a parameter of a model.
     Required for proper GUI construction."""
     _range = None
+    _parameter = None #identifier to which parameter the range applies
 
     @staticmethod
     def displayDataDescr():
-        return ("lower", "upper")
+        return ("lower", "upper", "parameter")
 
     @property
     def displayData(self):
@@ -138,6 +139,10 @@ class ParameterRange(DataSet, DisplayMixin):
     @property
     def upper(self):
         return self._range[1]
+
+    @property
+    def parameter(self):
+        return self._parameter
 
     @classmethod
     def create(cls, *args):
@@ -186,8 +191,13 @@ class RangeList(DataList):
         uentry = QDoubleSpinBox(dialog)
         uentry.setPrefix("upper: ")
         uentry.setRange(-1e100, +1e100)
+        #need to identify to which parameter the range limits apply.
+        pentry = QDoubleSpinBox(dialog) # FIXME: set to parameter pulldown
+        pentry.setPrefix("parameter: ")
+        pentry.setRange(0, 100)
         entryLayout.addWidget(lentry)
         entryLayout.addWidget(uentry)
+        entryLayout.addWidget(pentry)
         entryWidget.setLayout(entryLayout)
         vlayout.addWidget(btnWidget)
         btnLayout = QHBoxLayout(btnWidget)
@@ -202,13 +212,13 @@ class RangeList(DataList):
         lentry.selectAll() # select the first input by default
         if not dialog.exec_() or lentry.value() == uentry.value():
             return []
-        return [(lentry.value(), uentry.value())]
+        return [(lentry.value(), uentry.value())], pentry.value() 
 
     def loadData(self, ranges = None):
         """Overridden base class method for adding entries to the list."""
         # add only one item at a time into the list
         if ranges is None:
-            ranges = self.addRange()
+            ranges, pval = self.addRange()
         # do not add duplicates
         ranges = [r for r in ranges if r not in self.data()]
         DataList.loadData(self, sourceList = ranges, showProgress = False,
