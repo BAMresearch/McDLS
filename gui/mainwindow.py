@@ -646,6 +646,15 @@ class ModelWidget(SettingsWidget):
             return None
         return self.calculator.model
 
+    def setSphericalSizeRange(self, minVal, maxVal):
+        if self.modelBox.currentText() != "Sphere":
+            return
+        key = "radius"
+        keymin, keymax = key+"min", key+"max"
+        if self.get(keymin) is not None and self.get(keymax) is not None:
+            self.set(keymin, minVal)
+            self.set(keymax, maxVal)
+
 class PropertyWidget(SettingsWidgetBase):
     _calculator = None
 
@@ -877,11 +886,7 @@ class MainWindow(MainWindowBase):
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
-#        self._addToolboxItem(self._setupSettings())
         self._addToolboxItem(self._setupStatsWidget())
-#        self.fileWidget.sigSphericalSizeRange.connect(
-# FIXME
-#                        self.propWidget.setSphericalSizeRange)
         # put the log widget at the bottom
         self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
 
@@ -904,12 +909,6 @@ class MainWindow(MainWindowBase):
             widget.layout().setContentsMargins(0, 0, 0, 0)
         except: pass
 
-    def _setupSettings(self):
-        """Set up property widget with settings."""
-        propWidget = PropertyWidget(self)
-        self.propWidget = propWidget
-        return propWidget
-
     def _setupFileWidget(self):
         # set up file widget
         fileWidget = FileList(self, title = "Data Files",
@@ -929,6 +928,8 @@ class MainWindow(MainWindowBase):
     def _setupModelWidget(self):
         """Set up property widget with settings."""
         self.modelWidget = ModelWidget(self, self.calculator)
+        self.fileWidget.sigSphericalSizeRange.connect(
+                self.modelWidget.setSphericalSizeRange)
         return self.modelWidget
 
     def _setupStatsWidget(self):
