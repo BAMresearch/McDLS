@@ -219,10 +219,11 @@ class plotResults(object):
         axis('tight')
 
 
-    def plotHist(self, res, plotPar, parHist, hAxis, axisMargin):
+    def plotHist(self, res, plotPar, parHist, hAxis, axisMargin, rangei):
         """histogram plot"""
         #make active:
         axes(hAxis)
+        hRange = parHist.ranges[rangei]
 
         histXLowerEdge = res['histogramXLowerEdge']
         histXMean = res['histogramXMean']
@@ -271,11 +272,19 @@ class plotResults(object):
         # change axis settings not addressible through dictionary:
         hAxis = self.setAxis(hAxis)
         # fill axes
-        # plot histogram:
+        # plot inactive histogram:
         bar(histXLowerEdge[0:-1], volHistYMean, 
-                width = histXWidth, color = 'orange',
-                edgecolor = 'black', linewidth = 1, zorder = 2,
-                label = 'MC size histogram')
+                width = histXWidth, color = 'grey',
+                edgecolor = 'black', linewidth = 0.5, zorder = 2, alpha = 0.5,
+                )
+        # plot active histogram:
+        validi = (histXLowerEdge >= hRange[0]) * (histXLowerEdge <= hRange[1])
+        validi[-1] = 0
+        if not (validi.sum()==0):
+            bar(histXLowerEdge[validi], volHistYMean[validi[0:-1]], 
+                    width = histXWidth[validi[0:-1]], color = 'orange',
+                    edgecolor = 'black', linewidth = 1, zorder = 2,
+                    label = 'MC size histogram')
         # plot observability limit
         plot(histXMean, volHistMinReq, 'ro', 
                 ms = 5, markeredgecolor = 'r',
@@ -300,7 +309,7 @@ class plotResults(object):
             logging.info("There are no results to plot, breaking up.")
             return
 
-        #set parameters
+        # set parameters
         self._allRes = allRes
         self._result = allRes[0]
         self._dataset = dataset
@@ -317,33 +326,31 @@ class plotResults(object):
         self._textfont = fm.FontProperties(
                     family = fontFamilyTimes)
 
+        # set general axes settings:
+        self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
+                'xscale' : 'log', 
+                'yscale' : 'log',
+                }
+
         # load original Dataset
         self._data = self._dataset.origin
         self._q = self._data[:, 0]
         self._intensity = self._data[:, 1]
         self._intError = self._data[:, 2]
 
-
-        # check how many result plots we need to generate, and find the 
-        # indices to the to-plot paramters
         # number of histograms:
         self._nHists = mcsasInstance.model.activeParamCount()
         # number of ranges: 
         if self._nHists > 0:
-            self._nR = len( 
-                    mcsasInstance.model.activeParams()[0].histogram().ranges )
+            self._ranges = ( mcsasInstance.model.activeParams()[0]
+                    .histogram().ranges )
+            self._nR = len( self._ranges )
         else:
             self._nR = 1 # no active parameters
 
         # initialise figure:
         self._fig, self._ah = self.figInit(self._nHists, 
                 self._figureTitle, self._nR)
-
-        #general axes settings:
-        self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
-                'xscale' : 'log', 
-                'yscale' : 'log',
-                }
 
         # show all ranges:
         for rangei in range(self._nR):
@@ -387,7 +394,8 @@ class plotResults(object):
                     + self._nHists + 2 + parami]
                     #hAxis = self._ah[(rangei * 2 + 1) * self._nHists + 2 + parami]
 
-                self.plotHist(res, plotPar, parHist, hAxis, self._axisMargin)
+                self.plotHist(res, plotPar, parHist, 
+                        hAxis, self._axisMargin, rangei)
 
                 #put the rangeInfo in the plot above
                 InfoAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
