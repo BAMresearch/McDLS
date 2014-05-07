@@ -101,7 +101,7 @@ def plotResults(allRes, dataset,
             fig.canvas.set_window_title(figureTitle)
 
         gs = gridspec.GridSpec(2 * nR, nHists + 1,
-                height_ratios = np.repeat([1,6],nR ) )
+                height_ratios = np.tile([1,6],nR ) )
         #update margins
         gs.update(left = 0.08, bottom = 0.10,
                             right = 0.96, top = 0.95,
