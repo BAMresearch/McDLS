@@ -31,15 +31,15 @@ class plotResults(object):
     distribution.
     """
 
-    def formatRangeInfo(self, parameter, RI, mcsasInstance, weighti = 0):
+    def formatRangeInfo(self, parHist, RI, mcsasInstance, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
-        weightings = parameter.weighting()
+        weightings = parHist.weighting()
         weighting = weightings[weighti]
         oString = 'Range {} to {}, {}-weighted'.format(
-                parameter.ranges[RI][0],
-                parameter.ranges[RI][1],
+                parHist.ranges[RI][0],
+                parHist.ranges[RI][1],
                 weighting)
-        pStat = parameter.stats[RI][weighti]
+        pStat = parHist.stats[RI][weighti]
         pStatFields = pStat.fields
         pStatFieldNames = pStat.fieldNames()
         for si in np.arange(0,10,2):
@@ -194,7 +194,7 @@ class plotResults(object):
         #show volume-weighted info:
         ovString = self.formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 0)
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
-                {'facecolor' : 'white', 'alpha': 0.5},
+                {'facecolor' : 'white', 'alpha': 0.95},
                 family = "monospace", size = "small", 
                 horizontalalignment = 'right',
                 multialignment = 'right',
@@ -210,7 +210,7 @@ class plotResults(object):
         #add number-weighted info:
         onString = self.formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 1)
         tnObj = text(0. + delta, 0. + delta, onString, bbox = 
-                {'facecolor' : 'white', 'alpha': 0.5},
+                {'facecolor' : 'white', 'alpha': 0.95},
                 family = "monospace", size = "small", 
                 horizontalalignment = 'left',
                 multialignment = 'right',
@@ -345,51 +345,55 @@ class plotResults(object):
                 'yscale' : 'log',
                 }
 
-        # quickFix for now, to be modified later for showing more ranges:
-        rangei = 0
-        
-        #plot intensity fit:
-        if dataset.is2d:
-            psi = data[:, 3]
-            intensity2d = allRes['intensity2d']
-            qAxis = ax[self._nHists + nR]
-            self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
+        # show all ranges:
+        for rangei in range(self._nR):
+            
+            #plot intensity fit:
+            if dataset.is2d:
+                psi = data[:, 3]
+                intensity2d = allRes['intensity2d']
+                qAxis = ax[self._nHists + nR]
+                self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
 
-        else:
-            # 1D data
-            qAxis = self._ah[(rangei + 1) * (self._nHists + 1) ]
-            fitQ = np.sort(self._result['fitQ'])
-            fitIntensity = self._result['fitIntensityMean'][0, 
-                    np.argsort(self._result['fitQ'])]
-            self.plot1D(self._q, self._intensity, self._intError, 
-                    fitQ, fitIntensity, qAxis)
+            else:
+                # 1D data
+                qAxis = self._ah[rangei * 2 * (self._nHists + 1) 
+                    + self._nHists + 1]
+                fitQ = np.sort(self._result['fitQ'])
+                fitIntensity = self._result['fitIntensityMean'][0, 
+                        np.argsort(self._result['fitQ'])]
+                self.plot1D(self._q, self._intensity, self._intError, 
+                        fitQ, fitIntensity, qAxis)
 
-        # Information on the settings can be shown here:
-        InfoAxis = self._ah[rangei * (self._nHists + 1)]
-        # make active:
-        axes(InfoAxis)
-        text(0,0,'Algorithm settings \n go here...', bbox = 
-                {'facecolor' : 'white', 'alpha': 0.5},
-                fontproperties = self._textfont)
-        axis('tight')
+            ## Information on the settings can be shown here:
+            InfoAxis = self._ah[rangei * 2 * (self._nHists + 1)]
+            # make active:
+            axes(InfoAxis)
+            text(0,0,'Algorithm settings \n go here...', bbox = 
+                    {'facecolor' : 'white', 'alpha': 0.5},
+                    fontproperties = self._textfont)
+            # axis('tight')
 
-        # plot histograms
-        for parami, plotPar in enumerate(
-                self._mcsasInstance.model.activeParams()):
-            # histogram data:
-            parHist = plotPar.histogram()
-            # get data:
-            # histogram axis index:
-            res = self._allRes[parami]
-            # prep axes:
-            hAxis = self._ah[(rangei + 1) * self._nHists + 2 + parami]
+            # plot histograms
+            for parami, plotPar in enumerate(
+                    self._mcsasInstance.model.activeParams()):
+                # histogram data:
+                parHist = plotPar.histogram()
+                # get data:
+                # histogram axis index:
+                res = self._allRes[parami]
+                # prep axes:
+                hAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
+                    + self._nHists + 2 + parami]
+                    #hAxis = self._ah[(rangei * 2 + 1) * self._nHists + 2 + parami]
 
-            self.plotHist(res, plotPar, parHist, hAxis, self._axisMargin)
+                self.plotHist(res, plotPar, parHist, hAxis, self._axisMargin)
 
-            #put the rangeInfo in the plot above
-            InfoAxis = self._ah[(rangei) * self._nHists + 1 + parami]
-            self.plotStats(parHist, self._mcsasInstance, 
-                    rangei, self._fig, InfoAxis)
+                #put the rangeInfo in the plot above
+                InfoAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
+                    + 1 + parami]
+                self.plotStats(parHist, self._mcsasInstance, 
+                        rangei, self._fig, InfoAxis)
 
         # trigger plot window popup
         self._fig.show()
