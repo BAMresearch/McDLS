@@ -23,9 +23,7 @@ try:
 except ImportError:
     pass # no pyside
 
-def plotResults(allRes, dataset, 
-                axisMargin = 0.3, parameterIdx = None, figureTitle = None,
-                mcsasInstance = None):
+class plotResults(object):
     """
     This function plots the output of the Monte-Carlo procedure in two
     windows, with the left window the measured signal versus the fitted
@@ -141,7 +139,7 @@ def plotResults(allRes, dataset,
         qAxis = self.setAxis(qAxis)
         colorbar()
         title('Measured vs. Fitted intensity',
-              fontproperties = textfont, size = 'large')
+              fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
         xlim(QX)
         ylim(QY)
@@ -152,7 +150,7 @@ def plotResults(allRes, dataset,
                 q.max() * (1 + self._axisMargin))
         yLim = (intensity[intensity != 0].min() * (1 - self._axisMargin), 
                 intensity.max() * (1 + self._axisMargin))
-        qAxDict = AxDict.copy()
+        qAxDict = self._AxDict.copy()
         qAxDict.update({
                 'xlim' : xLim,
                 'ylim' : yLim,
@@ -180,7 +178,7 @@ def plotResults(allRes, dataset,
                  zorder = 3)
         except:
             pass
-        legend(loc = 1, fancybox = True, prop = textfont)
+        legend(loc = 1, fancybox = True, prop = self._textfont)
         title('Measured vs. Fitted intensity',
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
@@ -258,6 +256,8 @@ def plotResults(allRes, dataset,
             xScale = 'linear'
 
         yLim = (0, volHistYMean.max() * (1 + self._axisMargin) )
+        # histogram axes settings:
+        hAxDict = self._AxDict.copy()
         # change axis settigns:
         hAxDict.update({
             'xlim' : xLim,
@@ -268,10 +268,8 @@ def plotResults(allRes, dataset,
             'ylabel' : '[Rel.] Volume Fraction' })
         # update axes settings:
         hAxis.update(hAxDict)
-        # store in list of histogram axes (maybe depreciated soon):
-        sizeAxis.append(hAxis)
         # change axis settings not addressible through dictionary:
-        sizeAxis[parami] = self.setAxis(sizeAxis[parami])
+        hAxis = self.setAxis(hAxis)
         # fill axes
         # plot histogram:
         bar(histXLowerEdge[0:-1], volHistYMean, 
@@ -298,7 +296,6 @@ def plotResults(allRes, dataset,
     def __init__(self, allRes, dataset, 
                 axisMargin = 0.3, parameterIdx = None, figureTitle = None,
                 mcsasInstance = None):
-        print('BOOOOOO!')
         if not isList(allRes) or not len(allRes):
             logging.info("There are no results to plot, breaking up.")
             return
@@ -321,10 +318,10 @@ def plotResults(allRes, dataset,
                     family = fontFamilyTimes)
 
         # load original Dataset
-        self._data = dataset.origin
-        self._q = data[:, 0]
-        self._intensity = data[:, 1]
-        self._intError = data[:, 2]
+        self._data = self._dataset.origin
+        self._q = self._data[:, 0]
+        self._intensity = self._data[:, 1]
+        self._intError = self._data[:, 2]
 
 
         # check how many result plots we need to generate, and find the 
@@ -355,20 +352,20 @@ def plotResults(allRes, dataset,
         if dataset.is2d:
             psi = data[:, 3]
             intensity2d = allRes['intensity2d']
-            qAxis = ax[nHists + nR]
+            qAxis = ax[self._nHists + nR]
             self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
 
         else:
             # 1D data
-            qAxis = ah[(rangei + 1) * (nHists + 1) ]
-            fitQ = np.sort(result['fitQ'])
-            fitIntensity = result['fitIntensityMean'][0, 
-                    np.argsort(result['fitQ'])]
+            qAxis = self._ah[(rangei + 1) * (self._nHists + 1) ]
+            fitQ = np.sort(self._result['fitQ'])
+            fitIntensity = self._result['fitIntensityMean'][0, 
+                    np.argsort(self._result['fitQ'])]
             self.plot1D(self._q, self._intensity, self._intError, 
                     fitQ, fitIntensity, qAxis)
 
         # Information on the settings can be shown here:
-        InfoAxis = ah[rangei * (nHists + 1)]
+        InfoAxis = self._ah[rangei * (self._nHists + 1)]
         # make active:
         axes(InfoAxis)
         text(0,0,'Algorithm settings \n go here...', bbox = 
@@ -376,10 +373,7 @@ def plotResults(allRes, dataset,
                 fontproperties = self._textfont)
         axis('tight')
 
-        sizeAxis = list()
         # plot histograms
-        # histogram axes settings:
-        hAxDict = self._AxDict.copy()
         for parami, plotPar in enumerate(
                 self._mcsasInstance.model.activeParams()):
             # histogram data:
@@ -388,16 +382,16 @@ def plotResults(allRes, dataset,
             # histogram axis index:
             res = self._allRes[parami]
             # prep axes:
-            hAxis = ah[(rangei + 1) * nHists + 2 + parami]
+            hAxis = self._ah[(rangei + 1) * self._nHists + 2 + parami]
 
             self.plotHist(res, plotPar, parHist, hAxis, self._axisMargin)
 
             #put the rangeInfo in the plot above
-            InfoAxis = ah[(rangei) * nHists + 1 + parami]
+            InfoAxis = self._ah[(rangei) * self._nHists + 1 + parami]
             self.plotStats(parHist, self._mcsasInstance, 
                     rangei, self._fig, InfoAxis)
 
         # trigger plot window popup
-        fig.show()
+        self._fig.show()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
