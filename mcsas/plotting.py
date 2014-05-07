@@ -7,6 +7,13 @@ Add docstring
 import numpy as np # For arrays
 from numpy import size, log10
 from cutesnake.utils import isList, isString
+import matplotlib
+import matplotlib.font_manager as fm
+from matplotlib import gridspec
+from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar, 
+        text, plot, grid, legend, title, xlim, ylim, gca, axis,
+        close, colorbar, imshow, subplot, axes)
+from pylab import show
 
 def plotResults(allRes, dataset, 
                 axisMargin = 0.3, parameterIdx = None, figureTitle = None,
@@ -18,7 +25,6 @@ def plotResults(allRes, dataset,
     distribution.
     """
 
-    import matplotlib
     try:
         import PySide # verify/test that we have pyside
         # use() gives an error if calling twice
@@ -26,17 +32,11 @@ def plotResults(allRes, dataset,
         matplotlib.rcParams['backend.qt4'] = 'PySide'
     except ImportError:
         pass # no pyside
-    import matplotlib.font_manager as fm
-    from matplotlib import gridspec
-    from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar, 
-            text, plot, grid, legend, title, xlim, ylim, gca, axis,
-            close, colorbar, imshow, subplot, axes)
-    from pylab import show
 
     def formatRangeInfo(parameter, RI, mcsasInstance):
         """Preformats the rangeInfo results ready for printing"""
         for wi, weighting in enumerate(parameter.weighting()):
-            oString = 'Range {} to {}, {}-weighted \n'.format(
+            oString = 'Range {} to {}, {}-weighted'.format(
                     parameter.ranges[RI][0],
                     parameter.ranges[RI][1],
                     weighting)
@@ -47,7 +47,7 @@ def plotResults(allRes, dataset,
                 pStatFieldName = pStatFieldNames[si]
                 pStatField = pStatFields[si]
                 pStatFieldSTD = pStatFields[si + 1]
-                oString += '{0}: {1:0.03e} +/- {2:0.03e} \n'.format(
+                oString += '\n {0}:\t {1:0.03e} +/- {2:0.03e}'.format(
                         pStatFieldName,
                         pStatField,
                         pStatFieldSTD)
@@ -119,6 +119,51 @@ def plotResults(allRes, dataset,
                 ah[-1].update(textAxDict)
         return fig, ah
 
+    def plot2D(q, psi, intensity, intensity2d, qAxis):
+        # 2D data
+        # we need to recalculate the result in two dimensions
+        intShow = intensity.copy()
+        # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
+        intShow[(psi >   0) * (psi <=  90)] = intensity2d[
+                (psi >   0) * (psi <=  90)]
+        intShow[(psi > 180) * (psi <= 270)] = intensity2d[
+                (psi > 180) * (psi <= 270)]
+        xmidi = int(round(size(q, 1)/2))
+        ymidi = int(round(size(q, 0)/2))
+        QX = np.array([-q[ymidi, 0], q[ymidi, -1]])
+        QY = np.array([-q[0, xmidi], q[-1, xmidi]])
+        extent = (QX[0], QX[1], QY[0], QY[1])
+
+        # indexing probably wrong:
+        qAxis.update( axisbg = (.95, .95, .95),
+                               xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
+                               ylabel = 'q_y, 1_m')
+        imshow(log10(intShow), extent = extent, origin = 'lower')
+        qAxis = setAxis(qAxis)
+        colorbar()
+
+    def plot1D(q, intensity, intError, fitQ, fitIntensity, qAxis):
+        #make active:
+        axes(qAxis)
+        qAxis.update(qAxDict)
+        qAxis = setAxis(qAxis)
+        errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
+                 ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
+                 label = 'Measured intensity', lw = 2,
+                 solid_capstyle = 'round', solid_joinstyle = 'miter')
+        grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
+             dash_capstyle = 'round', zorder = -1)
+        plot(fitQ, fitIntensity, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
+        try:
+            plot(aq, np.mean(result['scalingFactors'][1, :]) + 0*aq,
+                 'g-', linewidth = 3,
+                 label = 'MC Background level:\n\t ({0:03.3g})'
+                         .format(np.mean(result['scalingFactors'][1, :])),
+                 zorder = 3)
+        except:
+            pass
+        legend(loc = 1, fancybox = True, prop = textfont)
+
     # set plot font
     fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
     fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
@@ -175,57 +220,19 @@ def plotResults(allRes, dataset,
     
     #plot intensity fit:
     if dataset.is2d:
-        # 2D data
         psi = data[:, 3]
-        # we need to recalculate the result in two dimensions
         intensity2d = allRes['intensity2d']
-        intShow = intensity.copy()
-        # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
-        intShow[(psi >   0) * (psi <=  90)] = intensity2d[
-                (psi >   0) * (psi <=  90)]
-        intShow[(psi > 180) * (psi <= 270)] = intensity2d[
-                (psi > 180) * (psi <= 270)]
-        xmidi = int(round(size(q, 1)/2))
-        ymidi = int(round(size(q, 0)/2))
-        QX = np.array([-q[ymidi, 0], q[ymidi, -1]])
-        QY = np.array([-q[0, xmidi], q[-1, xmidi]])
-        extent = (QX[0], QX[1], QY[0], QY[1])
+        qAxis = ax[nHists + nR]
+        plot2D(q, psi, intensity, intensity2d, qAxis)
 
-        # indexing probably wrong:
-        qAxis = ax[nHists + nR]
-        qAxis.update( axisbg = (.95, .95, .95),
-                               xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
-                               ylabel = 'q_y, 1_m')
-        qAxis = ax[nHists + nR]
-        imshow(log10(intShow), extent = extent, origin = 'lower')
-        qAxis = setAxis(qAxis)
-        colorbar()
     else:
         # 1D data
         qAxis = ah[(rangei + 1) * (nHists + 1) ]
-        #make active:
-        axes(qAxis)
-        qAxis.update(qAxDict)
-        qAxis = setAxis(qAxis)
-        errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
-                 ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
-                 label = 'Measured intensity', lw = 2,
-                 solid_capstyle = 'round', solid_joinstyle = 'miter')
-        grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
-             dash_capstyle = 'round', zorder = -1)
-        aq = np.sort(result['fitQ'])
-        aI = result['fitIntensityMean'][0, 
+        fitQ = np.sort(result['fitQ'])
+        fitIntensity = result['fitIntensityMean'][0, 
                 np.argsort(result['fitQ'])]
-        plot(aq, aI, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
-        try:
-            plot(aq, np.mean(result['scalingFactors'][1, :]) + 0*aq,
-                 'g-', linewidth = 3,
-                 label = 'MC Background level:\n\t ({0:03.3g})'
-                         .format(np.mean(result['scalingFactors'][1, :])),
-                 zorder = 3)
-        except:
-            pass
-        legend(loc = 1, fancybox = True, prop = textfont)
+        plot1D(q, intensity, intError, fitQ, fitIntensity, qAxis)
+
     title('Measured vs. Fitted intensity',
           fontproperties = textfont, size = 'x-large')
     # reapply limits, necessary for some reason:
@@ -328,10 +335,18 @@ def plotResults(allRes, dataset,
         #make active:
         axes(InfoAxis)
         oString = formatRangeInfo(parHist, rangei, mcsasInstance)
-        text(0.,0.,oString, bbox = 
+        tObj = text(0.,0.,oString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.5},
                 fontproperties = textfont)
+        show()
         axis('tight')
+        renderer = fig.canvas.get_renderer()
+        #get bounding box
+        bb = tObj.get_window_extent(renderer = renderer)
+        width = bb.width
+        height = bb.height
+
+
 
     # trigger plot window popup
     show()
