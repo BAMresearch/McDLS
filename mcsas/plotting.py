@@ -51,7 +51,6 @@ class plotResults(object):
                     pStatField,
                     pStatFieldSTD)
 
-        print('{}'.format(oString))
         return oString
 
     def setAxis(self, ah):
