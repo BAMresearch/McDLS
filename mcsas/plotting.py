@@ -123,6 +123,7 @@ def plotResults(allRes, dataset,
         return fig, ah
 
     def plot2D(q, psi, intensity, intensity2d, qAxis):
+        """plots 2D data and fit"""
         # 2D data
         # we need to recalculate the result in two dimensions
         intShow = intensity.copy()
@@ -146,6 +147,7 @@ def plotResults(allRes, dataset,
         colorbar()
 
     def plot1D(q, intensity, intError, fitQ, fitIntensity, qAxis):
+        """plots 1D data and fit"""
         #make active:
         axes(qAxis)
         qAxis.update(qAxDict)
@@ -166,6 +168,113 @@ def plotResults(allRes, dataset,
         except:
             pass
         legend(loc = 1, fancybox = True, prop = textfont)
+
+    def plotStats(parHist, mcsasInstance, rangei, fig, InfoAxis):
+        """plots the range statistics in the small info axes above plots"""
+        delta = 0.001 #minor offset
+        #make active:
+        axes(InfoAxis)
+        #show volume-weighted info:
+        ovString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 0)
+        tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
+                {'facecolor' : 'white', 'alpha': 0.5},
+                family = "monospace", size = "small", 
+                horizontalalignment = 'right',
+                multialignment = 'right',
+                verticalalignment = 'center')
+        fig.show()
+        #get bounding box
+        #bb = tvObj.get_window_extent()
+        #width = bb.width
+        #height = bb.height
+        #print('width: {}, height: {}'.format(width, height))
+        aLim = axis()
+        #axis('tight')
+        #add number-weighted info:
+        onString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 1)
+        tnObj = text(0. + delta, 0. + delta, onString, bbox = 
+                {'facecolor' : 'white', 'alpha': 0.5},
+                family = "monospace", size = "small", 
+                horizontalalignment = 'left',
+                multialignment = 'right',
+                verticalalignment = 'center')
+        fig.show()
+        axis('tight')
+
+
+    def plotHist(res, plotPar, parHist, hAxis, axisMargin):
+        """histogram plot"""
+        #make active:
+        axes(hAxis)
+
+        histXLowerEdge = res['histogramXLowerEdge']
+        histXMean = res['histogramXMean']
+        histXWidth = res['histogramXWidth']
+        # plot volume weighted by default, both would be good
+        # can we plot both weightings? perhaps, with different colors?
+        # e.g. red/orange (current) and blue/lightblue?
+        volHistYMean = res['volumeHistogramYMean']
+        volHistMinReq = res['volumeHistogramMinimumRequired']
+        volHistYStd = res['volumeHistogramYStd']
+        #elif params[parameterId[parami]].histogram().hasWeighting('num'):
+        #    volHistYMean = res['numberHistogramYMean']
+        #    volHistMinReq = res['numberHistogramMinimumRequired']
+        #    volHistYStd = res['numberHistogramYStd']
+        #else: 
+        #    "Incorrect value for histWeighting: "\
+        #    "should be either 'volume' or 'number'"
+
+        #get information for labels:
+        plotTitle = plotPar.displayName()
+        xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
+
+        if parHist.scaleX == 'log':
+            xLim = (histXLowerEdge.min() * (1 - axisMargin), 
+                    histXLowerEdge.max() * (1 + axisMargin))
+            xScale = 'log'
+        else:
+            xLim = (histXLowerEdge.min() - (1 - axisMargin)
+                    * histXLowerEdge.min(), 
+                    histXLowerEdge.max() * (1 + axisMargin))
+            xScale = 'linear'
+
+        yLim = (0, volHistYMean.max() * (1 + axisMargin) )
+        # change axis settigns:
+        hAxDict.update({
+            'xlim' : xLim,
+            'ylim' : yLim,
+            'xlabel' : xLabel,
+            'xscale' : xScale,
+            'yscale' : 'linear',
+            'ylabel' : '[Rel.] Volume Fraction' })
+        # update axes settings:
+        hAxis.update(hAxDict)
+        # store in list of histogram axes (maybe depreciated soon):
+        sizeAxis.append(hAxis)
+        # change axis settings not addressible through dictionary:
+        sizeAxis[parami] = setAxis(sizeAxis[parami])
+        # fill axes
+        # plot histogram:
+        bar(histXLowerEdge[0:-1], volHistYMean, 
+                width = histXWidth, color = 'orange',
+                edgecolor = 'black', linewidth = 1, zorder = 2,
+                label = 'MC size histogram')
+        # plot observability limit
+        plot(histXMean, volHistMinReq, 'ro', 
+                ms = 5, markeredgecolor = 'r',
+                label = 'Minimum visibility limit', zorder = 3)
+        # plot uncertainties
+        errorbar(histXMean, volHistYMean, volHistYStd,
+                zorder = 4, fmt = 'k.', ecolor = 'k',
+                elinewidth = 2, capsize = 4, ms = 0, lw = 2,
+                solid_capstyle = 'round', solid_joinstyle = 'miter')
+        legend(loc = 1, fancybox = True, prop = textfont)
+        title(plotTitle, fontproperties = textfont,
+              size = 'large')
+        # reapply limits in x
+        xlim((histXLowerEdge.min() * (1 - axisMargin),
+              histXLowerEdge.max() * (1 + axisMargin)))
+
 
     # set plot font
     fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
@@ -237,7 +346,7 @@ def plotResults(allRes, dataset,
         plot1D(q, intensity, intError, fitQ, fitIntensity, qAxis)
 
     title('Measured vs. Fitted intensity',
-          fontproperties = textfont, size = 'x-large')
+          fontproperties = textfont, size = 'large')
     # reapply limits, necessary for some reason:
     xlim(xLim)
     ylim(yLim)
@@ -261,110 +370,14 @@ def plotResults(allRes, dataset,
         # get data:
         # histogram axis index:
         res = allRes[parami]
-        histXLowerEdge = res['histogramXLowerEdge']
-        histXMean = res['histogramXMean']
-        histXWidth = res['histogramXWidth']
-        # plot volume weighted by default, both would be good
-        # can we plot both weightings? perhaps, with different colors?
-        # e.g. red/orange (current) and blue/lightblue?
-        volHistYMean = res['volumeHistogramYMean']
-        volHistMinReq = res['volumeHistogramMinimumRequired']
-        volHistYStd = res['volumeHistogramYStd']
-        #elif params[parameterId[parami]].histogram().hasWeighting('num'):
-        #    volHistYMean = res['numberHistogramYMean']
-        #    volHistMinReq = res['numberHistogramMinimumRequired']
-        #    volHistYStd = res['numberHistogramYStd']
-        #else: 
-        #    "Incorrect value for histWeighting: "\
-        #    "should be either 'volume' or 'number'"
-
-        #get information for labels:
-        plotTitle = plotPar.displayName()
-        xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
-
-        if parHist.scaleX == 'log':
-            xLim = (histXLowerEdge.min() * (1 - axisMargin), 
-                    histXLowerEdge.max() * (1 + axisMargin))
-            xScale = 'log'
-        else:
-            xLim = (histXLowerEdge.min() - (1 - axisMargin)
-                    * histXLowerEdge.min(), 
-                    histXLowerEdge.max() * (1 + axisMargin))
-            xScale = 'linear'
-
-        yLim = (0, volHistYMean.max() * (1 + axisMargin) )
         # prep axes:
         hAxis = ah[(rangei + 1) * nHists + 2 + parami]
-        #make active:
-        axes(hAxis)
-        # change axis settigns:
-        hAxDict.update({
-            'xlim' : xLim,
-            'ylim' : yLim,
-            'xlabel' : xLabel,
-            'xscale' : xScale,
-            'yscale' : 'linear',
-            'ylabel' : '[Rel.] Volume Fraction' })
-        # update axes settings:
-        hAxis.update(hAxDict)
-        # store in list of histogram axes (maybe depreciated soon):
-        sizeAxis.append(hAxis)
-        # change axis settings not addressible through dictionary:
-        sizeAxis[parami] = setAxis(sizeAxis[parami])
-        # fill axes
-        # plot histogram:
-        bar(histXLowerEdge[0:-1], volHistYMean, 
-                width = histXWidth, color = 'orange',
-                edgecolor = 'black', linewidth = 1, zorder = 2,
-                label = 'MC size histogram')
-        # plot observability limit
-        plot(histXMean, volHistMinReq, 'ro', 
-                ms = 5, markeredgecolor = 'r',
-                label = 'Minimum visibility limit', zorder = 3)
-        # plot uncertainties
-        errorbar(histXMean, volHistYMean, volHistYStd,
-                zorder = 4, fmt = 'k.', ecolor = 'k',
-                elinewidth = 2, capsize = 4, ms = 0, lw = 2,
-                solid_capstyle = 'round', solid_joinstyle = 'miter')
-        legend(loc = 1, fancybox = True, prop = textfont)
-        title(plotTitle, fontproperties = textfont,
-              size = 'x-large')
-        # reapply limits in x
-        xlim((histXLowerEdge.min() * (1 - axisMargin),
-              histXLowerEdge.max() * (1 + axisMargin)))
+
+        plotHist(res, plotPar, parHist, hAxis, axisMargin)
 
         #put the rangeInfo in the plot above
         InfoAxis = ah[(rangei) * nHists + 1 + parami]
-        #make active:
-        axes(InfoAxis)
-        #show volume-weighted info:
-        ovString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 0)
-        tvObj = text(-0.001, 0., ovString, bbox = 
-                {'facecolor' : 'white', 'alpha': 0.5},
-                family = "monospace", size = "small", 
-                horizontalalignment = 'right',
-                multialignment = 'right',
-                verticalalignment = 'center')
-        fig.show()
-        #get bounding box
-        bb = tvObj.get_window_extent()
-        width = bb.width
-        height = bb.height
-        print('width: {}, height: {}'.format(width, height))
-        aLim = axis()
-        #axis('tight')
-        #add number-weighted info:
-        onString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 1)
-        tnObj = text(0.001, 0., onString, bbox = 
-                {'facecolor' : 'white', 'alpha': 0.5},
-                family = "monospace", size = "small", 
-                horizontalalignment = 'left',
-                multialignment = 'right',
-                verticalalignment = 'center')
-        fig.show()
-        axis('tight')
-
-
+        plotStats(parHist, mcsasInstance, rangei, fig, InfoAxis)
 
     # trigger plot window popup
     fig.show()
