@@ -48,7 +48,7 @@ def plotResults(allRes, dataset,
             pStatFieldName = pStatFieldNames[si]
             pStatField = pStatFields[si]
             pStatFieldSTD = pStatFields[si + 1]
-            oString += '\n {0}:   {1:0.03e} +/- {2:0.03e}'.format(
+            oString += '\n {0}:  {1:0.03e} $\pm$ {2:0.03e}'.format(
                     pStatFieldName,
                     pStatField,
                     pStatFieldSTD)
@@ -341,7 +341,7 @@ def plotResults(allRes, dataset,
         ovString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 0)
         tvObj = text(-0.001, 0., ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.5},
-                fontproperties = textfont, size = "small", 
+                family = "monospace", size = "small", 
                 horizontalalignment = 'right',
                 multialignment = 'right',
                 verticalalignment = 'center')
@@ -357,7 +357,7 @@ def plotResults(allRes, dataset,
         onString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 1)
         tnObj = text(0.001, 0., onString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.5},
-                fontproperties = textfont, size = "small", 
+                family = "monospace", size = "small", 
                 horizontalalignment = 'left',
                 multialignment = 'right',
                 verticalalignment = 'center')
