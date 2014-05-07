@@ -33,24 +33,25 @@ def plotResults(allRes, dataset,
     except ImportError:
         pass # no pyside
 
-    def formatRangeInfo(parameter, RI, mcsasInstance):
+    def formatRangeInfo(parameter, RI, mcsasInstance, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
-        for wi, weighting in enumerate(parameter.weighting()):
-            oString = 'Range {} to {}, {}-weighted'.format(
-                    parameter.ranges[RI][0],
-                    parameter.ranges[RI][1],
-                    weighting)
-            pStat = parameter.stats[RI][wi]
-            pStatFields = pStat.fields
-            pStatFieldNames = pStat.fieldNames()
-            for si in np.arange(0,10,2):
-                pStatFieldName = pStatFieldNames[si]
-                pStatField = pStatFields[si]
-                pStatFieldSTD = pStatFields[si + 1]
-                oString += '\n {0}:\t {1:0.03e} +/- {2:0.03e}'.format(
-                        pStatFieldName,
-                        pStatField,
-                        pStatFieldSTD)
+        weightings = parameter.weighting()
+        weighting = weightings[weighti]
+        oString = 'Range {} to {}, {}-weighted'.format(
+                parameter.ranges[RI][0],
+                parameter.ranges[RI][1],
+                weighting)
+        pStat = parameter.stats[RI][weighti]
+        pStatFields = pStat.fields
+        pStatFieldNames = pStat.fieldNames()
+        for si in np.arange(0,10,2):
+            pStatFieldName = pStatFieldNames[si]
+            pStatField = pStatFields[si]
+            pStatFieldSTD = pStatFields[si + 1]
+            oString += '\n {0}:   {1:0.03e} +/- {2:0.03e}'.format(
+                    pStatFieldName,
+                    pStatField,
+                    pStatFieldSTD)
 
         print('{}'.format(oString))
         return oString
@@ -115,6 +116,8 @@ def plotResults(allRes, dataset,
                         'frame_on' : False,
                         'yticks' : [],
                         'xticks' : [],
+                        'ylim' : [0., 1.],
+                        'xlim' : [0., 1.],
                         }
                 ah[-1].update(textAxDict)
         return fig, ah
@@ -168,10 +171,10 @@ def plotResults(allRes, dataset,
     fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
     fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
     plotfont = fm.FontProperties(
-                size = 'large',
+                #size = 'large',
                 family = fontFamilyArial)
     textfont = fm.FontProperties(
-                size = 'large',
+                #size = 'large',
                 family = fontFamilyTimes)
 
     # load original Dataset
@@ -334,21 +337,36 @@ def plotResults(allRes, dataset,
         InfoAxis = ah[(rangei) * nHists + 1 + parami]
         #make active:
         axes(InfoAxis)
-        oString = formatRangeInfo(parHist, rangei, mcsasInstance)
-        tObj = text(0.,0.,oString, bbox = 
+        #show volume-weighted info:
+        ovString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 0)
+        tvObj = text(-0.001, 0., ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.5},
-                fontproperties = textfont)
-        show()
-        axis('tight')
-        renderer = fig.canvas.get_renderer()
+                fontproperties = textfont, size = "small", 
+                horizontalalignment = 'right',
+                multialignment = 'right',
+                verticalalignment = 'center')
+        fig.show()
         #get bounding box
-        bb = tObj.get_window_extent(renderer = renderer)
+        bb = tvObj.get_window_extent()
         width = bb.width
         height = bb.height
+        print('width: {}, height: {}'.format(width, height))
+        aLim = axis()
+        #axis('tight')
+        #add number-weighted info:
+        onString = formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 1)
+        tnObj = text(0.001, 0., onString, bbox = 
+                {'facecolor' : 'white', 'alpha': 0.5},
+                fontproperties = textfont, size = "small", 
+                horizontalalignment = 'left',
+                multialignment = 'right',
+                verticalalignment = 'center')
+        fig.show()
+        axis('tight')
 
 
 
     # trigger plot window popup
-    show()
+    fig.show()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
