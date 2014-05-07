@@ -143,6 +143,12 @@ class plotResults(object):
         xlim(QX)
         ylim(QY)
 
+    def plotPartial(self, fitQ, fitIntensity, fitSTD, qAxis):
+        """plots 1D data and fit"""
+        #make active:
+        axes(qAxis)
+        plot(fitQ, fitIntensity, 'g-', lw = 1, label = 'MC partial intensity')
+
     def plot1D(self, q, intensity, intError, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
         xLim = (q.min() * (1 - self._axisMargin), 
@@ -288,8 +294,14 @@ class plotResults(object):
         plot(histXMean, volHistMinReq, 'ro', 
                 ms = 5, markeredgecolor = 'r',
                 label = 'Minimum visibility limit', zorder = 3)
-        # plot uncertainties
+        # plot inactive uncertainties
         errorbar(histXMean, volHistYMean, volHistYStd,
+                zorder = 4, fmt = 'k.', ecolor = 'k',
+                elinewidth = 0.5, capsize = 3, ms = 0, lw = 0.5,
+                solid_capstyle = 'round', solid_joinstyle = 'miter')
+        # plot active uncertainties
+        errorbar(histXMean[validi[0:-1]], volHistYMean[validi[0:-1]], 
+            volHistYStd[validi[0:-1]],
                 zorder = 4, fmt = 'k.', ecolor = 'k',
                 elinewidth = 2, capsize = 4, ms = 0, lw = 2,
                 solid_capstyle = 'round', solid_joinstyle = 'miter')
@@ -385,14 +397,16 @@ class plotResults(object):
                     self._mcsasInstance.model.activeParams()):
                 # histogram data:
                 parHist = plotPar.histogram()
+                parStat = parHist.stats[rangei][0]
                 # get data:
                 # histogram axis index:
                 res = self._allRes[parami]
                 # prep axes:
                 hAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
                     + self._nHists + 2 + parami]
-                    #hAxis = self._ah[(rangei * 2 + 1) * self._nHists + 2 + parami]
-
+                #plot partial contribution in qAxis
+                fitIntensity, fitSTD = parStat.intensity
+                self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
                 self.plotHist(res, plotPar, parHist, 
                         hAxis, self._axisMargin, rangei)
 
