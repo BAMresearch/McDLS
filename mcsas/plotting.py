@@ -182,6 +182,7 @@ class plotResults(object):
                          .format(np.mean(result['scalingFactors'][1, :])),
                  zorder = 3)
         except:
+            print('could not plot background')
             pass
         legend(loc = 1, fancybox = True, prop = self._textfont)
         title('Measured vs. Fitted intensity',
