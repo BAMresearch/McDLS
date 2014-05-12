@@ -122,6 +122,22 @@ def eventLoop(args):
     mw.show()
     return app.exec_()
 
+def setBackgroundStyleSheet(widget, imgpath):
+    assert isinstance(widget, QWidget)
+    print "bckground exists:", os.path.exists(imgpath), imgpath
+    stylesheet = """
+        #listWidget {{
+            background-image:       url({path});
+            background-repeat:      no-repeat;
+            background-position:    center center;
+            background-attachment:  fixed;
+            background-color:       white;
+        }}
+    """
+    #imgpath = os.path.splitext(imgpath)[0]+".png"
+    widget.setStyleSheet(stylesheet.format(path = imgpath))
+    print widget.styleSheet()
+
 from cutesnake.dataset import DataSet, DisplayMixin
 class ParameterRange(DataSet, DisplayMixin):
     """Represents a range tuple for a parameter of a model.
@@ -245,13 +261,14 @@ class RangeList(DataList):
         return (len(self) - len(self.listWidget.selectedItems())) > 0
 
     def setupUi(self):
-        self.clearSelection()
+        setBackgroundStyleSheet(self, "./resources/background_ranges.svg")
         self.listWidget.setRootIsDecorated(False)
         self.listWidget.setUniformRowHeights(True)
         self.listWidget.setItemsExpandable(False)
         self.listWidget.setAlternatingRowColors(True)
         self.action("load").setText("add range") # fix default action name
         self.loadData([(0., numpy_inf)]) # default range
+        self.clearSelection()
         # note: derive the default range from parameters?
         # -> works only if statistics ranges are defined
         # per parameter individually, not for all as it is now
@@ -658,6 +675,10 @@ class FileList(DataList):
     def itemDoubleClicked(self, item, column):
         valueRange = item.data().sphericalSizeEst()
         self.sigSphericalSizeRange.emit(min(valueRange), max(valueRange))
+
+    def setupUi(self):
+        self.listWidget.setAlternatingRowColors(True)
+        setBackgroundStyleSheet(self, "./resources/background_files.svg")
 
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()

@@ -43,7 +43,11 @@ if sys.platform in "win32":
 
 TARGETNAME = version.name() + EXEC_SUFFIX
 
-INCLUDEFILES = []
+INCLUDEFILES = [
+        "mcsas/McSASParameters.json",
+        "resources/background_files.svg",
+        "resources/background_ranges.svg",
+        ]
 if sys.platform in "win32":
     INCLUDEFILES += [
         'Microsoft.VC90.CRT',
