@@ -31,6 +31,116 @@ class plotResults(object):
     distribution.
     """
 
+    def __init__(self, allRes, dataset, 
+                axisMargin = 0.3, parameterIdx = None, figureTitle = None,
+                mcsasInstance = None):
+        if not isList(allRes) or not len(allRes):
+            logging.info("There are no results to plot, breaking up.")
+            return
+
+        # set parameters
+        self._allRes = allRes
+        self._result = allRes[0]
+        self._dataset = dataset
+        self._axisMargin = axisMargin
+        self._parameterIdx = parameterIdx
+        self._figureTitle = figureTitle
+        self._mcsasInstance = mcsasInstance
+        try:
+            self._BG = (np.mean(self._result['scalingFactors'][1, :]), 
+                np.std(self._result['scalingFactors'][1, :], ddof = 1 ) )
+        except:
+            self._BG = (0., 0.)
+
+        # set plot font
+        fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
+        fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
+        self._plotfont = fm.FontProperties(
+                    family = fontFamilyArial)
+        self._textfont = fm.FontProperties(
+                    family = fontFamilyTimes)
+
+        # set general axes settings:
+        self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
+                'xscale' : 'log', 
+                'yscale' : 'log',
+                }
+
+        # load original Dataset
+        self._data = self._dataset.origin
+        self._q = self._data[:, 0]
+        self._intensity = self._data[:, 1]
+        self._intError = self._data[:, 2]
+
+        # number of histograms:
+        self._nHists = mcsasInstance.model.activeParamCount()
+        # number of ranges: 
+        if self._nHists > 0:
+            self._ranges = ( mcsasInstance.model.activeParams()[0]
+                    .histogram().ranges )
+            self._nR = len( self._ranges )
+        else:
+            self._nR = 1 # no active parameters
+
+        # initialise figure:
+        self._fig, self._ah = self.figInit(self._nHists, 
+                self._figureTitle, self._nR)
+
+        # show all ranges:
+        for rangei in range(self._nR):
+            
+            #plot intensity fit:
+            if dataset.is2d:
+                psi = data[:, 3]
+                intensity2d = allRes['intensity2d']
+                qAxis = ax[self._nHists + nR]
+                self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
+
+            else:
+                # 1D data
+                qAxis = self._ah[rangei * 2 * (self._nHists + 1) 
+                    + self._nHists + 1]
+                fitQ = np.sort(self._result['fitQ'])
+                fitIntensity = self._result['fitIntensityMean'][0, 
+                        np.argsort(self._result['fitQ'])]
+                self.plot1D(self._q, self._intensity, self._intError, 
+                        fitQ, fitIntensity, qAxis)
+
+            ## Information on the settings can be shown here:
+            InfoAxis = self._ah[rangei * 2 * (self._nHists + 1)]
+            # make active:
+            self.plotInfo(InfoAxis)
+            axes(InfoAxis)
+            # axis('tight')
+
+            # plot histograms
+            for parami, plotPar in enumerate(
+                    self._mcsasInstance.model.activeParams()):
+                # histogram data:
+                parHist = plotPar.histogram()
+                parStat = parHist.stats[rangei][0]
+                # get data:
+                # histogram axis index:
+                res = self._allRes[parami]
+                # prep axes:
+                hAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
+                    + self._nHists + 2 + parami]
+                # plot partial contribution in qAxis
+                fitIntensity, fitSTD = parStat.intensity
+                self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
+                self.plotHist(res, plotPar, parHist, 
+                        hAxis, self._axisMargin, rangei)
+
+                # put the rangeInfo in the plot above
+                InfoAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
+                    + 1 + parami]
+                self.plotStats(parHist, self._mcsasInstance, 
+                        rangei, self._fig, InfoAxis)
+
+        # trigger plot window popup. On macBook Air, figure is not updated
+        # until window is resized, annoyingly.
+        self._fig.show()
+
     def formatRangeInfo(self, parHist, RI, mcsasInstance, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
         weightings = parHist.weighting()
@@ -50,6 +160,20 @@ class plotResults(object):
                     pStatFieldName,
                     pStatField,
                     pStatFieldSTD)
+
+        return oString
+
+    def formatAlgoInfo(self):
+        """Preformats the algorithm information ready for printing
+        the colons are surrounded by string-marks, to force laTeX rendering"""
+        oString = ' Fitting of data$:$ {} '.format(self._figureTitle)
+        oString += '\n Q-range$:$ {0:03e} to {1:03e} '.format(
+            self._q.min(), self._q.max())
+        #oString.append('\n number of datapoints: {}'.format(len(self._q)))
+        oString += '\n Active parameters$:$ {}, ranges: {} '.format(
+            self._mcsasInstance.model.activeParamCount(), self._nR)
+        oString += '\n Background level: {0:03e} $\pm$ {1:03e}'.format(
+                self._BG[0], self._BG[1])
 
         return oString
 
@@ -177,11 +301,10 @@ class plotResults(object):
         plot(fitQ, fitIntensity, 'r-', lw = 3, 
                 label = 'MC Fit intensity', zorder = 4)
         try:
-            self._meanBG = np.mean(self._result['scalingFactors'][1, :])
-            plot(fitQ, self._meanBG + 0*fitQ,
+            plot(fitQ, self._BG[0] + 0*fitQ,
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})' .format(
-                     self._meanBG), zorder = 3)
+                     self._BG[0]), zorder = 3)
         except:
             print('could not plot background')
             pass
@@ -192,6 +315,21 @@ class plotResults(object):
         xlim(xLim)
         ylim(yLim)
 
+
+    def plotInfo(self, InfoAxis):
+        """plots the range statistics in the small info axes above plots"""
+        delta = 0.001 #minor offset
+        #make active:
+        axes(InfoAxis)
+        #show volume-weighted info:
+        ovString = self.formatAlgoInfo()
+        tvObj = text(0. - delta, 0. + delta, ovString,
+                family = "monospace", size = "small", 
+                horizontalalignment = 'center',
+                multialignment = 'center',
+                verticalalignment = 'center')
+        self._fig.show()
+        axis('tight')
 
     def plotStats(self, parHist, mcsasInstance, rangei, fig, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
@@ -314,111 +452,5 @@ class plotResults(object):
         #xlim((histXLowerEdge.min() * (1 - self._axisMargin),
         #      histXLowerEdge.max() * (1 + self._axisMargin)))
         xlim(xLim)
-
-    def __init__(self, allRes, dataset, 
-                axisMargin = 0.3, parameterIdx = None, figureTitle = None,
-                mcsasInstance = None):
-        if not isList(allRes) or not len(allRes):
-            logging.info("There are no results to plot, breaking up.")
-            return
-
-        # set parameters
-        self._allRes = allRes
-        self._result = allRes[0]
-        self._dataset = dataset
-        self._axisMargin = axisMargin
-        self._parameterIdx = parameterIdx
-        self._figureTitle = figureTitle
-        self._mcsasInstance = mcsasInstance
-
-        # set plot font
-        fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
-        fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
-        self._plotfont = fm.FontProperties(
-                    family = fontFamilyArial)
-        self._textfont = fm.FontProperties(
-                    family = fontFamilyTimes)
-
-        # set general axes settings:
-        self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
-                'xscale' : 'log', 
-                'yscale' : 'log',
-                }
-
-        # load original Dataset
-        self._data = self._dataset.origin
-        self._q = self._data[:, 0]
-        self._intensity = self._data[:, 1]
-        self._intError = self._data[:, 2]
-
-        # number of histograms:
-        self._nHists = mcsasInstance.model.activeParamCount()
-        # number of ranges: 
-        if self._nHists > 0:
-            self._ranges = ( mcsasInstance.model.activeParams()[0]
-                    .histogram().ranges )
-            self._nR = len( self._ranges )
-        else:
-            self._nR = 1 # no active parameters
-
-        # initialise figure:
-        self._fig, self._ah = self.figInit(self._nHists, 
-                self._figureTitle, self._nR)
-
-        # show all ranges:
-        for rangei in range(self._nR):
-            
-            #plot intensity fit:
-            if dataset.is2d:
-                psi = data[:, 3]
-                intensity2d = allRes['intensity2d']
-                qAxis = ax[self._nHists + nR]
-                self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
-
-            else:
-                # 1D data
-                qAxis = self._ah[rangei * 2 * (self._nHists + 1) 
-                    + self._nHists + 1]
-                fitQ = np.sort(self._result['fitQ'])
-                fitIntensity = self._result['fitIntensityMean'][0, 
-                        np.argsort(self._result['fitQ'])]
-                self.plot1D(self._q, self._intensity, self._intError, 
-                        fitQ, fitIntensity, qAxis)
-
-            ## Information on the settings can be shown here:
-            InfoAxis = self._ah[rangei * 2 * (self._nHists + 1)]
-            # make active:
-            axes(InfoAxis)
-            text(0,0,'Algorithm settings \n go here...', bbox = 
-                    {'facecolor' : 'white', 'alpha': 0.5},
-                    fontproperties = self._textfont)
-            # axis('tight')
-
-            # plot histograms
-            for parami, plotPar in enumerate(
-                    self._mcsasInstance.model.activeParams()):
-                # histogram data:
-                parHist = plotPar.histogram()
-                parStat = parHist.stats[rangei][0]
-                # get data:
-                # histogram axis index:
-                res = self._allRes[parami]
-                # prep axes:
-                hAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
-                    + self._nHists + 2 + parami]
-                #plot partial contribution in qAxis
-                fitIntensity, fitSTD = parStat.intensity
-                self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
-                self.plotHist(res, plotPar, parHist, 
-                        hAxis, self._axisMargin, rangei)
-
-                #put the rangeInfo in the plot above
-                InfoAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
-                    + 1 + parami]
-                self.plotStats(parHist, self._mcsasInstance, 
-                        rangei, self._fig, InfoAxis)
-
-        # trigger plot window popup
-        self._fig.show()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
