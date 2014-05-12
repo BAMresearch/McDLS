@@ -96,14 +96,16 @@ class McSASParameters(PropertyNames):
     paramDefFile = "McSASParameters.json"
 
     def loadParameters(self, filename):
-        if not os.path.exists(filename):
-            logging.error('no default parameter file found!')
-            return
-
-        #load parameter definitions from file and add to list:
-        with open(filename, 'r') as jfile:
-            logging.info('loading parameters from file: {}'.format(filename))
-            parDict=json.load(jfile)
+        # load parameter definitions from file and add to list:
+        parDict = dict()
+        try:
+            with open(filename, 'r') as jfile:
+                logging.info("Loading parameters from file: '{}'"
+                             .format(filename))
+                parDict = json.load(jfile)
+        except IOError:
+            logging.error("Could not load default parameter file '{fn}'!"
+                          .format(fn = filename))
         for pkey in parDict.keys():
             default = parDict[pkey].pop('default')
             self.parameters.append(
@@ -119,7 +121,7 @@ class McSASParameters(PropertyNames):
         paramDefFile = 'path/to/file'
         McSASParameters.json should be in the same directory as this function
         """
-        #new style, to gradually replace old style, instantiate defaults:
+        # new style, to gradually replace old style, instantiate defaults:
         fname = self.paramDefFile
         if not(os.path.exists(fname)):
             #try one more:
@@ -127,7 +129,9 @@ class McSASParameters(PropertyNames):
             #determine the directory in which McSASParameters is located:
             #settings should be in the same directory:
             fdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-            fname = os.path.join(fdir, "McSASParameters.json")
+            # FIXME: does not work well with freezed standalone app on Win
+            # logging.error("fdir: ".format(fdir))
+            fname = os.path.join(fdir, fname)
 
         self.loadParameters(fname)
 
