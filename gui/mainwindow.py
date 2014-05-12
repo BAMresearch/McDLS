@@ -668,14 +668,14 @@ class MainWindow(MainWindowBase):
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
+        # put the log widget at the bottom
+        self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
         # file widget at the top
         self.toolbox = QToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
         self._addToolboxItem(self._setupStatsWidget())
-        # put the log widget at the bottom
-        self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
 
         # set up central widget of the main window
         self.centralLayout = QVBoxLayout()
