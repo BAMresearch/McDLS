@@ -110,9 +110,14 @@ MODELS = {Sphere.name(): Sphere,
           }
 FIXEDWIDTH = 120
 
+# required for svg graphics support
+from cutesnake.qt import QtSvg, QtXml, pluginDirs
+
 def eventLoop(args):
     """Starts the UI event loop and get command line parser arguments."""
     app = QApplication(sys.argv)
+    for pluginDir in pluginDirs(): # required for svg graphics support
+        app.addLibraryPath(pluginDir)
     mw = MainWindow(args = args)
     mw.show()
     return app.exec_()
