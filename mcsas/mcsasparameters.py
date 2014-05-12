@@ -98,7 +98,7 @@ class McSASParameters(PropertyNames):
     def loadParameters(self, filename):
         if not os.path.exists(filename):
             logging.error('no default parameter file found!')
-            return false
+            return
 
         #load parameter definitions from file and add to list:
         with open(filename, 'r') as jfile:
