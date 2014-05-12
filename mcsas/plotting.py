@@ -174,13 +174,14 @@ class plotResults(object):
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
              dash_capstyle = 'round', zorder = -1)
-        plot(fitQ, fitIntensity, 'r-', lw = 3, label = 'MC Fit intensity', zorder = 4)
+        plot(fitQ, fitIntensity, 'r-', lw = 3, 
+                label = 'MC Fit intensity', zorder = 4)
         try:
-            plot(aq, np.mean(result['scalingFactors'][1, :]) + 0*aq,
+            self._meanBG = np.mean(self._result['scalingFactors'][1, :])
+            plot(fitQ, self._meanBG + 0*fitQ,
                  'g-', linewidth = 3,
-                 label = 'MC Background level:\n\t ({0:03.3g})'
-                         .format(np.mean(result['scalingFactors'][1, :])),
-                 zorder = 3)
+                 label = 'MC Background level:\n\t ({0:03.3g})' .format(
+                     self._meanBG), zorder = 3)
         except:
             print('could not plot background')
             pass
