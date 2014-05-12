@@ -345,17 +345,19 @@ class SettingsWidget(SettingsWidgetBase):
         if minValue is not None and maxValue is not None:
             # update value range for numerical parameters
             p.setValueRange((minValue, maxValue))
-            # update bounds of the value input widget
-            valueWidget.setMinimum(p.min())
-            valueWidget.setMaximum(p.max())
         # update the value input widget itself
         newValue = self.get(key)
+        minWidget = parent.findChild(QWidget, key+"min")
+        maxWidget = parent.findChild(QWidget, key+"max")
         if newValue is not None:
+            try: # assert the new value is within allowed bounds
+                newValue = max(minWidget.minimum(), newValue)
+                newValue = min(maxWidget.maximum(), newValue)
+            except AttributeError:
+                pass
             p.setValue(newValue)
         # fit parameter related updates
         newActive = self.get(key+"active")
-        minWidget = parent.findChild(QWidget, key+"min")
-        maxWidget = parent.findChild(QWidget, key+"max")
         if isinstance(newActive, bool): # None for non-fit parameters
             # update active state for fit parameters
             p.setActive(newActive)
@@ -424,6 +426,8 @@ class SettingsWidget(SettingsWidgetBase):
 
     def makeSetting(self, entries, param, activeBtns = False):
         """entries: Extended list of input widgets, for taborder elsewhere."""
+        if param is None:
+            return None
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -503,7 +507,8 @@ class AlgorithmWidget(SettingsWidget):
         # allowed parameters could be configurable from file too
         for i, p in enumerate(("convergenceCriterion", "histogramBins",
                               "numReps", "numContribs", "findBackground")):
-            p = getattr(self.algorithm, p)
+            p = getattr(self.algorithm, p, None)
+            if p is None: continue
             container = self.makeSetting(entries, p)
             self._widgets.append(container)
 
