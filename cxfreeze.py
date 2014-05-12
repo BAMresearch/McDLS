@@ -43,7 +43,11 @@ if sys.platform in "win32":
 
 TARGETNAME = version.name() + EXEC_SUFFIX
 
-INCLUDEFILES = []
+INCLUDEFILES = [
+        "mcsas/McSASParameters.json",
+        "resources/background_files.svg",
+        "resources/background_ranges.svg",
+        ]
 if sys.platform in "win32":
     INCLUDEFILES += [
         'Microsoft.VC90.CRT',
@@ -53,7 +57,8 @@ BUILDOPTIONS = dict(
     compressed = False,
     include_files = INCLUDEFILES,
     packages = [],
-    includes = ["PySide", "PySide.QtCore", "PySide.QtGui", "PySide.QtSvg",
+    includes = ["PySide", "PySide.QtCore", "PySide.QtGui",
+                "PySide.QtSvg", "PySide.QtXml",
                 "multiprocessing", "cutesnake",
                 "scipy.sparse.csgraph._validation",
                 "scipy.sparse.linalg.dsolve.umfpack", "scipy.integrate.vode",

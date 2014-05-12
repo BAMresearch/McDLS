@@ -110,12 +110,33 @@ MODELS = {Sphere.name(): Sphere,
           }
 FIXEDWIDTH = 120
 
+# required for svg graphics support
+from cutesnake.qt import QtSvg, QtXml, pluginDirs
+
 def eventLoop(args):
     """Starts the UI event loop and get command line parser arguments."""
     app = QApplication(sys.argv)
+    for pluginDir in pluginDirs(): # required for svg graphics support
+        app.addLibraryPath(pluginDir)
     mw = MainWindow(args = args)
     mw.show()
     return app.exec_()
+
+def setBackgroundStyleSheet(widget, imgpath):
+    assert isinstance(widget, QWidget)
+    print "bckground exists:", os.path.exists(imgpath), imgpath
+    stylesheet = """
+        #listWidget {{
+            background-image:       url({path});
+            background-repeat:      no-repeat;
+            background-position:    center center;
+            background-attachment:  fixed;
+            background-color:       white;
+        }}
+    """
+    #imgpath = os.path.splitext(imgpath)[0]+".png"
+    widget.setStyleSheet(stylesheet.format(path = imgpath))
+    print widget.styleSheet()
 
 from cutesnake.dataset import DataSet, DisplayMixin
 class ParameterRange(DataSet, DisplayMixin):
@@ -240,13 +261,14 @@ class RangeList(DataList):
         return (len(self) - len(self.listWidget.selectedItems())) > 0
 
     def setupUi(self):
-        self.clearSelection()
+        setBackgroundStyleSheet(self, "./resources/background_ranges.svg")
         self.listWidget.setRootIsDecorated(False)
         self.listWidget.setUniformRowHeights(True)
         self.listWidget.setItemsExpandable(False)
         self.listWidget.setAlternatingRowColors(True)
         self.action("load").setText("add range") # fix default action name
         self.loadData([(0., numpy_inf)]) # default range
+        self.clearSelection()
         # note: derive the default range from parameters?
         # -> works only if statistics ranges are defined
         # per parameter individually, not for all as it is now
@@ -345,17 +367,19 @@ class SettingsWidget(SettingsWidgetBase):
         if minValue is not None and maxValue is not None:
             # update value range for numerical parameters
             p.setValueRange((minValue, maxValue))
-            # update bounds of the value input widget
-            valueWidget.setMinimum(p.min())
-            valueWidget.setMaximum(p.max())
         # update the value input widget itself
         newValue = self.get(key)
+        minWidget = parent.findChild(QWidget, key+"min")
+        maxWidget = parent.findChild(QWidget, key+"max")
         if newValue is not None:
+            try: # assert the new value is within allowed bounds
+                newValue = max(minWidget.minimum(), newValue)
+                newValue = min(maxWidget.maximum(), newValue)
+            except AttributeError:
+                pass
             p.setValue(newValue)
         # fit parameter related updates
         newActive = self.get(key+"active")
-        minWidget = parent.findChild(QWidget, key+"min")
-        maxWidget = parent.findChild(QWidget, key+"max")
         if isinstance(newActive, bool): # None for non-fit parameters
             # update active state for fit parameters
             p.setActive(newActive)
@@ -424,6 +448,8 @@ class SettingsWidget(SettingsWidgetBase):
 
     def makeSetting(self, entries, param, activeBtns = False):
         """entries: Extended list of input widgets, for taborder elsewhere."""
+        if param is None:
+            return None
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -503,7 +529,8 @@ class AlgorithmWidget(SettingsWidget):
         # allowed parameters could be configurable from file too
         for i, p in enumerate(("convergenceCriterion", "histogramBins",
                               "numReps", "numContribs", "findBackground")):
-            p = getattr(self.algorithm, p)
+            p = getattr(self.algorithm, p, None)
+            if p is None: continue
             container = self.makeSetting(entries, p)
             self._widgets.append(container)
 
@@ -649,6 +676,10 @@ class FileList(DataList):
         valueRange = item.data().sphericalSizeEst()
         self.sigSphericalSizeRange.emit(min(valueRange), max(valueRange))
 
+    def setupUi(self):
+        self.listWidget.setAlternatingRowColors(True)
+        setBackgroundStyleSheet(self, "./resources/background_files.svg")
+
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
     _args = None # python command line arguments parser
@@ -668,14 +699,14 @@ class MainWindow(MainWindowBase):
 
     def setupUi(self, *args):
         # called in MainWindowBase.__init__()
+        # put the log widget at the bottom
+        self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
         # file widget at the top
         self.toolbox = QToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
         self._addToolboxItem(self._setupStatsWidget())
-        # put the log widget at the bottom
-        self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
 
         # set up central widget of the main window
         self.centralLayout = QVBoxLayout()

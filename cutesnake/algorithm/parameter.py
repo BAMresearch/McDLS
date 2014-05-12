@@ -259,6 +259,8 @@ class ParameterBase(object):
         return "{0}: {1}".format(
                 self.displayName(), self.value())
 
+    __repr__ = __str__
+
     def __eq__(self, other):
         if self.dtype != other.dtype:
             return False

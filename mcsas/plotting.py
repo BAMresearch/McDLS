@@ -10,11 +10,8 @@ from cutesnake.utils import isList, isString
 import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
-from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar, 
-        text, plot, grid, legend, title, xlim, ylim, gca, axis,
-        close, colorbar, imshow, subplot, axes)
-from pylab import show
 
+# set up matplotlib.pyplot, do this *before* importing pyplot
 try:
     import PySide # verify/test that we have pyside
     # use() gives an error if calling twice
@@ -22,6 +19,11 @@ try:
     matplotlib.rcParams['backend.qt4'] = 'PySide'
 except ImportError:
     pass # no pyside
+
+from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
+        text, plot, grid, legend, title, xlim, ylim, gca, axis,
+        close, colorbar, imshow, subplot, axes)
+from pylab import show
 
 class plotResults(object):
     """
