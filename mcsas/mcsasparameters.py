@@ -3,15 +3,15 @@
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
 from utils.propertynames import PropertyNames
-#more flexible parameter definitions:
+# more flexible parameter definitions:
 from mcsasdefaultcfg import cInfo
 import os
 import inspect
 import logging                                                                 
 import json
 from utils.parameter import Parameter
+from utils import isString
 logging.basicConfig(level = logging.INFO)                                      
-                                                     
 
 class McSASParameters(PropertyNames):
     """Defines the static parameters used for the fitting procedure:
@@ -70,7 +70,7 @@ class McSASParameters(PropertyNames):
             supplied dictionary
 
     """
-    #set old-style defaults
+    # set old-style defaults
     model = None
     contribParamBounds = ()
     priors = () # of shape Rrep, to be used as initial guess for
@@ -78,22 +78,9 @@ class McSASParameters(PropertyNames):
     prior = ()  # of shape Rset, to be used as initial guess for
                 # MCFit function
 
-    #superseded by new style
-    #qBounds = None
-    #psiBounds = None
-    #deltaRhoSquared = 1.0
-    #histogramBins = 50
-    #maxRetries = 5
-    #maskNegativeInt = False
-    #maskZeroInt = False
-    #doPlot = False
-    #startFromMinimum = False
-    #histogramWeighting = 'volume' # can be "volume" or "number"
-    #histogramXScale = 'log'
-    
-    #new defaults for loading parameters
+    # new defaults for loading parameters
     parameters = list()
-    paramDefFile = "McSASParameters.json"
+    paramDefFile = os.path.join("mcsas", "McSASParameters.json")
 
     def loadParameters(self, filename):
         # load parameter definitions from file and add to list:
@@ -114,25 +101,15 @@ class McSASParameters(PropertyNames):
                     )
             logging.debug('Parameter {} ingested'.format(pkey))
 
-    def __init__(self,**kwargs):
+    def __init__(self, paramDefFile = None):
         """initialise the defaults and populate the database with values
         where appropriate
         default parameter file can be provided using kwarg:
-        paramDefFile = 'path/to/file'
-        McSASParameters.json should be in the same directory as this function
+        paramDefFile = 'path/to/file' relative to application root dir
         """
-        # new style, to gradually replace old style, instantiate defaults:
-        fname = self.paramDefFile
-        if not(os.path.exists(fname)):
-            #try one more:
-            #determine the directory in which this module resides
-            #determine the directory in which McSASParameters is located:
-            #settings should be in the same directory:
-            fdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-            # FIXME: does not work well with freezed standalone app on Win
-            # logging.error("fdir: ".format(fdir))
-            fname = os.path.join(fdir, fname)
-
-        self.loadParameters(fname)
+        # instantiate defaults:
+        if not isString(paramDefFile) or not(os.path.exists(paramDefFile)):
+            paramDefFile = self.paramDefFile
+        self.loadParameters(paramDefFile)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
