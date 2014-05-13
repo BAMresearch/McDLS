@@ -3,7 +3,7 @@
 
 from abc import ABCMeta, abstractmethod
 import numpy
-from cutesnake.utils import isList, mixedmethod
+from utils import isList, isNumber, mixedmethod, testfor
 from cutesnake.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
 
@@ -36,7 +36,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         # calling user provided custom model
         v = self.volume(paramValues)
         # volume always returns a single value
-        assert v.size == 1
+        assert isNumber(v)
         return v
 
     @abstractmethod

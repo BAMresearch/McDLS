@@ -7,6 +7,7 @@ from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,
                   isnan, newaxis)
 from scipy import optimize
+from itertools import izip
 import time # Timekeeping and timing of objects
 import sys # For printing of slightly more advanced messages to stdout
 import logging
@@ -1187,17 +1188,29 @@ class McSAS(AlgorithmBase):
     def calcModel(self, data, rset, compensationExponent = None):
         """Calculates the total intensity and scatterer volume contributions
         using the current model."""
+        # remember parameter values
+        oldValues = [p() for p in self.model.params()]
         it = 0
         vset = zeros(rset.shape[0])
+        params = self.model.params()
+        activeParams = [p for p in self.model.params()]
+        indices = numpy.array([i for i, p in enumerate(self.model.params())
+                              if p.isActive()])
         # call the model for each parameter value explicitly
         # otherwise the model gets complex for multiple params incl. fitting
         for i in numpy.arange(rset.shape[0]):
+            if len(indices):
+                for p, v in izip(activeParams, rset[i][indices]):
+                    p.setValue(v)
             vset[i] = self.model.vol(rset[i].reshape((1, -1)),
                                      compensationExponent)
             # calculate their form factors
             ffset = self.model.ff(data, rset[i].reshape((1, -1)))
             # a set of intensities
             it += ffset**2 * vset[i]**2
+        # restore previous parameter values
+        for p, v in zip(self.model.params(), oldValues):
+            p.setValue(v)
         return it.flatten(), vset
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
