@@ -3,22 +3,20 @@
 import sys
 import os.path
 
-def isFrozen():
-    return hasattr(sys, "frozen")
-
 def getScriptPath():
+    """Returns the full path to the current script file which calls this
+    function. See cutesnake.utils"""
     thisFile = sys.executable
-    if not isFrozen():
+    try: # __file__ not defined if frozen
         thisFile = os.path.join(os.getcwd(), __file__)
+    except NameError: pass
     thisFile = os.path.abspath(thisFile)
     return os.path.split(thisFile)
 
 # get script/executable location, add to module search path
 scriptPath, scriptFilename = getScriptPath()
-programDir = scriptPath
-if not isFrozen():
-    programDir = os.path.abspath(os.path.join(scriptPath))
-    sys.path.append(programDir)
+if not hasattr(sys, "frozen"):
+    sys.path.append(scriptPath)
 
 import argparse
 import logging

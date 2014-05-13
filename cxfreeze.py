@@ -94,7 +94,7 @@ setup(
                   u"1-2-1 Sengen, 305-0047, "
                   u"305-0047, Tsukuba, Japan",
     options = dict(build_exe = BUILDOPTIONS),
-    executables = [Executable("gui.py", base = BASE,
+    executables = [Executable("main.py", base = BASE,
                               targetName=TARGETNAME)])
 
 RETCODE = subprocess.call([SEVENZIP, "a", "-t7z", "-mx=9",

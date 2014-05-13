@@ -136,7 +136,6 @@ def setBackgroundStyleSheet(widget, imgpath):
     """
     #imgpath = os.path.splitext(imgpath)[0]+".png"
     widget.setStyleSheet(stylesheet.format(path = imgpath))
-    print widget.styleSheet()
 
 from cutesnake.dataset import DataSet, DisplayMixin
 class ParameterRange(DataSet, DisplayMixin):
