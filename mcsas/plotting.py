@@ -25,7 +25,7 @@ from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
         close, colorbar, imshow, subplot, axes)
 from pylab import show
 
-class plotResults(object):
+class PlotResults(object):
     """
     This function plots the output of the Monte-Carlo procedure in two
     windows, with the left window the measured signal versus the fitted

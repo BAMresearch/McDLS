@@ -23,7 +23,7 @@ from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
 from cutesnake.utilsgui import processEventLoop
 
-from plotting import plotResults
+from plotting import PlotResults
 from sasdata import SASData
 from mcsasparameters import McSASParameters
 
@@ -1125,10 +1125,10 @@ class McSAS(AlgorithmBase):
             # UI has to run in main thread (X server error)
             # -> move (headless) calculations to another thread
             from multiprocessing import Process
-            proc = Process(target = plotResults, args = plotArgs)
+            proc = Process(target = PlotResults, args = plotArgs)
             proc.start()
         else:
-            plotResults(*plotArgs)
+            PlotResults(*plotArgs)
 
     def rangeInfo(self, 
             valueRange = [0, inf], paramIndex = 0, weighting = None):
