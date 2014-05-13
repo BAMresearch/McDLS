@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # __init__.py
 
-pass
+from scatteringmodel import ScatteringModel
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
