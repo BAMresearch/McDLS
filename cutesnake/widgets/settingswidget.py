@@ -131,7 +131,6 @@ class SettingsWidget(QWidget):
     def _editingFinishedSlot(self, widget):
         """Called after input widget looses focus,
         usually only one at a time."""
-        print "_editingFinishedSlot", self._isUpdateRequired
         #if not self._isUpdateRequired:
         #    return
         self._isUpdateRequired = False
@@ -139,7 +138,6 @@ class SettingsWidget(QWidget):
         self.sigValueChanged.emit(widget)
 
     def _valueChangedSlot(self, dummy):
-        print "_valueChangedSlot", dummy
         self._isUpdateRequired = True
 
 # vim: set sts=4 ts=4 sw=4 tw=0:
