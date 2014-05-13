@@ -139,8 +139,8 @@ class plotResults(object):
                 self.plotStats(parHist, self._mcsasInstance, 
                         rangei, self._fig, InfoAxis)
 
-        # trigger plot window popup. On macBook Air, figure is not updated
-        # until window is resized, annoyingly.
+        # trigger plot window popup
+        self._fig.canvas.draw()
         self._fig.show()
 
     def formatRangeInfo(self, parHist, RI, mcsasInstance, weighti = 0):
