@@ -1114,7 +1114,7 @@ class McSAS(AlgorithmBase):
         # runs matplotlib in a separate process
         # keeps plot window open on windows
         # does not block if another calculation is started
-        pickleParams = [p.attributes() for p in self.model.params()]
+        # pickleParams = [p.attributes() for p in self.model.params()]
         plotArgs = (self.result, self.dataPrepared, 
                     axisMargin, parameterIdx, self.figureTitle, self)
         # on Windows the plot figure blocks the app until it is closed
