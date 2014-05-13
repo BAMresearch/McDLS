@@ -9,9 +9,9 @@ import logging
 EPS = sys.float_info.epsilon
 
 from mixedmethod import mixedmethod
-from tests import isList, isString, isNonEmptyString, isMap, isSet, isNumber, isInteger
-from tests import isLinux, isMac, isWindows, isFrozen
-from tests import testfor, assertName
+from tests import (isList, isString, isNonEmptyString, isMap, isSet, isNumber,
+                   isInteger, isLinux, isMac, isWindows, isFrozen, testfor,
+                   assertName)
 
 # utility functions
 
