@@ -64,7 +64,7 @@ class GaussianChain(ScatteringModel):
 
     @mixedmethod
     def fixTestParams(self, params):
-        # order and meaning differs
+        # order and meaning differs from sasfit Gauss2 model
         vol = params['etas']
         params['etas'] = params['k']
         params['k'] = vol / params['rg']**2.
@@ -72,10 +72,22 @@ class GaussianChain(ScatteringModel):
 
 GaussianChain.factory()
 
-if __name__ == "__main__":
+# testing for this model
+# For testing with nose there needs to be a module level function containing
+# *test* in its name. Run it like this:
+#   PYTHONPATH=. nosetests --no-path-adjustment models/gaussianchain.py
+# nosetest compatibility is required to enable automated testing and reporting
+# of as much modules as possible ...
+def test():
     GaussianChain.test(filenames = (
         "sasfit_gauss2-5-1.5-2-1.dat",
-        "sasfit_gauss2-1-100-1-1.dat")
+        "sasfit_gauss2-1-100-1-1.dat"
+        ), tol = 1e-5
     )
+
+# call it manually like this:
+#   PYTHONPATH=. python models/gaussianchain.py
+if __name__ == "__main__":
+    test()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

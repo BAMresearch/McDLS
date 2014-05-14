@@ -92,6 +92,8 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     def activeParamCount(setforcls):
         return len(setforcls.activeParams())
 
+    # helpers for model testing below
+
     @mixedmethod
     def update(selforcls, **kwargs):
         """Update parameter values based on provided dict with parameter
@@ -154,7 +156,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
             delta = abs((dataset.i - intensity) / dataset.i)
             testfor(delta.mean() < tol, AssertionError,
                     "Could not verify {model} intensity against\n'{fn}',\n"
-                    "mean: {mean} >= tol: {tol}\n{delta}"
+                    "mean: {mean} >= tol: {tol}\ndelta:\n{delta}"
                     .format(model = cls.name(), fn = fn,
                             mean = delta.mean(), tol = tol, delta = delta))
 
