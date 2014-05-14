@@ -28,11 +28,6 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         raise NotImplemented
 
     def vol(self, paramValues, compensationExponent = None):
-        if paramValues is None:
-            assert self.paramCount() == 0
-        # by definition, no vector input, would require complex model code
-        # compare the flat length
-        assert paramValues.size == self.paramCount()
         self.compensationExponent = compensationExponent
         if self.compensationExponent is None:
             # get the exponent from class level of the particular model
@@ -50,11 +45,6 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         raise NotImplemented
 
     def ff(self, dataset, paramValues = None):
-        if paramValues is None:
-            assert self.paramCount() == 0
-        # by definition, no vector input, would require complex model code
-        # compare the flat length
-        assert paramValues.size == self.paramCount()
         # calling user provided custom model
         i = self.formfactor(dataset, paramValues)
         # there has to be one intensity value for each q-vector
