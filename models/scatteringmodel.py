@@ -87,15 +87,16 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     # helpers for model testing below
 
     @mixedmethod
-    def update(selforcls, **kwargs):
+    def update(selforcls, paramDict):
         """Update parameter values based on provided dict with parameter
         names as keys."""
-        selforcls.fixTestParams(kwargs)
-        for key, value in kwargs.iteritems():
-            p = getattr(selforcls, key, None)
-            if p is None:
-                continue
-            p.setValue(p.dtype(value))
+        selforcls.fixTestParams(paramDict)
+        for key, value in paramDict.iteritems():
+            try:
+                p = getattr(selforcls, key)
+            except: pass
+            else:
+                p.setValue(p.dtype(value))
 
     @mixedmethod
     def fixTestParams(selforcls, params):
@@ -114,14 +115,16 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         errorMsg = ("Could not infer {model} parameters from '{fn}'!"
                     .format(model = cls.name(), fn = filename))
         testfor(len(pnames) > cls.paramCount(), NameError, errorMsg)
-        result = dict()
-        try:
-            for i, p in enumerate(cls.params()):
-                value = pnames[i - cls.paramCount()]
-                result[p.name()] = p.dtype(value)
-        except:
-            logging.error(errorMsg)
-            raise
+        # exclude the base name at front
+        pnames = tuple(enumerate(pnames[1:]))
+        # store all values by index for reference in fixTestParams()
+        result = dict(pnames)
+        # map values to parameter names beginning at front
+        for i, valueStr in pnames:
+            try:
+                p = cls.param(i) # raises IndexError eventually
+                result[p.name()] = p.dtype(valueStr)
+            except IndexError: continue
         return result
 
     @classmethod
