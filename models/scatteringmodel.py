@@ -28,12 +28,14 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         raise NotImplemented
 
     def vol(self, paramValues, compensationExponent = None):
-        self.compensationExponent = compensationExponent
-        if self.compensationExponent is None:
-            # get the exponent from class level of the particular model
-            self.compensationExponent = type(self).compensationExponent
+        # restore the exponent from class level of the particular model
+        self.compensationExponent = type(self).compensationExponent
+        if compensationExponent is not None: # set custom exponent
+            self.compensationExponent = compensationExponent
         # calling user provided custom model
         v = self.volume(paramValues)
+        # restore the exponent from class level of the particular model
+        self.compensationExponent = type(self).compensationExponent
         # volume always returns a single value
         assert isNumber(v)
         return v
