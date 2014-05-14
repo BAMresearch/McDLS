@@ -42,7 +42,7 @@ class GaussianChain(ScatteringModel):
     parameters[0].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(GaussianChain, self).__init__()
         # some presets
         self.rg.setValueRange((1, 1e2))
         self.bp.setValueRange((0.1, 1e3))

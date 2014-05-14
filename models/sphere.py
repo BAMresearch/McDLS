@@ -18,7 +18,7 @@ class Sphere(ScatteringModel):
     parameters[0].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(Sphere, self).__init__()
         # this only works for people
         # defining lengths in angstrom or nm, not m.
         self.radius.setValueRange((1.0, 1e4))
