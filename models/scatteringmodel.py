@@ -141,7 +141,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         testfor(filenames is not None and len(filenames), AssertionError,
                 "No filenames for testing provided!")
         if datadir is None or not os.path.isdir(datadir):
-            datadir = "../brianpauw"
+            datadir = "testdata"
         models = getModels()
         testfor(len(models), AssertionError,
                 "No models found for testing!")
