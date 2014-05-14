@@ -128,41 +128,49 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         return result
 
     @classmethod
-    def test(cls, filenames = None, datadir = None, tol = 1e-5):
+    def test(cls, filename):
         """Regression test of a scattering model. File names are expected
         to contain the parameter values which produce the provided intensity.
         Otherwise implement fixTestParams() for the particular model.
-        """
-        testfor(filenames is not None and len(filenames), AssertionError,
-                "No filenames for testing provided!")
-        if datadir is None or not os.path.isdir(datadir):
-            datadir = "testdata"
-        models = getModels()
-        testfor(len(models), AssertionError,
-                "No models found for testing!")
-        for fn in filenames:
-            fn = os.path.abspath(os.path.join(datadir, fn))
-            dataset = SASData.load(fn)
-            model = models[0]()
-            testParams = model.getParametersFromFilename(dataset.filename)
-            model.update(**testParams)
-            intensity = model.formfactor(dataset, None)**2.
-            # computing the relative error to reference data
-            delta = abs((dataset.i - intensity) / dataset.i)
-            testfor(delta.mean() < tol, AssertionError,
-                    "Could not verify {model} intensity against\n'{fn}',\n"
-                    "mean: {mean} >= tol: {tol}\ndelta:\n{delta}"
-                    .format(model = cls.name(), fn = fn,
-                            mean = delta.mean(), tol = tol, delta = delta))
 
-def getModels():
-    """Returns all subclasses of ScatteringModel in the current model script.
-    Make sure classes are imported from top level modules in application path!
-    """
-    _dict = inspect.currentframe().f_back.f_back.f_globals
-    return [obj for key, obj in _dict.items()
-                if (isinstance(obj, type) and
-                    issubclass(obj, ScatteringModel) and
-                    obj is not ScatteringModel)]
+        *filename*: Name of the file in cls.testDataDir to test against.
+        *cls.testRelErr*: Acceptable mean of relative error against reference
+                          intensity. Default: 1e-5
+        *cls.testVolExp*: Volume compensation exponent, sets the amount of
+                          volume contribution the intensity is scaled by.
+        *cls.testDataDir*: Directory of test data relative to program dir.
+                           Default: "testdata"
+        """
+        relerr = getattr(cls, "testRelErr", 1e-5)
+        datadir = getattr(cls, "testDataDir", "testdata")
+        volumeExponent = getattr(cls, "testVolExp", 1.0)
+        filename = os.path.abspath(os.path.join(datadir, filename))
+        dataset = SASData.load(filename)
+        if dataset is None:
+            return
+        model = cls()
+        testParams = model.getParametersFromFilename(dataset.filename)
+        model.update(testParams)
+        # intensity how it's calculated in SASfit
+        intensity = (model.vol(None,
+                               compensationExponent = volumeExponent)
+                     * model.ff(dataset, None))**2.
+        # computing the relative error to reference data
+        delta = abs((dataset.i - intensity) / dataset.i)
+        dmax = numpy.argmax(delta)
+        testfor(delta.mean() < relerr, AssertionError,
+                "Could not verify {model} intensity against\n'{fn}',"
+                "\nmean(delta): {mean} >= relErr: {relerr}"
+                "\nQ, Int_ref, Int_calc, Delta around dmax({dmax}):"
+                "\n{data}"
+                .format(model = cls.name(), fn = filename,
+                        mean = delta.mean(), relerr = relerr,
+                        dmax = dmax, data = numpy.hstack((
+                            dataset.q.reshape(-1, 1),
+                            dataset.i.reshape(-1, 1),
+                            intensity.reshape(-1, 1),
+                            delta.reshape(-1, 1)))[max(0, dmax-4):dmax+5]
+                        )
+                )
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

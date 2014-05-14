@@ -79,15 +79,12 @@ GaussianChain.factory()
 # nosetest compatibility is required to enable automated testing and reporting
 # of as much modules as possible ...
 def test():
-    GaussianChain.test(filenames = (
-        "sasfit_gauss2-5-1.5-2-1.dat",
-        "sasfit_gauss2-1-100-1-1.dat"
-        ), tol = 1e-5
-    )
-
-# call it manually like this:
-#   PYTHONPATH=. python models/gaussianchain.py
-if __name__ == "__main__":
-    test()
+    GaussianChain.testRelErr = 1e-5
+    # volume is already included in the model
+    # volume is a difficult topic for this one anyway
+    GaussianChain.testVolExp = 0.0
+    for fn in ("sasfit_gauss2-5-1.5-2-1.dat",
+               "sasfit_gauss2-1-100-1-1.dat"):
+        yield GaussianChain.test, fn
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
