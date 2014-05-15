@@ -2,67 +2,14 @@
 # models/kholodenko.py
 
 import logging
-import time
 import numpy
-from numpy import pi
-from utils.parameter import FitParameter, Parameter
+from scipy.special import j1 as bessel_j1
+from scipy.integrate import quad
+from utils.parameter import FitParameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
 
-# parameters must not be inf
-
-from scipy.special import j1 as bessel_j1
-from scipy.integrate import quad
-from multiprocessing import Process, Queue, cpu_count
-
 LASTMSG = set()
-
-def calcParamsVsQ(func, vec, args, start = None, end = None, queue = None):
-    if start is None:
-        start = 0
-    if end is None:
-        end = len(args)
-    result = numpy.empty((len(vec), end-start))
-    for idx in range(start, end):
-        # queue it here directly? what about non-parallel version?
-        result[:, idx-start] = func(args[idx], vec)
-    if queue is None:
-        return result
-    queue.put((start, end, result))
-    queue.close()
-
-def calcParamsVsQParallel(func, vec, args):
-    if len(args) == 1:
-        return calcParamsVsQ(func, vec, args)
-    t0 = time.time()
-    dataPerCore = max(len(args) / int(cpu_count() * 1.5), 1)
-    result = numpy.zeros((len(vec), len(args)))
-    queue = Queue()
-    jobs = []
-    for start in range(0, len(args), dataPerCore):
-        end = min(start + dataPerCore, len(args))
-        p = Process(target = calcParamsVsQ, args = (func, vec, args, start, end, queue))
-        jobs.append(p)
-    print "starting"
-    for job in jobs:
-        job.start()
-    print "joining"
-    for job in jobs:
-        job.join()
-    print "get results", result.shape, queue.qsize()
-    resSum = 0
-    while resSum < result.shape[1]:
-        try:
-            start, end, res = queue.get()
-        except IOError:
-            continue
-        resSum += res.shape[1]
-        print "resSum", resSum, result.shape, res.shape
-        result[:, start:end] = res
-    logging.info("Calculated p0 by {0} processes in {1} secs."
-                 .format(len(jobs), time.time()-t0))
-    del jobs[:], p, job
-    return result
 
 def core(z, qValue, kuhnLength, x):
     if z <= 0.0 or x <= 0.0:
@@ -85,19 +32,13 @@ def coreIntegral(qValue, kuhnLength, x):
                limit = 10000, full_output = 1, epsabs = 0.0, epsrel = 1e-10)
     if len(res) > 3:
         LASTMSG.add(res[-1])
-    # print qValue, res[0:2]
-    return res[0:2]
+    return numpy.sqrt(res[0])
 vectorizedCoreIntegral = numpy.vectorize(coreIntegral)
-
-def coreIntegralOverQ(constants, qVector):
-    kuhnLength, x = constants
-    res = vectorizedCoreIntegral(qVector, kuhnLength, x)
-    return res[0]
 
 def calcPcs(u):
     if u <= 0.0:
         return 1.0
-    res = 4. * bessel_j1(u)*bessel_j1(u) / (u*u)
+    res = 2. * bessel_j1(u) / u
     return res
 vectorizedPcs = numpy.vectorize(calcPcs)
 
@@ -135,84 +76,28 @@ class Kholodenko(ScatteringModel):
         self.lenKuhn.setValueRange((10, 50))
         self.lenContour.setValueRange((100, 1000))
 
-    def updateParamBounds(self, bounds):
-        bounds = ScatteringModel.updateParamBounds(self, bounds)
-        if len(bounds) < 1:
-            return
-        logging.info("bounds [pi/qmin, pi/qmax]: '{}'".format(bounds))
-        return
-        if len(bounds) == 1:
-            logging.warning("Only one bound provided, "
-                            "assuming it denotes the maximum.")
-            bounds.insert(0, self.radius.valueRange[0])
-        elif len(bounds) > 2:
-            bounds = bounds[0:2]
-            logging.info("Updating lower and upper contribution parameter bounds "
-                         "to: ({0}, {1}).".format(bounds[0], bounds[1]))
-            self.radius.valueRange = (min(bounds), max(bounds))
-
     def formfactor(self, dataset, paramValues):
         # vectorized data and arguments
-        q = dataset.q
-        radius = numpy.array((self.radius(),))
-        if self.radius.isActive():
-            radius = paramValues[:, 0]
-        lenKuhn = numpy.array((self.lenKuhn(),))
-        if self.lenKuhn.isActive():
-            idx = int(self.radius.isActive())
-            lenKuhn = paramValues[:, idx]
-        lenContour = numpy.array((self.lenContour(),))
-        if self.lenContour.isActive():
-            idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
-            lenContour = paramValues[:, idx]
-        qr = numpy.outer(q, radius) # a matrix usually
+        qr = dataset.q * self.radius() # a vector
         pcs = vectorizedPcs(qr)
 
-        x = numpy.divide(3. * lenContour, lenKuhn)
-        if len(lenKuhn) == 1:
-            value = lenKuhn[0]
-            lenKuhn = lenContour.copy()
-            lenKuhn.fill(value)
-        constants = numpy.array((lenKuhn, x)).T
-        p0 = calcParamsVsQ(coreIntegralOverQ, q, constants)
+        x = 3. * self.lenContour() / self.lenKuhn()
+        p0 = vectorizedCoreIntegral(dataset.q, self.lenKuhn(), x)
         if len(LASTMSG):
             logging.warning("\n".join(["numpy.quad integration messages: "] + list(LASTMSG)))
-        return p0 * pcs # FIXME: must not be squared!
+        return p0 * pcs # non-squared as opposed to SASfit
 
     def volume(self, paramValues):
-        radius = numpy.array((self.radius(),))
-        if self.radius.isActive():
-            radius = paramValues[:, 0]
-        lenContour = numpy.array((self.lenContour(),))
-        if self.lenContour.isActive():
-            idx = int(self.radius.isActive()) + int(self.lenKuhn.isActive())
-            lenContour = paramValues[:, idx]
-        volume = pi * radius*radius * lenContour
-        if len(volume) <= 1 and len(volume) < len(paramValues):
-            # duplicates of single value for dimension compatibility
-            volume = numpy.ones(len(paramValues)) * volume
+        volume = numpy.pi * self.lenContour() * self.radius()**2
         return volume**self.compensationExponent
 
 Kholodenko.factory()
 
-if __name__ == "__main__":
-    from cutesnake.datafile import PDHFile, AsciiFile
-    # FIXME: use SASData.load() instead
-    pf = PDHFile("sasfit_kho-1-10-1000.dat")
-    model = Kholodenko()
-    model.radius.setValue(1.)
-    model.radius.setActive(False)
-    model.lenKuhn.setValue(10.)
-    model.lenKuhn.setActive(False)
-    model.lenContour.setValue(1000.)
-    model.lenContour.setActive(False)
-    intensity = model.formfactor(pf.data, None).reshape(-1)**2.
-    q = pf.data[:, 0]
-    oldInt = pf.data[:, 1]
-    delta = abs(oldInt - intensity)
-    result = numpy.dstack((q, intensity, delta))[0]
-    AsciiFile.writeFile("kho.dat", result)
-    # call it like this:
-    # PYTHONPATH=..:../mcsas/ python brianpauwgui/kholodenko.py && gnuplot -p -e 'set logscale xy; plot "kho.dat" using 1:2:3 with errorbars'
+def test():
+    # volume is already included in the model, how to exclude it?
+    Kholodenko.testVolExp = 0.0
+    for fn in ("sasfit_kho-1-10-1000.dat",
+               ):
+        yield Kholodenko.test, fn
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
