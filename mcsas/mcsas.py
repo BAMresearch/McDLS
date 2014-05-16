@@ -563,18 +563,19 @@ class McSAS(AlgorithmBase):
                                   # (didnt understand this part)
             numContribs = prior.shape[0]
             rset = prior
+        # branches below won't be accessed
         elif prior.shape[0] == numContribs:
             rset = prior
         elif prior.shape[0] < numContribs:
-            logging.info("size of prior is smaller than numContribs. "\
-                    "duplicating random prior values")
+            logging.info("size of prior is smaller than numContribs. "
+                         "duplicating random prior values")
             randomIndices = numpy.random.randint(prior.shape[0],
                             size = numContribs - prior.shape[0])
             rset = numpy.concatenate((prior, prior[randomIndices, :]))
             logging.info("size now: {}".format(rset.shape))
         elif prior.shape[0] > numContribs:
-            logging.info("Size of prior is larger than numContribs. "\
-                    "removing random prior values")
+            logging.info("Size of prior is larger than numContribs. "
+                         "removing random prior values")
             # remaining choices
             randomIndices = numpy.random.randint(prior.shape[0],
                                                  size = numContribs)
@@ -1189,18 +1190,17 @@ class McSAS(AlgorithmBase):
         """Calculates the total intensity and scatterer volume contributions
         using the current model."""
         # remember parameter values
-        oldValues = [p() for p in self.model.params()]
+        params = self.model.params()
+        oldValues = [p() for p in params]
         it = 0
         vset = zeros(rset.shape[0])
-        params = self.model.params()
-        activeParams = [p for p in self.model.params()]
-        indices = numpy.array([i for i, p in enumerate(self.model.params())
+        indices = numpy.array([i for i, p in enumerate(params)
                               if p.isActive()])
         # call the model for each parameter value explicitly
         # otherwise the model gets complex for multiple params incl. fitting
         for i in numpy.arange(rset.shape[0]):
             if len(indices):
-                for p, v in izip(activeParams, rset[i][indices]):
+                for p, v in izip(params, rset[i][indices]):
                     p.setValue(v)
             vset[i] = self.model.vol(compensationExponent)
             # calculate their form factors
@@ -1208,7 +1208,7 @@ class McSAS(AlgorithmBase):
             # a set of intensities
             it += ffset**2 * vset[i]**2
         # restore previous parameter values
-        for p, v in zip(self.model.params(), oldValues):
+        for p, v in izip(params, oldValues):
             p.setValue(v)
         return it.flatten(), vset
 
