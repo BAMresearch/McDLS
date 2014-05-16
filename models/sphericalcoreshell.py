@@ -14,26 +14,26 @@ class SphericalCoreShell(ScatteringModel):
     solvent, identical to the notation used in the Core-shell ellipsoid.
     Compared wiht a SASfit-generated model (both with and without distribution)
     """
-    shortName = "Core-shell sphere"
+    shortName = "Core-Shell Sphere"
     parameters = (
             FitParameter("radius", 1.0,
-                    displayName = "Core radius",
+                    displayName = "Core Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             FitParameter("t", 1.0,
-                    displayName = "Thickness of shell",
+                    displayName = "Thickness of Shell",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf), suffix = "nm"),
             FitParameter("eta_c", 3.16,
-                    displayName = "core SLD",
+                    displayName = "Core SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
             FitParameter("eta_s", 2.53,
-                    displayName = "shell SLD",
+                    displayName = "Shell SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
             FitParameter("eta_sol", 0.,
-                    displayName = "solvent SLD",
+                    displayName = "Solvent SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf), suffix = "-"),
     )
@@ -46,117 +46,66 @@ class SphericalCoreShell(ScatteringModel):
         self.t.setValueRange((0.1, 1e3))
 
     def formfactor(self, dataset, paramValues):
-        def K(Q, R, DEta):
-            #modified K, taken out the volume scaling
-            QR = numpy.outer(Q, R)
-            k = DEta * 3 * (
-                    sin(QR) - QR * cos(QR)
-                    ) / (QR)**3
+        def k(q, r, dEta):
+            # modified K, taken out the volume scaling
+            qr = numpy.outer(q, r)
+            k = dEta * 3 * (
+                    sin(qr) - qr * cos(qr)
+                    ) / (qr)**3
             return k
 
+        # dToR = pi / 180. #degrees to radian
 
-        # vectorized data and arguments
-        q = dataset.q
-        radius = numpy.array((self.radius(),))
-        t = numpy.array((self.t(),))
-        eta_c = numpy.array((self.eta_c(),))
-        eta_s = numpy.array((self.eta_s(),))
-        eta_sol = numpy.array((self.eta_sol(),))
-        #unused:
+        vc = 4./3 * pi *  self.radius() **3
+        vt = 4./3 * pi * (self.radius() + self.t()) ** 3
+        vRatio = vc / vt
 
-        idx = 0
-        if self.radius.isActive():
-            radius = paramValues[:, idx]
-            idx += 1
-        if self.t.isActive():
-            t = paramValues[:, idx]
-            idx += 1
-        if self.eta_c.isActive():
-            eta_c = paramValues[:, idx]
-            idx += 1
-        if self.eta_s.isActive():
-            eta_s = paramValues[:, idx]
-            idx += 1
-        if self.eta_sol.isActive():
-            eta_sol = paramValues[:, idx]
-            idx += 1
-        #remaining parameters are never active fitting parameters
-
-        #dToR = pi / 180. #degrees to radian
-
-        Vc = 4./3 * pi * radius **3
-        Vt = 4./3 * pi * (radius + t) ** 3
-        VRatio = Vc / Vt
-        if not isinstance(VRatio, numpy.ndarray):
-            VRatio = numpy.array(VRatio)
-
-        if paramValues is None:
-            Fell=zeros((len(q), 1 ))
-        else:
-            Fell=zeros((len(q), len(paramValues[:,(idx-1)])))
-
-        for ri in range(len(radius)):
-            rad = radius[ ri % len(radius) ]
-            ti = t[ ri % len(t) ]
-            etac = eta_c[ ri % len(eta_c) ]
-            etas = eta_s[ ri % len(eta_s) ]
-            etasol = eta_sol[ ri % len(eta_sol) ]
-            VRati = VRatio[ ri % len(VRatio) ]
-            Ks = K(q, (rad + ti), (etas - etasol))
-            Kc = K(q, rad, (etas - etac))
-            Fell[:,ri] = ( Ks - VRati * Kc ).flatten()
-            #integrate over orientation
-            #Fell[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
-
-        return Fell
+        ks = k(dataset.q, self.radius() + self.t(),
+                          self.eta_s() - self.eta_sol())
+        kc = k(dataset.q, self.radius(),
+                          self.eta_s() - self.eta_c())
+        return ks - vRatio * kc
+        #integrate over orientation
+        #Fell[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
 
     def volume(self, paramValues):
-        radius = numpy.array((self.radius(),))
-        t = numpy.array((self.t(),))
-
-        if self.radius.isActive():
-            radius = paramValues[:, 0]
-        if self.t.isActive():
-            idx = int(self.radius.isActive())
-            t = paramValues[:, idx]
-
-        v = 4./3 * pi * (radius + t)**3
+        v = 4./3 * pi * (self.radius() + self.t())**3
         return v**self.compensationExponent
 
 SphericalCoreShell.factory()
 
-if __name__ == "__main__":
-    import sys
-    sys.path.append('..')
-    sys.path.append('.')
-    sys.path.append('../utils')
-    sys.path.append('../cutesnake')
-    from cutesnake.datafile import PDHFile, AsciiFile
-    from models.SphericalCoreShell import SphericalCoreShell
-    # FIXME: use SASData.load() instead
-    pf = PDHFile("testData/SphCoreShell_R100_dR150_c3p16_s2p53.csv")
-    model = SphericalCoreShell()
-    model.radius.setValue(100.)
-    model.radius.setActive(False)
-    model.t.setValue(150.)
-    model.t.setActive(False)
-    model.eta_c.setValue(3.16)
-    model.eta_c.setActive(False)
-    model.eta_s.setValue(2.53)
-    model.eta_s.setActive(False)
-    model.eta_sol.setValue(0.)
-    model.eta_sol.setActive(False)
-    intensity = (model.formfactor(pf.data, None).reshape(-1))**2
-    q = pf.data[:, 0]
-    oldInt = pf.data[:, 1]
-    #normalize
-    intensity /= intensity.max()
-    oldInt /= oldInt.max()
-    delta = abs(oldInt - intensity)
-    print('mean Delta: {}'.format(delta.mean()))
-    result = numpy.dstack((q, intensity, delta))[0]
-    AsciiFile.writeFile("SphericalCoreShell.dat", result)
-    # call it like this:
-    # PYTHONPATH=..:../mcsas/ python SphericalCoreShell.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
+#if __name__ == "__main__":
+#    import sys
+#    sys.path.append('..')
+#    sys.path.append('.')
+#    sys.path.append('../utils')
+#    sys.path.append('../cutesnake')
+#    from cutesnake.datafile import PDHFile, AsciiFile
+#    from models.SphericalCoreShell import SphericalCoreShell
+#    # FIXME: use SASData.load() instead
+#    pf = PDHFile("testData/SphCoreShell_R100_dR150_c3p16_s2p53.csv")
+#    model = SphericalCoreShell()
+#    model.radius.setValue(100.)
+#    model.radius.setActive(False)
+#    model.t.setValue(150.)
+#    model.t.setActive(False)
+#    model.eta_c.setValue(3.16)
+#    model.eta_c.setActive(False)
+#    model.eta_s.setValue(2.53)
+#    model.eta_s.setActive(False)
+#    model.eta_sol.setValue(0.)
+#    model.eta_sol.setActive(False)
+#    intensity = (model.formfactor(pf.data, None).reshape(-1))**2
+#    q = pf.data[:, 0]
+#    oldInt = pf.data[:, 1]
+#    #normalize
+#    intensity /= intensity.max()
+#    oldInt /= oldInt.max()
+#    delta = abs(oldInt - intensity)
+#    print('mean Delta: {}'.format(delta.mean()))
+#    result = numpy.dstack((q, intensity, delta))[0]
+#    AsciiFile.writeFile("SphericalCoreShell.dat", result)
+#    # call it like this:
+#    # PYTHONPATH=..:../mcsas/ python SphericalCoreShell.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
