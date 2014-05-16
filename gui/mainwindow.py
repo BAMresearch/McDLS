@@ -470,14 +470,18 @@ class SettingsWidget(SettingsWidgetBase):
             minmaxValue = type(param).min(), type(param).max()
             for bound in "min", "max":
                 w = self._makeEntry(param.name() + bound, param.dtype,
-                                       getattr(param, bound)(),
-                                       minmax = minmaxValue, parent = widget)
+                                    getattr(param, bound)(),
+                                    minmax = minmaxValue, parent = widget)
                 w.setPrefix(bound + ": ")
                 w.setFixedWidth(FIXEDWIDTH)
                 widgets.append(w)
         # create scalar value input widget
         w = self._makeEntry(param.name(), param.dtype, param.value(),
                                       minmax = minmaxValue, parent = widget)
+        try: # set special value text for lower bound, simple solution
+            special = param.displayValues(w.minimum())
+            w.setSpecialValueText(special)
+        except: pass
         w.setFixedWidth(FIXEDWIDTH)
         widgets.insert(len(widgets)/2, w)
         if activeBtns:

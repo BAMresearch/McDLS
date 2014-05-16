@@ -30,11 +30,12 @@ class LMADenseSphere(ScatteringModel):
                     valueRange = (0, 1.),
                     generator = RandomUniform,
                     suffix = " ", decimals = 1),
-            FitParameter("mf", -1., #-1 is auto calculation
+            FitParameter("mf", -1., # auto
                     displayName = "standoff multiplier (-1 = auto)",
-                    valueRange = (-1, 400.),
+                    valueRange = (-1., 400.),
                     generator = RandomUniform,
-                    suffix = " ", decimals = 1)
+                    suffix = " ", decimals = 1,
+                    displayValues = {-1.: "auto"})
             )
     parameters[0].setActive(True)
 
