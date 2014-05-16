@@ -49,7 +49,7 @@ class GaussianChain(ScatteringModel):
         self.etas.setValueRange((0.1, 10.))
         self.k.setValueRange((0.1, 10.))
 
-    def formfactor(self, dataset, paramValues):
+    def formfactor(self, dataset):
         # vectorized data
         beta = self.bp() - (self.k() * self.rg()**2) * self.etas()
         u = (dataset.q * self.rg())**2
@@ -58,7 +58,7 @@ class GaussianChain(ScatteringModel):
         result[dataset.q <= 0.0] = beta
         return result
 
-    def volume(self, paramValues):
+    def volume(self):
         v = self.k() * self.rg()**2
         return v**self.compensationExponent
 

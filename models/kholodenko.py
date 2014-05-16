@@ -76,7 +76,7 @@ class Kholodenko(ScatteringModel):
         self.lenKuhn.setValueRange((10, 50))
         self.lenContour.setValueRange((100, 1000))
 
-    def formfactor(self, dataset, paramValues):
+    def formfactor(self, dataset):
         # vectorized data and arguments
         qr = dataset.q * self.radius() # a vector
         pcs = vectorizedPcs(qr)
@@ -87,7 +87,7 @@ class Kholodenko(ScatteringModel):
             logging.warning("\n".join(["numpy.quad integration messages: "] + list(LASTMSG)))
         return p0 * pcs # non-squared as opposed to SASfit
 
-    def volume(self, paramValues):
+    def volume(self):
         volume = numpy.pi * self.lenContour() * self.radius()**2
         return volume**self.compensationExponent
 

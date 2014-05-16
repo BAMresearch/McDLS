@@ -45,7 +45,7 @@ class SphericalCoreShell(ScatteringModel):
         self.radius.setValueRange((0.1, 1e3))
         self.t.setValueRange((0.1, 1e3))
 
-    def formfactor(self, dataset, paramValues):
+    def formfactor(self, dataset):
         def k(q, r, dEta):
             # modified K, taken out the volume scaling
             qr = numpy.outer(q, r)
@@ -68,7 +68,7 @@ class SphericalCoreShell(ScatteringModel):
         #integrate over orientation
         #Fell[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
 
-    def volume(self, paramValues):
+    def volume(self):
         v = 4./3 * pi * (self.radius() + self.t())**3
         return v**self.compensationExponent
 

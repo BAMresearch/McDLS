@@ -21,19 +21,19 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         return arg
 
     @abstractmethod
-    def volume(self, paramValues):
+    def volume(self):
         """Calculates the volume of this model, taking compensationExponent
         into account from input or preset parameters.
         Reimplement this for new models."""
         raise NotImplemented
 
-    def vol(self, paramValues, compensationExponent = None):
+    def vol(self, compensationExponent = None):
         # restore the exponent from class level of the particular model
         self.compensationExponent = type(self).compensationExponent
         if compensationExponent is not None: # set custom exponent
             self.compensationExponent = compensationExponent
         # calling user provided custom model
-        v = self.volume(paramValues)
+        v = self.volume()
         # restore the exponent from class level of the particular model
         self.compensationExponent = type(self).compensationExponent
         # volume always returns a single value
@@ -41,14 +41,14 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         return v
 
     @abstractmethod
-    def formfactor(self, dataset, paramValues = None):
+    def formfactor(self, dataset):
         """Calculates the Rayleigh function of this model.
         Reimplement this for new models."""
         raise NotImplemented
 
-    def ff(self, dataset, paramValues = None):
+    def ff(self, dataset):
         # calling user provided custom model
-        i = self.formfactor(dataset, paramValues)
+        i = self.formfactor(dataset)
         # there has to be one intensity value for each q-vector
         assert i.size == dataset.q.size
         return i

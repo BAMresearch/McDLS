@@ -41,7 +41,7 @@ class CylindersIsotropic(ScatteringModel):
         self.radius.setValueRange((0.1, 1e3))
         self.length.setValueRange((1, numpy.inf))
 
-    def formfactor(self, dataset, paramValues):
+    def formfactor(self, dataset):
         # psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
         # used in the equation for a cylinder from Pedersen, 1997
 
@@ -60,7 +60,7 @@ class CylindersIsotropic(ScatteringModel):
         #integrate over orientation
         return numpy.sqrt(numpy.mean(fsplit**2, axis=1)) # should be length q
 
-    def volume(self, paramValues):
+    def volume(self):
         if self.lengthIsAspect():
             halfLength = self.radius() * self.length()
         else:

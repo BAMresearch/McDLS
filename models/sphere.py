@@ -23,11 +23,11 @@ class Sphere(ScatteringModel):
         # defining lengths in angstrom or nm, not m.
         self.radius.setValueRange((1.0, 1e4))
 
-    def volume(self, paramValues):
+    def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)
         return result
 
-    def formfactor(self, dataset, paramValues):
+    def formfactor(self, dataset):
         qr = dataset.q * self.radius()
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         return result

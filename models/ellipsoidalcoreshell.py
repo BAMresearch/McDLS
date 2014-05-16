@@ -53,7 +53,7 @@ class EllipsoidalCoreShell(ScatteringModel):
         self.b.setValueRange((1., 1e4))
         self.t.setValueRange((0.1, 1e3))
 
-    def formfactor(self, dataset, paramValues):
+    def formfactor(self, dataset):
         def j1(x):
             return ( sin(x) - x * cos(x) ) / (x**2)
 
@@ -87,7 +87,7 @@ class EllipsoidalCoreShell(ScatteringModel):
         # integrate over orientation
         return numpy.sqrt(numpy.mean(fsplit**2, axis=1)) # should be length q
 
-    def volume(self, paramValues):
+    def volume(self):
         v = 4./3 * pi * (self.a() + self.t()) * (self.b() + self.t())**2
         return v**self.compensationExponent
 

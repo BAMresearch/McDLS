@@ -1202,10 +1202,9 @@ class McSAS(AlgorithmBase):
             if len(indices):
                 for p, v in izip(activeParams, rset[i][indices]):
                     p.setValue(v)
-            vset[i] = self.model.vol(rset[i].reshape((1, -1)),
-                                     compensationExponent)
+            vset[i] = self.model.vol(compensationExponent)
             # calculate their form factors
-            ffset = self.model.ff(data, rset[i].reshape((1, -1)))
+            ffset = self.model.ff(data)
             # a set of intensities
             it += ffset**2 * vset[i]**2
         # restore previous parameter values
