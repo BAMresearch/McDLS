@@ -131,7 +131,6 @@ def makeAlternatingRowColorsTransparent(widget):
 
 def setBackgroundStyleSheet(widget, imgpath):
     assert isinstance(widget, QWidget)
-    print "bckground exists:", os.path.exists(imgpath), imgpath
     makeAlternatingRowColorsTransparent(widget.listWidget)
     stylesheet = """
         #listWidget {{
@@ -142,7 +141,6 @@ def setBackgroundStyleSheet(widget, imgpath):
             background-color:       white;
         }}
     """
-    #imgpath = os.path.splitext(imgpath)[0]+".png"
     widget.setStyleSheet(stylesheet.format(path = imgpath))
 
 from cutesnake.dataset import DataSet, DisplayMixin
