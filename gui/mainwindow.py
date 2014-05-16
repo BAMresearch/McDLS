@@ -14,7 +14,7 @@ from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
-                   QTreeWidgetItem, QTreeWidget, QToolBox)
+                   QTreeWidgetItem, QTreeWidget, QToolBox, QPalette)
 from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.widgets.datalist import DataList
@@ -122,9 +122,17 @@ def eventLoop(args):
     mw.show()
     return app.exec_()
 
+def makeAlternatingRowColorsTransparent(widget):
+    palette = widget.palette()
+    color = palette.color(QPalette.AlternateBase)
+    color.setAlphaF(0.4)
+    palette.setColor(QPalette.AlternateBase, color)
+    widget.setPalette(palette)
+
 def setBackgroundStyleSheet(widget, imgpath):
     assert isinstance(widget, QWidget)
     print "bckground exists:", os.path.exists(imgpath), imgpath
+    makeAlternatingRowColorsTransparent(widget.listWidget)
     stylesheet = """
         #listWidget {{
             background-image:       url({path});
