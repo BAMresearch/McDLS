@@ -687,6 +687,16 @@ class FileList(DataList):
         self.listWidget.setAlternatingRowColors(True)
         setBackgroundStyleSheet(self, "./resources/background_files.svg")
 
+class ToolBox(QToolBox):
+    """QToolBox containing the widgets for user settings.
+    Used to propagate resize events to child widgets to enable responsive behaviour.
+    On MacOS, fixes failed detection of size changes in child widget due to scroll area.
+    """
+    def resizeEvent(self, event):
+        child = self.currentWidget()
+        if isinstance(child, AlgorithmWidget):
+            child.resizeEvent(event)
+
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
     _args = None # python command line arguments parser
@@ -709,7 +719,7 @@ class MainWindow(MainWindowBase):
         # put the log widget at the bottom
         self.addDockWidget(Qt.BottomDockWidgetArea, self._setupLogWidget())
         # file widget at the top
-        self.toolbox = QToolBox(self)
+        self.toolbox = ToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
