@@ -44,7 +44,7 @@ class LMADenseSphere(ScatteringModel):
         #defining lengths in angstrom or nm, not m.
 
     def volume(self, paramValues):
-        result = (pi*4./3.) * paramValues[:, 0]**(3. * self.compensationExponent)
+        result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)
         return result
 
     def formfactor(self, dataset, paramValues):
@@ -54,8 +54,7 @@ class LMADenseSphere(ScatteringModel):
         if SFmf == -1:
             SFmf = (0.634 / SFmu) **(1. / 3)
 
-
-        def SFG(A,SFmu):
+        def SFG(A, SFmu):
             alpha = ( 1 + 2 * SFmu )**2 / ( 1 - SFmu )**4
             beta = -6 * SFmu * ( 1 + SFmu / 2 )**2 / ( 1 - SFmu )**2
             gamma = SFmu * alpha / 2
@@ -68,13 +67,11 @@ class LMADenseSphere(ScatteringModel):
             return G
 
 
-        r = paramValues[:,0].flatten()
-        q = dataset.q
-        qr = numpy.outer(q, r)
+        qr = dataset.q * self.radius()
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         #now we introduce the structure factor
-        rhsq = numpy.outer(q,(SFmf * r))
-        G = SFG(rhsq,SFmu)
+        rhsq = dataset.q * (SFmf * self.radius())
+        G = SFG(rhsq, SFmu)
         Ssqrt = (abs( 1. + 24. * SFmu * G / rhsq ))**(-0.5)
         # the above structure factor needs to be the square root as it is
         # taken into the form factor. Eventually, we want to calculate the
