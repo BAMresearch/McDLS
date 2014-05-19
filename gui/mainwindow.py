@@ -112,6 +112,7 @@ FIXEDWIDTH = 120
 
 # required for svg graphics support
 from cutesnake.qt import QtSvg, QtXml, pluginDirs
+from main import makeAbsolutePath
 
 def eventLoop(args):
     """Starts the UI event loop and get command line parser arguments."""
@@ -141,7 +142,7 @@ def setBackgroundStyleSheet(widget, imgpath):
             background-color:       white;
         }}
     """
-    widget.setStyleSheet(stylesheet.format(path = imgpath))
+    widget.setStyleSheet(stylesheet.format(path = makeAbsolutePath(imgpath)))
 
 from cutesnake.dataset import DataSet, DisplayMixin
 class ParameterRange(DataSet, DisplayMixin):

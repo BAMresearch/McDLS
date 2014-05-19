@@ -11,6 +11,7 @@ import logging
 import json
 from utils.parameter import Parameter
 from utils import isString
+from main import makeAbsolutePath
 logging.basicConfig(level = logging.INFO)                                      
 
 class McSASParameters(PropertyNames):
@@ -85,6 +86,7 @@ class McSASParameters(PropertyNames):
     def loadParameters(self, filename):
         # load parameter definitions from file and add to list:
         parDict = dict()
+        filename = makeAbsolutePath(filename)
         try:
             with open(filename, 'r') as jfile:
                 logging.info("Loading parameters from file: '{}'"

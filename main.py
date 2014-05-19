@@ -6,22 +6,26 @@ import os.path
 def getScriptPath():
     """Returns the full path to the current script file which calls this
     function. See cutesnake.utils"""
-    thisFile = sys.executable
+    thisFile = sys.executable # works for frozen app
     try: # __file__ not defined if frozen
         thisFile = os.path.join(os.getcwd(), __file__)
     except NameError: pass
     thisFile = os.path.abspath(thisFile)
     return os.path.split(thisFile)
 
+def makeAbsolutePath(relpath):
+    path, script = getScriptPath()
+    return os.path.abspath(os.path.join(path, relpath))
+
 # get script/executable location, add to module search path
 scriptPath, scriptFilename = getScriptPath()
-if not hasattr(sys, "frozen"):
+if not hasattr(sys, "frozen") and scriptPath not in sys.path:
     sys.path.append(scriptPath)
 
 import argparse
 import logging
 from cutesnake.log import replaceStdOutErr
-from gui.calc import Calculator
+import gui.calc
 
 def main(argv = None):
     parser = argparse.ArgumentParser(description = "Monte Carlo SAS analysis")
@@ -38,7 +42,8 @@ def main(argv = None):
                         help = "One or more data files to analyse")
     # TODO: add info about output files to be created ...
     args = parser.parse_args()
-    Calculator.nolog = args.nolog # forwarding logging setting, quick fix 
+    # forwarding logging setting, quick fix 
+    gui.calc.Calculator.nolog = args.nolog
 
     # initiate logging (to console stderr for now)
     replaceStdOutErr() # replace all text output with our sinks
