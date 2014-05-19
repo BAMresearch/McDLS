@@ -8,7 +8,7 @@ import sys
 import gui.version
 
 if len(sys.argv) > 2:
-    alternateVersion = "_".join(sys.argv[2:])
+    alternateVersion = "-".join(sys.argv[2:])
     del sys.argv[2:]
     print "Using an alternate version:", alternateVersion
     gui.version.version.updateFile(gui.version, alternateVersion)
@@ -81,10 +81,13 @@ BUILDOPTIONS = dict(
     copy_dependent_files = True,
 )
 
-versionNumber = ""
-# only set proper version number if it follows some rules
-if re.match("([0-9]\.)*[0-9]+", version.number()) is not None:
-    versionNumber = version.number()
+# only set version number if compatible with pywin32
+versionNumber = version.number()
+try:
+    bits = [int(i) for i in versionNumber.split(".")]
+    assert(len(bits))
+except (AssertionError, IndexError, TypeError, ValueError):
+    versionNumber = "0" # do not set version number in win32 binary
 
 setup(
     name = version.name(),
