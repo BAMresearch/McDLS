@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # appversion.py
 
+import inspect
+import os.path
+import re
 from cutesnake.utils import isNonEmptyString
 
 class AppVersion(object):
@@ -52,6 +55,30 @@ class AppVersion(object):
     @classmethod
     def isValid(cls, other):
         return issubclass(type(other), cls)
+
+    @staticmethod
+    def updateFile(module, newversion):
+        """Updates the version string within a given module.
+        Replaces the version string in the source code textually.
+        Assumes there is an AppVersion constructor call in the module.
+        """
+        fn = os.path.abspath(inspect.getfile(module))
+        if not os.path.exists(fn):
+            return
+        if os.path.splitext(fn)[-1].endswith("pyc"):
+            fn = fn[:-1]
+        # read current file content
+        content = None
+        with open(fn) as fd:
+            content = fd.read()
+        # get version number, parse and update it
+        match = re.search(r'(versionNumber\s+=\s+(\"[^\"]*\"))', content)
+        oldversion = match.group(2)
+        # replace version string and write back
+        newversion = '"{0}"'.format(newversion)
+        content = content.replace(oldversion, newversion)
+        with open(fn, 'wb') as fd:
+            fd.write(content)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
 
