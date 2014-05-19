@@ -4,9 +4,18 @@
 # Usage on target platform, tested on Windows with MinGW/MSYS:
 # python cxfreeze.py build_exe
 
+import sys
+import gui.version
+
+if len(sys.argv) > 2:
+    alternateVersion = "_".join(sys.argv[2:])
+    del sys.argv[2:]
+    print "Using an alternate version:", alternateVersion
+    gui.version.version.updateFile(gui.version, alternateVersion)
+    reload(gui.version)
+
 import re
 import os.path
-import sys
 import subprocess
 from cx_Freeze import setup, Executable
 from gui.version import version
@@ -72,9 +81,14 @@ BUILDOPTIONS = dict(
     copy_dependent_files = True,
 )
 
+versionNumber = ""
+# only set proper version number if it follows some rules
+if re.match("([0-9]\.)*[0-9]+", version.number()) is not None:
+    versionNumber = version.number()
+
 setup(
     name = version.name(),
-    version = version.number(),
+    version = versionNumber,
     description = version.name(),
     long_description = ("GUI for Monte-Carlo size distribution analysis"),
 #    url = "http://sourceforge.net/",
@@ -85,7 +99,7 @@ setup(
     contact_email = "brian@stack.nl",
     maintainer = u"Ingo Breßler",
     maintainer_email = "ingo.bressler@bam.de",
-    # additional metadata for hacked version of cx_Freeze
+    # additional metadata for modified version of cx_Freeze
     # displayed in copyright info
     download_url = "2013, https://bitbucket.org/pkwasniew/mcsas",
     # company
