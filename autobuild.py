@@ -103,15 +103,15 @@ class BitbucketClient(object):
 
     _DBG = False
     _contentFn = "last_content.html"
+    _credentialsFn = "credentials"
 
-    def __init__(self, username, password, repository):
+    def __init__(self, repository, username = None, password = None):
+        if username is None or password is None:
+            username, password = self.getCredentials(self._credentialsFn)
         if not self._DBG:
             self.session = requests.session()
             self.signin(username, password)
         self.repository = repository
-        url = self.upload("/home/ingo/code/bitbucket-distutils/README.md")
-        #url = self.upload("/home/ingo/code/mcsas/McSASGui-2014-05-19_19-47-53-restructuring-157d5b5.7z")
-        print url
 
     def signin(self, username, password):
         url = 'https://bitbucket.org/account/signin/'
@@ -170,6 +170,24 @@ class BitbucketClient(object):
         token = re.search(fquery + r'=[\'"]([^\'"]*)[\'"]',
                           tag.group(0))
         return token.group(1)
+
+    @classmethod
+    def getCredentials(cls, filename):
+        programDir = os.path.dirname(
+                        os.path.abspath(
+                            os.path.join(os.getcwd(), __file__)))
+        filename = os.path.join(programDir, filename)
+        logging.info("Reading {cls} credentials from '{fn}'!"
+                     .format(cls = cls.__name__, fn = filename))
+        creds = ""
+        with open(filename) as fd:
+            creds = fd.read()
+        return creds.split()
+
+bb = BitbucketClient("pkwasniew/mcsas")
+print bb.upload(os.path.abspath("README.md"))
+#url = self.upload("/home/ingo/code/mcsas/McSASGui-2014-05-19_19-47-53-restructuring-157d5b5.7z")
+sys.exit()
 
 testForGit()
 clone()
