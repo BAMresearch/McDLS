@@ -916,9 +916,11 @@ class McSAS(AlgorithmBase):
                 return numpy.zeros(shp)
 
             # total volume fraction contribution in a bin
+            volHistRepYCum = initHist(numReps)
             volHistRepY = initHist(numReps)
             # total number fraction contribution in a bin
             numHistRepY = initHist(numReps)
+            numHistRepYCum = initHist(numReps)
             # minimum required number of contributions /in a bin/ to make
             # a measurable impact
             minReqVolBin = initHist(numReps)
@@ -939,6 +941,14 @@ class McSAS(AlgorithmBase):
                     # y contains the volume fraction for that radius bin
                     volHistRepY[bini, ri] = sum(volumeFraction[binMask, ri])
                     numHistRepY[bini, ri] = sum(numberFraction[binMask, ri])
+                    if bini > 1:
+                        # take the cumulated histogram of the previous bin
+                        volHistRepYCum[bini, ri] = volHistRepYCum[bini-1, ri]
+                        numHistRepYCum[bini, ri] = numHistRepYCum[bini-1, ri]
+                    # add the current bin to the cumulated histogram
+                    volHistRepYCum[bini, ri] += volHistRepY[bini, ri]
+                    numHistRepYCum[bini, ri] += numHistRepY[bini, ri]
+                    # observability below
                     if not any(binMask):
                         minReqVolBin[bini, ri] = 0
                         minReqNumBin[bini, ri] = 0
@@ -951,17 +961,16 @@ class McSAS(AlgorithmBase):
                         minReqNumBin[bini, ri] = minReqNum[binMask, ri].mean()
                     if isnan(volHistRepY[bini, ri]):
                         volHistRepY[bini, ri] = 0.
+                        volHistRepYCum[bini, ri] = 0.
+                    if isnan(numHistRepY[bini, ri]):
                         numHistRepY[bini, ri] = 0.
+                        numHistRepYCum[bini, ri] = 0.
             for bini in range(param.histogram().binCount):
                 histogramXMean[bini] = histogramXLowerEdge[bini:bini+2].mean()
                 vb = minReqVolBin[bini, :]
                 volHistMinReq[bini] = vb[vb < inf].max()
                 nb = minReqNumBin[bini, :]
                 numHistMinReq[bini] = nb[nb < inf].max()
-            volHistYMean = volHistRepY.mean(axis = 1)
-            numHistYMean = numHistRepY.mean(axis = 1)
-            volHistYStd = volHistRepY.std(axis = 1)
-            numHistYStd = numHistRepY.std(axis = 1)
 
             # store the results, we'll fix this later by a proper structure
             while paramIndex >= len(self.result):
@@ -972,10 +981,14 @@ class McSAS(AlgorithmBase):
                 histogramXWidth = diff(histogramXLowerEdge),
                 volumeHistogramRepetitionsY = volHistRepY,
                 numberHistogramRepetitionsY = numHistRepY,
-                volumeHistogramYMean = volHistYMean,
-                volumeHistogramYStd = volHistYStd,
-                numberHistogramYMean = numHistYMean,
-                numberHistogramYStd = numHistYStd,
+                volumeHistogramYMean = volHistRepY.mean(axis = 1),
+                volumeHistogramYStd = volHistRepY.std(axis = 1),
+                numberHistogramYMean = numHistRepY.mean(axis = 1),
+                numberHistogramYStd = numHistRepY.std(axis = 1),
+                volumeHistogramYCumMean = volHistRepYCum.mean(axis = 1),
+                volumeHistogramYCumStd = volHistRepYCum.std(axis = 1),
+                numberHistogramYCumMean = numHistRepYCum.mean(axis = 1),
+                numberHistogramYCumStd = numHistRepYCum.std(axis = 1),
                 volumeHistogramMinimumRequired = volHistMinReq,
                 minimumRequiredVolume = minReqVol,
                 volumeFraction = volumeFraction,

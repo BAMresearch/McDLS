@@ -135,10 +135,14 @@ class Calculator(object):
     def _writeDistrib(self, mcResult, paramName):
         self._writeResultHelper(mcResult,
             "dist_"+paramName, "distributions",
-            ('histogramXMean', 'histogramXWidth', 'volumeHistogramYMean',
-             'volumeHistogramYStd', 'volumeHistogramMinimumRequired',
+            ('histogramXMean', 'histogramXWidth',
+             'volumeHistogramYMean', 'volumeHistogramYStd',
+             'volumeHistogramMinimumRequired',
              'numberHistogramYMean', 'numberHistogramYStd',
-             'numberHistogramMinimumRequired'),
+             'numberHistogramMinimumRequired',
+             'volumeHistogramYCumMean', 'volumeHistogramYCumStd',
+             'numberHistogramYCumMean', 'numberHistogramYCumStd',
+             ),
             extension = '.csv'
         )
 
