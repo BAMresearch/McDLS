@@ -13,14 +13,13 @@ def getScriptPath():
     thisFile = os.path.abspath(thisFile)
     return os.path.split(thisFile)
 
-def makeAbsolutePath(relpath):
-    path, script = getScriptPath()
-    return os.path.abspath(os.path.join(path, relpath))
-
 # get script/executable location, add to module search path
-scriptPath, scriptFilename = getScriptPath()
-if not hasattr(sys, "frozen") and scriptPath not in sys.path:
-    sys.path.append(scriptPath)
+SCRIPT_PATH, SCRIPT_FILENAME = getScriptPath()
+if not hasattr(sys, "frozen") and SCRIPT_PATH not in sys.path:
+    sys.path.append(SCRIPT_PATH)
+
+def makeAbsolutePath(relpath):
+    return os.path.abspath(os.path.join(SCRIPT_PATH, relpath))
 
 import argparse
 import logging
