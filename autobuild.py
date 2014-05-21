@@ -197,6 +197,8 @@ freeze(datetime, branch, hash)
 
 # TODO: let freeze output the created file, upload it below
 # TODO further:
+#   - use plain build numbers instead of "{datetime} {branch} {hash}"
+#     - e.g. build234 (seen at Windows OS versions for example)
 #   - setup logging into a file, outside with python stderr eventually?
 #     -> push it to a special branch ('buildlogs' or similar)
 #     -> make it available via https://readthedocs.org/projects/mcsas/
