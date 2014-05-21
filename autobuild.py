@@ -184,11 +184,6 @@ class BitbucketClient(object):
             creds = fd.read()
         return creds.split()
 
-bb = BitbucketClient("pkwasniew/mcsas")
-print bb.upload(os.path.abspath("README.md"))
-#url = self.upload("/home/ingo/code/mcsas/McSASGui-2014-05-19_19-47-53-restructuring-157d5b5.7z")
-sys.exit()
-
 testForGit()
 clone()
 WORKDIR = os.path.join(WORKDIR, DIRNAME)
@@ -199,6 +194,19 @@ hash = getHash()
 basename = "{DIRNAME} {datetime} {branch} {hash}".format(**locals())
 logging.info(basename)
 freeze(datetime, branch, hash)
+
+# TODO: let freeze output the created file, upload it below
+# TODO further:
+#   - setup logging into a file, outside with python stderr eventually?
+#     -> push it to a special branch ('buildlogs' or similar)
+#     -> make it available via https://readthedocs.org/projects/mcsas/
+#        (allows some formatting)
+#   - same goes for reports of automated tests later
+#     -> will be plugged in right after cloning
+
+#bb = BitbucketClient("pkwasniew/mcsas")
+#print bb.upload(os.path.abspath("README.md"))
+#url = self.upload("/home/ingo/code/mcsas/McSASGui-2014-05-19_19-47-53-restructuring-157d5b5.7z")
 
 waitForUser()
 
