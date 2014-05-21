@@ -89,6 +89,88 @@ def freeze(*args):
     print err
     print cmd
 
+import re
+from distutils.version import StrictVersion
+import requests
+assert(StrictVersion(requests.__version__) > StrictVersion('2.2.0'))
+from collections import OrderedDict
+
+class BitbucketClient(object):
+    """Minimal Bitbucket that signs in and uploads files.
+    from https://bitbucket.org/dahlia/bitbucket-distutils
+    version: 0.1.2 (public domain, 2014-05-20)
+    """
+
+    _DBG = False
+    _contentFn = "last_content.html"
+
+    def __init__(self, username, password, repository):
+        if not self._DBG:
+            self.session = requests.session()
+            self.signin(username, password)
+        self.repository = repository
+        url = self.upload("/home/ingo/code/bitbucket-distutils/README.md")
+        #url = self.upload("/home/ingo/code/mcsas/McSASGui-2014-05-19_19-47-53-restructuring-157d5b5.7z")
+        print url
+
+    def signin(self, username, password):
+        url = 'https://bitbucket.org/account/signin/'
+        form = self.session.get(url)
+        token = self._find_field(form.content, 'name', 'csrfmiddlewaretoken')
+        data = {'username': username, 'password': password,
+                'csrfmiddlewaretoken': token}
+        login = self.session.post(url, data = data, cookies = form.cookies,
+                                  headers = {'Referer': url})
+        self.cookies = login.cookies
+
+    def upload(self, filename):
+        assert(os.path.exists(filename))
+        url = 'https://bitbucket.org/' + self.repository + '/downloads'
+        fields = ('acl', 'success_action_redirect', 'AWSAccessKeyId',
+                  'Policy', 'Signature', 'Content-Type', 'Content-Disposition',
+                  'key',)
+        if self._DBG:
+            with open(self._contentFn) as fd:
+                content = fd.read()
+        else:
+            form = self.session.get(url, cookies = self.cookies)
+            content = form.content
+            with open(self._contentFn, 'w') as fd:
+                fd.write(content)
+        s3_url = self._find_field(content, "id", "upload-file-form",
+                                  ftype = "form", fquery = "action")
+        data = OrderedDict((f, self._find_field(content, "name", f)) for f in fields)
+        basename = os.path.basename(filename)
+        data['Content-Type'] = "application/octet-stream"
+        data['Content-Disposition'] += basename
+        data['key'] += basename
+        if self._DBG:
+            print data
+            return None
+        with open(filename, 'rb') as fp:
+            files = {'file': (basename, fp)}
+            response = self.session.post(s3_url, data = data, files = files)
+        if 300 <= response.status_code < 400 and 'location' in response.headers:
+            response = self.session.get(response.headers['location'])
+            logging.warning("Updated response!")
+        logging.info("Response: {code} {hdr}"
+                     .format(code = response.status_code,
+                             hdr = str(response.headers)))
+        assert(200 <= response.status_code < 300)
+        return url + '/' + basename
+
+    def _find_field(self, content, key, value,
+                    ftype = "input", fquery = "value"):
+        """Extracts a given query value from an HTML tag with a given field
+        type and key/value identification."""
+        pattern = (r'<' + ftype + '\s[^<>]*'
+                        + key + '=[\'"]' + re.escape(value)
+                        + r'[\'"]\s[^>]*>')
+        tag = re.search(pattern, content)
+        token = re.search(fquery + r'=[\'"]([^\'"]*)[\'"]',
+                          tag.group(0))
+        return token.group(1)
+
 testForGit()
 clone()
 WORKDIR = os.path.join(WORKDIR, DIRNAME)
