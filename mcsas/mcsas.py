@@ -1126,24 +1126,8 @@ class McSAS(AlgorithmBase):
               "and {} empty fields".format(rowi,ncol,emptyfields)
 
     def plot(self, axisMargin = 0.3, parameterIdx = None):
-        # runs matplotlib in a separate process
-        # keeps plot window open on windows
-        # does not block if another calculation is started
-        # pickleParams = [p.attributes() for p in self.model.params()]
-        plotArgs = (self.result, self.dataPrepared, 
+        PlotResults(self.result, self.dataPrepared,
                     axisMargin, parameterIdx, self.figureTitle, self)
-        # on Windows the plot figure blocks the app until it is closed
-        # -> we have to call matplotlib plot in another thread (1.3.1)
-        # on linux it does not block, can show multiple figures (1.0.1)
-        if sys.platform.lower().startswith("win") and not isFrozen():
-            # does not work on linux: 
-            # UI has to run in main thread (X server error)
-            # -> move (headless) calculations to another thread
-            from multiprocessing import Process
-            proc = Process(target = PlotResults, args = plotArgs)
-            proc.start()
-        else:
-            PlotResults(*plotArgs)
 
     def rangeInfo(self, 
             valueRange = [0, inf], paramIndex = 0, weighting = None):
