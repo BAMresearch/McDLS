@@ -11,20 +11,24 @@ def getScriptPath():
         thisFile = os.path.join(os.getcwd(), __file__)
     except NameError: pass
     thisFile = os.path.abspath(thisFile)
-    return os.path.split(thisFile)
+    path, fn = os.path.split(thisFile)
+    if os.path.isfile(path):
+        path = os.path.dirname(path)
+    return path, fn
 
 # get script/executable location, add to module search path
 SCRIPT_PATH, SCRIPT_FILENAME = getScriptPath()
 if not hasattr(sys, "frozen") and SCRIPT_PATH not in sys.path:
     sys.path.append(SCRIPT_PATH)
 
-def makeAbsolutePath(relpath):
-    return os.path.abspath(os.path.join(SCRIPT_PATH, relpath))
-
 import argparse
 import logging
 from cutesnake.log import replaceStdOutErr
 import gui.calc
+
+def makeAbsolutePath(relpath):
+#    logging.info("SCRIPT_PATH: '{}'".format(SCRIPT_PATH))
+    return os.path.abspath(os.path.join(SCRIPT_PATH, relpath))
 
 def main(argv = None):
     parser = argparse.ArgumentParser(description = "Monte Carlo SAS analysis")
