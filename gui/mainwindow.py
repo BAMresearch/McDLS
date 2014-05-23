@@ -10,7 +10,7 @@ import sys
 import logging
 from cutesnake.qt import QtCore, QtGui
 from cutesnake.utils.signal import Signal
-from QtCore import Qt, QSettings, QRegExp
+from QtCore import Qt, QSettings, QRegExp, QFileInfo
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
@@ -142,7 +142,9 @@ def setBackgroundStyleSheet(widget, imgpath):
             background-color:       white;
         }}
     """
-    widget.setStyleSheet(stylesheet.format(path = makeAbsolutePath(imgpath)))
+    # convert path to qt style formatting (separators, ...)
+    imgpath = QFileInfo(makeAbsolutePath(imgpath)).absoluteFilePath()
+    widget.setStyleSheet(stylesheet.format(path = imgpath))
 
 from cutesnake.dataset import DataSet, DisplayMixin
 class ParameterRange(DataSet, DisplayMixin):
