@@ -559,14 +559,16 @@ class McSAS(AlgorithmBase):
                     rset[:, idx] = numpy.ones(numContribs) * mb * .5
             else:
                 rset = self.model.generateParameters(numContribs)
-        elif prior.shape[0] != 0: #? and size(numContribs) == 0:
-                                  # (didnt understand this part)
+        # A prior set can be provided, f.ex. to continue an interrupted run.
+        elif (prior.shape[0] != 0) and (numContribs == 0):
+            # In this case, rset will assume whatever size prior happens to be
             numContribs = prior.shape[0]
             rset = prior
-        # branches below won't be accessed
         elif prior.shape[0] == numContribs:
+            # same size prior as requested
             rset = prior
         elif prior.shape[0] < numContribs:
+            # prior is smaller in size than requested
             logging.info("size of prior is smaller than numContribs. "
                          "duplicating random prior values")
             randomIndices = numpy.random.randint(prior.shape[0],
@@ -574,6 +576,7 @@ class McSAS(AlgorithmBase):
             rset = numpy.concatenate((prior, prior[randomIndices, :]))
             logging.info("size now: {}".format(rset.shape))
         elif prior.shape[0] > numContribs:
+            # prior is larger in size than requested.
             logging.info("Size of prior is larger than numContribs. "
                          "removing random prior values")
             # remaining choices
