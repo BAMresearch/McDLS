@@ -932,8 +932,6 @@ class McSAS(AlgorithmBase):
             volHistMinReq = initHist()
             numHistMinReq = initHist()
 
-            logging.debug('shape contribs: {}, paramIndex: {}'
-                    .format(shape(contribs),paramIndex))
             for ri in range(numReps):
                 # single set of R for this calculation
                 rset = contribs[:, paramIndex, ri]
@@ -977,8 +975,10 @@ class McSAS(AlgorithmBase):
 
             # store the results, we'll fix this later by a proper structure
             while paramIndex >= len(self.result):
+                # BP: This only runs for multi-parameter models?
                 self.result.append(dict())
             self.result[paramIndex].update(dict(
+                contribs = contribs,
                 histogramXLowerEdge = histogramXLowerEdge,
                 histogramXMean = histogramXMean,
                 histogramXWidth = diff(histogramXLowerEdge),
