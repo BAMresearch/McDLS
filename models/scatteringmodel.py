@@ -57,8 +57,8 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         """Generates a set of parameters for this model using the predefined
         Parameter.generator. Allows for different random number distributions.
         """
-        lst = numpy.zeros((count, self.paramCount()))
-        for idx, param in enumerate(self.params()):
+        lst = numpy.zeros((count, self.activeParamCount()))
+        for idx, param in enumerate(self.activeParams()):
             # generate numbers in different range for each parameter
             #only for active parameters, otherwise it may try to generate
             #random values for a boolean-type parameter.

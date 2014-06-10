@@ -463,7 +463,7 @@ class McSAS(AlgorithmBase):
         if not any([p.isActive() for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
-        contributions = zeros((numContribs, self.model.paramCount(), numReps))
+        contributions = zeros((numContribs, self.model.activeParamCount(), numReps))
         numIter = zeros(numReps)
         contribIntensity = zeros([1, len(data.q), numReps])
         start = time.time() # for time estimation and reporting
@@ -552,7 +552,7 @@ class McSAS(AlgorithmBase):
         # generate initial set of spheres
         if size(prior) == 0:
             if self.startFromMinimum():
-                for idx, param in enumerate(self.model.params()):
+                for idx, param in enumerate(self.model.activeParams()):
                     mb = min(param.valueRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
                         mb = pi / q.max()
@@ -975,7 +975,6 @@ class McSAS(AlgorithmBase):
 
             # store the results, we'll fix this later by a proper structure
             while paramIndex >= len(self.result):
-                # BP: This only runs for multi-parameter models?
                 self.result.append(dict())
             self.result[paramIndex].update(dict(
                 contribs = contribs,
@@ -1188,20 +1187,18 @@ class McSAS(AlgorithmBase):
     # which additional output might by useful/required?
     def calcModel(self, data, rset, compensationExponent = None):
         """Calculates the total intensity and scatterer volume contributions
-        using the current model."""
+        using the current model.
+        *rset* number columns equals the number of active parameters."""
         # remember parameter values
-        params = self.model.params()
+        params = self.model.activeParams()
         oldValues = [p() for p in params]
         it = 0
         vset = zeros(rset.shape[0])
-        indices = numpy.array([i for i, p in enumerate(params)
-                              if p.isActive()])
         # call the model for each parameter value explicitly
         # otherwise the model gets complex for multiple params incl. fitting
         for i in numpy.arange(rset.shape[0]):
-            if len(indices):
-                for p, v in izip(params, rset[i][indices]):
-                    p.setValue(v)
+            for p, v in izip(params, rset[i]):
+                p.setValue(v)
             vset[i] = self.model.vol(compensationExponent)
             # calculate their form factors
             ffset = self.model.ff(data)

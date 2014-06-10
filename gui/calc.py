@@ -153,7 +153,7 @@ class Calculator(object):
                                      "Model contribution parameters",
                                      extension = '.pickle')
         with open(fn,'w') as fh:
-            pickle.dump(mcResult['contribs'],fh)
+            pickle.dump(mcResult['contribs'], fh)
 
     def _writeSettings(self, mcargs, dataset):
         if self.model is None:
