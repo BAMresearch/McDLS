@@ -252,7 +252,7 @@ class FitParameterBase(ParameterBase):
     # by default it is not fitted, inactive
     ParameterBase.setAttributes(locals(), histogram = None)
     #store values if active in the parameter itself
-    ParameterBase.setAttributes(locals(), _activeValues = None)
+    ParameterBase.setAttributes(locals(), _activeValues = list())
 
     @mixedmethod
     def isActive(selforcls):
@@ -273,30 +273,41 @@ class FitParameterBase(ParameterBase):
             
     @mixedmethod
     def activeVal(selforcls, val, index = None):
-        """gets a particular value for use during MC procedure. 
-        If index = None, the entire active values array is returned.
+        """
+        activeVal is set after a successful MC run. It is a list of arrays, 
+        with each array storing the parameter values of a successful run.
+        If index is supplied, only the array at that list index is returned, 
+        otherwise the entire list is returned.
         """
         if index is None:
             return selforcls._activeValues
         else:
-            return selforcls._activeValues[index%len(selforcls.activeVal())]
+            return selforcls._activeValues[index%len(selforcls._activeValues)]
 
     @mixedmethod
     def setActiveVal(selforcls, val, index = None):
-        """Sets a particular value during MC procedure. If index = None,
-        the entire active values array is replaced with input val. This can
-        be used to initialize the values.
         """
+        Sets or appends to the list of activeVal. There *could* be a race
+        condition if two mcFit instances try to append at the same time. 
+        Therefore, an index can be supplied to identify the list index to set 
+        or change.
+        If the list is not long enough to accommodate the value, it will be 
+        extended.
+        """
+        if index is None:
+            # append to end
+            index = len(selforcls._activeValues)
+
+        while len(selforcls._activeValues) < (index + 1):
+            # expand list to allow storage of value
+            selforcls._activeValues.append(None)
+
         if not isActive:
             logging.error(
             'value of parameter cannot be set, parameter not active')
             return
-        if index is None:
-            selforcls._activeValues = np.array(val)
-        else:
-            selforcls._activeValues[index%len(selforcls.activeVal())] = val
 
-
+        selforcls._activeValues[index] = val
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
