@@ -280,9 +280,10 @@ class FitParameterBase(ParameterBase):
         otherwise the entire list is returned.
         """
         if index is None:
-            return selforcls._activeValues
+            return selforcls._activeValues()
         else:
-            return selforcls._activeValues[index%len(selforcls._activeValues)]
+            return selforcls._activeValues()[
+                    index%len(selforcls._activeValues())]
 
     @mixedmethod
     def setActiveVal(selforcls, val, index = None):
