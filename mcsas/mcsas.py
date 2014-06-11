@@ -524,8 +524,7 @@ class McSAS(AlgorithmBase):
             numIter = numIter.mean()))
 
     def mcFit(self, numContribs, minConvergence,
-              outputIntensity = False, outputDetails = False,
-              outputIterations = False):
+              outputIntensity = False, outputDetails = False):
         """
         Object-oriented, shape-flexible core of the Monte Carlo procedure.
         Takes optional arguments:
@@ -536,10 +535,6 @@ class McSAS(AlgorithmBase):
         *outputDetails*:
             details of the fitting procedure, number of iterations and so on
 
-        *outputIterations*:
-            Returns the Result on every successful iteration step, useful for
-            visualising the entire Monte Carlo optimisation procedure for
-            presentations.
         """
         data = self.dataPrepared
         prior = McSASParameters.prior
@@ -603,47 +598,26 @@ class McSAS(AlgorithmBase):
                 data.i, it/vst, data.e, sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
-        if outputIterations:
-            logging.warning('outputIterations functionality inoperable')
-            #will not work, because of the different size of rset with multi-
-            #parameter models.
-            ## Output each iteration, starting with number 0. Iterations will
-            ## be stored in details['paramDistrib'], details['intensityFitted'],
-            ## details['convergenceValue'], details['scalingFactor'] and
-            ## details['priorUnaccepted'] listing the unaccepted number of
-            ## moves before the recorded accepted move.
-
-            ## new iterations will (have to) be appended to this, cannot be
-            ## zero-padded due to size constraints
-            #details['paramDistrib'] = rset[:, newaxis]
-            #details['intensityFitted'] = (it/vst*sc[0] + sc[1])[:, newaxis]
-            #details['convergenceValue'] = conval[newaxis]
-            #details['scalingFactor'] = sc[:, newaxis]
-            #details['priorUnaccepted'] = numpy.array(0)[newaxis]
-
         # start the MC procedure
         start = time.time()
-        numMoves = 0 # tracking the number of moves
-        numNotAccepted = 0
-        numIter = 0
+        # progress tracking:
+        numMoves, numIter, lastUpdate = 0, 0, 0
+        # running variable indicating which contribution to change
         ri = 0
-        lastUpdate = 0
+        #NOTE: keep track of uncertainties in MC procedure through epsilon
         while (len(vset) > 1 and # see if there is a distribution at all
                conval > minConvergence and
                numIter < self.maxIterations.value() and
                not self.stop):
             rt = self.model.generateParameters()
+            # calculate contribution intensity:
             itt, vtt = self.calcModel(data, rt)
-            # Calculate new total intensity
+            # Calculate new total intensity, subtract old intensity, add new:
             itest = None
-            # speed up by storing all intensities above, needs lots of memory
-            # itest = (it - iset[:, ri] + itt)
             io, dummy = self.calcModel(data, rset[ri].reshape((1, -1)))
             itest = (it.flatten() - io + itt) # is this numerically stable?
-            # my NOTE: for this test, it'd be a good idea to store all indiv.
-            # intensities (see above) instead of summing them up above,
-            # but memory problem ...
-            # what about storing partial sums instead?
+            # is numerically stable (so far). Can calculate final uncertainty
+            # based on number of valid "moves" and sys.float_info.epsilon
 
             # SMEAR function goes here
             itest = self.model.smear(itest)
@@ -661,33 +635,7 @@ class McSAS(AlgorithmBase):
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
                 numMoves += 1
-                if outputIterations:
-                    # output each iteration, starting with number 0. 
-                    # Iterations will be stored in details['paramDistrib'],
-                    # details['intensityFitted'], details['convergenceValue'],
-                    # details['scalingFactor'] and details['priorUnaccepted']
-                    # listing the unaccepted number of moves before the
-                    # recorded accepted move.
 
-                    # new iterations will (have to) be appended to this,
-                    # cannot be zero-padded due to size constraints
-                    details['paramDistrib'] = numpy.dstack(
-                            (details['paramDistrib'], rset[:, :, newaxis]))
-                    details['intensityFitted'] = numpy.hstack(
-                            (details['intensityFitted'],
-                             (itest/vstest*sct[0] + sct[1]).T))
-                    details['convergenceValue'] = numpy.concatenate(
-                            (details['convergenceValue'], convalt[newaxis]))
-                    details['scalingFactor'] = numpy.hstack(
-                            (details['scalingFactor'], sct[:, newaxis]))
-                    details['priorUnaccepted'] = numpy.concatenate(
-                            (details['priorUnaccepted'],
-                             numpy.array((numNotAccepted, ))))
-                numNotAccepted = 0
-            else:
-                # number of non-accepted moves,
-                # resets to zero after an accepted move
-                numNotAccepted += 1
             if time.time() - lastUpdate > 0.25:
                 # update twice a sec max -> speedup for fast models
                 # because output takes much time especially in GUI
@@ -698,7 +646,7 @@ class McSAS(AlgorithmBase):
                 processEventLoop()
                 lastUpdate = time.time()
             # move to next sphere in list, loop if last sphere
-            ri = (ri + 1) % (numContribs)
+            ri = (ri + 1) % numContribs
             numIter += 1 # add one to the iteration number
 
         #print # for progress print in the loop
@@ -707,16 +655,17 @@ class McSAS(AlgorithmBase):
                             "reached".format(numIter))
         else:
             logging.info("normal exit")
-        # the +0.001 seems necessary to prevent a divide by zero error
-        # on some Windows systems.
+
+        # Post-MC operations:
+        # the +0.001 prevents a divide by zero error on some Windows systems.
         elapsed = time.time() - start + 1e-3
         logging.info("Number of iterations per second: {0}".format(
                         numIter/elapsed))
         logging.info("Number of valid moves: {0}".format(numMoves))
         logging.info("Final Chi-squared value: {0}".format(conval))
-        details['numIterations'] = numIter
-        details['numMoves'] = numMoves
-        details['elapsed'] = elapsed
+        details.update({'numIterations': numIter,
+            'numMoves': numMoves,
+            'elapsed': elapsed})
 
         ifinal = it / sum(vset**2)
         ifinal = self.model.smear(ifinal)
