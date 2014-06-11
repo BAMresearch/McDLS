@@ -488,7 +488,8 @@ class McSAS(AlgorithmBase):
                 (contributions[:, :, nr], contribIntensity[:, :, nr],
                  convergence, details) = self.mcFit(
                                 numContribs, minConvergence,
-                                outputIntensity = True, outputDetails = True)
+                                outputIntensity = True, outputDetails = True,
+                                nRun = nr)
                 if len(contributions) <= 1:
                     break # nothing to fit
                 if self.stop:
@@ -524,7 +525,7 @@ class McSAS(AlgorithmBase):
             numIter = numIter.mean()))
 
     def mcFit(self, numContribs, minConvergence,
-              outputIntensity = False, outputDetails = False):
+              outputIntensity = False, outputDetails = False, nRun = None):
         """
         Object-oriented, shape-flexible core of the Monte Carlo procedure.
         Takes optional arguments:
@@ -534,6 +535,9 @@ class McSAS(AlgorithmBase):
 
         *outputDetails*:
             details of the fitting procedure, number of iterations and so on
+
+        *nRun*: "serial number" of run. Used to store results in parameters
+            in the right place
 
         """
         data = self.dataPrepared
@@ -678,6 +682,10 @@ class McSAS(AlgorithmBase):
         result.append(conval)
         if outputDetails:
             result.append(details)
+        if nRun is not None:
+            #store results in parameter
+            for idx, param in enumerate(self.model.activeParams()):
+                param.setActiveVal(rset[:, idx], index = nRun) 
         # returning <rset, intensity, conval, details>
         return result
 

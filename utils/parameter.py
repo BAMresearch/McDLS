@@ -290,24 +290,25 @@ class FitParameterBase(ParameterBase):
         Sets or appends to the list of activeVal. There *could* be a race
         condition if two mcFit instances try to append at the same time. 
         Therefore, an index can be supplied to identify the list index to set 
-        or change.
+        or change. Each mcFit instance should be assigned a serial (index) 
+        number.
         If the list is not long enough to accommodate the value, it will be 
         extended.
         """
         if index is None:
             # append to end
-            index = len(selforcls._activeValues)
+            index = len(selforcls._activeValues())
 
-        while len(selforcls._activeValues) < (index + 1):
+        while len(selforcls._activeValues()) < (index + 1):
             # expand list to allow storage of value
-            selforcls._activeValues.append(None)
+            selforcls._activeValues().append(None)
 
-        if not isActive:
+        if not selforcls.isActive():
             logging.error(
             'value of parameter cannot be set, parameter not active')
             return
 
-        selforcls._activeValues[index] = val
+        selforcls._activeValues()[index] = val
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
