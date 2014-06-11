@@ -297,16 +297,16 @@ class McSAS(AlgorithmBase):
             # ValueError instead? Is it mandatory to have IError?
             logging.warning("No intensity uncertainties provided!")
             # TODO: generate some
-            #B: nope. It is up to the user to supply error estimates. these
-            #B: are essential to good data practices.
-            #B: i.e. Make it easy, but not so easy it encourages "abuse".
+            # B: nope. It is up to the user to supply error estimates. these
+            # B: are essential to good data practices.
+            # B: i.e. Make it easy, but not so easy it encourages "abuse".
         # data[3]: PSI is optional, only for 2D required
         # TODO: is psi mandatory in 2D? Should ierror be mandatory?
-        #B:Either PSI and Q or QX and QY are required. Useful to calculate the 
-        #B:missing matrices and allow use of both QX and QY or Q and PSI.
-        # can psi be present without ierror?
-        #B:yes. but without an error estimate on the intensity, results are
-        #B:ambiguous
+        # B:Either PSI and Q or QX and QY are required. Useful to calculate the 
+        # B:missing matrices and allow use of both QX and QY or Q and PSI.
+        #  can psi be present without ierror?
+        # B:yes. but without an error estimate on the intensity, results are
+        # B:ambiguous
 
         # make single array: one row per intensity and its associated values
         # selection of intensity is shorter this way: dataset[validIndices]
@@ -592,16 +592,15 @@ class McSAS(AlgorithmBase):
         # Optimize the intensities and calculate convergence criterium
         # SMEAR function goes here
         it = self.model.smear(it)
-        intensity = data.i
-        intError = data.e
-        sci = intensity.max() / it.max() # init. guess for the scaling factor
-        bgi = intensity.min()
+        # generate initial guess for scaling factor and background
+        sci = data.i.max() / it.max() # init. guess for the scaling factor
+        bgi = data.i.min()
         sc, conval = self.optimScalingAndBackground(
-                intensity, it/vst, intError, numpy.array([sci, bgi]), ver = 1)
+                data.i, it/vst, data.e, numpy.array([sci, bgi]), ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         sc, conval = self.optimScalingAndBackground(
-                intensity, it/vst, intError, sc)
+                data.i, it/vst, data.e, sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         if outputIterations:
@@ -623,8 +622,6 @@ class McSAS(AlgorithmBase):
             #details['priorUnaccepted'] = numpy.array(0)[newaxis]
 
         # start the MC procedure
-        intObs = data.i
-        intError = data.e
         start = time.time()
         numMoves = 0 # tracking the number of moves
         numNotAccepted = 0
@@ -654,7 +651,7 @@ class McSAS(AlgorithmBase):
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt = self.optimScalingAndBackground(
-                                    intObs, itest/vstest, intError, sc)
+                                    data.i, itest/vstest, data.e, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -724,7 +721,7 @@ class McSAS(AlgorithmBase):
         ifinal = it / sum(vset**2)
         ifinal = self.model.smear(ifinal)
         sc, conval = self.optimScalingAndBackground(
-                            intObs, ifinal, intError, sc)
+                            data.i, ifinal, data.e, sc)
 
         result = [rset]
         if outputIntensity:
