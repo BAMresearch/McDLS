@@ -258,8 +258,8 @@ class PlotResults(object):
 
         # indexing probably wrong:
         qAxis.update( axisbg = (.95, .95, .95),
-                               xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
-                               ylabel = 'q_y, 1_m')
+                               xlim = QX, ylim = QY, xlabel = 'q_x, $\times 10^9$ 1/m',
+                               ylabel = 'q_y, $\times 10^9$  1/m')
         imshow(log10(intShow), extent = extent, origin = 'lower')
         qAxis = self.setAxis(qAxis)
         colorbar()
@@ -285,8 +285,8 @@ class PlotResults(object):
         qAxDict.update({
                 'xlim' : xLim,
                 'ylim' : yLim,
-                'xlabel' : 'q, 1/m', 
-                'ylabel' : 'intensity, 1/(m sr)'
+                'xlabel' : 'q, $\\times 10^9 m^{-1}$', 
+                'ylabel' : 'intensity, $(m\, sr)^{-1}$'
                 })
 
         """plots 1D data and fit"""
