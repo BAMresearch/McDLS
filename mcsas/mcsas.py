@@ -992,58 +992,6 @@ class McSAS(AlgorithmBase):
         PlotResults(self.result, self.dataPrepared,
                     axisMargin, parameterIdx, self.figureTitle, self)
 
-    def rangeInfo(self, 
-            valueRange = [0, inf], paramIndex = 0, weighting = None):
-        """Calculates the total volume or number fraction of the MC result
-        within a given range, and returns the total numer or volume fraction
-        and its standard deviation over all nreps as well as the first four
-        distribution moments: mean, variance, skewness and kurtosis
-        (Pearson's definition).
-        Will use the *histogramWeighting* parameter or the optional 
-        rangeInfo parameter *weighting* for determining whether to 
-        return the volume or number-weighted values.
-
-        Input arguments are:
-
-            *valueRange*
-              The radius range in which the moments are to be calculated
-            *paramIndex*
-              Which shape parameter the moments are to be calculated for
-              (e.g. 0 = width, 1 = length, 2 = orientation)
-            *weighting*
-              Can be set to "volume" or "number", otherwise it is set to
-              the *histogramWeighting* parameter of the McSAS main function
-
-        Returns a 4-by-2 array, with the values and their sample standard
-        deviations over all *numRepetitions*.
-        """
-        param = self.model.activeParams()[paramIndex]
-        rangeIndex = param.histogram().addRange(*valueRange)
-        stats = param.histogram().calcStats(paramIndex, self)
-        weighting = str(weighting).lower()[0:3]
-        # find index of the chosen weighting
-        weightingIndex = 0
-        for i, w in enumerate(param.histogram().weighting()):
-            if weighting == w:
-                weightingIndex = i
-                break
-        # get the desired statistics
-        stats = stats[rangeIndex][weightingIndex]
-
-        rangeInfoResult = dict(
-            partialIntensityMean = stats.intensity[0],
-            partialIntensityStd  = stats.intensity[1],
-            partialQ             = self.result[0]['fitQ'].flatten(),
-            totalValue           = stats.total,
-            mean                 = stats.mean,
-            variance             = stats.variance,
-            skew                 = stats.skew,
-            kurtosis             = stats.kurtosis
-        )
-        # doesn't make sense anymore for several weighting/range options
-        # self.result[paramIndex].update(rangeInfoResult)
-        return rangeInfoResult
-
     # move this to ScatteringModel eventually?
     # which additional output might by useful/required?
     def calcModel(self, data, rset, compensationExponent = None):
