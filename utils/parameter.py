@@ -252,7 +252,7 @@ class FitParameterBase(ParameterBase):
     # by default it is not fitted, inactive
     ParameterBase.setAttributes(locals(), histogram = None)
     #store values if active in the parameter itself
-    ParameterBase.setAttributes(locals(), _activeValues = list())
+    ParameterBase.setAttributes(locals(), activeValues = list())
 
     @mixedmethod
     def isActive(selforcls):
@@ -280,10 +280,10 @@ class FitParameterBase(ParameterBase):
         otherwise the entire list is returned.
         """
         if index is None:
-            return selforcls._activeValues()
+            return selforcls.activeValues()
         else:
-            return selforcls._activeValues()[
-                    index%len(selforcls._activeValues())]
+            return selforcls.activeValues()[
+                    index%len(selforcls.activeValues())]
 
     @mixedmethod
     def setActiveVal(selforcls, val, index = None):
@@ -298,18 +298,22 @@ class FitParameterBase(ParameterBase):
         """
         if index is None:
             # append to end
-            index = len(selforcls._activeValues())
+            index = len(selforcls.activeValues())
 
-        while len(selforcls._activeValues()) < (index + 1):
+        while len(selforcls.activeValues()) < (index + 1):
             # expand list to allow storage of value
-            selforcls._activeValues().append(None)
+            tempVal = selforcls.activeValues()
+            tempVal.append(None)
+            selforcls.setActiveValues(tempVal)
 
         if not selforcls.isActive():
             logging.error(
             'value of parameter cannot be set, parameter not active')
             return
 
-        selforcls._activeValues()[index] = val
+        tempVal = selforcls.activeValues()
+        tempVal[index] = val
+        selforcls.setActiveValues(tempVal)
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
