@@ -4,7 +4,7 @@
 Source Code Documentation
 *************************
 
-.. automodule:: McSAS
+.. automodule:: mcsas.mcsas
    :members:
 
 .. vim: set ts=4 sts=4 sw=4 tw=0:

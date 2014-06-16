@@ -24,7 +24,6 @@ if not hasattr(sys, "frozen") and SCRIPT_PATH not in sys.path:
 import argparse
 import logging
 from cutesnake.log import replaceStdOutErr
-import gui.calc
 
 def makeAbsolutePath(relpath):
 #    logging.info("SCRIPT_PATH: '{}'".format(SCRIPT_PATH))
@@ -46,6 +45,7 @@ def main(argv = None):
     # TODO: add info about output files to be created ...
     args = parser.parse_args()
     # forwarding logging setting, quick fix 
+    import gui.calc # importing here makes avoids import loops elsewhere
     gui.calc.Calculator.nolog = args.nolog
 
     # initiate logging (to console stderr for now)
