@@ -36,7 +36,7 @@ class Mock(object):
 
 if on_rtd:
     for mod_name in ('scipy', 'numpy', 'PySide',
-                     'QtCore', 'QtGui', 'QtSvg', 'QtXml'):
+                     'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'cutesnake.qt'):
         sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
