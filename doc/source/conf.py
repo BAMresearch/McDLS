@@ -34,10 +34,16 @@ class Mock(object):
         else:
             return Mock()
 
-if on_rtd:
-    for mod_name in ('scipy', 'numpy', 'PySide',
-                     'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'cutesnake.qt'):
-        sys.modules[mod_name] = Mock()
+    # some placeholders accessed on mocked modules
+    inf = 1e300
+    rcParams = dict()
+
+# mock missing modules in readthedocs.org environment not required for docs
+for mod_name in ('scipy', 'numpy', 'numpy.ma', 'matplotlib',
+                 'matplotlib.font_manager', 'matplotlib.pyplot', 'pylab',
+                 'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml',
+                 'cutesnake.qt'):
+    sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
 members_to_watch = ['function', 'method'];
