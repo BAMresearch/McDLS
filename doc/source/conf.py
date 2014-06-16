@@ -35,7 +35,7 @@ class Mock(object):
             return Mock()
 
 if on_rtd:
-    for mod_name in ('scipy', 'numpy'):
+    for mod_name in ('scipy', 'numpy', 'PySide'):
         sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
