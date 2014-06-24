@@ -10,7 +10,8 @@ from scatteringmodel import ScatteringModel
 
 class LMADenseSphere(ScatteringModel):
     """Form factor of a sphere convoluted with a structure factor,
-    equations 15-17 from Pedersen, J. Appl. Cryst. 27 (1994), 595--608
+    equations 15-17 from Pedersen, J. Appl. Cryst. 27 (1994), 595--608. 
+    Correct eqn given in Kinning and Thomas, Macromolecules 17 (1984) 1712.
     Internally set parameters are volume fraction of the hard spheres,
     and the multiplication factor /mf/ for an additional stand-off distance
     between the hard spheres: Rh=mf*R where Rh is the hard-sphere radius
