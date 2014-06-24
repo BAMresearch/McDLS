@@ -139,6 +139,9 @@ class PlotResults(object):
                 self.plotStats(parHist, self._mcsasInstance, 
                         rangei, self._fig, InfoAxis)
 
+            #plot labels in qAxis:
+            axes(qAxis)
+            legend(loc = 1, fancybox = True, prop = self._textfont)
         # trigger plot window popup
         self._fig.canvas.draw()
         self._fig.show()
@@ -273,7 +276,7 @@ class PlotResults(object):
         """plots 1D data and fit"""
         #make active:
         axes(qAxis)
-        plot(fitQ, fitIntensity, 'g-', lw = 1, label = 'MC partial intensity')
+        plot(fitQ, fitIntensity, 'b-', lw = 1, label = 'MC partial intensity')
 
     def plot1D(self, q, intensity, intError, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
@@ -310,7 +313,6 @@ class PlotResults(object):
         except:
             print('could not plot background')
             pass
-        legend(loc = 1, fancybox = True, prop = self._textfont)
         title('Measured vs. Fitted intensity',
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
