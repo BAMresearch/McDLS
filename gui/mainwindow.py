@@ -865,6 +865,7 @@ class MainWindow(MainWindowBase):
             return
         self.logWidget.clear()
         self.fileWidget.updateData(updateFunc = self.calculator,
+                                   stopFunc = self.calculator.isStopped,
                                    showProgress = False)
 
     def closeEvent(self, closeEvent):

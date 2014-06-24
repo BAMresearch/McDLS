@@ -390,7 +390,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         return [item.data() for item in items]
 
     def updateData(self, selectedOnly = False, showProgress = True,
-                   updateFunc = None, prepareFunc = None, **kwargs):
+                   updateFunc = None, prepareFunc = None, stopFunc = None,
+                   **kwargs):
         """
         Calls the provided function on all data items.
 
@@ -406,6 +407,11 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             from cutesnake.utilsgui.progressdialog import ProgressDialog
             progress = ProgressDialog(self, count = len(data))
         updateResult = []
+        # check provided stop function
+        if (stopFunc is not None and
+            not isinstance(stopFunc, collections.Callable)):
+            stopFunc = None
+        # call provided functions which can raise exceptions
         try:
             # call prepare function
             prepareResult = None
@@ -418,8 +424,11 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             # call update function on each data object
             for item in data:
                 try:
-                    updateResult.append(updateFunc(item, *prepareResult, **kwargs))
+                    updateResult.append(
+                            updateFunc(item, *prepareResult, **kwargs))
                     if progress is not None and progress.update():
+                        break
+                    if stopFunc is not None and stopFunc():
                         break
                 except StandardError, e:
                     logging.error(str(e).replace("\n"," ") + " ... skipping")
