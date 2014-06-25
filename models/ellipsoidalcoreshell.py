@@ -42,6 +42,7 @@ class EllipsoidalCoreShell(ScatteringModel):
                     valueRange = (0, numpy.inf), suffix = "-"),
             FitParameter("intDiv", 100,
                     displayName = "Orientation Integration Divisions",
+                    generator = RandomUniform,
                     valueRange = (0, 1e4), suffix = "-"),
     )
     parameters[0].setActive(True)
@@ -69,7 +70,6 @@ class EllipsoidalCoreShell(ScatteringModel):
                     )
             return numpy.outer(q, sfact)
 
-        dToR = pi / 180. #degrees to radian
         intVal = numpy.linspace(0., 1., self.intDiv())
 
         vc = 4./3. * pi *  self.a() * self.b() **2.
