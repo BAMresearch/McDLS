@@ -57,6 +57,9 @@ class Calculator(object):
     def stop(self):
         self._algo.stop = True
 
+    def isStopped(self):
+        return self._algo.stop
+
     def _setBaseFilename(self, dataset):
         self.basefn = "{fn}_{ts}".format(
                 fn = os.path.join(LastPath.get(), dataset.title),
