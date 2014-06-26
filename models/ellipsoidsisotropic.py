@@ -63,7 +63,13 @@ class EllipsoidsIsotropic(ScatteringModel):
         return np.sqrt(np.mean(fsplit**2 * sin(intVal), axis=1)) # should be length q
 
     def volume(self):
-        v = 4./3. * pi * self.a()**2. * self.c()
+        Ra = self.a()
+        if self.cIsAspect():
+            Rc = self.a() * self.c()
+        else:
+            Rc = self.c()
+
+        v = 4./3. * pi * Ra**2. * Rc
         return v**self.compensationExponent
 
 EllipsoidsIsotropic.factory()
