@@ -13,7 +13,7 @@ from scatteringmodel import ScatteringModel
 class EllipsoidsIsotropic(ScatteringModel):
     r"""Form factor for a spheroidal structure with semi-axes a = b, c.
     c can be set to be an aspect ratio with respect to a
-    *Untested*
+    tested with Ellipsoid II from SASfit 20140626
     """
     shortName = "Isotropic Ellipsoids"
     parameters = (
@@ -54,13 +54,13 @@ class EllipsoidsIsotropic(ScatteringModel):
         else:
             Rc = self.c()
 
-        intVal = np.linspace(0., 1., self.intDiv())
+        intVal = np.linspace(0., pi / 2., self.intDiv())
         
         qrP = np.outer(q, rPlugin(Ra, Rc, intVal))
-        fsplit = 3.* ( sin( qrP ) - qrP * cos (qrP) ) / (qrP**3.)
+        fsplit = 3.* ( sin(qrP) - qrP * cos (qrP) ) / (qrP**3.) 
         
         # integrate over orientation
-        return np.sqrt(np.mean(fsplit**2, axis=1)) # should be length q
+        return np.sqrt(np.mean(fsplit**2 * sin(intVal), axis=1)) # should be length q
 
     def volume(self):
         v = 4./3. * pi * self.a()**2. * self.c()
