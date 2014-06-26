@@ -146,6 +146,13 @@ class PlotResults(object):
         self._fig.canvas.draw()
         self._fig.show()
 
+    def plotGrid(self, figh):
+        #make axis active:
+        axes(figh)
+        #plot grid
+        grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
+             dash_capstyle = 'round', zorder = -1)
+            
     def formatRangeInfo(self, parHist, RI, mcsasInstance, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
         weightings = parHist.weighting()
@@ -301,8 +308,7 @@ class PlotResults(object):
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
                  label = 'Measured intensity', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
-        grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
-             dash_capstyle = 'round', zorder = -1)
+        self.plotGrid(qAxis)
         plot(fitQ, fitIntensity, 'r-', lw = 3, 
                 label = 'MC Fit intensity', zorder = 4)
         try:
@@ -408,7 +414,7 @@ class PlotResults(object):
         yLim = (0, volHistYMean.max() * (1 + self._axisMargin) )
         # histogram axes settings:
         hAxDict = self._AxDict.copy()
-        # change axis settigns:
+        # change axis settings:
         hAxDict.update({
             'xlim' : xLim,
             'ylim' : yLim,
@@ -420,6 +426,9 @@ class PlotResults(object):
         hAxis.update(hAxDict)
         # change axis settings not addressible through dictionary:
         hAxis = self.setAxis(hAxis)
+        #plot grid
+        self.plotGrid(hAxis)
+
         # fill axes
         # plot inactive histogram:
         bar(histXLowerEdge[0:-1], volHistYMean, 
@@ -452,9 +461,8 @@ class PlotResults(object):
         legend(loc = 1, fancybox = True, prop = self._textfont)
         title(plotTitle, fontproperties = self._textfont,
               size = 'large')
-        # reapply limits in x
-        #xlim((histXLowerEdge.min() * (1 - self._axisMargin),
-        #      histXLowerEdge.max() * (1 + self._axisMargin)))
         xlim(xLim)
+
+
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
