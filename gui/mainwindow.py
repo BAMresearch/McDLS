@@ -656,10 +656,14 @@ class ModelWidget(SettingsWidget):
         """*model*: string containing the name of the model to select."""
         if not isString(model):
             return
+        index = 0
+        # search the model with the provided name
         for i in range(0, self.modelBox.count()):
             if self.modelBox.itemText(i).lower() == model.lower().strip():
-                self.modelBox.setCurrentIndex(i)
+                index = i
                 break
+        # set the index found or the first one otherwise
+        self.modelBox.setCurrentIndex(index)
 
     @property
     def algorithm(self):
