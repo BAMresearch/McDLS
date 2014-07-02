@@ -100,16 +100,18 @@ from models.cylindersisotropic import CylindersIsotropic
 from models.ellipsoidsisotropic import EllipsoidsIsotropic
 from models.ellipsoidalcoreshell import EllipsoidalCoreShell
 from models.sphericalcoreshell import SphericalCoreShell
+from collections import OrderedDict
 
-MODELS = {Sphere.name(): Sphere,
-          CylindersIsotropic.name(): CylindersIsotropic,
-          EllipsoidsIsotropic.name(): EllipsoidsIsotropic,
-          EllipsoidalCoreShell.name(): EllipsoidalCoreShell,
-          SphericalCoreShell.name(): SphericalCoreShell,
-          GaussianChain.name(): GaussianChain,
-          LMADenseSphere.name(): LMADenseSphere,
-          Kholodenko.name(): Kholodenko
-          }
+MODELS = OrderedDict((
+    (Sphere.name(), Sphere),
+    (CylindersIsotropic.name(), CylindersIsotropic),
+    (EllipsoidsIsotropic.name(), EllipsoidsIsotropic),
+    (EllipsoidalCoreShell.name(), EllipsoidalCoreShell),
+    (SphericalCoreShell.name(), SphericalCoreShell),
+    (GaussianChain.name(), GaussianChain),
+    (LMADenseSphere.name(), LMADenseSphere),
+    (Kholodenko.name(), Kholodenko),
+))
 FIXEDWIDTH = 120
 
 # required for svg graphics support
