@@ -8,6 +8,7 @@
 import sys
 import gui.version
 
+OLDVERSIONNUM = gui.version.version.number()
 if len(sys.argv) > 2:
     alternateVersion = "-".join(sys.argv[2:])
     del sys.argv[2:]
@@ -138,5 +139,9 @@ hashValue = hashFile(PACKAGEFN, hashlib.sha256())
 # write the checksum to file
 with open(version.name() + ".sha", 'w') as fd:
     fd.write(" *".join(hashValue))
+
+# restore initially modified version
+if version.number() != OLDVERSIONNUM:
+    version.updateFile(gui.version, OLDVERSIONNUM)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
