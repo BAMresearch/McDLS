@@ -18,6 +18,7 @@ if len(sys.argv) > 2:
 import re
 import os.path
 import subprocess
+import hashlib
 from cx_Freeze import setup, Executable
 from gui.version import version
 
@@ -115,6 +116,7 @@ setup(
     executables = [Executable("main.py", base = BASE,
                               targetName = TARGETNAME)])
 
+# package the freezed program into an 7z archive
 PACKAGEFN = TARGETDIR + ".7z"
 LOGFN = os.path.splitext(os.path.basename(SEVENZIP))[0] + ".log" # 7z.log
 with open(LOGFN, 'w') as fd:
@@ -122,8 +124,19 @@ with open(LOGFN, 'w') as fd:
                                PACKAGEFN, TARGETDIR],
                                stdout = fd,
                                stderr = fd)
-# TODO: make hash from package write it to separate file: result.sha
-# return the created package file name via stdout
-sys.stdout.writelines(("", os.path.abspath(PACKAGEFN)))
+
+# calc a checksum of the package
+def hashFile(filename, hasher, blocksize = 65536):
+    with open(filename, 'rb') as fd:
+        buf = fd.read(blocksize)
+        while len(buf) > 0:
+            hasher.update(buf)
+            buf = fd.read(blocksize)
+    return hasher.hexdigest(), os.path.basename(filename)
+hashValue = hashFile(PACKAGEFN, hashlib.sha256())
+
+# write the checksum to file
+with open(version.name() + ".sha", 'w') as fd:
+    fd.write(" *".join(hashValue))
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
