@@ -4,6 +4,7 @@
 # currently supported and tested: Win7
 
 import sys
+import glob
 import subprocess
 import os.path
 import logging
@@ -15,7 +16,7 @@ def waitForUser():
     sys.stdout.flush()
     input = sys.stdin.readline()
 
-WORKDIR = os.path.expanduser('~')
+WORKDIR = os.path.abspath(os.path.expanduser('~'))
 logging.info("Work dir: '{WORKDIR}'".format(**locals()))
 REPOURL = "https://bitbucket.org/pkwasniew/mcsas.git"
 REPOURL = os.path.abspath("z:\mcsas")
@@ -60,9 +61,20 @@ def clone():
     logging.info("\n".join((cmd, out)))
 
 def getLatestBranch():
+    dummy = git("pull", "--all")
     cmd, out = git("for-each-ref", "--sort=-committerdate", "--count=1",
                    "--format=%(refname:short)", "refs")
-    return os.path.basename(out.strip())
+    # returns sth like: 'origin/<branchName>'
+    branchName = os.path.basename(out.strip())
+    logging.info("Got initial branch name: '{}'".format(branchName))
+    if branchName.upper() == "HEAD":
+        cmd, out = git("log", "-n1", "--format=%d", branchName)
+        # returns sth like: '(HEAD, origin/<branchName>, origin/HEAD)'
+        fields = out.strip().split(",")
+        if len(fields) > 2:
+            branchName = os.path.basename(fields[1].strip())
+        logging.info("Final branch name: '{}'".format(branchName))
+    return branchName
 
 def getDateTime():
     cmd, out = git("log", "-n1", "--pretty=%ci")
@@ -78,17 +90,30 @@ def checkout(refname):
     logging.info("\n".join(git("checkout", refname)))
 
 def freeze(*args):
+    """Returns a tuple consisting of the checksum and the package file name.
+    """
+    # call the cxfreeze script
     cmd = ("python", "cxfreeze.py", "build_exe") + args
-    p = subprocess.Popen(cmd, cwd = WORKDIR,
-                         stdout = subprocess.PIPE,
-                         stderr = subprocess.PIPE)
-    out, err = p.communicate()
-    out = out.strip()
-    err = err.strip()
-    cmd = " ".join(cmd)
-    print out
-    print err
-    print cmd
+    logfn = os.path.join(WORKDIR, "freeze.log")
+    with open(logfn, 'w') as fd:
+        subprocess.call(cmd, cwd = WORKDIR,
+                        stdout = fd, stderr = fd)
+    # get the file which contains the checksum and the package file name
+    # chose the most recently modified one if there are several
+    globPattern = os.path.join(WORKDIR, "*.sha")
+#    logging.info("globPattern: '{}'".format(globPattern))
+    checksumfn = sorted(glob.glob(globPattern),
+                        key = lambda fn: os.stat(fn).st_mtime,
+                        reverse = False)
+    # extract checksum and package file name from it
+    checksum = None, None
+    if not len(checksumfn):
+        return checksum
+    checksumfn = checksumfn[0]
+    logging.info("Getting checksum & file name from: '{}'".format(checksumfn))
+    with open(checksumfn, 'r') as fd:
+        checksum = fd.read().replace(' *',' ').strip().split()
+    return checksum
 
 import re
 from distutils.version import StrictVersion
@@ -150,6 +175,8 @@ class BitbucketClient(object):
             return None
         with open(filename, 'rb') as fp:
             files = {'file': (basename, fp)}
+            # raise ConnectionError(e)
+            # requests.exceptions.ConnectionError: HTTPSConnectionPool(host='bbuseruploads.s3.amazonaws.com', port=443): Max retries exceeded with url: / (Caused by <class 'socket.error'>: [Errno 104] Connection reset by peer)
             response = self.session.post(s3_url, data = data, files = files)
         if 300 <= response.status_code < 400 and 'location' in response.headers:
             response = self.session.get(response.headers['location'])
@@ -185,6 +212,10 @@ class BitbucketClient(object):
             creds = fd.read()
         return creds.split()
 
+#bb = BitbucketClient("pkwasniew/mcsas")
+#print bb.upload(os.path.abspath("McSASGui-2014-05-21_19-35-17-restructuring-bb8c02e.7z"))
+#sys.exit(0)
+
 testForGit()
 clone()
 WORKDIR = os.path.join(WORKDIR, DIRNAME)
@@ -194,12 +225,14 @@ datetime = getDateTime()
 hash = getHash()
 basename = "{DIRNAME} {datetime} {branch} {hash}".format(**locals())
 logging.info(basename)
-freeze(datetime, branch, hash)
+checksum, fn = freeze(datetime, branch, hash)
+fn = os.path.join(WORKDIR, fn)
+logging.info("Created package '{0}'.".format(fn))
+if os.path.isfile(fn):
+    logging.info("exists")
 
 # TODO: let freeze output the created file, upload it below
-# TODO further:
-#   - use plain build numbers instead of "{datetime} {branch} {hash}"
-#     - e.g. build234 (seen at Windows OS versions for example)
+# further:
 #   - setup logging into a file, outside with python stderr eventually?
 #     -> push it to a special branch ('buildlogs' or similar)
 #     -> make it available via https://readthedocs.org/projects/mcsas/
