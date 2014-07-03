@@ -67,7 +67,8 @@ def getLatestBranch():
 def getDateTime():
     cmd, out = git("log", "-n1", "--pretty=%ci")
     fields = out.strip().split()
-    return "_".join(fields[:-1]).replace(":", "-")
+    # return "_".join(fields[:-1]).replace(":", "-")
+    return fields[0].replace("-", "")[2:] # using the date only, 2-digit year
 
 def getHash():
     cmd, out = git("log", "-n1", "--pretty=%h")
