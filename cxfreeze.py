@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # cxfreeze.py
 #
-# Usage on target platform, tested on Windows with MinGW/MSYS:
-# python cxfreeze.py build_exe
+# Usage on target platform:
+#  python cxfreeze.py build_exe
+# tested on Windows with MinGW/MSYS
 
 import sys
 import gui.version
@@ -10,7 +11,7 @@ import gui.version
 if len(sys.argv) > 2:
     alternateVersion = "-".join(sys.argv[2:])
     del sys.argv[2:]
-    print "Using an alternate version:", alternateVersion
+    print "Using an alternate version: '{0}'".format(alternateVersion)
     gui.version.version.updateFile(gui.version, alternateVersion)
     reload(gui.version)
 
@@ -104,7 +105,7 @@ setup(
     maintainer_email = "ingo.bressler@bam.de",
     # additional metadata for modified version of cx_Freeze
     # displayed in copyright info
-    download_url = "2013, https://bitbucket.org/pkwasniew/mcsas",
+    download_url = "2014, https://bitbucket.org/pkwasniew/mcsas",
     # company
     classifiers = u"NIMS\r\n"
                   u"National Institute for Materials Science, \r\n\r\n"
@@ -112,9 +113,17 @@ setup(
                   u"305-0047, Tsukuba, Japan",
     options = dict(build_exe = BUILDOPTIONS),
     executables = [Executable("main.py", base = BASE,
-                              targetName=TARGETNAME)])
+                              targetName = TARGETNAME)])
 
-RETCODE = subprocess.call([SEVENZIP, "a", "-t7z", "-mx=9",
-                           TARGETDIR+".7z", TARGETDIR])
+PACKAGEFN = TARGETDIR + ".7z"
+LOGFN = os.path.splitext(os.path.basename(SEVENZIP))[0] + ".log" # 7z.log
+with open(LOGFN, 'w') as fd:
+    RETCODE = subprocess.call([SEVENZIP, "a", "-t7z", "-mx=9",
+                               PACKAGEFN, TARGETDIR],
+                               stdout = fd,
+                               stderr = fd)
+# TODO: make hash from package write it to separate file: result.sha
+# return the created package file name via stdout
+sys.stdout.writelines(("", os.path.abspath(PACKAGEFN)))
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
