@@ -159,7 +159,12 @@ class ParameterRange(DataSet, DisplayMixin):
 
     @staticmethod
     def displayDataDescr():
-        return ("lower", "upper", "parameter")
+        return ("lower", 
+                "upper", 
+                "parameter", 
+                "X-axis scaling", 
+                "Number of bins", 
+                "Y-axis weighting")
 
     @property
     def displayData(self):
