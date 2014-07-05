@@ -84,6 +84,13 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     def activeParamCount(setforcls):
         return len(setforcls.activeParams())
 
+    @mixedmethod
+    def activeParamNames(setforcls):
+        namelist = list()
+        for param in setforcls.activeParams():
+            namelist.append(param.displayName())
+        return namelist
+        
     # helpers for model testing below
 
     @mixedmethod
