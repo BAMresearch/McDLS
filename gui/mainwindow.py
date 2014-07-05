@@ -261,6 +261,13 @@ class RangeList(DataList):
         #bentry.setDecimals(0)
         bentry.setDisabled(True) #not active yet
 
+        #histogram weighting input
+        wentry = QComboBox(dialog)
+        #for name in scatteringmodel.activeParamNames():
+        for name in ['Number weighted', 'Volume weighted']:
+            wentry.addItem(name)
+        wentry.setCurrentIndex(1)
+        wentry.setDisabled(True) #not active yet
 
         #pentry = QDoubleSpinBox(dialog) # FIXME: set to parameter pulldown
         #pentry.setPrefix("parameter: ")
@@ -271,6 +278,7 @@ class RangeList(DataList):
         entryLayout.addWidget(pentry)
         entryLayout.addWidget(sentry)
         entryLayout.addWidget(bentry)
+        entryLayout.addWidget(wentry)
 
         entryWidget.setLayout(entryLayout)
         vlayout.addWidget(btnWidget)
