@@ -207,12 +207,13 @@ class ParameterRange(DataSet, DisplayMixin):
     __repr__ = __str__
 
 from numpy import inf as numpy_inf
-from QtGui import QDialog, QDoubleSpinBox
+from QtGui import QDialog, QDoubleSpinBox, QSpinBox
 class RangeList(DataList):
     def addRange(self):
         """Creates a modal dialog window to ask the user for a range to be
         added. Returns a list of tuples (only one for now) or an empty list.
         """
+        #set up dialog window for "add range"
         dialog = QDialog(self)
         dialog.setObjectName("AddRangeDialog")
         dialog.setWindowTitle("Add Range")
@@ -223,19 +224,54 @@ class RangeList(DataList):
         btnWidget = QWidget(self)
         vlayout.addWidget(entryWidget)
         entryLayout = QHBoxLayout(entryWidget)
+
+        #TODO: need to identify to which parameter the range limits apply.
+        #Q: can we access the model class from here?
+
+        #add input for lower limit
         lentry = QDoubleSpinBox(dialog)
         lentry.setPrefix("lower: ")
         lentry.setRange(-1e100, +1e100) # FIXME: float input format
+
+        #add input for upper limit
         uentry = QDoubleSpinBox(dialog)
         uentry.setPrefix("upper: ")
         uentry.setRange(-1e100, +1e100)
-        #need to identify to which parameter the range limits apply.
-        pentry = QDoubleSpinBox(dialog) # FIXME: set to parameter pulldown
-        pentry.setPrefix("parameter: ")
-        pentry.setRange(0, 100)
+
+        #add a parameter choice list
+        pentry = QComboBox(dialog)
+        #for name in scatteringmodel.activeParamNames():
+        for name in ['dummy', 'menu', 'values']:
+            pentry.addItem(name)
+        pentry.setDisabled(True) #not active yet
+
+        #histogram scaling choice (X-axis only at this point)
+        sentry = QComboBox(dialog)
+        #for name in scatteringmodel.activeParamNames():
+        for name in ['linear x', 'logarithmic x']:
+            sentry.addItem(name)
+        sentry.setDisabled(True) #not active yet
+
+        #number of histogram bin input box
+        bentry = QSpinBox(dialog)
+        bentry.setPrefix("# bins: ")
+        bentry.setRange(1, 200)
+        bentry.setValue(50)
+        bentry.setSingleStep(10)
+        #bentry.setDecimals(0)
+        bentry.setDisabled(True) #not active yet
+
+
+        #pentry = QDoubleSpinBox(dialog) # FIXME: set to parameter pulldown
+        #pentry.setPrefix("parameter: ")
+        #pentry.setRange(0, 100)
+
         entryLayout.addWidget(lentry)
         entryLayout.addWidget(uentry)
         entryLayout.addWidget(pentry)
+        entryLayout.addWidget(sentry)
+        entryLayout.addWidget(bentry)
+
         entryWidget.setLayout(entryLayout)
         vlayout.addWidget(btnWidget)
         btnLayout = QHBoxLayout(btnWidget)
@@ -250,7 +286,7 @@ class RangeList(DataList):
         lentry.selectAll() # select the first input by default
         if not dialog.exec_() or lentry.value() == uentry.value():
             return []
-        return [(lentry.value(), uentry.value())], pentry.value() 
+        return [(lentry.value(), uentry.value())], pentry.currentIndex() 
 
     def loadData(self, ranges = None):
         """Overridden base class method for adding entries to the list."""
