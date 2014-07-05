@@ -852,7 +852,7 @@ class McSAS(AlgorithmBase):
 
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations
-            if param.histogram().scaleX == 'lin':
+            if 'lin' in param.histogram().scaleX:
                 # histogramXLowerEdge contains #histogramBins+1 bin edges,
                 # or class limits.
                 histogramXLowerEdge = numpy.linspace(
@@ -860,7 +860,7 @@ class McSAS(AlgorithmBase):
                         max(param.valueRange()),
                         param.histogram().binCount + 1)
             else:
-                histogramXLowerEdge = 10**numpy.linspace(
+                histogramXLowerEdge = numpy.logspace(
                         log10(min(param.valueRange())),
                         log10(max(param.valueRange())),
                         param.histogram().binCount + 1)

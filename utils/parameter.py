@@ -296,7 +296,6 @@ class FitParameterBase(ParameterBase):
         If the list is not long enough to accommodate the value, it will be 
         extended.
         """
-        # Question: maybe move to mcFit?
         if index is None:
             # append to end
             index = len(selforcls.activeValues())
