@@ -357,8 +357,7 @@ class McSAS(AlgorithmBase):
             p.histogram().binCount = self.histogramBins()
             p.histogram().scaleX = self.histogramXScale()[:3]
 
-    def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2,
-            outputIntensity = False):
+    def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2):
         """
         Optimizes the scaling and background factor to match *intCalc* closest
         to intObs. 
@@ -433,10 +432,7 @@ class McSAS(AlgorithmBase):
                 sc[1] = 0.0
                 conval = csqr_v1(intObs, sc[0]*intCalc, intError)
 
-        if outputIntensity:
-            return sc, conval, sc[0]*intCalc + sc[1]
-        else:
-            return sc, conval
+        return sc, conval
 
     def _passthrough(self,In):
         """A passthrough mechanism returning the input unchanged"""
