@@ -158,7 +158,6 @@ class ParameterRange(DataSet, DisplayMixin):
     """Represents a range tuple for a parameter of a model.
     Required for proper GUI construction."""
     _range = None
-    _parameter = None #identifier to which parameter the range applies
 
     @staticmethod
     def displayDataDescr():
@@ -180,10 +179,6 @@ class ParameterRange(DataSet, DisplayMixin):
     @property
     def upper(self):
         return self._range[1]
-
-    @property
-    def parameter(self):
-        return self._parameter
 
     @classmethod
     def create(cls, *args):

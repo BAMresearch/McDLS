@@ -57,6 +57,8 @@ class RangeStats(object):
         contribs = algo.result[0]['contribs']
         self._setValidRange(contribs[:, paramIndex, :], valueRange)
         self._calcMoments(contribs[:, paramIndex, :], fraction)
+        #for par in algo.activeParams():
+        #self._calcMoments(self.activeVal(), fraction)
         scalingFactors = algo.result[paramIndex]['scalingFactors']
         self._calcPartialIntensities(contribs, scalingFactors, algo)
 
@@ -109,6 +111,7 @@ class RangeStats(object):
         self._skew     = (skw.mean(), skw.std(ddof = 1))
         self._kurtosis = (krt.mean(), krt.std(ddof = 1))
 
+    #partial intensities not parameter-specific. Move to model?
     def _calcPartialIntensities(self, contribs, scalingFactors, algo):
         """scalingFactors: scaling and background for each repetition.
         contribs: all contributions also of other parameters; not required
@@ -147,6 +150,7 @@ class Histogram(object):
     _param      = None # this is not necessary here. belongs to one par.
     _binCount   = None # list of bin counts
     _scaleX     = None # list of scalings
+    _weights    = None # list of weightings
     _ranges     = None # list of tuples/pairs
     _stats      = None # rangeInfo() results, RangeStats lists
 
