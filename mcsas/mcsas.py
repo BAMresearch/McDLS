@@ -456,14 +456,15 @@ class McSAS(AlgorithmBase):
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
-        maxRetries = self.maxRetries()
         numContribs = self.numContribs()
         numReps = self.numReps()
         minConvergence = self.convergenceCriterion()
         if not any([p.isActive() for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
-        contributions = zeros((numContribs, self.model.activeParamCount(), numReps))
+        contributions = zeros((self.numContribs(), 
+            self.model.activeParamCount(), 
+            self.numReps()))
         numIter = zeros(numReps)
         contribIntensity = zeros([1, len(data.q), numReps])
         start = time.time() # for time estimation and reporting
@@ -495,12 +496,12 @@ class McSAS(AlgorithmBase):
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
                     return
-                if nt > maxRetries:
+                if nt > self.maxRetries():
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
                     logging.warning("Could not reach optimization criterion "
                                     "within {0} attempts, exiting..."
-                                    .format(maxRetries+2))
+                                    .format(self.maxRetries() + 2))
                     return
             # keep track of how many iterations were needed to reach converg.
             numIter[nr] = details.get('numIterations', 0)
