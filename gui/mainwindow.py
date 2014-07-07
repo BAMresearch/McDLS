@@ -216,7 +216,13 @@ from QtGui import QDialog, QDoubleSpinBox, QSpinBox
 class RangeList(DataList):
     def addRange(self):
         """Creates a modal dialog window to ask the user for a range to be
-        added. Returns a list of tuples (only one for now) or an empty list.
+        added. 
+        Returns a dict of kw-value pairs for the following:
+            *range* : the lower and upper limits set
+            *parIdx* : The parameter index of the acive parameter chosen
+            *scale* : int assuming 0 for linear x-axis, 1 for log. Default 1
+            *nBins* : number of bins to histogram over
+            *weight* :  0 for number-weighted, 1 volume weighted. Default 1
         """
         #set up dialog window for "add range"
         dialog = QDialog(self)
@@ -274,10 +280,6 @@ class RangeList(DataList):
         wentry.setCurrentIndex(1)
         wentry.setDisabled(True) #not active yet
 
-        #pentry = QDoubleSpinBox(dialog) # FIXME: set to parameter pulldown
-        #pentry.setPrefix("parameter: ")
-        #pentry.setRange(0, 100)
-
         entryLayout.addWidget(lentry)
         entryLayout.addWidget(uentry)
         entryLayout.addWidget(pentry)
@@ -297,15 +299,28 @@ class RangeList(DataList):
         btnWidget.setLayout(btnLayout)
         dialog.setLayout(vlayout)
         lentry.selectAll() # select the first input by default
+
         if not dialog.exec_() or lentry.value() == uentry.value():
             return []
-        return [(lentry.value(), uentry.value())], pentry.currentIndex() 
+
+        #prepare output:
+        output = {"range": [(lentry.value(), uentry.value())],
+                "parIdx" : pentry.currentIndex(),
+                "scale" : sentry.currentIndex(),
+                "nBins" : bentry.value(),
+                "weight" : wentry.currentIndex()}
+
+        #return [(lentry.value(), uentry.value())], pentry.currentIndex()
+        return output
 
     def loadData(self, ranges = None):
         """Overridden base class method for adding entries to the list."""
         # add only one item at a time into the list
         if ranges is None:
-            ranges, pval = self.addRange()
+            outDict = self.addRange()
+            ranges = outDict["range"]
+            pval =  outDict["parIdx"]
+
         # do not add duplicates
         ranges = [r for r in ranges if r not in self.data()]
         DataList.loadData(self, sourceList = ranges, showProgress = False,

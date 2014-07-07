@@ -144,9 +144,9 @@ class Histogram(object):
     Stores&calculates rangeInfo() results for all available weighting options.
     """
     # back reference of the FitParameter this histogram belongs to
-    _param      = None
-    _binCount   = None
-    _scaleX     = None
+    _param      = None # this is not necessary here. belongs to one par.
+    _binCount   = None # list of bin counts
+    _scaleX     = None # list of scalings
     _ranges     = None # list of tuples/pairs
     _stats      = None # rangeInfo() results, RangeStats lists
 
