@@ -40,11 +40,14 @@ Output files start with the base name of the input file. They have the current d
 
 CHANGESTEXT = (u"""
 Latest changes:
+- Stability improvements and code cleanup
+- Improved plotting routine
+- Range statistics list functionality added
+- Improved division of GUI items into vertical tabs
 - More information shown in data list
 - Correct handling when fitting multiple files
 - Range estimate now uses minimum Q by itself, no longer considers Q-spacing
 - LMA Dense Spheres, spherical and ellipsoidal core shell models work again
-- Stability improvements and code cleanup
 - Extended internal parameter functionality, using JSON defaults file
 - Improvements towards implementing RangeInfo in the GUI
 
