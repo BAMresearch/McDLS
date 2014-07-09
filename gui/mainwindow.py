@@ -171,7 +171,12 @@ class ParameterRange(DataSet, DisplayMixin):
 
     @property
     def displayData(self):
-        return self.displayDataDescr()
+        return ("lower", 
+                "upper", 
+                "parameter", 
+                "xscaling", 
+                "nbins", 
+                "yweighting")
 
     @property
     def lower(self):
@@ -183,6 +188,18 @@ class ParameterRange(DataSet, DisplayMixin):
 
     @property
     def parameter(self):
+        return self._parameter
+
+    @property
+    def xscaling(self):
+        return self._range[0]
+
+    @property
+    def nbins(self):
+        return self._range[1]
+
+    @property
+    def yweighting(self):
         return self._parameter
 
     @classmethod
