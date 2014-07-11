@@ -47,9 +47,13 @@ class SettingsWidget(QWidget):
             return value
         propValue = None
         for attr in "value", "checked", "text":
-            propValue = child.property(attr)
-            if propValue is not None:
-                value = propValue
+            try: 
+                valueGetter = getattr(child, attr)
+            except:
+                value = child.property(attr)
+            else:
+                value = valueGetter()
+            if value is not None:
                 break
         return value
 
@@ -64,7 +68,10 @@ class SettingsWidget(QWidget):
             setterName = "set" + attr.title()
             try:
                 setter = getattr(child, setterName)
-                oldValue = child.property(attr)
+                try: 
+                    oldValue = getattr(child, attr)()
+                except:
+                    oldValue = child.property(attr)
                 dtype = type(oldValue)
             except AttributeError:
                 continue

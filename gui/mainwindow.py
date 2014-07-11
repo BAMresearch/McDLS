@@ -32,6 +32,10 @@ from calc import Calculator
 from sasdata import SASData
 from mcsas.mcsas import McSAS
 
+from numpy import inf as numpy_inf
+from QtGui import QDialog, QDoubleSpinBox, QSpinBox, QLineEdit, QDoubleValidator
+from gui.scientrybox import SciEntryBox
+
 INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
 
 The convergence criterion can be set by the user. If it is not reached no output is generated, just this log is saved to file. On success, the resulting size distribution and the data fit are stored to files with uncertainties.
@@ -231,8 +235,6 @@ class ParameterRange(DataSet, DisplayMixin):
 
     __repr__ = __str__
 
-from numpy import inf as numpy_inf
-from QtGui import QDialog, QDoubleSpinBox, QSpinBox
 class RangeList(DataList):
     def addRange(self):
         """Creates a modal dialog window to ask the user for a range to be
@@ -525,7 +527,10 @@ class SettingsWidget(SettingsWidgetBase):
             "Input widget '{w}' exists already in '{s}'"
             .format(w = name, s = self.objectName()))
         if widgetType is None:
-            widgetType = self.getInputWidget(dtype)
+            if dtype is float:
+                widgetType = SciEntryBox
+            else:
+                widgetType = self.getInputWidget(dtype)
         if parent is None:
             parent = self
         widget = widgetType(parent)
@@ -549,6 +554,7 @@ class SettingsWidget(SettingsWidgetBase):
         widget = QWidget(self)
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addStretch()
         layout.addWidget(self._makeLabel(param.displayName()))
         widget.setLayout(layout)
         minmaxValue, widgets = None, []
