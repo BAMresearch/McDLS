@@ -2,7 +2,6 @@
 # mainwindow.py
 
 from QtGui import QLineEdit, QDoubleValidator
-#from cutesnake.qt import QtCore
 from QtCore import Qt
 
 class SciEntryBox(QLineEdit):
@@ -22,7 +21,6 @@ class SciEntryBox(QLineEdit):
         setattr(self, "maximum", lval.top)
         setattr(self, "setDecimals", lval.setDecimals)
         setattr(self, "decimals", lval.decimals)
-        #self.setProperty("value", self.text())
         
     def setValue(self, value):
         fstr = "{:." + str(self.decimals()) + "g}" 
@@ -34,4 +32,4 @@ class SciEntryBox(QLineEdit):
     def setPrefix(self, value):
         self.setPlaceholderText(value)
 
-
+# vim: set ts=4 sts=4 sw=4 tw=0:
