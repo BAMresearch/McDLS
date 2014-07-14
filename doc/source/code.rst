@@ -4,6 +4,9 @@
 Source Code Documentation
 *************************
 
+.. inheritance-diagram:: mcsas.mcsas
+   :parts: 1
+
 .. automodule:: mcsas.mcsas
    :members:
 
