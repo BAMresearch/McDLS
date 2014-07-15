@@ -57,7 +57,7 @@
     "deltaRhoSquared" : {
         "displayName" : "Electron density contrast squared",
         "valueRange" : [0,Infinity],
-        "description" : "Squared electron density contrast (mind the units!)",
+        "description" : "Squared electron density contrast (mind the units!). Typical order of magnitude around 1e30 m^-4",
         "default" : 1.0,
         "isActive" : false 
     },
@@ -101,14 +101,14 @@
     "qUnits" : {
         "displayName" : "input Q scale (m^-1)",
         "valueRange" : [0,Infinity],
-        "description" : "Order of magnitude of input units of Q to m^-1. i.e. for input in nm^-1, set this to 1e9.",
+        "description" : "Order of magnitude of input units of Q to m^-1. \n for input in nm^-1, set this to 1e9, for input in A^-1, set this to 1e10.",
         "default" : 1e9,
         "isActive" : false 
     },
-    "IUnits" : {
+    "iUnits" : {
         "displayName" : "input I scale ((m sr)^-1)",
         "valueRange" : [0,Infinity],
-        "description" : "Order of magnitude of input units of I to (m sr)^-1. i.e. for input in (cm sr)^-1, set this to 1e2.",
+        "description" : "Order of magnitude of input units of I to (m sr)^-1. \n for input in (cm sr)^-1, set this to 1e2, for input in (m sr)^-1 set this to 1.",
         "default" : 1.0,
         "isActive" : false 
     },

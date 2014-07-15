@@ -50,53 +50,10 @@ class McSAS(AlgorithmBase):
             not provided, these will be estimated as:
             :math:`R_{max} = {pi \over q_{min}}` and
             :math:`R_{min} = {pi \over q_{max}}`. Units in meter.
-        - *numContribs*: int, default: 200
-            Number of spheres used for the MC simulation
-        - *maxIterations*: int, default: 1e5
-            Maximum number of iterations for the :py:func:`MCFit` function
         - *compensationExponent*: float, default: :math:`1.5 \over 3`
             Parameter used to compensate the :math:`volume^2` scaling of each
             sphere contribution to the simulated I(q).
-        - *numReps*: int, default: 100
-            Number of repetitions of the MC fit for determination of final
-            histogram uncertainty.
-        - qBounds*: list, default: [0, inf]
-            Limits on the fitting range in q.
-            Units in :math:`m^{-1}`
-        - *histogramBins*: int, default: 50
-            Number of bins used for the histogramming procedure.
-        - *histogramXScale*: string, default: 'log'
-            Can be set to 'log' for histogramming on a logarithmic size scale,
-            recommended for q- and/or size-ranges spanning more than a decade.
-        - *histogramWeighting*: string, default: 'volume'
-            Can be set to 'number' to force plotting of number-weighted
-            distributions
-        - *deltaRhoSquared*: float, default: 1
-            Scattering contrast - when known it will be used to calculate the
-            absolute volume fraction of each contribution.
-            Units in :math:`m^{-4}`
-        - *convergenceCriterion*: float, default: 1
-            Convergence criterion for the least-squares fit. The fit converges
-            once the :math:`normalized \chi^2 < convergenceCriterion`. If
-            convergence is reached with `convergenceCriterion == 1`, the model
-            describes the data (on average) to within the uncertainty, and thus
-            all information has been extracted from the scattering pattern.
-        - *startFromMinimum*: bool, default: False
-            If set to False, the starting configuration is a set of spheres
-            with radii uniformly sampled between the given or estimated
-            bounds. If set to True, the starting configuration is a set of
-            spheres with radii set to the lower given or estimated Bound
-            (if not zero). Practically, this makes little difference and this
-            feature might be depreciated.
-        - *maxRetries*: int, default: 5
-            If a single MC optimization fails to reach convergence within
-            *maxIterations*, it may just be due to bad luck. The procedure
-            will try to redo that MC optimization for a maximum of
-            *maxRetries* tries before concluding that it is not bad luck
-            but bad input.
-        - *doPlot*: Bool, default: False
-            If set to True, will generate a plot showing the data and fit, as
-            well as the Resulting size histogram.
+        For more settings, see mcsas/McSASParameters.json
 
     **Returns:**
 
