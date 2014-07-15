@@ -556,7 +556,16 @@ class SettingsWidget(SettingsWidgetBase):
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addStretch()
-        layout.addWidget(self._makeLabel(param.displayName()))
+        try:
+            suffix = param.suffix()
+        except AttributeError:
+            suffix = None
+        if suffix is None:
+            layout.addWidget(self._makeLabel(param.displayName()))
+        else:
+            layout.addWidget(self._makeLabel("{} ({})".format(
+                param.displayName(), suffix)))
+
         widget.setLayout(layout)
         minmaxValue, widgets = None, []
         # instead of create/remove widgets, show/hide them on active toggle
