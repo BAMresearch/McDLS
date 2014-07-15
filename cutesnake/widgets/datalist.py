@@ -149,6 +149,14 @@ class DataItem(QTreeWidgetItem):
             pass
         return False
 
+    def setAlignment(self, alignment):
+        if alignment is None:
+            return
+        if not isList(alignment):
+            alignment = [alignment]
+        for c in range(0, self.columnCount()):
+            self.setTextAlignment(c, alignment[min(c, len(alignment)-1)])
+
 class DataList(QWidget, DropWidget, ContextMenuWidget):
     """
     Manages all loaded spectra.
@@ -215,8 +223,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.listWidget.itemClicked.connect(self._itemClicked)
         self.listWidget.itemChanged.connect(self._itemChanged)
         self.listWidget.itemDoubleClicked.connect(self.itemDoubleClicked)
-        self.listWidget.itemExpanded.connect(self._updateColumnWidths)
-        self.listWidget.itemCollapsed.connect(self._updateColumnWidths)
+        self.listWidget.itemExpanded.connect(self.fitColumnsToContents)
+        self.listWidget.itemCollapsed.connect(self.fitColumnsToContents)
         self.verticalLayout.addWidget(self.listWidget)
         self.sigReceivedUrls.connect(self.loadData)
         self.clearSelection = self.listWidget.clearSelection
@@ -248,7 +256,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
     def _updateContextMenu(self):
         self.updateMenu(self.listWidget)
 
-    def _updateColumnWidths(self, *args):
+    def fitColumnsToContents(self, *args):
         for c in range(0, self.listWidget.columnCount()):
             self.listWidget.resizeColumnToContents(c)
 
@@ -264,7 +272,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
 
     def expandAll(self):
         self.listWidget.expandAll()
-        self._updateColumnWidths()
+        self.fitColumnsToContents()
 
     def __len__(self):
         return self.listWidget.topLevelItemCount()
@@ -295,7 +303,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
     def updateItems(self):
         for item in self.topLevelItems():
             item.update()
-        self._updateColumnWidths()
+        self.fitColumnsToContents()
 
     def _itemClicked(self, item, column):
         item.setClicked(column)
@@ -446,7 +454,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         return updateResult
 
     def loadData(self, sourceList = None, processSourceFunc = None,
-                 showProgress = True, **kwargs):
+                 showProgress = True, alignment = None, **kwargs):
         """
         Loads a list of data source items.
 
@@ -505,11 +513,12 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                 continue
             else:
                 lastItem = self.add(data)
+                lastItem.setAlignment(alignment)
             if progress is not None and progress.update():
                 break
         if progress is not None:
             progress.close()
-        self._updateColumnWidths()
+        self.fitColumnsToContents()
         # notify interested widgets about changes
         if lastItem is not None:
             self.listWidget.setCurrentItem(lastItem)

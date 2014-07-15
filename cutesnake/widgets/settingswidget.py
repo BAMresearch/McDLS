@@ -47,7 +47,7 @@ class SettingsWidget(QWidget):
             return value
         propValue = None
         for attr in "value", "checked", "text":
-            try: 
+            try:
                 valueGetter = getattr(child, attr)
             except:
                 value = child.property(attr)
@@ -68,7 +68,7 @@ class SettingsWidget(QWidget):
             setterName = "set" + attr.title()
             try:
                 setter = getattr(child, setterName)
-                try: 
+                try:
                     oldValue = getattr(child, attr)()
                 except:
                     oldValue = child.property(attr)
@@ -138,8 +138,6 @@ class SettingsWidget(QWidget):
     def _editingFinishedSlot(self, widget):
         """Called after input widget looses focus,
         usually only one at a time."""
-        #if not self._isUpdateRequired:
-        #    return
         self._isUpdateRequired = False
         self.sigValuesChanged.emit()
         self.sigValueChanged.emit(widget)
