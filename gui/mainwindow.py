@@ -44,6 +44,7 @@ Output files start with the base name of the input file. They have the current d
 
 CHANGESTEXT = (u"""
 Latest changes:
+- Number input boxes now allow scientific notation input
 - Stability improvements and code cleanup
 - Improved plotting routine
 - Range statistics list functionality added
@@ -637,8 +638,9 @@ class AlgorithmWidget(SettingsWidget):
         entries = []
         # create inputs for a subset of calculator parameters
         # allowed parameters could be configurable from file too
-        for i, p in enumerate(("convergenceCriterion", "histogramBins",
-                              "numReps", "numContribs", "findBackground")):
+        for i, p in enumerate(("qUnits", "IUnits", "convergenceCriterion", 
+                    "histogramBins", "numReps", 
+                    "numContribs", "findBackground")):
             p = getattr(self.algorithm, p, None)
             if p is None: continue
             container = self.makeSetting(entries, p)
