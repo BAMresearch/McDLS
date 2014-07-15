@@ -154,7 +154,8 @@ class ParameterBase(object):
         # sets the ordered names of attributes
         dictionary["_attributeNames"] = names
 
-    setAttributes.__func__(None, locals(), "name", "value", "displayName")
+    setAttributes.__func__(None, locals(), "name", "value", 
+            "displayName", "description")
 
     @classmethod
     def attributeNames(cls):
