@@ -21,6 +21,10 @@ class SciEntryBox(QLineEdit):
         setattr(self, "maximum", lval.top)
         setattr(self, "setDecimals", lval.setDecimals)
         setattr(self, "decimals", lval.decimals)
+
+    def setRange(self, lo, hi):
+        self.setMinimum(lo)
+        self.setMaximum(hi)
         
     def setValue(self, value):
         fstr = "{:." + str(self.decimals()) + "g}" 
