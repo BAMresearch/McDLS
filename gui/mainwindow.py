@@ -581,9 +581,9 @@ class SettingsWidget(SettingsWidgetBase):
                 w.setFixedWidth(FIXEDWIDTH)
                 widgets.append(w)
 
-        if hasattr(param, "description"):
+        if isString(param.__doc__):
             #add description as tooltip if available for parameter
-            widget.setToolTip(param.description())
+            widget.setToolTip(param.__doc__)
         # create scalar value input widget
         w = self._makeEntry(param.name(), param.dtype, param.value(),
                                       minmax = minmaxValue, parent = widget)
