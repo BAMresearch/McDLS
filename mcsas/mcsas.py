@@ -251,19 +251,8 @@ class McSAS(AlgorithmBase):
         if data[1] is None:
             raise ValueError("No intensity values provided!")
         if data[2] is None:
-            # ValueError instead? Is it mandatory to have IError?
+            # Discussion moved to Bitbucket issue #7
             logging.warning("No intensity uncertainties provided!")
-            # TODO: generate some
-            # B: nope. It is up to the user to supply error estimates. these
-            # B: are essential to good data practices.
-            # B: i.e. Make it easy, but not so easy it encourages "abuse".
-        # data[3]: PSI is optional, only for 2D required
-        # TODO: is psi mandatory in 2D? Should ierror be mandatory?
-        # B:Either PSI and Q or QX and QY are required. Useful to calculate the 
-        # B:missing matrices and allow use of both QX and QY or Q and PSI.
-        #  can psi be present without ierror?
-        # B:yes. but without an error estimate on the intensity, results are
-        # B:ambiguous
 
         # make single array: one row per intensity and its associated values
         # selection of intensity is shorter this way: dataset[validIndices]
@@ -310,6 +299,7 @@ class McSAS(AlgorithmBase):
         within their limits.
         """
         # set all parameters to be fitted to the same histogram setup
+        # depreciated soon with the implementation of the new statistics
         for p in self.model.activeParams():
             p.histogram().binCount = self.histogramBins()
             p.histogram().scaleX = self.histogramXScale()[:3]
