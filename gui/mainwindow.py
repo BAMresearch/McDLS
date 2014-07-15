@@ -638,7 +638,7 @@ class AlgorithmWidget(SettingsWidget):
         entries = []
         # create inputs for a subset of calculator parameters
         # allowed parameters could be configurable from file too
-        for i, p in enumerate(("qUnits", "IUnits", "convergenceCriterion", 
+        for i, p in enumerate(("qUnits", "iUnits", "convergenceCriterion", 
                     "histogramBins", "numReps", 
                     "numContribs", "findBackground")):
             p = getattr(self.algorithm, p, None)

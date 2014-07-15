@@ -40,6 +40,8 @@ class SASData(DataSet, DisplayMixin):
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
+    _qUnits = 1. #can be set to scale to standard units (m^-1)
+    _iUnits = 1. #can be set to scale to standard units ((m sr)^-1)
 
     @staticmethod
     def displayDataDescr():
@@ -113,24 +115,34 @@ class SASData(DataSet, DisplayMixin):
         return cpy
 
     @property
+    def qUnits(self):
+        """Scaling factor for q to move to m^-1."""
+        return self._qUnits
+
+    @property
+    def iUnits(self):
+        """Scaling factor for q to move to m^-1."""
+        return self._iUnits
+
+    @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self.origin[:, 0]
+        return self.origin[:, 0] * self.qUnits
 
     @property
     def i(self):
         """Measured intensity at q."""
-        return self.origin[:, 1]
+        return self.origin[:, 1] * self.iUnits
 
     @property
     def e(self):
         """Uncertainty or Error of the intensity at q."""
-        return self.origin[:, 2]
+        return self.origin[:, 2] * self.iUnits
 
     @property
     def p(self):
         """Psi-Vector."""
-        return self.origin[:, 3]
+        return self.origin[:, 3] 
 
     @property
     def is2d(self):
