@@ -16,7 +16,7 @@ def _makeProperty(varName):
         return getattr(selforcls, varName)
     return property(getter)
 
-class RangeStats(object):
+class Moments(object):
     _intensity  = None # partial intensity
     _total      = None
     _mean       = None # 1st moment
@@ -54,14 +54,12 @@ class RangeStats(object):
     def __repr__(self):
         return str(self)
 
-    def __init__(self, paramIndex, valueRange, fraction, algo):
-        contribs = algo.result[0]['contribs']
+    def __init__(self, contribs, paramIndex, valueRange, fraction, algo = None):
         self._setValidRange(contribs[:, paramIndex, :], valueRange)
         self._calcMoments(contribs[:, paramIndex, :], fraction)
-        #for par in algo.activeParams():
-        #self._calcMoments(self.activeVal(), fraction)
-        scalingFactors = algo.result[paramIndex]['scalingFactors']
-        self._calcPartialIntensities(contribs, scalingFactors, algo)
+        if algo is not None:
+            scalingFactors = algo.result[paramIndex]['scalingFactors']
+            self._calcPartialIntensities(contribs, scalingFactors, algo)
 
     def _setValidRange(self, contribs, valueRange):
         """Calculate contributions mask to be within the given value range.
@@ -141,6 +139,33 @@ class RangeStats(object):
         self._intensity = (partialIntensities.mean(axis = 0),
                            partialIntensities.std(axis = 0))
 
+class VectorResult(object):
+    """Stores multiple populations of a single result data vector.
+    Calculates statistics at initialization."""
+    _mean = None
+    _std = None
+    _full = None
+
+    # some read-only attributes
+
+    @property
+    def mean(self):
+        return self._mean
+
+    @property
+    def std(self):
+        return self._std
+
+    @property
+    def full(self):
+        return self._full
+
+    def __init__(self, vecResult):
+        assert vecResult.ndim == 2 # 2 dim input
+        self._full = vecResult
+        self._mean = self._full.mean(axis = 1)
+        self._std = self._full.std(axis = 1)
+
 # put this sketch here, for the moment can be placed in a separate file later
 class Histogram(DataSet, DisplayMixin):
     """Stores histogram related settings of a parameter.
@@ -154,10 +179,14 @@ class Histogram(DataSet, DisplayMixin):
     _xrange     = None # list of tuples/pairs
     _stats      = None # rangeInfo() results, RangeStats lists
 
-    # results
+    # results: class HistogramResult?
     _xLowerEdge = None
     _xMean = None
     _xWidth = None
+    _bins = None
+    _cdf = None
+    _observability = None
+    _moments = None
 
     @property
     def param(self):
@@ -227,30 +256,6 @@ class Histogram(DataSet, DisplayMixin):
         to keep it valid."""
         self.xrange = self.xrange # call getter & setter again
 
-    @property
-    def xLowerEdge(self):
-        return self._xLowerEdge
-
-    def _setXLowerEdge(self):
-        # Now bin whilst keeping track of which contribution ends up in
-        # which bin: set bin edge locations
-        if 'lin' in self.xscale:
-            # histogramXLowerEdge contains #histogramBins+1 bin edges,
-            # or class limits.
-            self._xLowerEdge = numpy.linspace(
-                    self.lower, self.upper, self.binCount + 1)
-        else:
-            self._xLowerEdge = numpy.logspace(
-                    log10(self.lower), log10(self.upper), self.binCount + 1)
-
-    @property
-    def xMean(self):
-        return self._xMean
-
-    @property
-    def xWidth(self):
-        return self._xWidth
-
     @staticmethod
     def displayDataDescr():
         return (
@@ -289,6 +294,73 @@ class Histogram(DataSet, DisplayMixin):
         except:
             return avail
 
+    @property
+    def xLowerEdge(self):
+        return self._xLowerEdge
+
+    def _setXLowerEdge(self):
+        # Now bin whilst keeping track of which contribution ends up in
+        # which bin: set bin edge locations
+        if 'lin' in self.xscale:
+            # histogramXLowerEdge contains #histogramBins+1 bin edges,
+            # or class limits.
+            self._xLowerEdge = numpy.linspace(
+                    self.lower, self.upper, self.binCount + 1)
+        else:
+            self._xLowerEdge = numpy.logspace(
+                    numpy.log10(self.lower), numpy.log10(self.upper),
+                    self.binCount + 1)
+        self._setXWidth()
+        self._setXMean()
+
+    @property
+    def xMean(self):
+        return self._xMean
+
+    def _setXMean(self):
+        if self.xLowerEdge is None:
+            return
+        # NOTE: isn't this the same as:
+        # self.xWidth * .5 + self.xLowerEdge
+        self._xMean = numpy.zeros(self.binCount)
+        for i in range(self.binCount):
+            self._xMean[i] = self.xLowerEdge[i:i+2].mean()
+
+    @property
+    def xWidth(self):
+        return self._xWidth
+
+    def _setXWidth(self):
+        if self.xLowerEdge is None:
+            return
+        self._xWidth = numpy.diff(self.xLowerEdge)
+
+    @property
+    def bins(self):
+        return self._bins
+
+    @property
+    def cdf(self):
+        return self._cdf
+
+    @property
+    def observability(self):
+        return self._observability
+
+    def _setObservability(self, allObservability):
+        self._observability = numpy.zeros(self.binCount)
+        if allObservability is None:
+            return
+        testfor(allObservability.shape[0] == self.binCount, ValueError)
+        for bi in range(self.binCount):
+            # for observabilities over all repetitions select the largest
+            obs = allObservability[bi, :]
+            self._observability[bi] = obs[obs < numpy.inf].max()
+
+    @property
+    def moments(self):
+        return self._moments
+
     def addRange(self, lower, upper):
         """Adds the provided range and returns its index.
         The index may be different from the last if the range exists."""
@@ -302,9 +374,68 @@ class Histogram(DataSet, DisplayMixin):
     def resetRanges(self):
         self._ranges = []
 
-    def calc(self):
-        print "hist calc for", self.paramName
+    def _binMask(self, bini, parValues):
+        # indexing which contributions fall into the radius bin
+        return (  (parValues >= self.xLowerEdge[bini])
+                * (parValues <  self.xLowerEdge[bini + 1]))
+
+    def calc(self, contribs, paramIndex, fractions):
         self._setXLowerEdge()
+        self._calcRepetitions(contribs, paramIndex, fractions)
+
+    def _calcRepetitions(self, contribs, paramIndex, fractions):
+        numContribs, dummy, numReps = contribs.shape
+        binLst, obsLst, cdfLst = [], [], []
+        fractions, minReq = fractions[self.yweight]
+        for ri in range(numReps):
+            parValues = contribs[:, paramIndex, ri]
+            bins, binObs, cdf = self._calcBins(
+                    contribs, parValues, fractions[:, ri], minReq[:, ri])
+            binLst.append(bins)
+            obsLst.append(binObs)
+            cdfLst.append(cdf)
+        # set final result: y values, CDF and observability of all bins
+        self._bins = VectorResult(numpy.vstack(binLst).T)
+        self._cdf = VectorResult(numpy.vstack(cdfLst).T)
+        self._setObservability(numpy.vstack(obsLst).T)
+        self._moments = Moments(contribs, paramIndex, self.xrange, fractions)
+
+    def _calcBins(self, contribs, parValues, fraction, minReq):
+        """Returns numpy arrays for the bin values, observability and the CDF
+        based on the bin values."""
+        # single set of R for this calculation
+        bins = numpy.zeros(self.binCount)
+        binObs = numpy.zeros(self.binCount)
+        for bi in range(self.binCount):
+            val, obs = self._calcBin(
+                    self._binMask(bi, parValues),
+                    fraction, minReq)
+            bins[bi] = val
+            binObs[bi] = obs
+            cdf = self._calcCDF(bins)
+        return bins, binObs, cdf
+
+    def _calcBin(self, binMask, fraction, minReq):
+        """
+           *fraction*: overall fraction (number or volume, weighting depending)
+        """
+        # y contains the volume fraction for that radius bin
+        binValue = sum(fraction[binMask])
+        if numpy.isnan(binValue):
+            binValue = 0.
+        # observability below
+        if not any(binMask):
+            binMinReq = 0.
+        else:
+            binMinReq = minReq[binMask].mean()
+        return binValue, binMinReq
+
+    def _calcCDF(self, bins):
+        cdf = numpy.zeros_like(bins)
+        cdf[0] = bins[0]
+        for i in range(1, len(cdf)):
+            cdf[i] = cdf[i - 1] + bins[i]
+        return cdf
 
     def calcStats(self, paramIndex, algo):
         """Calculates distribution statistics for all available weighting
@@ -337,11 +468,15 @@ class Histogram(DataSet, DisplayMixin):
                 yield valueRange, weighting, weightingStats
 
     def __str__(self):
-        out = []
+        out = ["hist"]
         for attr in self.displayData:
             val = getattr(self, attr)
             out.append(str(val))
-        return "Hist(" + ", ".join(out) + ")"
+        idx = self.displayData.index("paramName")
+        # replace the parameter display name by its internal name
+        # (short, no spaces)
+        out[idx+1] = self.param.name()
+        return "-".join(out)
 
     __repr__ = __str__
 
@@ -368,9 +503,8 @@ class Histogram(DataSet, DisplayMixin):
         self.binCount = binCount # bin count is mandatory
         self.xrange = (lower, upper)
         # setter chose the first option available for invalid options
-        self.xscale = None
-        self.yweight = None
-        print " Histogram:", lower, upper, self.xrange, self.xscale, self.yweight
+        self.xscale = xscale
+        self.yweight = yweight
 
     # TODO: Function toString() or toJson() or similar which makes it
     # serializable and also a classmethod which constructs it from serial data
@@ -379,17 +513,19 @@ class Histograms(list):
     """Manages a set of user configured histograms for evaluation after
     monte-carlo run."""
     def append(self, value):
+        if value in self:
+            return
         list.append(self, value)
 
     def updateRanges(self):
         # work directly on the histograms, no copy
-        for i in range(0, len(self)):
+        for i in range(len(self)):
             self[i].updateRange()
 
-    def calc(self):
+    def calc(self, *args):
         # work directly on the histograms, no copy
-        for i in range(0, len(self)):
-            self[i].calc()
+        for i in range(len(self)):
+            self[i].calc(*args)
 
 class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
@@ -404,7 +540,7 @@ class FitParameterBase(ParameterBase):
         # point the parameter reference to this instance now
         # (instead of the type previously)
         if self.isActive():
-            for i in range(0, len(self.histograms())):
+            for i in range(len(self.histograms())):
                 self.histograms()[i].param = self
 
     @mixedmethod
@@ -420,7 +556,6 @@ class FitParameterBase(ParameterBase):
         histgram setup for each parameter is implemented elsewhere"""
         if isActive and not selforcls.isActive():
             # set only if there is no histogram defined already
-            print "setactive", selforcls
             lo, hi = selforcls.valueRange()
             selforcls.setHistograms(Histograms()) # init histogram list
             # add a default histogram

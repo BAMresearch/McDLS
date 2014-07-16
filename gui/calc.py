@@ -19,7 +19,7 @@ from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.log import timestamp, addHandler
 import cutesnake.log as log
 from mcsas.mcsas import McSAS
-from utils.parameter import Histogram, RangeStats
+from utils.parameter import Histogram, Moments
 
 class Calculator(object):
     _algo = None # McSAS algorithm instance
@@ -98,9 +98,8 @@ class Calculator(object):
             res = self._algo.result[0]
             # quick hack for now, will get fixed with Parameter design
             for i, p in enumerate(self.model.activeParams()):
-                res = self._algo.result[i]
-                self._writeDistrib(res, p.name())
-                self._writeStatistics(i)
+                self._writeDistrib(p)
+                self._writeStatistics(i, p)
             #plotting last so calcStats is already executed.
             if res is not None:
                 self._writeFit(res)
@@ -111,17 +110,15 @@ class Calculator(object):
 
         log.removeHandler(logFile)
 
-    def _writeStatistics(self, paramIndex):
+    def _writeStatistics(self, paramIndex, param):
         stats = dict()
         columnNames = (("lower", "upper", "weighting")
-                        + RangeStats.fieldNames())
+                        + Moments.fieldNames())
         for cn in columnNames:
             stats[cn] = []
-        param = self.modelActiveParams()[paramIndex]
-        param.histogram().addRange(0, numpy.inf)
-        param.histogram().calcStats(paramIndex, self._algo)
-        for valueRange, weighting, rangeStats in param.histogram().iterStats():
-            values = valueRange + (weighting,) + rangeStats.fields
+        # not optimal, but for now, it helps
+        for h in param.histograms():
+            values = h.xrange + (h.yweight,) + h.moments.fields
             for name, value in zip(columnNames, values):
                 if stats.get(name) is None:
                     stats[name] = []
@@ -136,19 +133,20 @@ class Calculator(object):
             extension = '.csv'
         )
 
-    def _writeDistrib(self, mcResult, paramName):
-        self._writeResultHelper(mcResult,
-            "dist_"+paramName, "distributions",
-            ('histogramXMean', 'histogramXWidth',
-             'volumeHistogramYMean', 'volumeHistogramYStd',
-             'volumeHistogramMinimumRequired',
-             'numberHistogramYMean', 'numberHistogramYStd',
-             'numberHistogramMinimumRequired',
-             'volumeHistogramYCumMean', 'volumeHistogramYCumStd',
-             'numberHistogramYCumMean', 'numberHistogramYCumStd',
-             ),
-            extension = '.csv'
-        )
+    def _writeDistrib(self, param):
+        for h in param.histograms():
+            histRes = dict(
+                xMean = h.xMean, xWidth = h.xWidth,
+                yMean = h.bins.mean, yStd = h.bins.std,
+                Obs = h.observability,
+                cdfMean = h.cdf.mean, cdfStd = h.cdf.std
+            )
+            self._writeResultHelper(histRes, str(h), "distributions",
+                ("xMean", "xWidth", # fixed order of result columns
+                 "yMean", "yStd", "Obs",
+                 "cdfMean", "cdfStd"),
+                extension = '.csv'
+            )
 
     def _writeContribs(self, mcResult):
         # Writes the contribution parameters to a pickled file.

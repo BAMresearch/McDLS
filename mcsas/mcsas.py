@@ -780,12 +780,15 @@ class McSAS(AlgorithmBase):
             numberFraction[:, ri] /= totalNumberFraction[ri]
             minReqNum[:, ri] /= totalNumberFraction[ri]
 
+        fractions = dict(vol = (volumeFraction, minReqVol),
+                         num = (numberFraction, minReqNum))
+
         # now we histogram over each variable
         # for each variable parameter we define,
         # we need to histogram separately.
-        for p in self.model.activeParams():
-            p.histograms().calc()
         for paramIndex, param in enumerate(self.model.activeParams()):
+            param.histograms().calc(contribs, paramIndex, fractions) # new method
+            continue # code below will never be reached, just for comparison
 
             # Now bin whilst keeping track of which contribution ends up in
             # which bin: set bin edge locations

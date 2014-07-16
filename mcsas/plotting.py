@@ -4,6 +4,7 @@
 Add docstring
 """
 
+import logging
 import numpy as np # For arrays
 from numpy import size, log10
 from cutesnake.utils import isList, isString
@@ -34,8 +35,8 @@ class PlotResults(object):
     """
 
     def __init__(self, allRes, dataset, 
-                axisMargin = 0.3, parameterIdx = None, figureTitle = None,
-                mcsasInstance = None):
+                 axisMargin = 0.3, parameterIdx = None, figureTitle = None,
+                 mcsasInstance = None):
         if not isList(allRes) or not len(allRes):
             logging.info("There are no results to plot, breaking up.")
             return
@@ -75,11 +76,14 @@ class PlotResults(object):
         self._intError = self._data[:, 2]
 
         # number of histograms:
-        self._nHists = mcsasInstance.model.activeParamCount()
+#        self._nHists = mcsasInstance.model.activeParamCount()
+        self._nHists = sum((len(p.histograms())
+                    for p in mcsasInstance.model.activeParams()))
+        self._nR = 1
         # number of ranges: 
-        if self._nHists > 0:
+        if False and self._nHists > 0: # disabled for testing
             self._ranges = ( mcsasInstance.model.activeParams()[0]
-                    .histogram().ranges )
+                                .histogram().ranges )
             self._nR = len( self._ranges )
         else:
             self._nR = 1 # no active parameters
@@ -116,26 +120,29 @@ class PlotResults(object):
             # axis('tight')
 
             # plot histograms
-            for parami, plotPar in enumerate(
-                    self._mcsasInstance.model.activeParams()):
+            # https://stackoverflow.com/a/952952
+            for hi, parHist in enumerate((parHist for histograms in
+                        (p.histograms()
+                            for p in self._mcsasInstance.model.activeParams())
+                        for parHist in histograms)):
+                plotPar = parHist.param
                 # histogram data:
-                parHist = plotPar.histogram()
-                parStat = parHist.stats[rangei][0]
+#                    parStat = parHist.moments
                 # get data:
                 # histogram axis index:
-                res = self._allRes[parami]
+#                res = self._allRes[parami]
+                res = None
                 # prep axes:
-                hAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
-                    + self._nHists + 2 + parami]
+                hAxis = self._ah[hi + (self._nHists + 1) + 1]
                 # plot partial contribution in qAxis
-                fitIntensity, fitSTD = parStat.intensity
-                self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
+# not yet available:
+#                   fitIntensity, fitSTD = parStat.intensity
+#                   self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
                 self.plotHist(res, plotPar, parHist, 
                         hAxis, self._axisMargin, rangei)
 
                 # put the rangeInfo in the plot above
-                InfoAxis = self._ah[rangei * 2 * (self._nHists + 1) + 
-                    + 1 + parami]
+                InfoAxis = self._ah[hi + 1]
                 self.plotStats(parHist, self._mcsasInstance, 
                         rangei, self._fig, InfoAxis)
 
@@ -155,13 +162,10 @@ class PlotResults(object):
             
     def formatRangeInfo(self, parHist, RI, mcsasInstance, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
-        weightings = parHist.weighting()
-        weighting = weightings[weighti]
         oString = 'Range {} to {}, {}-weighted'.format(
-                parHist.ranges[RI][0],
-                parHist.ranges[RI][1],
-                weighting)
-        pStat = parHist.stats[RI][weighti]
+                parHist.lower, parHist.upper,
+                parHist.yweight)
+        pStat = parHist.moments
         pStatFields = pStat.fields
         pStatFieldNames = pStat.fieldNames()
         for si in np.arange(0,10,2):
@@ -317,7 +321,7 @@ class PlotResults(object):
                  label = 'MC Background level:\n\t ({0:03.3g})' .format(
                      self._BG[0]), zorder = 3)
         except:
-            print('could not plot background')
+            logging.error('could not plot background')
             pass
         title('Measured vs. Fitted intensity',
               fontproperties = self._textfont, size = 'large')
@@ -355,6 +359,8 @@ class PlotResults(object):
                 multialignment = 'right',
                 verticalalignment = 'center')
         fig.show()
+        axis('tight')
+        return # stop here
         #get bounding box
         #bb = tvObj.get_window_extent()
         #width = bb.width
@@ -378,17 +384,17 @@ class PlotResults(object):
         """histogram plot"""
         #make active:
         axes(hAxis)
-        hRange = parHist.ranges[rangei]
+#        hRange = parHist.ranges[rangei]
 
-        histXLowerEdge = res['histogramXLowerEdge']
-        histXMean = res['histogramXMean']
-        histXWidth = res['histogramXWidth']
+        histXLowerEdge = parHist.xLowerEdge
+        histXMean = parHist.xMean
+        histXWidth = parHist.xWidth
         # plot volume weighted by default, both would be good
         # can we plot both weightings? perhaps, with different colors?
         # e.g. red/orange (current) and blue/lightblue?
-        volHistYMean = res['volumeHistogramYMean']
-        volHistMinReq = res['volumeHistogramMinimumRequired']
-        volHistYStd = res['volumeHistogramYStd']
+        volHistYMean = parHist.bins.mean
+        volHistMinReq = parHist.observability
+        volHistYStd = parHist.bins.std
         #elif params[parameterId[parami]].histogram().hasWeighting('num'):
         #    volHistYMean = res['numberHistogramYMean']
         #    volHistMinReq = res['numberHistogramMinimumRequired']
@@ -401,7 +407,7 @@ class PlotResults(object):
         plotTitle = plotPar.displayName()
         xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
 
-        if parHist.scaleX == 'log':
+        if parHist.xscale == 'log':
             xLim = (histXLowerEdge.min() * (1 - self._axisMargin), 
                     histXLowerEdge.max() * (1 + self._axisMargin))
             xScale = 'log'
@@ -436,7 +442,7 @@ class PlotResults(object):
                 edgecolor = 'black', linewidth = 0.5, zorder = 2, alpha = 0.5,
                 )
         # plot active histogram:
-        validi = (histXLowerEdge >= hRange[0]) * (histXLowerEdge <= hRange[1])
+        validi = (histXLowerEdge >= parHist.lower) * (histXLowerEdge <= parHist.upper)
         validi[-1] = 0
         if not (validi.sum()==0):
             bar(histXLowerEdge[validi], volHistYMean[validi[0:-1]], 

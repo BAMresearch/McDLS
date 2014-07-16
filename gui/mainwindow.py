@@ -288,8 +288,6 @@ class RangeDialog(QDialog):
                 self.wentry.currentText())
         return output
 
-# TODO: clear on model change, remove entries on active change
-#   on model change: using default histogram?
 class RangeList(DataList):
     _calculator = None
 
@@ -301,11 +299,9 @@ class RangeList(DataList):
 
     def onRemoval(self, removedHistograms):
         for hist in removedHistograms:
-            print "remove", hist
-            # TODO
+            hist.param.histograms().remove(hist)
 
     def updateHistograms(self):
-        print "updateHistograms"
         self.clear()
         lst = []
         for p in self._calculator.model.activeParams():
@@ -313,7 +309,6 @@ class RangeList(DataList):
         self.append(lst)
 
     def append(self, histList):
-        print " append", histList
         if histList is None:
             return
         if not isList(histList):
@@ -331,10 +326,12 @@ class RangeList(DataList):
         if not isinstance(newHist, Histogram):
             return
         # do not add duplicates
-        # TODO: add it to param.histograms instead, do dup checking&sync there
         if newHist in self.data():
             return
-        self.append(newHist)
+        # add it to the actual histogram list of the parameter
+        newHist.param.histograms().append(newHist) # hmm, funny here
+        # update the GUI based on that
+        self.updateHistograms()
 
     def setupUi(self):
         setBackgroundStyleSheet(self, "./resources/background_ranges.svg")
@@ -354,6 +351,8 @@ class RangeList(DataList):
                           callbacks = self.recalc)
 
     def recalc(self):
+        return
+        # does not work yet! missing arguments for Hist.calc()
         DataList.updateData(self, selectedOnly = True, showProgress = False,
                 updateFunc = Histogram.calc,
                 stopFunc = None)
