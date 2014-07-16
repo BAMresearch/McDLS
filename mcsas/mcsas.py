@@ -245,8 +245,8 @@ class McSAS(AlgorithmBase):
         except:
             pass
         # expecting flat arrays, TODO: check this earlier
-        SD = kwargs.pop("SASData", None)
-        if SD is None:
+        dataset = kwargs.pop("SASData", None)
+        if dataset is None:
             data = tuple((kwargs.pop(n, None) for n in ('Q', 'I', 'IError', 'Psi')))
             if data[0] is None:
                 raise ValueError("No q values provided!")
@@ -261,8 +261,6 @@ class McSAS(AlgorithmBase):
             # enforce a certain shape here (removed ReshapeFitdata)
             data = numpy.vstack([d for d in data if d is not None]).T
             dataset = SASData("SAS data provided", data)
-        else:
-            dataset = SD
         if isOriginal:
             self.dataOriginal = dataset
         else:
