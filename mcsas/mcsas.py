@@ -723,7 +723,7 @@ class McSAS(AlgorithmBase):
         intensity = data.i
         intError = data.e
 
-        # loop over each repetition
+        # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
@@ -758,9 +758,10 @@ class McSAS(AlgorithmBase):
             numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
 
-            for c in range(numContribs): # for each sphere
-                # calculate the observability (the maximum contribution for
-                # that sphere to the total scattering pattern)
+            # calc observability for each sphere/contribution
+            for c in range(numContribs):
+                # observability: the maximum contribution for
+                # that sphere to the total scattering pattern
                 # NOTE: no need to compensate for p_c here, we work with
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
@@ -782,6 +783,8 @@ class McSAS(AlgorithmBase):
         # now we histogram over each variable
         # for each variable parameter we define,
         # we need to histogram separately.
+        for p in self.model.activeParams():
+            p.histograms().calc()
         for paramIndex, param in enumerate(self.model.activeParams()):
 
             # Now bin whilst keeping track of which contribution ends up in

@@ -302,6 +302,10 @@ class Histogram(DataSet, DisplayMixin):
     def resetRanges(self):
         self._ranges = []
 
+    def calc(self):
+        print "hist calc for", self.paramName
+        self._setXLowerEdge()
+
     def calcStats(self, paramIndex, algo):
         """Calculates distribution statistics for all available weighting
         options over all ranges previously set."""
@@ -378,8 +382,14 @@ class Histograms(list):
         list.append(self, value)
 
     def updateRanges(self):
+        # work directly on the histograms, no copy
         for i in range(0, len(self)):
             self[i].updateRange()
+
+    def calc(self):
+        # work directly on the histograms, no copy
+        for i in range(0, len(self)):
+            self[i].calc()
 
 class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from

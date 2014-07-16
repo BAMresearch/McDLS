@@ -349,6 +349,14 @@ class RangeList(DataList):
         self.setToolTip(
             "Right-click to add additional ranges."
         )
+        self.addMenuEntry(name = "recalc", text = "recalc selected",
+                          menuStates = "hasSelection",
+                          callbacks = self.recalc)
+
+    def recalc(self):
+        DataList.updateData(self, selectedOnly = True, showProgress = False,
+                updateFunc = Histogram.calc,
+                stopFunc = None)
 
 class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
