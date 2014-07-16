@@ -245,20 +245,24 @@ class McSAS(AlgorithmBase):
         except:
             pass
         # expecting flat arrays, TODO: check this earlier
-        data = tuple((kwargs.pop(n, None) for n in ('Q', 'I', 'IError', 'Psi')))
-        if data[0] is None:
-            raise ValueError("No q values provided!")
-        if data[1] is None:
-            raise ValueError("No intensity values provided!")
-        if data[2] is None:
-            # Discussion moved to Bitbucket issue #7
-            logging.warning("No intensity uncertainties provided!")
+        SD = kwargs.pop("SASData", None)
+        if SD is None:
+            data = tuple((kwargs.pop(n, None) for n in ('Q', 'I', 'IError', 'Psi')))
+            if data[0] is None:
+                raise ValueError("No q values provided!")
+            if data[1] is None:
+                raise ValueError("No intensity values provided!")
+            if data[2] is None:
+                # Discussion moved to Bitbucket issue #7
+                logging.warning("No intensity uncertainties provided!")
 
-        # make single array: one row per intensity and its associated values
-        # selection of intensity is shorter this way: dataset[validIndices]
-        # enforce a certain shape here (removed ReshapeFitdata)
-        data = numpy.vstack([d for d in data if d is not None]).T
-        dataset = SASData("SAS data provided", data)
+            # make single array: one row per intensity and its associated values
+            # selection of intensity is shorter this way: dataset[validIndices]
+            # enforce a certain shape here (removed ReshapeFitdata)
+            data = numpy.vstack([d for d in data if d is not None]).T
+            dataset = SASData("SAS data provided", data)
+        else:
+            dataset = SD
         if isOriginal:
             self.dataOriginal = dataset
         else:
