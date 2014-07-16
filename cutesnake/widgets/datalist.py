@@ -364,10 +364,14 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.selectionChanged()
 
     def add(self, data):
-        item = DataItem(data)
+#        print "ADD1", self.topLevelItems()
+        # WTF? w/o it returns QTreeWidgetItem instead of DataItem below!
+        DataItem(data)
+        self.listWidget.addTopLevelItem(DataItem(data))
+#        print "ADD2", self.topLevelItems()
+        item = self.listWidget.topLevelItem(len(self)-1)
         if not self._nestedItems:
             item.setFlags(int(item.flags()) - int(Qt.ItemIsDropEnabled))
-        self.listWidget.addTopLevelItem(item)
         return item
 
     def topLevelItems(self):
