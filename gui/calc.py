@@ -88,8 +88,9 @@ class Calculator(object):
         if self.nolog:
             log.removeHandler(oldHandler)
         self._algo.figureTitle = os.path.basename(self.basefn)
-        self._algo.calc(Q = dataset.q, I = dataset.i,
-                        IError = dataset.uncertainty, **mcargs)
+        # self._algo.calc(Q = dataset.q, I = dataset.i,
+        #                 IError = dataset.uncertainty, **mcargs)
+        self._algo.calc(SASData = dataset, **mcargs)
         if self.nolog:
             log.addHandler(oldHandler)
 
