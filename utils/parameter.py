@@ -147,13 +147,17 @@ class Histogram(DataSet, DisplayMixin):
     The results too, eventually(?). yes, please.
     Stores&calculates rangeInfo() results for all available weighting options.
     """
-    # back reference of the FitParameter this histogram belongs to
-    _param      = None # this is not necessary here. belongs to one par.
+    _param      = None # the FitParameter this histogram belongs to
     _binCount   = None # list of bin counts
     _xscale     = None # list of scalings
     _yweight    = None # list of weightings
     _xrange     = None # list of tuples/pairs
     _stats      = None # rangeInfo() results, RangeStats lists
+
+    # results
+    _xLowerEdge = None
+    _xMean = None
+    _xWidth = None
 
     @property
     def param(self):
@@ -222,6 +226,30 @@ class Histogram(DataSet, DisplayMixin):
         """Updates histogram range according to a changed parameter range
         to keep it valid."""
         self.xrange = self.xrange # call getter & setter again
+
+    @property
+    def xLowerEdge(self):
+        return self._xLowerEdge
+
+    def _setXLowerEdge(self):
+        # Now bin whilst keeping track of which contribution ends up in
+        # which bin: set bin edge locations
+        if 'lin' in self.xscale:
+            # histogramXLowerEdge contains #histogramBins+1 bin edges,
+            # or class limits.
+            self._xLowerEdge = numpy.linspace(
+                    self.lower, self.upper, self.binCount + 1)
+        else:
+            self._xLowerEdge = numpy.logspace(
+                    log10(self.lower), log10(self.upper), self.binCount + 1)
+
+    @property
+    def xMean(self):
+        return self._xMean
+
+    @property
+    def xWidth(self):
+        return self._xWidth
 
     @staticmethod
     def displayDataDescr():
