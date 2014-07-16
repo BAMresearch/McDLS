@@ -420,6 +420,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             not isinstance(stopFunc, collections.Callable)):
             stopFunc = None
         # call provided functions which can raise exceptions
+        errorOccured = False # raise error after processing all items
         try:
             # call prepare function
             prepareResult = None
@@ -439,6 +440,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                     if stopFunc is not None and stopFunc():
                         break
                 except StandardError, e:
+                    errorOccured = True
                     logging.error(str(e).replace("\n"," ") + " ... skipping")
                     continue
             if progress is not None:
@@ -447,8 +449,10 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             # progress.cancel()
             # catch and display _all_ exceptions in user friendly manner
             # DisplayException(e)
+            errorOccured = True
             pass
-        self.reraiseLast()
+        if errorOccured:
+            self.reraiseLast()
 #        self.selectionChanged()
         self.sigUpdatedData.emit(self.currentSelection()[1])
         return updateResult
@@ -500,6 +504,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             from cutesnake.utilsgui.progressdialog import ProgressDialog
             progress = ProgressDialog(self, count = len(sourceList))
         self.listWidget.clearSelection()
+        errorOccured = False
         lastItem = None
         for sourceItem in sourceList:
             data = None
@@ -509,6 +514,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                 # progress.cancel()
                 # DisplayException(e)
                 # on error, skip the current file
+                errorOccured = True
                 logging.error(str(e).replace("\n"," ") + " ... skipping")
                 continue
             else:
@@ -522,7 +528,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         # notify interested widgets about changes
         if lastItem is not None:
             self.listWidget.setCurrentItem(lastItem)
-        self.reraiseLast()
+        if errorOccured:
+            self.reraiseLast()
 
     def reraiseLast(self):
         """Reraise the last error if any and display an error message dialog.
