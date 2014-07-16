@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # utils/parameter.py
 
-from cutesnake.utils import mixedmethod
-from cutesnake.utils.tests import testfor, isInteger
+from utils import mixedmethod, isList, testfor, isInteger
 from cutesnake.algorithm import (ParameterBase, ParameterFloat,
                                  ParameterNumerical, ParameterBoolean,
                                  ParameterLog, ParameterString)
 from cutesnake.algorithm import Parameter
+from cutesnake.dataset import DataSet, DisplayMixin
 
 import logging
 import numpy
@@ -44,6 +44,7 @@ class RangeStats(object):
 
     @property
     def fields(self):
+        """Tuple of member data incl. uncertainty for export."""
         return (self._total + self._mean + self._variance
                 + self._skew + self._kurtosis)
 
@@ -141,7 +142,7 @@ class RangeStats(object):
                            partialIntensities.std(axis = 0))
 
 # put this sketch here, for the moment can be placed in a separate file later
-class Histogram(object):
+class Histogram(DataSet, DisplayMixin):
     """Stores histogram related settings of a parameter.
     The results too, eventually(?). yes, please.
     Stores&calculates rangeInfo() results for all available weighting options.
@@ -149,26 +150,22 @@ class Histogram(object):
     # back reference of the FitParameter this histogram belongs to
     _param      = None # this is not necessary here. belongs to one par.
     _binCount   = None # list of bin counts
-    _scaleX     = None # list of scalings
-    _weights    = None # list of weightings
-    _ranges     = None # list of tuples/pairs
+    _xscale     = None # list of scalings
+    _yweight    = None # list of weightings
+    _xrange     = None # list of tuples/pairs
     _stats      = None # rangeInfo() results, RangeStats lists
 
-    @staticmethod
-    def availableScaling(index = None):
-        avail = ('lin', 'log')
-        try:
-            return avail[index]
-        except:
-            return avail
+    @property
+    def param(self):
+        return self._param
 
-    @staticmethod
-    def weighting(index = None):
-        avail = ('vol', 'num')
-        try:
-            return avail[index]
-        except:
-            return avail
+    @param.setter
+    def param(self, newParam):
+        self._param = newParam
+
+    @property
+    def paramName(self):
+        return self.param.displayName()
 
     @property
     def binCount(self):
@@ -182,18 +179,87 @@ class Histogram(object):
         self._binCount = max(0, int(binCount))
 
     @property
-    def scaleX(self):
-        return self._scaleX
+    def xscale(self):
+        return self._xscale
 
-    @scaleX.setter
-    def scaleX(self, kind):
-        self._scaleX = str(kind)
-        if self._scaleX not in self.availableScaling():
-            self._scaleX = self.availableScaling(0)
+    @xscale.setter
+    def xscale(self, kind):
+        """Sets it to the first available option by default."""
+        self._xscale = str(kind).strip() # remove whitespace eventually
+        if self._xscale not in self.xscaling():
+            self._xscale = self.xscaling(0)
 
     @property
-    def ranges(self):
-        return self._ranges
+    def yweight(self):
+        return self._yweight
+
+    @yweight.setter
+    def yweight(self, kind):
+        self._yweight = str(kind).strip() # remove whitespace eventually
+        if self._yweight not in self.yweighting():
+            self._yweight = self.yweighting(0)
+
+    @property
+    def xrange(self):
+        return self._xrange
+
+    @xrange.setter
+    def xrange(self, valueRange):
+        lo, hi = min(valueRange), max(valueRange)
+        # restrict the provided range to the current range of the parameter
+        lo, hi = max(self.param.min(), lo), min(self.param.max(), hi)
+        self._xrange = lo, hi
+
+    @property
+    def lower(self):
+        return self._xrange[0]
+
+    @property
+    def upper(self):
+        return self._xrange[1]
+
+    def updateRange(self):
+        """Updates histogram range according to a changed parameter range
+        to keep it valid."""
+        self.xrange = self.xrange # call getter & setter again
+
+    @staticmethod
+    def displayDataDescr():
+        return (
+                "parameter",
+                "lower",
+                "upper",
+                "Number of bins",
+                "X-axis scaling",
+                "Y-axis weighting"
+                )
+
+    @property
+    def displayData(self):
+        return (
+                "paramName",
+                "lower",
+                "upper",
+                "binCount",
+                "xscale",
+                "yweight"
+                )
+
+    @staticmethod
+    def xscaling(index = None):
+        avail = ('lin', 'log')
+        try:
+            return avail[index]
+        except:
+            return avail
+
+    @staticmethod
+    def yweighting(index = None):
+        avail = ('vol', 'num')
+        try:
+            return avail[index]
+        except:
+            return avail
 
     def addRange(self, lower, upper):
         """Adds the provided range and returns its index.
@@ -222,7 +288,7 @@ class Histogram(object):
                 logging.info("Calculating {weighting} weighted distribution "
                              "statistics of {param} within {range} ..."
                              .format(weighting = weighting.upper(),
-                                     param = self._param.name(),
+                                     param = self.param.name(),
                                      range = valueRange))
                 allWeighting.append(RangeStats(paramIndex, valueRange,
                                                 fraction, algo))
@@ -238,31 +304,76 @@ class Histogram(object):
             for weighting, weightingStats in zip(self.weighting(), rangeStats):
                 yield valueRange, weighting, weightingStats
 
-    def __init__(self, param, binCount = 10):
+    def __str__(self):
+        out = []
+        for attr in self.displayData:
+            val = getattr(self, attr)
+            out.append(str(val))
+        return "Hist(" + ", ".join(out) + ")"
+
+    __repr__ = __str__
+
+    def __eq__(self, other):
+        """Compares with another Histogram or tuple."""
+        if id(self.param) != id(other.param):
+            return False
+        for attr in "lower", "upper", "binCount", "xscale", "yweight":
+            thisval = getattr(self, attr)
+            otherval = getattr(other, attr)
+            if otherval != thisval:
+                return False
+        return True
+
+    def __neq__(self, other):
+        return not self.__eq__(other)
+
+    def __init__(self, param, lower, upper, binCount = 50,
+                 xscale = None, yweight = None):
         """Creates an histogram with default bin count, will be updated later."""
-        self._param = param # parameter we belong to is mandatory
+        DataSet.__init__(self, "({0}, {1})".format(lower, upper), None)
+        # add it to the parameter here
+        self.param = param # parameter we belong to is mandatory
         self.binCount = binCount # bin count is mandatory
-        self.scaleX = None # sets it to the first available option by default
-        self._ranges = [] # no ranges at least, defaults to [0,inf] somewhere
+        self.xrange = (lower, upper)
+        # setter chose the first option available for invalid options
+        self.xscale = None
+        self.yweight = None
+        print " Histogram:", lower, upper, self.xrange, self.xscale, self.yweight
 
     # TODO: Function toString() or toJson() or similar which makes it
     # serializable and also a classmethod which constructs it from serial data
+
+class Histograms(list):
+    """Manages a set of user configured histograms for evaluation after
+    monte-carlo run."""
+    def append(self, value):
+        list.append(self, value)
+
+    def updateRanges(self):
+        for i in range(0, len(self)):
+            self[i].updateRange()
 
 class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
     cutesnake.algorithm.parameter to introduce more specific fit
     related attributes."""
-    # soon, histogram will replace *isActive*
     # by default it is not fitted, inactive
-    ParameterBase.setAttributes(locals(), histogram = None)
-    #store values if active in the parameter itself
-    ParameterBase.setAttributes(locals(), activeValues = list())
+    ParameterBase.setAttributes(locals(), histograms = None,
+                                activeValues = list())
+
+    def __init__(self):
+        super(FitParameterBase, self).__init__()
+        # point the parameter reference to this instance now
+        # (instead of the type previously)
+        if self.isActive():
+            for i in range(0, len(self.histograms())):
+                self.histograms()[i].param = self
 
     @mixedmethod
     def isActive(selforcls):
         """Tests if there is an histogram defined.
         Provided for convenience."""
-        return isinstance(selforcls.histogram(), Histogram)
+        return isList(selforcls.histograms())
 
     @mixedmethod
     def setActive(selforcls, isActive):
@@ -271,10 +382,24 @@ class FitParameterBase(ParameterBase):
         histgram setup for each parameter is implemented elsewhere"""
         if isActive and not selforcls.isActive():
             # set only if there is no histogram defined already
-            selforcls.setHistogram(Histogram(selforcls))
+            print "setactive", selforcls
+            lo, hi = selforcls.valueRange()
+            selforcls.setHistograms(Histograms()) # init histogram list
+            # add a default histogram
+            # NOTE: apply default bin count from MCSASParameters here
+            # or in Histogram.__init__ defaults
+            selforcls.histograms().append(Histogram(selforcls, lo, hi))
         elif not isActive:
-            selforcls.setHistogram(None)
-            
+            selforcls.setHistograms(None)
+
+    @mixedmethod
+    def setValueRange(selforcls, newRange):
+        try:
+            super(FitParameterBase, selforcls).setValueRange(newRange)
+            selforcls.histograms().updateRanges()
+        except:
+            pass
+
     @mixedmethod
     def activeVal(selforcls, val, index = None):
         """

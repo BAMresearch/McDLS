@@ -8,13 +8,16 @@ import os.path
 import re
 import sys
 import logging
+from numpy import inf as numpy_inf
 from cutesnake.qt import QtCore, QtGui
 from cutesnake.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp, QFileInfo
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
-                   QTreeWidgetItem, QTreeWidget, QToolBox, QPalette)
+                   QTreeWidgetItem, QTreeWidget, QToolBox, QPalette,
+                   QDialog, QDoubleSpinBox, QSpinBox)
+from cutesnake.dataset import DataSet, DisplayMixin
 from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
 from cutesnake.widgets.logwidget import LogWidget
 from cutesnake.widgets.datalist import DataList
@@ -23,10 +26,9 @@ from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBase
 from cutesnake.utils.lastpath import LastPath
-from cutesnake.utils import isList, isString
+from utils import isList, isString, processEventLoop
 from cutesnake.utils.tests import testfor
-from cutesnake.utilsgui.displayexception import DisplayException
-from utils.parameter import ParameterNumerical
+from utils.parameter import ParameterNumerical, Histogram
 from version import version
 from calc import Calculator
 from sasdata import SASData
@@ -158,206 +160,181 @@ def setBackgroundStyleSheet(widget, imgpath):
     imgpath = QFileInfo(makeAbsolutePath(imgpath)).absoluteFilePath()
     widget.setStyleSheet(stylesheet.format(path = imgpath))
 
-from cutesnake.dataset import DataSet, DisplayMixin
-class ParameterRange(DataSet, DisplayMixin):
-    """Represents a range tuple for a parameter of a model.
-    Required for proper GUI construction."""
-    _range = None
-    _parameter = None #identifier to which parameter the range applies
+class RangeDialog(QDialog):
+    """Creates a modal dialog window to ask the user for a range to be
+    added."""
+    _model = None
 
-    @staticmethod
-    def displayDataDescr():
-        return ("lower", 
-                "upper", 
-                "parameter", 
-                "X-axis scaling", 
-                "Number of bins", 
-                "Y-axis weighting")
-
-    @property
-    def displayData(self):
-        return ("lower", 
-                "upper", 
-                "parameter", 
-                "xscaling", 
-                "nbins", 
-                "yweighting")
-
-    @property
-    def lower(self):
-        return self._range[0]
-
-    @property
-    def upper(self):
-        return self._range[1]
-
-    @property
-    def parameter(self):
-        return self._parameter
-
-    @property
-    def xscaling(self):
-        return self._range[0]
-
-    @property
-    def nbins(self):
-        return self._range[1]
-
-    @property
-    def yweighting(self):
-        return self._parameter
-
-    @classmethod
-    def create(cls, *args):
-        paramRange = cls(*args)
-        return paramRange
-
-    @staticmethod
-    def sanitize(valueRange):
-        return (min(valueRange), max(valueRange))
-
-    def __init__(self, valueRange):
-        self._range = self.sanitize(valueRange)
-        DataSet.__init__(self, "({0}, {1})"
-                               .format(*self._range), None)
-
-    def __eq__(self, other):
-        """Compares with another ParameterRange or tuple."""
-        try:
-            return self.lower == other.lower and self.upper == other.upper
-        except AttributeError:
-            return self._range == other
-
-    def __neq__(self, other):
-        return not self.__eq__(other)
-
-    def __str__(self):
-        return str(self._range)
-
-    __repr__ = __str__
-
-class RangeList(DataList):
-    def addRange(self):
-        """Creates a modal dialog window to ask the user for a range to be
-        added. 
-        Returns a dict of kw-value pairs for the following:
-            *range* : the lower and upper limits set
-            *parIdx* : The parameter index of the acive parameter chosen
-            *scale* : int assuming 0 for linear x-axis, 1 for log. Default 1
-            *nBins* : number of bins to histogram over
-            *weight* :  0 for number-weighted, 1 volume weighted. Default 1
-        """
-        #set up dialog window for "add range"
-        dialog = QDialog(self)
-        dialog.setObjectName("AddRangeDialog")
-        dialog.setWindowTitle("Add Range")
-        dialog.setWindowModality(Qt.WindowModal)
-        vlayout = QVBoxLayout(dialog)
+    def __init__(self, parent = None, model = None):
+        QDialog.__init__(self, parent)
+        assert isinstance(model, ScatteringModel)
+        self._model = model
+        self.setObjectName("AddRangeDialog")
+        self.setWindowTitle("Add Range")
+        self.setWindowModality(Qt.WindowModal)
+        vlayout = QVBoxLayout(self)
         vlayout.setObjectName("vlayout")
+        vlayout.addWidget(self._createEntries())
+        vlayout.addWidget(self._createButtons())
+        self.setLayout(vlayout)
+
+    def _createEntries(self):
         entryWidget = QWidget(self)
-        btnWidget = QWidget(self)
-        vlayout.addWidget(entryWidget)
         entryLayout = QHBoxLayout(entryWidget)
+        entryLayout.addWidget(self._createParamBox())
+        entryLayout.addWidget(self._createLower())
+        entryLayout.addWidget(self._createUpper())
+        entryLayout.addWidget(self._createBins())
+        entryLayout.addWidget(self._createXScale())
+        entryLayout.addWidget(self._createYWeight())
+        entryWidget.setLayout(entryLayout)
+        self.pbox.setCurrentIndex(0)
+        self.lentry.selectAll() # select the first input by default
+        return entryWidget
 
-        #TODO: need to identify to which parameter the range limits apply.
-        #Q: can we access the model class from here?
-
+    def _createLower(self):
         #add input for lower limit
-        lentry = QDoubleSpinBox(dialog)
+        lentry = SciEntryBox(self)
         lentry.setPrefix("lower: ")
-        lentry.setRange(-1e100, +1e100) # FIXME: float input format
+        self.lentry = lentry
+        return lentry
 
+    def _createUpper(self):
         #add input for upper limit
-        uentry = QDoubleSpinBox(dialog)
+        uentry = SciEntryBox(self)
         uentry.setPrefix("upper: ")
-        uentry.setRange(-1e100, +1e100)
+        self.uentry = uentry
+        return uentry
 
-        #add a parameter choice list
-        pentry = QComboBox(dialog)
-        #for name in scatteringmodel.activeParamNames():
-        for name in ['dummy', 'menu', 'values']:
-            pentry.addItem(name)
-        pentry.setDisabled(True) #not active yet
-
-        #histogram scaling choice (X-axis only at this point)
-        sentry = QComboBox(dialog)
-        #for name in scatteringmodel.activeParamNames():
-        for name in ['linear x', 'logarithmic x']:
-            sentry.addItem(name)
-        sentry.setDisabled(True) #not active yet
-
+    def _createBins(self):
         #number of histogram bin input box
-        bentry = QSpinBox(dialog)
+        bentry = QSpinBox(self)
         bentry.setPrefix("# bins: ")
         bentry.setRange(1, 200)
         bentry.setValue(50)
         bentry.setSingleStep(10)
-        #bentry.setDecimals(0)
-        bentry.setDisabled(True) #not active yet
+        self.bentry = bentry
+        return bentry
 
+    def _createParamBox(self):
+        #add a parameter choice list
+        pbox = QComboBox(self)
+        for p in self._model.params():
+            if not p.isActive():
+                continue
+            # providing the internal param name as item data
+            pbox.addItem(p.displayName(), p.name())
+        pbox.addItem("Test Dummy", "dummy")
+        pbox.setCurrentIndex(-1)
+        pbox.currentIndexChanged[int].connect(self._selectParam)
+        self.pbox = pbox
+        return pbox
+
+    def _createXScale(self):
+        #histogram scaling choice (X-axis only at this point)
+        sentry = QComboBox(self)
+        for name in Histogram.xscaling():
+            sentry.addItem(name)
+        self.sentry = sentry
+        return sentry
+
+    def _createYWeight(self):
         #histogram weighting input
-        wentry = QComboBox(dialog)
-        #for name in scatteringmodel.activeParamNames():
-        for name in ['Number weighted', 'Volume weighted']:
+        wentry = QComboBox(self)
+        for name in Histogram.yweighting():
             wentry.addItem(name)
-        wentry.setCurrentIndex(1)
-        wentry.setDisabled(True) #not active yet
+        self.wentry = wentry
+        return wentry
 
-        entryLayout.addWidget(lentry)
-        entryLayout.addWidget(uentry)
-        entryLayout.addWidget(pentry)
-        entryLayout.addWidget(sentry)
-        entryLayout.addWidget(bentry)
-        entryLayout.addWidget(wentry)
+    def _selectParam(self, index):
+        """Gets the index within the selection box."""
+        pname = self.pbox.itemData(index)
+        p = getattr(self._model, pname)
+        # perhaps, use testfor() for that:
+        assert p is not None, "Could not found parameter from selection box" 
+        lower = min(type(p).valueRange())
+        upper = max(type(p).valueRange())
+        self.lentry.setRange(lower, upper)
+        self.uentry.setRange(lower, upper)
+        lower = min(p.valueRange())
+        upper = max(p.valueRange())
+        self.lentry.setValue(lower)
+        self.uentry.setValue(upper)
 
-        entryWidget.setLayout(entryLayout)
-        vlayout.addWidget(btnWidget)
+    def _createButtons(self):
+        btnWidget = QWidget(self)
         btnLayout = QHBoxLayout(btnWidget)
         okBtn = QPushButton("add", self)
-        okBtn.clicked.connect(dialog.accept)
+        okBtn.clicked.connect(self.accept)
         cancelBtn = QPushButton("cancel", self)
-        cancelBtn.clicked.connect(dialog.reject)
+        cancelBtn.clicked.connect(self.reject)
         btnLayout.addWidget(okBtn)
         btnLayout.addWidget(cancelBtn)
         btnWidget.setLayout(btnLayout)
-        dialog.setLayout(vlayout)
-        lentry.selectAll() # select the first input by default
+        return btnWidget
 
-        if not dialog.exec_() or lentry.value() == uentry.value():
-            return []
-
-        #prepare output:
-        output = {"range": [(lentry.value(), uentry.value())],
-                "parIdx" : pentry.currentIndex(),
-                "scale" : sentry.currentIndex(),
-                "nBins" : bentry.value(),
-                "weight" : wentry.currentIndex()}
-
-        #return [(lentry.value(), uentry.value())], pentry.currentIndex()
+    def output(self):
+        if not self.exec_() or self.lentry.value() == self.uentry.value():
+            return None
+        p = None
+        try:
+            pname = self.pbox.itemData(self.pbox.currentIndex())
+            p = getattr(self._model, pname)
+        except:
+            return None
+        output = Histogram(p,
+                self.lentry.value(), self.uentry.value(),
+                self.bentry.value(), self.sentry.currentText(),
+                self.wentry.currentText())
         return output
+
+# TODO: clear on model change, remove entries on active change
+#   on model change: using default histogram?
+class RangeList(DataList):
+    _calculator = None
+
+    def __init__(self, calculator = None, **kwargs):
+        DataList.__init__(self, **kwargs)
+        assert isinstance(calculator, Calculator)
+        self._calculator = calculator
+        self.sigRemovedData.connect(self.onRemoval)
+
+    def onRemoval(self, removedHistograms):
+        for hist in removedHistograms:
+            print "remove", hist
+            # TODO
+
+    def updateHistograms(self):
+        print "updateHistograms"
+        self.clear()
+        lst = []
+        for p in self._calculator.model.activeParams():
+            lst += [h for h in p.histograms()]
+        self.append(lst)
+
+    def append(self, histList):
+        print " append", histList
+        if histList is None:
+            return
+        if not isList(histList):
+            histList = [histList]
+        DataList.loadData(self, sourceList = histList, showProgress = False,
+                processSourceFunc = lambda x: x)
+        self.fitColumnsToContents()
 
     def loadData(self, ranges = None):
         """Overridden base class method for adding entries to the list."""
         # add only one item at a time into the list
-        if ranges is None:
-            outDict = self.addRange()
-            ranges = outDict["range"]
-            pval =  outDict["parIdx"]
-
+        #set up dialog window for "add range"
+        dialog = RangeDialog(self, self._calculator.model)
+        newHist = dialog.output()
+        if not isinstance(newHist, Histogram):
+            return
         # do not add duplicates
-        ranges = [r for r in ranges if r not in self.data()]
-        DataList.loadData(self, sourceList = ranges, showProgress = False,
-                          processSourceFunc = ParameterRange.create)
-        # align text to the right
-        if len(self.topLevelItems()) > 0:
-            item = self.topLevelItems()[-1]
-            item.setTextAlignment(0, Qt.AlignRight)
-            item.setTextAlignment(1, Qt.AlignRight)
-
-    def isRemovableSelected(self):
-        """Decides if selected items can be removed.
-        Allow remove only if there is at least one item left."""
-        return (len(self) - len(self.listWidget.selectedItems())) > 0
+        # TODO: add it to param.histograms instead, do dup checking&sync there
+        if newHist in self.data():
+            return
+        self.append(newHist)
 
     def setupUi(self):
         setBackgroundStyleSheet(self, "./resources/background_ranges.svg")
@@ -366,15 +343,17 @@ class RangeList(DataList):
         self.listWidget.setItemsExpandable(False)
         self.listWidget.setAlternatingRowColors(True)
         self.action("load").setText("add range") # fix default action name
-        self.loadData([(0., numpy_inf)]) # default range
+# FIXME        self.loadData([(0., numpy_inf)]) # default range
         self.clearSelection()
-        # note: derive the default range from parameters?
-        # -> works only if statistics ranges are defined
-        # per parameter individually, not for all as it is now
+        self.setHeader(Histogram.displayDataDescr())
+        self.setToolTip(
+            "Right-click to add additional ranges."
+        )
 
 class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
     _appSettings = None
+    sigRangeChanged = Signal()
 
     def __init__(self, parent, calculator = None):
         SettingsWidgetBase.__init__(self, parent)
@@ -454,7 +433,8 @@ class SettingsWidget(SettingsWidgetBase):
 
     def updateParam(self, widget, p):
         """Write UI settings back to the algorithm."""
-        activeChanged = False
+        def isNotNone(*args):
+            return all((a is not None for a in args))
         # persistent name due to changes to the class instead of instance
         key = p.name()
         # get the parent of the updated widget and other input for this param
@@ -463,7 +443,7 @@ class SettingsWidget(SettingsWidgetBase):
         # get changed value range if any
         minValue = self.get(key+"min")
         maxValue = self.get(key+"max")
-        if minValue is not None and maxValue is not None:
+        if isNotNone(minValue, maxValue):
             # update value range for numerical parameters
             p.setValueRange((minValue, maxValue))
         # update the value input widget itself
@@ -486,14 +466,15 @@ class SettingsWidget(SettingsWidgetBase):
                 valueWidget.hide()
                 minWidget.show()
                 maxWidget.show()
-                # sync parameter ranges for statistics after calc
-                self._updateStatsRanges()
         if not isinstance(newActive, bool) or not newActive:
             valueWidget.show()
             try:
                 minWidget.hide()
                 maxWidget.hide()
             except: pass
+        if isNotNone(minValue, maxValue):
+            # the range was updated
+            self.sigRangeChanged.emit()
 
     def setStatsWidget(self, statsWidget):
         """Sets the statistics widget to use for updating ranges."""
@@ -506,6 +487,7 @@ class SettingsWidget(SettingsWidgetBase):
         algorithm. Uses the previously configured statistics widget."""
         if self._statsWidget is None:
             return
+        return # FIXME
         for p in self.algorithm.params():
             try:
                 # works for active FitParameters only
@@ -687,6 +669,7 @@ class AlgorithmWidget(SettingsWidget):
         layout.setRowStretch(layout.rowCount() - 1, 1)
 
 class ModelWidget(SettingsWidget):
+    sigModelChanged = Signal()
 
     def __init__(self, *args, **kwargs):
         SettingsWidget.__init__(self, *args, **kwargs)
@@ -739,6 +722,10 @@ class ModelWidget(SettingsWidget):
             self.appSettings.endGroup()
 
     def _selectModelSlot(self, key = None):
+        # rebuild the UI without early signals
+        try:
+            self.sigRangeChanged.disconnect(self.sigModelChanged)
+        except: sys.exc_clear()
         model = MODELS.get(str(key), None)
         if model is None or not issubclass(model, ScatteringModel):
             return
@@ -757,6 +744,8 @@ class ModelWidget(SettingsWidget):
         layout.addStretch()
         # restore user settings for this model
         self.restoreSession(self.calculator.model.name())
+        self.sigRangeChanged.connect(self.sigModelChanged)
+        self.sigModelChanged.emit()
 
     def selectModel(self, model):
         """*model*: string containing the name of the model to select."""
@@ -889,14 +878,12 @@ class MainWindow(MainWindowBase):
     def _setupStatsWidget(self):
         """Set up property widget with settings."""
         # setup similar to the file widget
-        self.statsWidget = RangeList(self,
+        self.statsWidget = RangeList(parent = self,
+                                     calculator = self.calculator,
                                      title = "Set up Statistics",
                                      withBtn = False, nestedItems = False)
-        self.statsWidget.setToolTip(
-                "Right-click to add additional ranges.\n" +
-                "Keeping full range (0, inf) is highly recommended.")
-        self.statsWidget.setHeader(ParameterRange.displayDataDescr())
         self.modelWidget.setStatsWidget(self.statsWidget)
+        self.modelWidget.sigModelChanged.connect(self.statsWidget.updateHistograms)
         return self.statsWidget
 
     def _setupLogWidget(self):
@@ -947,6 +934,8 @@ class MainWindow(MainWindowBase):
             settingsWidget.storeSession()
         settings.setValue("lastpath", LastPath.get())
         settings.sync()
+        return
+        # test for additionally storing settings to file
         tempSettings = QSettings("/tmp/qsettings.test", QSettings.IniFormat)
         for key in settings.allKeys():
             if key in ('geometry', 'windowState', 'lastpath'):
@@ -965,6 +954,7 @@ class MainWindow(MainWindowBase):
         self.logWidget.scrollToTop()
 
     def onStartStopClick(self, checked):
+        processEventLoop()
         if checked:
             self.startStopBtn.setText("stop")
             self.startStopBtn.setChecked(True)

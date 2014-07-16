@@ -214,8 +214,6 @@ class McSAS(AlgorithmBase):
                     [str(p)+", active: "+str(p.isActive())
                         for p in self.model.params()])
         )
-        self.checkParameters() # checks histbins
-                               # (-> should go into custom parameter type)
         self.analyse()
         # continue if there are results only
         if not len(self.result):
@@ -295,17 +293,6 @@ class McSAS(AlgorithmBase):
     ######################################################################
     ##################### Pre-optimisation Functions #####################
     ######################################################################
-
-    def checkParameters(self):
-        """Checks for the Parameters, for example to make sure
-        histbins is defined for all, or to check if all Parameters fall
-        within their limits.
-        """
-        # set all parameters to be fitted to the same histogram setup
-        # depreciated soon with the implementation of the new statistics
-        for p in self.model.activeParams():
-            p.histogram().binCount = self.histogramBins()
-            p.histogram().scaleX = self.histogramXScale()[:3]
 
     def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2):
         """
