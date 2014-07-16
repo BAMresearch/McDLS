@@ -265,7 +265,8 @@ class McSAS(AlgorithmBase):
             self.dataOriginal = dataset
         else:
             self.dataPrepared = dataset
-        McSASParameters.contribParamBounds = list(dataset.sphericalSizeEst())
+        # Redundant:
+        # McSASParameters.contribParamBounds = list(dataset.sphericalSizeEst())
 
     def setParameter(self, kwargs):
         """Sets the supplied Parameters given in keyword-value pairs for known
