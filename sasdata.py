@@ -40,8 +40,9 @@ class SASData(DataSet, DisplayMixin):
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
-    _qUnits = 1. #can be set to scale to standard units (m^-1)
+    _qUnits = 1.e9 #can be set to scale to standard units (m^-1)
     _iUnits = 1. #can be set to scale to standard units ((m sr)^-1)
+    _qClipRange = [-np.inf, np.inf] #manually set Q clip range for this dataset
 
     @staticmethod
     def displayDataDescr():
@@ -59,12 +60,24 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def sphericalSizeEstText(self):
-        return "min: {0:.4f}, max: {1:.4f}".format(*self.sphericalSizeEst())
+        return "min: {0:.4g}, max: {1:.4g}".format(*self.sphericalSizeEst())
+
+    @property
+    def qClipRange(self):
+        return self._qClipRange
+
+    def qMin(self):
+        #returns minimum q from data or qClipRange, whichever is larger
+        return np.maximum(self.qClipRange[0], self.q.min())
+
+    def qMax(self):
+        #returns maximum q from data or qClipRange, whichever is smaller
+        return np.minimum(self.qClipRange[1], self.q.max())
 
     @property
     def qLimsString(self):
-        return "min Q: {0:.4f}, max Q: {1:.4f}".format(
-                self.q.min(), self.q.max())
+        return "min Q: {0:.4g}, max Q: {1:.4g}".format(
+                self.qMin(), self.qMax())
 
     @property
     def dataContent(self):
@@ -127,12 +140,12 @@ class SASData(DataSet, DisplayMixin):
     @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self.origin[:, 0] * self.qUnits
+        return self.origin[:, 0] 
 
     @property
     def i(self):
         """Measured intensity at q."""
-        return self.origin[:, 1] * self.iUnits
+        return self.origin[:, 1]
 
     @property
     def e(self):
@@ -158,10 +171,6 @@ class SASData(DataSet, DisplayMixin):
 
     def __init__(self, *args):
         DataSet.__init__(self, *args)
-        #self._sizeEst = np.pi / np.array([self.q.max(),
-        #                                  min(abs(self.q.min()),
-        #                                      abs(np.diff(self.q).min()))
-        #                                 ])
         self._sizeEst = np.pi / np.array([self.q.max(),
                                           abs(self.q.min()) ])
         self._prepareUncertainty()
@@ -227,7 +236,6 @@ class SASData(DataSet, DisplayMixin):
             cutIndices(validIndices,self.q[validIndices] > min(qBounds))
             cutIndices(validIndices,self.q[validIndices] <= max(qBounds))
         if isList(psiBounds) and self.is2d:
-            # excluding the lower q limit may prevent q = 0 from appearing
             cutIndices(validIndices,self.p[validIndices] > min(psiBounds))
             cutIndices(validIndices,self.p[validIndices] <= max(psiBounds))
 
