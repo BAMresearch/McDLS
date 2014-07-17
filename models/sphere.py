@@ -14,7 +14,7 @@ class Sphere(ScatteringModel):
                     displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
-                    suffix = "nm", decimals = 1), )
+                    suffix = "m", decimals = 1), )
     parameters[0].setActive(True)
 
     def __init__(self):
@@ -28,7 +28,7 @@ class Sphere(ScatteringModel):
         return result
 
     def formfactor(self, dataset):
-        qr = dataset.q * self.radius()
+        qr = dataset.q * self.radius() * dataset.qMagnitude
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         return result
 

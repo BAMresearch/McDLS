@@ -71,7 +71,7 @@ class PlotResults(object):
 
         # load original Dataset
         self._data = self._dataset.origin
-        self._q = self._data[:, 0]
+        self._q = self._data[:, 0] * self._dataset.qMagnitude
         self._intensity = self._data[:, 1]
         self._intError = self._data[:, 2]
 
@@ -184,7 +184,7 @@ class PlotResults(object):
         the colons are surrounded by string-marks, to force laTeX rendering"""
         oString = ' Fitting of data$:$ {} '.format(self._figureTitle)
         oString += '\n Q-range$:$ {0:03e} to {1:03e} '.format(
-            self._q.min(), self._q.max())
+            self._dataset.qMin, self._dataset.qMax)
         #oString.append('\n number of datapoints: {}'.format(len(self._q)))
         oString += '\n Active parameters$:$ {}, ranges: {} '.format(
             self._mcsasInstance.model.activeParamCount(), self._nR)
@@ -272,8 +272,8 @@ class PlotResults(object):
 
         # indexing probably wrong:
         qAxis.update( axisbg = (.95, .95, .95),
-                               xlim = QX, ylim = QY, xlabel = 'q_x, $\times 10^9$ 1/m',
-                               ylabel = 'q_y, $\times 10^9$  1/m')
+                               xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
+                               ylabel = 'q_y, 1/m')
         imshow(log10(intShow), extent = extent, origin = 'lower')
         qAxis = self.setAxis(qAxis)
         colorbar()
@@ -299,7 +299,7 @@ class PlotResults(object):
         qAxDict.update({
                 'xlim' : xLim,
                 'ylim' : yLim,
-                'xlabel' : 'q, $\\times 10^9 m^{-1}$', 
+                'xlabel' : 'q, $m^{-1}$', 
                 'ylabel' : 'intensity, $(m\, sr)^{-1}$'
                 })
 

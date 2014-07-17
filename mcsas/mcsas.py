@@ -263,8 +263,6 @@ class McSAS(AlgorithmBase):
             self.dataOriginal = dataset
         else:
             self.dataPrepared = dataset
-        # Redundant:
-        # McSASParameters.contribParamBounds = list(dataset.sphericalSizeEst())
 
     def setParameter(self, kwargs):
         """Sets the supplied Parameters given in keyword-value pairs for known
@@ -454,7 +452,7 @@ class McSAS(AlgorithmBase):
             contribs = contributions, # Rrep
             fitIntensityMean = contribIntensity.mean(axis = 2),
             fitIntensityStd = contribIntensity.std(axis = 2),
-            fitQ = data.q,
+            fitQ = data.q * data.qMagnitude,
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
 
@@ -481,14 +479,14 @@ class McSAS(AlgorithmBase):
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
         
-        q = data.q
+        q = data.q * data.qMagnitude
         # generate initial set of spheres
         if size(prior) == 0:
             if self.startFromMinimum():
                 for idx, param in enumerate(self.model.activeParams()):
                     mb = min(param.valueRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
-                        mb = pi / q.max()
+                        mb = pi / (q.max() * data.qMagnitude)
                     rset[:, idx] = numpy.ones(numContribs) * mb * .5
             else:
                 rset = self.model.generateParameters(numContribs)
