@@ -224,7 +224,7 @@ class RangeDialog(QDialog):
                 continue
             # providing the internal param name as item data
             pbox.addItem(p.displayName(), p.name())
-        pbox.addItem("Test Dummy", "dummy")
+        # pbox.addItem("Test Dummy", "dummy")
         pbox.setCurrentIndex(-1)
         pbox.currentIndexChanged[int].connect(self._selectParam)
         self.pbox = pbox
