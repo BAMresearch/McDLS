@@ -74,7 +74,7 @@ class SASData(DataSet, DisplayMixin):
     @property
     def sphericalSizeEstText(self):
         return u"{0:.3g} ≤ R [{rUnitName}] ≤ {1:.3g}".format(
-                *self.sphericalSizeEst(), rUnitName = "nm")
+                *self.sphericalSizeEst(), rUnitName = self.rMagnitudeName())
 
     def invName(self, unitString):
         if not u"⁻¹" in unitString:
@@ -87,6 +87,10 @@ class SASData(DataSet, DisplayMixin):
         if not magnitude in self._magnitudeDict:
             return u" "
         return self._magnitudeDict[magnitude]
+
+    def rMagnitudeName(self):
+        #derived from the q units of measure, cannot be set
+        return self.lengthName(1 / self.qMagnitude)
 
     @property
     def qMagnitudeName(self):
@@ -142,7 +146,7 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qLimsString(self):
         return u"{0:.3g} ≤ Q [{qMagnitudeName}] ≤ {1:.3g}".format(
-                self.qMin, self.qMax, qMagnitudeName = u"nm⁻¹")
+                self.qMin, self.qMax, qMagnitudeName = self.qMagnitudeName)
 
     @property
     def dataContent(self):
