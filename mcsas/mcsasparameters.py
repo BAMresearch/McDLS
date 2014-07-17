@@ -21,8 +21,8 @@ class McSASParameters(PropertyNames):
         - *qBounds*: limits in *q* between which the fit is applied
         - *psiBounds*: limits in azimuthal angle (2D patterns only) to which
             the fit is applied
-        - *qUnits*: indicates the multiplier to scale q to m^-1
-        - *iUnits*: indicates the multiplier to scale I to (m sr)^-1
+        - *qMagnitude*: indicates the multiplier to scale q to m^-1
+        - *iMagnitude*: indicates the multiplier to scale I to (m sr)^-1
         - *priors*: a set of contribution parameters for a number of McSAS 
             repetitions. These can be used to resume or recalculate an older
             result

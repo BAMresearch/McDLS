@@ -40,14 +40,27 @@ class SASData(DataSet, DisplayMixin):
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
-    _qUnits = 1.e9 #can be set to scale to standard units (m^-1)
-    _iUnits = 1. #can be set to scale to standard units ((m sr)^-1)
+    _qMagnitude = 1.e9 #can be set to scale to standard units (m^-1)
+    _iMagnitude = 1. #can be set to scale to standard units ((m sr)^-1)
     _qClipRange = [-np.inf, np.inf] #manually set Q clip range for this dataset
+    _magnitudeDict = { 1e-10 : u"Å",
+            1e-9 : u"nm",
+            1e-6 : u"µm",
+            1e-3 : u"nm",
+            1e-2 : u"cm",
+            1e0 : u"m"}
 
     @staticmethod
     def displayDataDescr():
         return ("filename", "data points", "data content", 
                 "Q limits", "est. sphere size")
+
+    @property
+    def magnitudeDict(self):
+        return self._magnitudeDict
+
+    def invMagnitudeDict(self):
+        return {v:k for k, v in self.magnitudeDict.items()}
 
     @property
     def displayData(self):
@@ -60,24 +73,76 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def sphericalSizeEstText(self):
-        return "min: {0:.4g}, max: {1:.4g}".format(*self.sphericalSizeEst())
+        return u"{0:.3g} ≤ R [{rUnitName}] ≤ {1:.3g}".format(
+                *self.sphericalSizeEst(), rUnitName = "nm")
+
+    def invName(self, unitString):
+        if not u"⁻¹" in unitString:
+            return unitString + u"⁻¹"
+        else: 
+            return unitString.replace( u"⁻¹", u"" )
+
+    def lengthName(self, magnitude):
+        #returns a string of (length) units 
+        if not magnitude in self._magnitudeDict:
+            return u" "
+        return self._magnitudeDict[magnitude]
+
+    @property
+    def qMagnitudeName(self):
+        return self.invName( self.lengthName(1 / self.qMagnitude) ) 
+
+    @qMagnitudeName.setter
+    def qMagnitudeName(self, name):
+        #looks up order of magnitude for a given text name of units
+        #strip inversion
+        name.replace( u"⁻¹", u"" )
+        #find in inverted dict:
+        try:
+            return self.invMagnitudeDict()[name]
+        except KeyError:
+            return 
+
+    @property
+    def qMagnitude(self):
+        """Scaling factor for q to move to m^-1."""
+        return self._qMagnitude
+
+    @qMagnitude.setter
+    def qMagnitude(self, value):
+        if not (1/value) in self.magnitudeDict:
+            logging.warning(
+                    "Q order of magnitude: {} not recognised." .format(value))
+        else:
+            self._qMagnitude = value
 
     @property
     def qClipRange(self):
         return self._qClipRange
 
+    @property
     def qMin(self):
         #returns minimum q from data or qClipRange, whichever is larger
         return np.maximum(self.qClipRange[0], self.q.min())
 
+    @qMin.setter
+    def qMin(self, newParam):
+        #value in cliprange will not exceed available q.
+        self.qClipRange[0] = np.maximum(newParam, self.q.min())
+
+    @property
     def qMax(self):
-        #returns maximum q from data or qClipRange, whichever is smaller
         return np.minimum(self.qClipRange[1], self.q.max())
+
+    @qMax.setter
+    def qMax(self, newParam):
+        #value in cliprange will not exceed available q.
+        self.qClipRange[1] = np.minimum(newParam, self.q.max())
 
     @property
     def qLimsString(self):
-        return "min Q: {0:.4g}, max Q: {1:.4g}".format(
-                self.qMin(), self.qMax())
+        return u"{0:.3g} ≤ Q [{qMagnitudeName}] ≤ {1:.3g}".format(
+                self.qMin, self.qMax, qMagnitudeName = u"nm⁻¹")
 
     @property
     def dataContent(self):
@@ -128,14 +193,9 @@ class SASData(DataSet, DisplayMixin):
         return cpy
 
     @property
-    def qUnits(self):
+    def iMagnitude(self):
         """Scaling factor for q to move to m^-1."""
-        return self._qUnits
-
-    @property
-    def iUnits(self):
-        """Scaling factor for q to move to m^-1."""
-        return self._iUnits
+        return self._iMagnitude
 
     @property
     def q(self):
@@ -150,7 +210,7 @@ class SASData(DataSet, DisplayMixin):
     @property
     def e(self):
         """Uncertainty or Error of the intensity at q."""
-        return self.origin[:, 2] * self.iUnits
+        return self.origin[:, 2] * self.iMagnitude
 
     @property
     def p(self):
