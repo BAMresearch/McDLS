@@ -69,12 +69,6 @@ class PlotResults(object):
                 'yscale' : 'log',
                 }
 
-        # load original Dataset
-        self._data = self._dataset.origin
-        self._q = self._data[:, 0] * self._dataset.qMagnitude
-        self._intensity = self._data[:, 1]
-        self._intError = self._data[:, 2]
-
         # number of histograms:
 #        self._nHists = mcsasInstance.model.activeParamCount()
         self._nHists = sum((len(p.histograms())
@@ -97,10 +91,12 @@ class PlotResults(object):
             
             #plot intensity fit:
             if dataset.is2d:
-                psi = data[:, 3]
-                intensity2d = allRes['intensity2d']
-                qAxis = ax[self._nHists + nR]
-                self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
+                # dysfunctional
+                pass
+                # psi = data[:, 3]
+                # intensity2d = allRes['intensity2d']
+                # qAxis = ax[self._nHists + nR]
+                # self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
 
             else:
                 # 1D data
@@ -109,7 +105,7 @@ class PlotResults(object):
                 fitQ = np.sort(self._result['fitQ'])
                 fitIntensity = self._result['fitIntensityMean'][0, 
                         np.argsort(self._result['fitQ'])]
-                self.plot1D(self._q, self._intensity, self._intError, 
+                self.plot1D(self._dataset,
                         fitQ, fitIntensity, qAxis)
 
             ## Information on the settings can be shown here:
@@ -183,12 +179,12 @@ class PlotResults(object):
         """Preformats the algorithm information ready for printing
         the colons are surrounded by string-marks, to force laTeX rendering"""
         oString = ' Fitting of data$:$ {} '.format(self._figureTitle)
-        oString += '\n Q-range$:$ {0:03e} to {1:03e} '.format(
+        oString += '\n Q-range$:$ {0:03g} to {1:03g} '.format(
             self._dataset.qMin, self._dataset.qMax)
         #oString.append('\n number of datapoints: {}'.format(len(self._q)))
         oString += '\n Active parameters$:$ {}, ranges: {} '.format(
             self._mcsasInstance.model.activeParamCount(), self._nR)
-        oString += '\n Background level: {0:03e} $\pm$ {1:03e}'.format(
+        oString += '\n Background level: {0:03g} $\pm$ {1:03g}'.format(
                 self._BG[0], self._BG[1])
 
         return oString
@@ -289,8 +285,14 @@ class PlotResults(object):
         axes(qAxis)
         plot(fitQ, fitIntensity, 'b-', lw = 1, label = 'MC partial intensity')
 
-    def plot1D(self, q, intensity, intError, fitQ, fitIntensity, qAxis):
+    def plot1D(self, dataset, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
+        q = dataset.q / dataset.qMagnitude
+        qUnitLabel = dataset.qMagnitudeName
+        intensity = dataset.i / dataset.iMagnitude
+        iUnitLabel = dataset.iMagnitudeName
+        intError = dataset.e / dataset.iMagnitude
+
         xLim = (q.min() * (1 - self._axisMargin), 
                 q.max() * (1 + self._axisMargin))
         yLim = (intensity[intensity != 0].min() * (1 - self._axisMargin), 
@@ -299,8 +301,8 @@ class PlotResults(object):
         qAxDict.update({
                 'xlim' : xLim,
                 'ylim' : yLim,
-                'xlabel' : 'q, $m^{-1}$', 
-                'ylabel' : 'intensity, $(m\, sr)^{-1}$'
+                'xlabel' : u'q [{}]'.format(qUnitLabel), 
+                'ylabel' : u'intensity [{}]'.format(iUnitLabel)
                 })
 
         """plots 1D data and fit"""
@@ -313,10 +315,12 @@ class PlotResults(object):
                  label = 'Measured intensity', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         self.plotGrid(qAxis)
-        plot(fitQ, fitIntensity, 'r-', lw = 3, 
+        plot(fitQ / dataset.qMagnitude, 
+                fitIntensity / dataset.iMagnitude, 'r-', lw = 3, 
                 label = 'MC Fit intensity', zorder = 4)
         try:
-            plot(fitQ, self._BG[0] + 0*fitQ,
+            plot(fitQ / dataset.qMagnitude, 
+                    (self._BG[0] + 0*fitQ) / dataset.iMagnitude,
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})' .format(
                      self._BG[0]), zorder = 3)

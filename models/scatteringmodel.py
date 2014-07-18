@@ -173,7 +173,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
                 .format(model = cls.name(), fn = filename,
                         mean = delta.mean(), relerr = relerr,
                         dmax = dmax, data = numpy.hstack((
-                            dataset.q.reshape(-1, 1) * dataset.qMagnitude,
+                            dataset.q.reshape(-1, 1),
                             dataset.i.reshape(-1, 1),
                             intensity.reshape(-1, 1),
                             delta.reshape(-1, 1)))[max(0, dmax-4):dmax+5]

@@ -56,6 +56,16 @@ class SASData(DataSet, DisplayMixin):
                 "Q limits", "est. sphere size")
 
     @property
+    def iMagnitude(self):
+        """Scaling factor for q to move to m^-1."""
+        return self._iMagnitude
+
+    @property
+    def iMagnitudeName(self):
+        #to be replaced with more proper function later
+        return u"(m sr)⁻¹"
+
+    @property
     def magnitudeDict(self):
         return self._magnitudeDict
 
@@ -74,7 +84,8 @@ class SASData(DataSet, DisplayMixin):
     @property
     def sphericalSizeEstText(self):
         return u"{0:.3g} ≤ R [{rUnitName}] ≤ {1:.3g}".format(
-                *self.sphericalSizeEst(), rUnitName = self.rMagnitudeName())
+                *self.sphericalSizeEst() / self.rMagnitude, 
+                rUnitName = self.rMagnitudeName())
 
     def invName(self, unitString):
         if not u"⁻¹" in unitString:
@@ -90,7 +101,10 @@ class SASData(DataSet, DisplayMixin):
 
     def rMagnitudeName(self):
         #derived from the q units of measure, cannot be set
-        return self.lengthName(1 / self.qMagnitude)
+        return self.lengthName(self.rMagnitude)
+
+    def rMagnitude(self):
+        return 1 / self.qMagnitude
 
     @property
     def qMagnitudeName(self):
@@ -146,7 +160,9 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qLimsString(self):
         return u"{0:.3g} ≤ Q [{qMagnitudeName}] ≤ {1:.3g}".format(
-                self.qMin, self.qMax, qMagnitudeName = self.qMagnitudeName)
+                self.qMin / self.qMagnitude, 
+                self.qMax / self.qMagnitude, 
+                qMagnitudeName = self.qMagnitudeName)
 
     @property
     def dataContent(self):
@@ -197,19 +213,14 @@ class SASData(DataSet, DisplayMixin):
         return cpy
 
     @property
-    def iMagnitude(self):
-        """Scaling factor for q to move to m^-1."""
-        return self._iMagnitude
-
-    @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self.origin[:, 0] 
+        return self.origin[:, 0] * self.qMagnitude
 
     @property
     def i(self):
         """Measured intensity at q."""
-        return self.origin[:, 1]
+        return self.origin[:, 1] * self.iMagnitude
 
     @property
     def e(self):

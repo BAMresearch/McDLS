@@ -28,7 +28,7 @@ class Sphere(ScatteringModel):
         return result
 
     def formfactor(self, dataset):
-        qr = dataset.q * self.radius() * dataset.qMagnitude
+        qr = dataset.q * self.radius() 
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         return result
 
