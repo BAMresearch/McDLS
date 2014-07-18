@@ -301,8 +301,8 @@ class PlotResults(object):
         qAxDict.update({
                 'xlim' : xLim,
                 'ylim' : yLim,
-                'xlabel' : u'q [{}]'.format(qUnitLabel), 
-                'ylabel' : u'intensity [{}]'.format(iUnitLabel)
+                'xlabel' : u'q ({})'.format(qUnitLabel), 
+                'ylabel' : u'intensity ({})'.format(iUnitLabel)
                 })
 
         """plots 1D data and fit"""
