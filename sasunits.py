@@ -46,25 +46,31 @@ class SASUnits(object):
     > rUnit.magnitudeConversion('nm', 'm')
     or:
     > rUnit.magnitudeConversion('nm')
+    out: 1e-9
+
+    Selecting a default: 
+    > qUnit = SASUnits(magnitudedict = 'q', outputmagnitudename = u"m⁻¹", inputmagnitudename = u"cm⁻¹")
+    > qUnit.magnitudeConversion(u"cm⁻¹")
+    out: 100.0
     """
     _magnitudeDict = dict()
     _outputMagnitudeName = u"" 
     _inputMagnitudeName = u""
     #default library
     _defaultDicts = {
-            u'length' : { 1e-10 : u"Å", 
+            'length' : { 1e-10 : u"Å", 
                 1e-9 : u"nm",
                 1e-6 : u"µm",
                 1e-3 : u"nm",
                 1e-2 : u"cm",
                 1e0 : u"m"},
-            u'q' :  { 1e10 : u"Å⁻¹",
+            'q' :  { 1e10 : u"Å⁻¹",
                 1e9 : u"nm⁻¹",
                 1e6 : u"µm⁻¹",
-                1e3 : u"nm⁻¹",
+                1e3 : u"mm⁻¹",
                 1e2 : u"cm⁻¹",
                 1e0 : u"m⁻¹"},
-            u'I' :  { 1e2 : u"(cm sr)⁻¹",
+            'I' :  { 1e2 : u"(cm sr)⁻¹",
                 1e0 : u"(m sr)⁻¹"},
             }
 
@@ -180,6 +186,8 @@ class SASUnits(object):
         Returns: 
         *float* : A scaling factor for input unit to scale to output unit.
         """
+        if inputmagnitudename is None:
+            inputmagnitudename = self.inputMagnitudeName
         if outputmagnitudename is None:
             outputmagnitudename = self.outputMagnitudeName
 
