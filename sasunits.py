@@ -39,19 +39,34 @@ class SASUnits(object):
         unicode strings.
     *outputmagnitudename*: the output magnitude name
 
-    Available methods:
-
+    Example usage: 
+    > rUnit = SASUnits(magnitudedict = {1e-9 : u"nm", 1e0 : u"m"}, 
+        outputmagnitudename = "m", 
+        inputmagnitudename = "nm")
+    > rUnit.magnitudeConversion('nm', 'm')
+    or:
+    > rUnit.magnitudeConversion('nm')
     """
     _magnitudeDict = dict()
     _outputMagnitudeName = u"" 
     _inputMagnitudeName = u""
     #default library
-    _lengthMagnitudeDict = { 1e-10 : u"Å",
-            1e-9 : u"nm",
-            1e-6 : u"µm",
-            1e-3 : u"nm",
-            1e-2 : u"cm",
-            1e0 : u"m"}
+    _defaultDicts = {
+            u'length' : { 1e-10 : u"Å", 
+                1e-9 : u"nm",
+                1e-6 : u"µm",
+                1e-3 : u"nm",
+                1e-2 : u"cm",
+                1e0 : u"m"},
+            u'q' :  { 1e10 : u"Å⁻¹",
+                1e9 : u"nm⁻¹",
+                1e6 : u"µm⁻¹",
+                1e3 : u"nm⁻¹",
+                1e2 : u"cm⁻¹",
+                1e0 : u"m⁻¹"},
+            u'I' :  { 1e2 : u"(cm sr)⁻¹",
+                1e0 : u"(m sr)⁻¹"},
+            }
 
     def __init__(self, **kwargs):
         """process input. Input should contain keywords defined above"""
@@ -60,11 +75,25 @@ class SASUnits(object):
         inArg = kwargs.get('inputmagnitudename', None)
 
         if dictArg is not None:
-            self.magnitudeDict = dictArg
+            if isinstance(dictArg, dict):
+                #set the dict
+                self.magnitudeDict = dictArg
+            else: 
+                #select one of the predefined dicts
+                self.magnitudeDict = self.defaultDict(dictArg)
         if outArg is not None:
             self.outputMagnitudeName = outArg
         if inArg is not None:
             self.inputMagnitudeName = inArg
+
+    def defaultDict(self, dictArg = None):
+        if dictArg in self._defaultDicts.keys():
+            return self._defaultDicts[dictArg]
+        else:
+            logging.warning('dictionary for {} not found'.format(dictArg))
+        logging.info('Default dictionaries available for: {}'
+                .format(self._defaultDicts.keys()))
+        return None
 
     def magnitude(self, name):
         """Returns a (numerical) magnitude matching a magnitude name"""
