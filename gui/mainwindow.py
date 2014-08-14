@@ -557,6 +557,8 @@ class SettingsWidget(SettingsWidgetBase):
                 param.displayName(), suffix)))
 
         widget.setLayout(layout)
+        if isString(param.__doc__):
+            widget.setToolTip(param.__doc__)
         minmaxValue, widgets = None, []
         # instead of create/remove widgets, show/hide them on active toggle
         if isinstance(param, ParameterNumerical):
