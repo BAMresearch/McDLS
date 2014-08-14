@@ -18,7 +18,7 @@ from cutesnake.dataset import DataSet
 from cutesnake.utils import isList, isString, isFrozen
 from cutesnake.algorithm import (AlgorithmBase,
                                  RandomUniform, RandomExponential)
-from utils.parameter import ParameterBase, Histogram
+from utils.parameter import ParameterBase, Histogram, isActiveParam
 from utils.propertynames import PropertyNames
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
@@ -211,7 +211,7 @@ class McSAS(AlgorithmBase):
             return
         logging.info(
                 "\n".join(["Analysing parameters: "]+
-                    [str(p)+", active: "+str(p.isActive())
+                    [str(p)+", active: "+str(isActiveParam(p))
                         for p in self.model.params()])
         )
         self.analyse()
@@ -392,7 +392,7 @@ class McSAS(AlgorithmBase):
         numContribs = self.numContribs()
         numReps = self.numReps()
         minConvergence = self.convergenceCriterion()
-        if not any([p.isActive() for p in self.model.params()]):
+        if not any([isActiveParam(p) for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
         contributions = zeros((self.numContribs(), 

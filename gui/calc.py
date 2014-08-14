@@ -19,7 +19,7 @@ from cutesnake.utilsgui.displayexception import DisplayException
 from cutesnake.log import timestamp, addHandler
 import cutesnake.log as log
 from mcsas.mcsas import McSAS
-from utils.parameter import Histogram, Moments
+from utils.parameter import Histogram, Moments, isActiveParam
 
 class Calculator(object):
     _algo = None # McSAS algorithm instance
@@ -185,7 +185,7 @@ class Calculator(object):
         sectionName = "Model Settings"
         config.add_section(sectionName)
         for p in self.modelParams():
-            if p.isActive():
+            if isActiveParam(p):
                 config.set(sectionName, p.name()+"_min", p.min())
                 config.set(sectionName, p.name()+"_max", p.max())
             else:

@@ -28,7 +28,8 @@ from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBas
 from cutesnake.utils.lastpath import LastPath
 from utils import isList, isString, processEventLoop
 from cutesnake.utils.tests import testfor
-from utils.parameter import ParameterNumerical, Histogram
+from cutesnake.utilsgui.displayexception import DisplayException
+from utils.parameter import ParameterNumerical, Histogram, FitParameterBase
 from version import version
 from calc import Calculator
 from sasdata import SASData
@@ -582,7 +583,9 @@ class SettingsWidget(SettingsWidgetBase):
         except: pass
         w.setFixedWidth(FIXEDWIDTH)
         widgets.insert(len(widgets)/2, w)
+        activeBtns = activeBtns and isinstance(param, FitParameterBase)
         if activeBtns:
+            # create *active* buttons for FitParameters only
             w = self._makeEntry(param.name()+"active", bool,
                                 param.isActive(),
                                 widgetType = QPushButton,
