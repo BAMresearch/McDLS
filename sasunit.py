@@ -2,61 +2,40 @@
 # mcsas/sasdata.py
 
 """
-Represents data associated with a measurement by small angle scattering (SAS).
-Some examples and tests.
+Defines methods for using and manipulating units of variables. 
+Some default magnitude-name dictionaries are provided, but the user can 
+supply their own dictionary if required. Default unit to translate to 
+must be set.
+Required keyword arguments:
+*magnitudedict*: a dictionary of magnitude - name pairs. Names must be 
+    unicode strings.
+*outputmagnitudename*: the output magnitude name
 
->>> import numpy
->>> testdata = numpy.random.rand(4,4)
->>> testtitle = "some title"
->>> from sasdata import SASData
+Example usage: 
 
-Testing copy()
->>> first = SASData(testtitle, testdata)
->>> first.title == testtitle
-True
->>> numpy.all(first.origin == testdata)
-True
->>> second = first.copy()
->>> second.title == testtitle
-True
->>> numpy.all(second.origin == testdata)
-True
->>> first == second
-True
+>>> rUnit = SASUnit(magnitudedict = {1e-9 : u"nm", 1e0 : u"m"}, 
+    outputmagnitudename = "m", 
+    inputmagnitudename = "nm")
+>>> rUnit.magnitudeConversion('nm', 'm')
+or:
+>>> rUnit.magnitudeConversion('nm')
+1e-9
+
+Selecting a default: 
+>>> qUnit = SASUnit(magnitudedict = 'q', outputmagnitudename = u"m⁻¹", inputmagnitudename = u"cm⁻¹")
+>>> qUnit.magnitudeConversion(u"cm⁻¹")
+100.0
+
 """
 
 import logging
 import numpy as np # For arrays
 
-class SASUnits(object):
-    """
-    Defines methods for using and manipulating units of variables. 
-    Some default magnitude-name dictionaries are provided, but the user can 
-    supply their own dictionary if required. Default unit to translate to 
-    must be set.
-    Required keyword arguments:
-    *magnitudedict*: a dictionary of magnitude - name pairs. Names must be 
-        unicode strings.
-    *outputmagnitudename*: the output magnitude name
-
-    Example usage: 
-    > rUnit = SASUnits(magnitudedict = {1e-9 : u"nm", 1e0 : u"m"}, 
-        outputmagnitudename = "m", 
-        inputmagnitudename = "nm")
-    > rUnit.magnitudeConversion('nm', 'm')
-    or:
-    > rUnit.magnitudeConversion('nm')
-    out: 1e-9
-
-    Selecting a default: 
-    > qUnit = SASUnits(magnitudedict = 'q', outputmagnitudename = u"m⁻¹", inputmagnitudename = u"cm⁻¹")
-    > qUnit.magnitudeConversion(u"cm⁻¹")
-    out: 100.0
-    """
+class SASUnit(object):
     _magnitudeDict = dict()
     _outputMagnitudeName = u"" 
     _inputMagnitudeName = u""
-    #default library
+    #default library, if growing out of bounds should be put in json dict
     _defaultDicts = {
             'length' : { 1e-10 : u"Å", 
                 1e-9 : u"nm",

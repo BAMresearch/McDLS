@@ -32,6 +32,7 @@ from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.dataset import DataSet, DisplayMixin
 from cutesnake.utils import isList
 from cutesnake.utilsgui import processEventLoop
+from sasunit import SASUnit
 
 class SASData(DataSet, DisplayMixin):
     """Represents one set of data from a unique source (a file, for example).
@@ -40,9 +41,12 @@ class SASData(DataSet, DisplayMixin):
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
-    _qMagnitude = 1.e9 #can be set to scale to standard units (m^-1)
-    _iMagnitude = 1. #can be set to scale to standard units ((m sr)^-1)
-    _qClipRange = [-np.inf, np.inf] #manually set Q clip range for this dataset
+    _qMeta = None # will be instance of SASUnit, defines units
+    _iMeta = None # will be instance of SASUnit, defines units
+    _rMeta = None # defines units for r used in sizeest
+    _qMagnitude = 1.e9 # can be set to scale to standard units (m^-1)
+    _iMagnitude = 1. # can be set to scale to standard units ((m sr)^-1)
+    _qClipRange = [-np.inf, np.inf] # manually set Q clip range for this dataset
     _magnitudeDict = { 1e-10 : u"Å",
             1e-9 : u"nm",
             1e-6 : u"µm",
@@ -249,6 +253,15 @@ class SASData(DataSet, DisplayMixin):
         self._sizeEst = np.pi / np.array([self.q.max(),
                                           abs(self.q.min()) ])
         self._prepareUncertainty()
+        self._qMeta = SASUnit(magnitudedict = 'q', #see SASUnits._defaultDicts
+                outputmagnitudename = u"m⁻¹", # we use 1/m internally
+                inputmagnitudename = u"nm⁻¹") # input is assumed to be 1/nm
+        self._iMeta = SASUnit(magnitudedict = 'I', #see SASUnits._defaultDicts
+                outputmagnitudename = u"(m sr)⁻¹", # internal units
+                inputmagnitudename = u"(m sr)⁻¹") # input units
+        self._rMeta = SASUnit(magnitudedict = 'length', 
+                outputmagnitudename = u"m", # we use m internally
+                inputmagnitudename = u"m") # input is assumed to be 1/m
 
     def _prepareUncertainty(self):
         self._uncertainty = self.minUncertainty() * self.i
