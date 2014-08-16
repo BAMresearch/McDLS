@@ -9,6 +9,7 @@ import numpy
 from utils import isList, isNumber, mixedmethod, testfor
 from cutesnake.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
+from utils.parameter import isActiveParam
 from sasdata import SASData
 
 class ScatteringModel(AlgorithmBase, PropertyNames):
@@ -62,7 +63,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
             # generate numbers in different range for each parameter
             #only for active parameters, otherwise it may try to generate
             #random values for a boolean-type parameter.
-            if param.isActive():
+            if isActiveParam(param):
                 lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
@@ -77,7 +78,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     @mixedmethod
     def activeParams(setforcls):
         """returns all "active" parameters of this algorithm"""
-        aPars = [par for par in setforcls.params() if par.isActive()]
+        aPars = [par for par in setforcls.params() if isActiveParam(par)]
         return tuple(aPars)
 
     @mixedmethod

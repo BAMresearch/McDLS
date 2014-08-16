@@ -527,6 +527,11 @@ class Histograms(list):
         for i in range(len(self)):
             self[i].calc(*args)
 
+def isActiveParam(param):
+    """Checks any type of parameter for activeness.
+    Shorter than that below or an try/except clause."""
+    return isinstance(param, FitParameterBase) and param.isActive()
+
 class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
     cutesnake.algorithm.parameter to introduce more specific fit

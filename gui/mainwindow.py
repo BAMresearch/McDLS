@@ -28,7 +28,8 @@ from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBas
 from cutesnake.utils.lastpath import LastPath
 from utils import isList, isString, processEventLoop
 from cutesnake.utils.tests import testfor
-from utils.parameter import ParameterNumerical, Histogram
+from cutesnake.utilsgui.displayexception import DisplayException
+from utils.parameter import ParameterNumerical, Histogram, FitParameterBase
 from version import version
 from calc import Calculator
 from sasdata import SASData
@@ -556,6 +557,8 @@ class SettingsWidget(SettingsWidgetBase):
                 param.displayName(), suffix)))
 
         widget.setLayout(layout)
+        if isString(param.__doc__):
+            widget.setToolTip(param.__doc__)
         minmaxValue, widgets = None, []
         # instead of create/remove widgets, show/hide them on active toggle
         if isinstance(param, ParameterNumerical):
@@ -582,14 +585,17 @@ class SettingsWidget(SettingsWidgetBase):
         except: pass
         w.setFixedWidth(FIXEDWIDTH)
         widgets.insert(len(widgets)/2, w)
+        activeBtns = activeBtns and isinstance(param, FitParameterBase)
+        w = QWidget()
         if activeBtns:
+            # create *active* buttons for FitParameters only
             w = self._makeEntry(param.name()+"active", bool,
                                 param.isActive(),
                                 widgetType = QPushButton,
                                 parent = widget)
             w.setText("active")
-            w.setFixedWidth(FIXEDWIDTH*.5)
-            widgets.append(w)
+        w.setFixedWidth(FIXEDWIDTH*.5)
+        widgets.append(w)
         # add input widgets to the layout
         for w in widgets:
             layout.addWidget(w)
