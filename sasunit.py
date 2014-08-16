@@ -9,20 +9,20 @@ must be set.
 Required keyword arguments:
 *magnitudedict*: a dictionary of magnitude - name pairs. Names must be 
     unicode strings.
-*outputmagnitudename*: the output magnitude name
+*simagnitudename*: the si magnitude name
 
 Example usage: 
 
 >>> rUnit = SASUnit(magnitudedict = {1e-9 : u"nm", 1e0 : u"m"}, 
-    outputmagnitudename = "m", 
-    inputmagnitudename = "nm")
+    simagnitudename = "m", 
+    displaymagnitudename = "nm")
 >>> rUnit.magnitudeConversion('nm', 'm')
 or:
 >>> rUnit.magnitudeConversion('nm')
 1e-9
 
 Selecting a default: 
->>> qUnit = SASUnit(magnitudedict = 'q', outputmagnitudename = u"m⁻¹", inputmagnitudename = u"cm⁻¹")
+>>> qUnit = SASUnit(magnitudedict = 'q', simagnitudename = u"m⁻¹", displaymagnitudename = u"cm⁻¹")
 >>> qUnit.magnitudeConversion(u"cm⁻¹")
 100.0
 
@@ -33,14 +33,14 @@ import numpy as np # For arrays
 
 class SASUnit(object):
     _magnitudeDict = dict()
-    _outputMagnitudeName = u"" 
-    _inputMagnitudeName = u""
+    _siMagnitudeName = u"" 
+    _displayMagnitudeName = u""
     #default library, if growing out of bounds should be put in json dict
     _defaultDicts = {
             'length' : { 1e-10 : u"Å", 
                 1e-9 : u"nm",
                 1e-6 : u"µm",
-                1e-3 : u"nm",
+                1e-3 : u"mm",
                 1e-2 : u"cm",
                 1e0 : u"m"},
             'q' :  { 1e10 : u"Å⁻¹",
@@ -54,10 +54,10 @@ class SASUnit(object):
             }
 
     def __init__(self, **kwargs):
-        """process input. Input should contain keywords defined above"""
+        """process display. Input should contain keywords defined above"""
         dictArg = kwargs.get('magnitudedict', None)
-        outArg = kwargs.get('outputmagnitudename', None)
-        inArg = kwargs.get('inputmagnitudename', None)
+        outArg = kwargs.get('simagnitudename', None)
+        inArg = kwargs.get('displaymagnitudename', None)
 
         if dictArg is not None:
             if isinstance(dictArg, dict):
@@ -67,9 +67,9 @@ class SASUnit(object):
                 #select one of the predefined dicts
                 self.magnitudeDict = self.defaultDict(dictArg)
         if outArg is not None:
-            self.outputMagnitudeName = outArg
+            self.siMagnitudeName = outArg
         if inArg is not None:
-            self.inputMagnitudeName = inArg
+            self.displayMagnitudeName = inArg
 
     def defaultDict(self, dictArg = None):
         if dictArg in self._defaultDicts.keys():
@@ -89,46 +89,46 @@ class SASUnit(object):
                     .format(name))
 
     @property
-    def outputMagnitude(self):
-        return self.magnitude(self.outputMagnitudeName)
-    @outputMagnitude.setter
-    def outputMagnitude(self, magnum):
+    def siMagnitude(self):
+        return self.magnitude(self.siMagnitudeName)
+    @siMagnitude.setter
+    def siMagnitude(self, magnum):
         try:
-            self.outputMagnitudeName = self.magnitudeDict[magnum]
+            self.siMagnitudeName = self.magnitudeDict[magnum]
         except KeyError:
-            logging.warning('no matching magnitude name for output magnitude {}'
+            logging.warning('no matching magnitude name for si magnitude {}'
                     .format(magname))
 
     @property
-    def outputMagnitudeName(self):
-        return self._outputMagnitudeName
-    @outputMagnitudeName.setter
-    def outputMagnitudeName(self, name):
+    def siMagnitudeName(self):
+        return self._siMagnitudeName
+    @siMagnitudeName.setter
+    def siMagnitudeName(self, name):
         if name in self.invMagnitudeDict():
-            self._outputMagnitudeName = name
+            self._siMagnitudeName = name
         else:
-            logging.warning('no valid output magnitude name used.')
+            logging.warning('no valid si magnitude name used.')
 
     @property
-    def inputMagnitude(self):
-        return self.magnitude(self.inputMagnitudeName)
-    @inputMagnitude.setter
-    def inputMagnitude(self, magnum):
+    def displayMagnitude(self):
+        return self.magnitude(self.displayMagnitudeName)
+    @displayMagnitude.setter
+    def displayMagnitude(self, magnum):
         try:
-            self.inputMagnitudeName = self.magnitudeDict[magnum]
+            self.displayMagnitudeName = self.magnitudeDict[magnum]
         except KeyError:
-            logging.warning('no matching magnitude name for input magnitude {}'
+            logging.warning('no matching magnitude name for display magnitude {}'
                     .format(magname))
 
     @property
-    def inputMagnitudeName(self):
-        return self._inputMagnitudeName
-    @inputMagnitudeName.setter
-    def inputMagnitudeName(self, name):
+    def displayMagnitudeName(self):
+        return self._displayMagnitudeName
+    @displayMagnitudeName.setter
+    def displayMagnitudeName(self, name):
         if name in self.invMagnitudeDict():
-            self._inputMagnitudeName = name
+            self._displayMagnitudeName = name
         else:
-            logging.warning('no valid input magnitude name used.')
+            logging.warning('no valid display magnitude name used.')
 
     @property
     def magnitudeDict(self):
@@ -152,28 +152,28 @@ class SASUnit(object):
         else: 
             return unitString.replace( u"⁻¹", u"" )
 
-    def magnitudeConversion(self, inputmagnitudename = None, 
-            outputmagnitudename = None):
+    def magnitudeConversion(self, displaymagnitudename = None, 
+            simagnitudename = None):
         """
-        Scaling factor to move from input magnitude to output units.
-        Required input argument:
-        *inputmagnitudename* : The name of the magnitude to convert from
-        Optional input argument:
-        *outputmagnitudename* : The name of the magnitude to convert to. 
-            Defaults to self.outputMagnitudeName
+        Scaling factor to move from display magnitude to si units.
+        Required display argument:
+        *displaymagnitudename* : The name of the magnitude to convert from
+        Optional display argument:
+        *simagnitudename* : The name of the magnitude to convert to. 
+            Defaults to self.siMagnitudeName
 
         Returns: 
-        *float* : A scaling factor for input unit to scale to output unit.
+        *float* : A scaling factor for display unit to scale to si unit.
         """
-        if inputmagnitudename is None:
-            inputmagnitudename = self.inputMagnitudeName
-        if outputmagnitudename is None:
-            outputmagnitudename = self.outputMagnitudeName
+        if displaymagnitudename is None:
+            displaymagnitudename = self.displayMagnitudeName
+        if simagnitudename is None:
+            simagnitudename = self.siMagnitudeName
 
-        #find input units:
-        iUnit = self.invMagnitudeDict()[inputmagnitudename.strip()]
-        #find output units
-        oUnit = self.invMagnitudeDict()[outputmagnitudename.strip()]
+        #find display units:
+        iUnit = self.invMagnitudeDict()[displaymagnitudename.strip()]
+        #find si units
+        oUnit = self.invMagnitudeDict()[simagnitudename.strip()]
         return iUnit / oUnit
     
 # vim: set ts=4 sts=4 sw=4 tw=0:

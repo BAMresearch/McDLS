@@ -44,37 +44,12 @@ class SASData(DataSet, DisplayMixin):
     _qMeta = None # will be instance of SASUnit, defines units
     _iMeta = None # will be instance of SASUnit, defines units
     _rMeta = None # defines units for r used in sizeest
-    _qMagnitude = 1.e9 # can be set to scale to standard units (m^-1)
-    _iMagnitude = 1. # can be set to scale to standard units ((m sr)^-1)
     _qClipRange = [-np.inf, np.inf] # manually set Q clip range for this dataset
-    _magnitudeDict = { 1e-10 : u"Å",
-            1e-9 : u"nm",
-            1e-6 : u"µm",
-            1e-3 : u"nm",
-            1e-2 : u"cm",
-            1e0 : u"m"}
 
     @staticmethod
     def displayDataDescr():
         return ("filename", "data points", "data content", 
                 "Q limits", "est. sphere size")
-
-    @property
-    def iMagnitude(self):
-        """Scaling factor for q to move to m^-1."""
-        return self._iMagnitude
-
-    @property
-    def iMagnitudeName(self):
-        #to be replaced with more proper function later
-        return u"(m sr)⁻¹"
-
-    @property
-    def magnitudeDict(self):
-        return self._magnitudeDict
-
-    def invMagnitudeDict(self):
-        return {v:k for k, v in self.magnitudeDict.items()}
 
     @property
     def displayData(self):
@@ -88,55 +63,8 @@ class SASData(DataSet, DisplayMixin):
     @property
     def sphericalSizeEstText(self):
         return u"{0:.3g} ≤ R [{rUnitName}] ≤ {1:.3g}".format(
-                *self.sphericalSizeEst() / self.rMagnitude, 
-                rUnitName = self.rMagnitudeName())
-
-    def invName(self, unitString):
-        if not u"⁻¹" in unitString:
-            return unitString + u"⁻¹"
-        else: 
-            return unitString.replace( u"⁻¹", u"" )
-
-    def lengthName(self, magnitude):
-        #returns a string of (length) units 
-        if not magnitude in self._magnitudeDict:
-            return u" "
-        return self._magnitudeDict[magnitude]
-
-    def rMagnitudeName(self):
-        #derived from the q units of measure, cannot be set
-        return self.lengthName(self.rMagnitude)
-
-    def rMagnitude(self):
-        return 1 / self.qMagnitude
-
-    @property
-    def qMagnitudeName(self):
-        return self.invName( self.lengthName(1 / self.qMagnitude) ) 
-
-    @qMagnitudeName.setter
-    def qMagnitudeName(self, name):
-        #looks up order of magnitude for a given text name of units
-        #strip inversion
-        name.replace( u"⁻¹", u"" )
-        #find in inverted dict:
-        try:
-            return self.invMagnitudeDict()[name]
-        except KeyError:
-            return 
-
-    @property
-    def qMagnitude(self):
-        """Scaling factor for q to move to m^-1."""
-        return self._qMagnitude
-
-    @qMagnitude.setter
-    def qMagnitude(self, value):
-        if not (1/value) in self.magnitudeDict:
-            logging.warning(
-                    "Q order of magnitude: {} not recognised." .format(value))
-        else:
-            self._qMagnitude = value
+                *self.sphericalSizeEst() / self._rMeta.magnitudeConversion(), 
+                rUnitName = self._rMeta.displayMagnitudeName)
 
     @property
     def qClipRange(self):
@@ -164,9 +92,9 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qLimsString(self):
         return u"{0:.3g} ≤ Q [{qMagnitudeName}] ≤ {1:.3g}".format(
-                self.qMin / self.qMagnitude, 
-                self.qMax / self.qMagnitude, 
-                qMagnitudeName = self.qMagnitudeName)
+                self.qMin / self._qMeta.magnitudeConversion(), 
+                self.qMax / self._qMeta.magnitudeConversion(), 
+                qMagnitudeName = self._qMeta.displayMagnitudeName)
 
     @property
     def dataContent(self):
@@ -219,17 +147,17 @@ class SASData(DataSet, DisplayMixin):
     @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self.origin[:, 0] * self.qMagnitude
+        return self.origin[:, 0] * self._qMeta.magnitudeConversion()
 
     @property
     def i(self):
         """Measured intensity at q."""
-        return self.origin[:, 1] * self.iMagnitude
+        return self.origin[:, 1] * self._iMeta.magnitudeConversion()
 
     @property
     def e(self):
         """Uncertainty or Error of the intensity at q."""
-        return self.origin[:, 2] * self.iMagnitude
+        return self.origin[:, 2] * self._iMeta.magnitudeConversion()
 
     @property
     def p(self):
@@ -249,19 +177,21 @@ class SASData(DataSet, DisplayMixin):
         return self.origin.shape[1] > 2
 
     def __init__(self, *args):
+        #set unit definitions for display and internal units
+        self._qMeta = SASUnit(magnitudedict = 'q', #see SASUnits._defaultDicts
+                simagnitudename = u"m⁻¹", # we use 1/m internally
+                displaymagnitudename = u"nm⁻¹") # display is assumed to be 1/nm
+        self._iMeta = SASUnit(magnitudedict = 'I', #see SASUnits._defaultDicts
+                simagnitudename = u"(m sr)⁻¹", # internal units
+                displaymagnitudename = u"(m sr)⁻¹") # display units
+        self._rMeta = SASUnit(magnitudedict = 'length', 
+                simagnitudename = u"m", # we use m internally
+                displaymagnitudename = u"nm") # display is assumed to be nm
+
         DataSet.__init__(self, *args)
         self._sizeEst = np.pi / np.array([self.q.max(),
                                           abs(self.q.min()) ])
         self._prepareUncertainty()
-        self._qMeta = SASUnit(magnitudedict = 'q', #see SASUnits._defaultDicts
-                outputmagnitudename = u"m⁻¹", # we use 1/m internally
-                inputmagnitudename = u"nm⁻¹") # input is assumed to be 1/nm
-        self._iMeta = SASUnit(magnitudedict = 'I', #see SASUnits._defaultDicts
-                outputmagnitudename = u"(m sr)⁻¹", # internal units
-                inputmagnitudename = u"(m sr)⁻¹") # input units
-        self._rMeta = SASUnit(magnitudedict = 'length', 
-                outputmagnitudename = u"m", # we use m internally
-                inputmagnitudename = u"m") # input is assumed to be 1/m
 
     def _prepareUncertainty(self):
         self._uncertainty = self.minUncertainty() * self.i
