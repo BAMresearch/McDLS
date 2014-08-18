@@ -6,6 +6,7 @@ from numpy import pi, sin, cos
 from cutesnake.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
+from sasunit import SASUnit
 
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""
@@ -14,14 +15,20 @@ class Sphere(ScatteringModel):
                     displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
-                    suffix = "m", decimals = 1), )
+                    decimals = 1), )
     parameters[0].setActive(True)
+    #set units
+    parameters[0].unit = SASUnit(magnitudedict = 'length', 
+            simagnitudename = u'm',
+            displaymagnitudename = u'nm')
+    #set suffix (normally set in above FitParameter definition) identical
+    #to displayname (temporary). Eventually, GUI should use unit metadata
+    parameters[0].setSuffix( parameters[0].unit.displayMagnitudeName )
 
     def __init__(self):
         super(Sphere, self).__init__()
-        # this only works for people
-        # defining lengths in angstrom or nm, not m.
-        self.radius.setValueRange((1.0, 1e4))
+        #stored in SI units. GUI input must convert upon ingestion
+        self.radius.setValueRange((1.0e-9, 1e-5))
 
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)

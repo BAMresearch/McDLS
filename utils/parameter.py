@@ -536,6 +536,8 @@ class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
     cutesnake.algorithm.parameter to introduce more specific fit
     related attributes."""
+    #temporary location for units metadata and converter
+    unit = None
     # by default it is not fitted, inactive
     ParameterBase.setAttributes(locals(), histograms = None,
                                 activeValues = list())
