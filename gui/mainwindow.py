@@ -252,7 +252,7 @@ class RangeDialog(QDialog):
         pname = self.pbox.itemData(index)
         p = getattr(self._model, pname)
         # perhaps, use testfor() for that:
-        assert p is not None, "Could not found parameter from selection box" 
+        assert p is not None, "Could not find parameter from selection box" 
         lower = min(type(p).valueRange())
         upper = max(type(p).valueRange())
         self.lentry.setRange(lower, upper)
@@ -451,9 +451,15 @@ class SettingsWidget(SettingsWidgetBase):
         # get changed value range if any
         minValue = self.get(key+"min")
         maxValue = self.get(key+"max")
+        if not hasattr(p, "unit"):
+            magConv = 1
+        else:
+            magConv = p.unit.magnitudeConversion()
         if isNotNone(minValue, maxValue):
             # update value range for numerical parameters
-            p.setValueRange((minValue, maxValue))
+            p.setValueRange((
+                minValue * magConv, 
+                maxValue * magConv))
         # update the value input widget itself
         newValue = self.get(key)
         minWidget = parent.findChild(QWidget, key+"min")
@@ -464,7 +470,7 @@ class SettingsWidget(SettingsWidgetBase):
                 newValue = min(maxWidget.maximum(), newValue)
             except AttributeError:
                 pass
-            p.setValue(newValue)
+            p.setValue(newValue * magConv)
         # fit parameter related updates
         newActive = self.get(key+"active")
         if isinstance(newActive, bool): # None for non-fit parameters
@@ -546,10 +552,14 @@ class SettingsWidget(SettingsWidgetBase):
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addStretch()
-        try:
-            suffix = param.suffix()
-        except AttributeError:
-            suffix = None
+        #new style: use "unit" definitions
+        if hasattr(param, "unit"):
+            suffix = param.unit.displayMagnitudeName
+        else:
+            try:
+                suffix = param.suffix()
+            except AttributeError:
+                suffix = None
         if suffix is None:
             layout.addWidget(self._makeLabel(param.displayName()))
         else:
@@ -560,29 +570,42 @@ class SettingsWidget(SettingsWidgetBase):
         if isString(param.__doc__):
             widget.setToolTip(param.__doc__)
         minmaxValue, widgets = None, []
+
         # instead of create/remove widgets, show/hide them on active toggle
         if isinstance(param, ParameterNumerical):
             # create input boxes for user specified min/max
             # within default upper/lower from class definition
-            minmaxValue = type(param).min(), type(param).max()
+            # get unit conversion factor if available
+            if hasattr(param, "unit"):
+                magConv = param.unit.magnitudeConversion()
+            else:
+                magConv = 1
+
+            minmaxValue = type(param).min() / magConv, type(param).max() / magConv
+
             for bound in "min", "max":
                 w = self._makeEntry(param.name() + bound, param.dtype,
-                                    getattr(param, bound)(),
-                                    minmax = minmaxValue, parent = widget)
+                                    getattr(param, bound)() / magConv,
+                                    minmax = minmaxValue, 
+                                    parent = widget)
                 w.setPrefix(bound + ": ")
                 w.setFixedWidth(FIXEDWIDTH)
                 widgets.append(w)
+            parVal = param.value() / magConv
+        else:
+            parVal = param.value() #no magnitude conversion if not numerical
 
+        # create scalar value input widget
+        w = self._makeEntry(param.name(), param.dtype, parVal,
+                                      minmax = minmaxValue, parent = widget)
         if isString(param.__doc__):
             #add description as tooltip if available for parameter
             widget.setToolTip(param.__doc__)
-        # create scalar value input widget
-        w = self._makeEntry(param.name(), param.dtype, param.value(),
-                                      minmax = minmaxValue, parent = widget)
         try: # set special value text for lower bound, simple solution
             special = param.displayValues(w.minimum())
             w.setSpecialValueText(special)
-        except: pass
+        except: 
+            pass
         w.setFixedWidth(FIXEDWIDTH)
         widgets.insert(len(widgets)/2, w)
         activeBtns = activeBtns and isinstance(param, FitParameterBase)
