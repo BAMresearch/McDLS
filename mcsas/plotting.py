@@ -388,11 +388,15 @@ class PlotResults(object):
         """histogram plot"""
         #make active:
         axes(hAxis)
-#        hRange = parHist.ranges[rangei]
+        # hRange = parHist.ranges[rangei]
+        try:
+            magConv = plotPar.unit.magnitudeConversion()
+        except AttributeError:
+            magConv = 1.
 
-        histXLowerEdge = parHist.xLowerEdge
-        histXMean = parHist.xMean
-        histXWidth = parHist.xWidth
+        histXLowerEdge = parHist.xLowerEdge / magConv
+        histXMean = parHist.xMean / magConv
+        histXWidth = parHist.xWidth / magConv
         # plot volume weighted by default, both would be good
         # can we plot both weightings? perhaps, with different colors?
         # e.g. red/orange (current) and blue/lightblue?
@@ -446,7 +450,8 @@ class PlotResults(object):
                 edgecolor = 'black', linewidth = 0.5, zorder = 2, alpha = 0.5,
                 )
         # plot active histogram:
-        validi = (histXLowerEdge >= parHist.lower) * (histXLowerEdge <= parHist.upper)
+        validi = ( (histXLowerEdge >= (parHist.lower / magConv)) * 
+                (histXLowerEdge <= parHist.upper / magConv) )
         validi[-1] = 0
         if not (validi.sum()==0):
             bar(histXLowerEdge[validi], volHistYMean[validi[0:-1]], 

@@ -467,13 +467,13 @@ class ParameterFloat(ParameterNumerical):
     def displayValue(self):                                                        
         """shows value converted to display units (str in displayValueUnit)"""         
         magConv = self.unit.magnitudeConversion() 
-        return self.value() * magConv 
+        return self.value() / magConv 
 
     @mixedmethod
-    def setDisplayValue(self, val):                                                   
+    def setDisplayValue(self, newVal):
         """sets value given in display units (str in displayValueUnit)"""
         magConv = self.unit.magnitudeConversion()  
-        self.setValue(val / magConv) 
+        self.setValue(newVal * magConv) 
 
     @mixedmethod
     def displayValueRange(selforcls, newRange):
@@ -486,7 +486,7 @@ class ParameterFloat(ParameterNumerical):
     def setDisplayValueRange(selforcls, newRange):
         """sets value range after converting input from display to SI units"""
         magConv = self.unit.magnitudeConversion()  
-        newRange = (min(newRange) / magConv, max(newRange / magConv))
+        newRange = (min(newRange) * magConv, max(newRange * magConv))
         super(ParameterNumerical, selforcls).setValueRange(newRange)
 
     @mixedmethod

@@ -259,8 +259,8 @@ class RangeDialog(QDialog):
         self.uentry.setRange(lower, upper)
         lower = min(p.valueRange())
         upper = max(p.valueRange())
-        self.lentry.setDisplayValue(lower)
-        self.uentry.setDisplayValue(upper)
+        self.lentry.setValue(lower)
+        self.uentry.setValue(upper)
 
     def _createButtons(self):
         btnWidget = QWidget(self)
@@ -275,7 +275,7 @@ class RangeDialog(QDialog):
         return btnWidget
 
     def output(self):
-        if not self.exec_() or self.lentry.displayValue() == self.uentry.displayValue():
+        if not self.exec_() or self.lentry.value() == self.uentry.value():
             return None
         p = None
         try:
@@ -284,7 +284,7 @@ class RangeDialog(QDialog):
         except:
             return None
         output = Histogram(p,
-                self.lentry.displayValue(), self.uentry.displayValue(),
+                self.lentry.value(), self.uentry.value(),
                 self.bentry.value(), self.sentry.currentText(),
                 self.wentry.currentText())
         return output
