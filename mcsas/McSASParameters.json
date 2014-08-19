@@ -54,13 +54,6 @@
         "default" : "volume",
         "isActive" : false 
     },
-    "deltaRhoSquared" : {
-        "displayName" : "Electron density contrast squared",
-        "valueRange" : [0,Infinity],
-        "description" : "Squared electron density contrast (mind the units!). Typical order of magnitude around 1e30 m^-4",
-        "default" : 1.0,
-        "isActive" : false 
-    },
     "startFromMinimum" : {
         "displayName" : "depreciated",
         "description" : "Sets the initial guess to minimal values rather than a uniform dist.",

@@ -751,8 +751,11 @@ class McSAS(AlgorithmBase):
                     intensity, it, intError, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
+            # volumeFraction[:, ri] = (
+            #         sc[0] * vsa**2/(vpa * self.deltaRhoSquared())
+            #         ).flatten()
             volumeFraction[:, ri] = (
-                    sc[0] * vsa**2/(vpa * self.deltaRhoSquared())
+                    sc[0] * vsa**2/(vpa)
                     ).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
