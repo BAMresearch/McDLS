@@ -61,6 +61,7 @@ from cutesnake.utils.tests import testfor, assertName
 from cutesnake.utils.mixedmethod import mixedmethod
 from cutesnake.utils.classproperty import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
+from sasunit import SASUnit
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
     # works with vectors of multiple bounds too
@@ -245,6 +246,16 @@ class ParameterBase(object):
         if (not isString(newName) or len(newName) <= 0):
             newName = selforcls.name()
         selforcls._displayName = newName
+    
+    #in ParameterFloat, this is scaled to units used. For GUI display
+    @mixedmethod
+    def displayValue(selforcls):
+        return selforcls.value()
+
+    #in ParameterFloat, this is scaled to units used. For GUI display
+    @mixedmethod
+    def setDisplayValue(selforcls, newValue):
+        selforcls.setValue(newValue)
 
     @classproperty
     @classmethod
@@ -439,6 +450,44 @@ class ParameterNumerical(ParameterBase):
 
 class ParameterFloat(ParameterNumerical):
     ParameterNumerical.setAttributes(locals(), "decimals")
+    unit = SASUnit(magnitudedict = 'none',
+            simagnitudename = u'-',
+            displaymagnitudename = u'-') #set unit metadata as blank
+
+    #link suffix directly to displayMagnitudeName of unit metadata
+    @mixedmethod
+    def suffix(selforcls):
+        return selforcls.unit.displayMagnitudeName
+
+    @mixedmethod
+    def setSuffix(selforcls, newSuffix):
+        selforcls.unit.displayMagnitudeName = newSuffix
+
+    @mixedmethod
+    def displayValue(self):                                                        
+        """shows value converted to display units (str in displayValueUnit)"""         
+        magConv = self.unit.magnitudeConversion() 
+        return self.value() * magConv 
+
+    @mixedmethod
+    def setDisplayValue(self, val):                                                   
+        """sets value given in display units (str in displayValueUnit)"""
+        magConv = self.unit.magnitudeConversion()  
+        self.setValue(val / magConv) 
+
+    @mixedmethod
+    def displayValueRange(selforcls, newRange):
+        """sets value range after converting input from display to SI units"""
+        magConv = self.unit.magnitudeConversion()  
+        newRange = (min(newRange) / magConv, max(newRange / magConv))
+        super(ParameterNumerical, selforcls).setValueRange(newRange)
+
+    @mixedmethod
+    def setDisplayValueRange(selforcls, newRange):
+        """sets value range after converting input from display to SI units"""
+        magConv = self.unit.magnitudeConversion()  
+        newRange = (min(newRange) / magConv, max(newRange / magConv))
+        super(ParameterNumerical, selforcls).setValueRange(newRange)
 
     @mixedmethod
     def setDecimals(selforcls, newDecimals):

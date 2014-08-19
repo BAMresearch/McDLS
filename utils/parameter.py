@@ -11,6 +11,7 @@ from cutesnake.dataset import DataSet, DisplayMixin
 import logging
 import numpy
 from cutesnake.utils.tests import testfor
+
 def _makeProperty(varName):
     def getter(selforcls):
         return getattr(selforcls, varName)
@@ -536,9 +537,6 @@ class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
     cutesnake.algorithm.parameter to introduce more specific fit
     related attributes."""
-    #temporary location for units metadata and converter
-    unit = None
-    # by default it is not fitted, inactive
     ParameterBase.setAttributes(locals(), histograms = None,
                                 activeValues = list())
 
@@ -549,6 +547,14 @@ class FitParameterBase(ParameterBase):
         if self.isActive():
             for i in range(len(self.histograms())):
                 self.histograms()[i].param = self
+
+    @mixedmethod
+    def setValueRange(selforcls, newRange):
+        try:
+            super(FitParameterBase, selforcls).setValueRange(newRange)
+            selforcls.histograms().updateRanges()
+        except:
+            pass
 
     @mixedmethod
     def isActive(selforcls):
@@ -571,14 +577,6 @@ class FitParameterBase(ParameterBase):
             selforcls.histograms().append(Histogram(selforcls, lo, hi))
         elif not isActive:
             selforcls.setHistograms(None)
-
-    @mixedmethod
-    def setValueRange(selforcls, newRange):
-        try:
-            super(FitParameterBase, selforcls).setValueRange(newRange)
-            selforcls.histograms().updateRanges()
-        except:
-            pass
 
     @mixedmethod
     def activeVal(selforcls, val, index = None):

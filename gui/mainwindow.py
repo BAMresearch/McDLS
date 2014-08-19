@@ -259,8 +259,8 @@ class RangeDialog(QDialog):
         self.uentry.setRange(lower, upper)
         lower = min(p.valueRange())
         upper = max(p.valueRange())
-        self.lentry.setValue(lower)
-        self.uentry.setValue(upper)
+        self.lentry.setDisplayValue(lower)
+        self.uentry.setDisplayValue(upper)
 
     def _createButtons(self):
         btnWidget = QWidget(self)
@@ -275,7 +275,7 @@ class RangeDialog(QDialog):
         return btnWidget
 
     def output(self):
-        if not self.exec_() or self.lentry.value() == self.uentry.value():
+        if not self.exec_() or self.lentry.displayValue() == self.uentry.displayValue():
             return None
         p = None
         try:
@@ -284,7 +284,7 @@ class RangeDialog(QDialog):
         except:
             return None
         output = Histogram(p,
-                self.lentry.value(), self.uentry.value(),
+                self.lentry.displayValue(), self.uentry.displayValue(),
                 self.bentry.value(), self.sentry.currentText(),
                 self.wentry.currentText())
         return output
@@ -451,15 +451,9 @@ class SettingsWidget(SettingsWidgetBase):
         # get changed value range if any
         minValue = self.get(key+"min")
         maxValue = self.get(key+"max")
-        if not hasattr(p, "unit"):
-            magConv = 1
-        else:
-            magConv = p.unit.magnitudeConversion()
         if isNotNone(minValue, maxValue):
             # update value range for numerical parameters
-            p.setValueRange((
-                minValue * magConv, 
-                maxValue * magConv))
+            p.setValueRange((minValue, maxValue))
         # update the value input widget itself
         newValue = self.get(key)
         minWidget = parent.findChild(QWidget, key+"min")
@@ -470,7 +464,7 @@ class SettingsWidget(SettingsWidgetBase):
                 newValue = min(maxWidget.maximum(), newValue)
             except AttributeError:
                 pass
-            p.setValue(newValue * magConv)
+            p.setDisplayValue(newValue)
         # fit parameter related updates
         newActive = self.get(key+"active")
         if isinstance(newActive, bool): # None for non-fit parameters
@@ -520,6 +514,7 @@ class SettingsWidget(SettingsWidgetBase):
 
     def _makeEntry(self, name, dtype, value, minmax = None,
                    widgetType = None, parent = None):
+
         testfor(name not in self.keys, KeyError,
             "Input widget '{w}' exists already in '{s}'"
             .format(w = name, s = self.objectName()))
@@ -552,14 +547,12 @@ class SettingsWidget(SettingsWidgetBase):
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addStretch()
-        #new style: use "unit" definitions
-        if hasattr(param, "unit"):
-            suffix = param.unit.displayMagnitudeName
-        else:
-            try:
-                suffix = param.suffix()
-            except AttributeError:
-                suffix = None
+
+        try:
+            suffix = param.suffix()
+        except AttributeError:
+            suffix = None
+
         if suffix is None:
             layout.addWidget(self._makeLabel(param.displayName()))
         else:
@@ -570,42 +563,29 @@ class SettingsWidget(SettingsWidgetBase):
         if isString(param.__doc__):
             widget.setToolTip(param.__doc__)
         minmaxValue, widgets = None, []
-
         # instead of create/remove widgets, show/hide them on active toggle
         if isinstance(param, ParameterNumerical):
             # create input boxes for user specified min/max
             # within default upper/lower from class definition
-            # get unit conversion factor if available
-            if hasattr(param, "unit"):
-                magConv = param.unit.magnitudeConversion()
-            else:
-                magConv = 1
-
-            minmaxValue = type(param).min() / magConv, type(param).max() / magConv
-
+            minmaxValue = type(param).min(), type(param).max()
             for bound in "min", "max":
                 w = self._makeEntry(param.name() + bound, param.dtype,
-                                    getattr(param, bound)() / magConv,
-                                    minmax = minmaxValue, 
-                                    parent = widget)
+                                    getattr(param, bound)(),
+                                    minmax = minmaxValue, parent = widget)
                 w.setPrefix(bound + ": ")
                 w.setFixedWidth(FIXEDWIDTH)
                 widgets.append(w)
-            parVal = param.value() / magConv
-        else:
-            parVal = param.value() #no magnitude conversion if not numerical
 
-        # create scalar value input widget
-        w = self._makeEntry(param.name(), param.dtype, parVal,
-                                      minmax = minmaxValue, parent = widget)
         if isString(param.__doc__):
             #add description as tooltip if available for parameter
             widget.setToolTip(param.__doc__)
+        # create scalar value input widget
+        w = self._makeEntry(param.name(), param.dtype, param.displayValue(),
+                                      minmax = minmaxValue, parent = widget)
         try: # set special value text for lower bound, simple solution
             special = param.displayValues(w.minimum())
             w.setSpecialValueText(special)
-        except: 
-            pass
+        except: pass
         w.setFixedWidth(FIXEDWIDTH)
         widgets.insert(len(widgets)/2, w)
         activeBtns = activeBtns and isinstance(param, FitParameterBase)
