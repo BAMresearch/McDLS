@@ -267,8 +267,10 @@ class ParameterBase(object):
         return isinstance(value, cls.dtype)
 
     def __str__(self):
-        return "{0}: {1}".format(
-                self.displayName(), self.value())
+        return u"{0}: {1} ({2})".format(
+                self.displayName(), 
+                self.displayValue(), 
+                self.suffix())
 
     __repr__ = __str__
 
@@ -439,7 +441,7 @@ class ParameterNumerical(ParameterBase):
         return isNumber(value) and not isinstance(value, float)
 
     def __str__(self):
-        return (ParameterBase.__str__(self) + " in [{0}, {1}]{2}, {3} steps"
+        return (ParameterBase.__str__(self) + u" in [{0}, {1}]{2}, {3} steps"
                 .format(*(self.valueRange() + (self.suffix(),
                                                self.stepping()))))
 

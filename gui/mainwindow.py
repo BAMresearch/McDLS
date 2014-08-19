@@ -221,6 +221,9 @@ class RangeDialog(QDialog):
         #add a parameter choice list
         pbox = QComboBox(self)
         for p in self._model.params():
+            if not hasattr(p, "isActive"):
+                #not a fit parameter, a regular one
+                continue
             if not p.isActive():
                 continue
             # providing the internal param name as item data
@@ -556,7 +559,7 @@ class SettingsWidget(SettingsWidgetBase):
         if suffix is None:
             layout.addWidget(self._makeLabel(param.displayName()))
         else:
-            layout.addWidget(self._makeLabel("{} ({})".format(
+            layout.addWidget(self._makeLabel(u"{} ({})".format(
                 param.displayName(), suffix)))
 
         widget.setLayout(layout)

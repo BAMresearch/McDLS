@@ -15,20 +15,28 @@ class Sphere(ScatteringModel):
                     displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
+                    decimals = 1), 
+                  Parameter("SLD", 1e14,
+                    displayName = "scattering length density",
+                    valueRange = (0., numpy.inf),
                     decimals = 1), )
     parameters[0].setActive(True)
     #set units
     parameters[0].unit = SASUnit(magnitudedict = 'length', 
             simagnitudename = u'm',
             displaymagnitudename = u'nm')
+    parameters[1].unit = SASUnit(magnitudedict = 'SLD', 
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
     #set suffix (normally set in above FitParameter definition) identical
     #to displayname (temporary). Eventually, GUI should use unit metadata
-    parameters[0].setSuffix( parameters[0].unit.displayMagnitudeName )
+    #now done automatically through definition in ParameterFloat: 
+    # parameters[0].setSuffix( parameters[0].unit.displayMagnitudeName )
 
     def __init__(self):
         super(Sphere, self).__init__()
         #stored in SI units. GUI input must convert upon ingestion
-        self.radius.setValueRange((1.0e-9, 1e-5))
+        self.radius.setValueRange((1.0e-10, 1e-6))
 
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)

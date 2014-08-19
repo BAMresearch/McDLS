@@ -210,8 +210,8 @@ class McSAS(AlgorithmBase):
             logging.warning("No parameters to analyse given! Breaking up.")
             return
         logging.info(
-                "\n".join(["Analysing parameters: "]+
-                    [str(p)+", active: "+str(isActiveParam(p))
+                "\n".join([u"Analysing parameters: "] +
+                    [unicode(p) + u", active: " + unicode(isActiveParam(p))
                         for p in self.model.params()])
         )
         self.analyse()

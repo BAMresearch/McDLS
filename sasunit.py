@@ -147,7 +147,7 @@ class SASUnit(object):
         if name in self.invMagnitudeDict():
             self._displayMagnitudeName = name
         else:
-            logging.warning('no valid display magnitude name used.')
+            logging.warning('no valid display magnitude name: {}'.format(name))
 
     @property
     def magnitudeDict(self):
