@@ -16,7 +16,7 @@ class Sphere(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     decimals = 1), 
-                  Parameter("SLD", 1e14,
+                  Parameter("sld", 1e14,
                     displayName = "scattering length density",
                     valueRange = (0., numpy.inf),
                     decimals = 1), )
@@ -41,6 +41,12 @@ class Sphere(ScatteringModel):
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)
         return result
+
+    def absVolume(self):
+        """
+        Volume calculation taking the scattering length density into account
+        """
+        return self.volume() * self.sld()**2
 
     def formfactor(self, dataset):
         qr = dataset.q * self.radius() 

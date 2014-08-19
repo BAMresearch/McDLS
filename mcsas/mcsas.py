@@ -739,7 +739,9 @@ class McSAS(AlgorithmBase):
             # compensated volume for each sphere in
             # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
             # Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
-            dummy, vpa = self.calcModel(data, rset, compensationExponent = 1.0)
+            # dummy, vpa = self.calcModel(data, rset, compensationExponent = 1.0)
+            dummy, vpa = self.calcModel(data, rset, 
+                    compensationExponent = 1.0, useSLD = True)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
             sci = intensity.max() / it.max()
@@ -940,7 +942,7 @@ class McSAS(AlgorithmBase):
 
     # move this to ScatteringModel eventually?
     # which additional output might by useful/required?
-    def calcModel(self, data, rset, compensationExponent = None):
+    def calcModel(self, data, rset, compensationExponent = None, useSLD = False):
         """Calculates the total intensity and scatterer volume contributions
         using the current model.
         *rset* number columns equals the number of active parameters."""
@@ -954,7 +956,7 @@ class McSAS(AlgorithmBase):
         for i in numpy.arange(rset.shape[0]):
             for p, v in izip(params, rset[i]):
                 p.setValue(v)
-            vset[i] = self.model.vol(compensationExponent)
+            vset[i] = self.model.vol(compensationExponent, useSLD = useSLD)
             # calculate their form factors
             ffset = self.model.ff(data)
             # a set of intensities
