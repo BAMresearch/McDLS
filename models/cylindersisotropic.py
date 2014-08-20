@@ -38,7 +38,7 @@ class CylindersIsotropic(ScatteringModel):
                     displayName = "Orientation Integration Divisions",
                     valueRange = (1, numpy.inf)),
             Parameter("sld", 1e14,
-                    displayName = "scattering length density",
+                    displayName = "Scattering length density",
                     valueRange = (0, numpy.inf))
     )
     parameters[0].setActive(True)
