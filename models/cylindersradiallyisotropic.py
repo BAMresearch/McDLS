@@ -6,6 +6,7 @@ from numpy import pi, zeros, sin, cos
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
+from sasunit import SASUnit
 
 # parameters must not be inf
 
@@ -14,28 +15,46 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     which are radially isotropic (so not spherically isotropic!)
     !!!completed but not verified!!!
     """
-    shortName = "Cylinders defined by aspect ratio"
+    shortName = "Radially (in-plane) isotropic cylinders"
     parameters = (
-            FitParameter("radius", 1.0,
+            FitParameter("radius", 1.0e-9,
                     displayName = "Cylinder radius",
                     generator = RandomExponential,
-                    valueRange = (0.1, numpy.inf), suffix = "nm"),
+                    valueRange = (1e-10, 1e1)),
             FitParameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
                     generator = RandomUniform,
-                    valueRange = (0.1, numpy.inf), suffix = "-"),
-            FitParameter("psiAngle", 10.0,
+                    valueRange = (0.1, numpy.inf)),
+            FitParameter("psiAngle", 0.17,
                     displayName = "in-plane cylinder rotation",
                     generator = RandomUniform,
-                    valueRange = (0.1, 360.1), suffix = "deg."),
-            FitParameter("psiAngleDivisions", 303.,
+                    valueRange = (0.1, 360.1)),
+            Parameter("psiAngleDivisions", 303., #setting to int gives OverflowError
                     displayName = "in-plane angle divisions",
-                    valueRange = (1, numpy.inf), suffix = "-"),
+                    valueRange = (1, numpy.inf)),
+            Parameter("sld", 1e14,
+                    displayName = "scattering length density",
+                    valueRange = (0., numpy.inf))
     )
     parameters[0].setActive(True)
     parameters[1].setActive(False) # not expected to vary
     parameters[2].setActive(True)  # better when random
-    parameters[3].setActive(False) # not expected to vary
+
+    parameters[0].unit = SASUnit(magnitudedict = 'length', 
+            simagnitudename = u'm', 
+            displaymagnitudename = u'nm')
+    parameters[1].unit = SASUnit(magnitudedict = 'none', 
+            simagnitudename = u'-', 
+            displaymagnitudename = u'-')
+    parameters[2].unit = SASUnit(magnitudedict = 'angle', 
+            simagnitudename = u'˚', 
+            displaymagnitudename = u'˚')
+    parameters[3].unit = SASUnit(magnitudedict = 'none', 
+            simagnitudename = u'-', 
+            displaymagnitudename = u'-')
+    parameters[4].unit = SASUnit(magnitudedict = 'SLD', 
+            simagnitudename = u'm⁻²', 
+            displaymagnitudename = u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -73,6 +92,9 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     def volume(self):
         v = pi * self.radius()**2 * (2. * self.radius() * self.aspect())
         return v**self.compensationExponent
+
+    def absVolume(self):
+        return self.volume() * self.sld()**2
 
 CylindersRadiallyIsotropic.factory()
 

@@ -108,6 +108,7 @@ from models.kholodenko import Kholodenko
 from models.gaussianchain import GaussianChain
 from models.lmadensesphere import LMADenseSphere
 from models.cylindersisotropic import CylindersIsotropic
+from models.cylindersradiallyisotropic import CylindersRadiallyIsotropic
 from models.ellipsoidsisotropic import EllipsoidsIsotropic
 from models.ellipsoidalcoreshell import EllipsoidalCoreShell
 from models.sphericalcoreshell import SphericalCoreShell
@@ -116,6 +117,7 @@ from collections import OrderedDict
 MODELS = OrderedDict((
     (Sphere.name(), Sphere),
     (CylindersIsotropic.name(), CylindersIsotropic),
+    (CylindersRadiallyIsotropic.name(), CylindersRadiallyIsotropic),
     (EllipsoidsIsotropic.name(), EllipsoidsIsotropic),
     (EllipsoidalCoreShell.name(), EllipsoidalCoreShell),
     (SphericalCoreShell.name(), SphericalCoreShell),
