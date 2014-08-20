@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # mcsas/sasdata.py
 
-"""
+u"""
 Defines methods for using and manipulating units of variables. 
 Some default magnitude-name dictionaries are provided, but the user can 
 supply their own dictionary if required. Default unit to translate to 
@@ -13,16 +13,20 @@ Required keyword arguments:
 
 Example usage: 
 
->>> rUnit = SASUnit(magnitudedict = {1e-9 : u"nm", 1e0 : u"m"}, 
-    simagnitudename = "m", 
-    displaymagnitudename = "nm")
+>>> rUnit = SASUnit(magnitudedict = {1e-9 : u"nm", 1e0 : u"m"},
+...                 simagnitudename = "m",
+...                 displaymagnitudename = "nm")
 >>> rUnit.magnitudeConversion('nm', 'm')
+1e-09
+
 or:
 >>> rUnit.magnitudeConversion('nm')
-1e-9
+1e-09
 
 Selecting a default: 
->>> qUnit = SASUnit(magnitudedict = 'q', simagnitudename = u"m⁻¹", displaymagnitudename = u"cm⁻¹")
+>>> qUnit = SASUnit(magnitudedict = 'q',
+...                 simagnitudename = u"m⁻¹",
+...                 displaymagnitudename = u"cm⁻¹")
 >>> qUnit.magnitudeConversion(u"cm⁻¹")
 100.0
 
@@ -115,6 +119,7 @@ class SASUnit(object):
     @property
     def siMagnitude(self):
         return self.magnitude(self.siMagnitudeName)
+
     @siMagnitude.setter
     def siMagnitude(self, magnum):
         try:
@@ -126,6 +131,7 @@ class SASUnit(object):
     @property
     def siMagnitudeName(self):
         return self._siMagnitudeName
+
     @siMagnitudeName.setter
     def siMagnitudeName(self, name):
         if name in self.invMagnitudeDict():
@@ -136,6 +142,7 @@ class SASUnit(object):
     @property
     def displayMagnitude(self):
         return self.magnitude(self.displayMagnitudeName)
+
     @displayMagnitude.setter
     def displayMagnitude(self, magnum):
         try:
@@ -147,6 +154,7 @@ class SASUnit(object):
     @property
     def displayMagnitudeName(self):
         return self._displayMagnitudeName
+
     @displayMagnitudeName.setter
     def displayMagnitudeName(self, name):
         if name in self.invMagnitudeDict():
@@ -157,6 +165,7 @@ class SASUnit(object):
     @property
     def magnitudeDict(self):
         return self._magnitudeDict
+
     @magnitudeDict.setter
     def magnitudeDict(self, dictionary):
         if isinstance(dictionary, dict):
@@ -199,5 +208,9 @@ class SASUnit(object):
         #find si units
         oUnit = self.invMagnitudeDict()[simagnitudename.strip()]
         return iUnit / oUnit
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
     
 # vim: set ts=4 sts=4 sw=4 tw=0:
