@@ -30,6 +30,7 @@ Selecting a default:
 
 import logging
 import numpy as np # For arrays
+from numpy import pi
 
 class SASUnit(object):
     _magnitudeDict = dict()
@@ -38,37 +39,41 @@ class SASUnit(object):
     #default library, if growing out of bounds should be put in json dict
     _defaultDicts = {
             'length' : { 1e-10 : u"Å", 
-                1e-9 : u"nm",
-                1e-6 : u"µm",
-                1e-3 : u"mm",
-                1e-2 : u"cm",
-                1e0 : u"m"},
-            'area' : { 1e-20 : u"Å²",
-                1e-18 : u"nm²",
-                1e-12 : u"µm²",
-                 1e-6 : u"mm²",
-                 1.   : u"m²"},
+                          1e-9 : u"nm",
+                          1e-6 : u"µm",
+                          1e-3 : u"mm",
+                          1e-2 : u"cm",
+                           1e0 : u"m"},
+            'area' : {   1e-20 : u"Å²",
+                         1e-18 : u"nm²",
+                         1e-12 : u"µm²",
+                          1e-6 : u"mm²",
+                            1. : u"m²"},
             'volume' : { 1e-30 : u"Å³",
-                1e-27 : u"nm³",
-                1e-18 : u"µm³",
-                 1e-9 : u"mm³",
-                   1. : u"m³"},
-            'SLD' : { 1e20 : u"Å⁻²",
-                1e18 : u"nm⁻²",
-                1e12 : u"µm⁻²",
-                 1e6 : u"mm⁻²",
-                 1e4 : u"cm⁻²",
-                  1. : u"m⁻²"},
-            'q' :  { 1e10 : u"Å⁻¹",
-                1e9 : u"nm⁻¹",
-                1e6 : u"µm⁻¹",
-                1e3 : u"mm⁻¹",
-                1e2 : u"cm⁻¹",
-                1e0 : u"m⁻¹"},
-            'I' :  { 1e2 : u"(cm sr)⁻¹",
-                1e0 : u"(m sr)⁻¹"},
-            'none' : { 1. : u"",
-                1. : u"-"}
+                         1e-27 : u"nm³",
+                         1e-18 : u"µm³",
+                          1e-9 : u"mm³",
+                            1. : u"m³"},
+            'angle' : {180./pi : u"˚",
+                         3./pi : u"'",
+                       0.05/pi : u'"',
+                            1. : u"rad"},
+            'SLD' : {     1e20 : u"Å⁻²",
+                          1e18 : u"nm⁻²",
+                          1e12 : u"µm⁻²",
+                           1e6 : u"mm⁻²",
+                           1e4 : u"cm⁻²",
+                            1. : u"m⁻²"},
+            'q' :  {      1e10 : u"Å⁻¹",
+                           1e9 : u"nm⁻¹",
+                           1e6 : u"µm⁻¹",
+                           1e3 : u"mm⁻¹",
+                           1e2 : u"cm⁻¹",
+                           1e0 : u"m⁻¹"},
+            'I' :  {       1e2 : u"(cm sr)⁻¹",
+                           1e0 : u"(m sr)⁻¹"},
+            'none' : {      1. : u"",
+                            1. : u"-"}
 
             }
 
