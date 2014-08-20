@@ -267,10 +267,15 @@ class ParameterBase(object):
         return isinstance(value, cls.dtype)
 
     def __str__(self):
+        if not hasattr(self, "suffix"):
+            sufx = u''
+        else:
+            sufx = self.suffix()
+
         return u"{0}: {1} ({2})".format(
                 self.displayName(), 
                 self.displayValue(), 
-                self.suffix())
+                sufx)
 
     __repr__ = __str__
 
