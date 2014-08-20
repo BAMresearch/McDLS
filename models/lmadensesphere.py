@@ -7,6 +7,7 @@ import logging
 from cutesnake.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
+from sasunit import SASUnit
 
 class LMADenseSphere(ScatteringModel):
     """Form factor of a sphere convoluted with a structure factor,
@@ -21,33 +22,49 @@ class LMADenseSphere(ScatteringModel):
 
     shortName = "LMADenseSphere"
     parameters = (
-            FitParameter("radius", 1.0,
+            FitParameter("radius", 1.0e-9,
                     displayName = "Sphere radius",
-                    valueRange = (0., 1e3),
+                    valueRange = (1e-10, 1e1),
                     generator = RandomUniform,
-                    suffix = "nm", decimals = 1),
+                    decimals = 1),
             FitParameter("volFrac", 0.1,
                     displayName = "Volume fraction of spheres",
                     valueRange = (0, 1.),
                     generator = RandomUniform,
-                    suffix = " ", decimals = 1),
+                    decimals = 1),
             FitParameter("mf", -1., # auto
                     displayName = "standoff multiplier (-1 = auto)",
                     valueRange = (-1., 400.),
                     generator = RandomUniform,
-                    suffix = " ", decimals = 1,
-                    displayValues = {-1.: "auto"})
+                    decimals = 1,
+                    displayValues = {-1.: "auto"}),
+            Parameter("sld", 1e14,
+                    displayName = "Scattering length density",
+                    valueRange = (0, 1e15))
             )
     parameters[0].setActive(True)
+    parameters[0].unit = SASUnit(magnitudedict = "length",
+            simagnitudename = u"m",
+            displaymagnitudename = u"nm")
+    parameters[1].unit = SASUnit(magnitudedict = "none",
+            simagnitudename = u"-",
+            displaymagnitudename = u"-")
+    parameters[2].unit = SASUnit(magnitudedict = "none",
+            simagnitudename = u"-",
+            displaymagnitudename = u"-")
+    parameters[3].unit = SASUnit(magnitudedict = "SLD",
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)
-        self.radius.setValueRange((1.0, 1e4)) #this only works for people
-        #defining lengths in angstrom or nm, not m.
 
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)
         return result
+    
+    def absVolume(self):
+        return self.volume() * self.sld()**2
 
     def formfactor(self, dataset):
         

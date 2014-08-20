@@ -6,6 +6,7 @@ from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomExponential, RandomUniform
+from sasunit import SASUnit
 
 class SphericalCoreShell(ScatteringModel):
     r"""Form factor for a spherical core shell structure
@@ -16,28 +17,43 @@ class SphericalCoreShell(ScatteringModel):
     """
     shortName = "Core-Shell Sphere"
     parameters = (
-            FitParameter("radius", 1.0,
+            FitParameter("radius", 1.0e-9,
                     displayName = "Core Radius",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
-            FitParameter("t", 1.0,
+                    valueRange = (0., numpy.inf)),
+            FitParameter("t", 1.0e-9,
                     displayName = "Thickness of Shell",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
-            FitParameter("eta_c", 3.16,
+                    valueRange = (0., numpy.inf)),
+            Parameter("eta_c", 3.16e14,
                     displayName = "Core SLD",
                     generator = RandomUniform,
-                    valueRange = (0, numpy.inf), suffix = "-"),
-            FitParameter("eta_s", 2.53,
+                    valueRange = (0, numpy.inf)),
+            Parameter("eta_s", 2.53e14,
                     displayName = "Shell SLD",
                     generator = RandomUniform,
-                    valueRange = (0, numpy.inf), suffix = "-"),
-            FitParameter("eta_sol", 0.,
+                    valueRange = (0, numpy.inf)),
+            Parameter("eta_sol", 0.,
                     displayName = "Solvent SLD",
                     generator = RandomUniform,
-                    valueRange = (0, numpy.inf), suffix = "-"),
+                    valueRange = (0, numpy.inf)),
     )
     parameters[0].setActive(True)
+    parameters[0].unit = SASUnit(magnitudedict = "length",
+            simagnitudename = u'm',
+            displaymagnitudename = u'nm')
+    parameters[1].unit = SASUnit(magnitudedict = "length",
+            simagnitudename = u'm',
+            displaymagnitudename = u'nm')
+    parameters[2].unit = SASUnit(magnitudedict = "SLD",
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
+    parameters[3].unit = SASUnit(magnitudedict = "SLD",
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
+    parameters[4].unit = SASUnit(magnitudedict = "SLD",
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -71,6 +87,9 @@ class SphericalCoreShell(ScatteringModel):
     def volume(self):
         v = 4./3 * pi * (self.radius() + self.t())**3
         return v**self.compensationExponent
+
+    def absVolume(self):
+        return self.volume() #TODO: check how to do this.
 
 SphericalCoreShell.factory()
 

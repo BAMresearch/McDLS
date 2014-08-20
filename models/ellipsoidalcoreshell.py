@@ -6,6 +6,7 @@ from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
 from cutesnake.algorithm import RandomUniform, RandomExponential
 from scatteringmodel import ScatteringModel
+from sasunit import SASUnit
 
 # parameters must not be inf
 
@@ -16,36 +17,57 @@ class EllipsoidalCoreShell(ScatteringModel):
     """
     shortName = "Core-Shell Ellipsoid"
     parameters = (
-            FitParameter("a", 1.0,
+            FitParameter("a", 1.0e-9,
                     displayName = "Principal Core Radius",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
-            FitParameter("b", 10.0,
+                    valueRange = (0., numpy.inf)),
+            FitParameter("b", 10.0e-9,
                     displayName = "Equatorial Core Radius",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
-            FitParameter("t", 1.0,
+                    valueRange = (0., numpy.inf)),
+            FitParameter("t", 1.0e-9,
                     displayName = "Thickness of Shell",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
-            FitParameter("eta_c", 3.15,
+                    valueRange = (0., numpy.inf)),
+            Parameter("eta_c", 3.15e14,
                     displayName = "Core SLD",
                     generator = RandomUniform,
-                    valueRange = (0, numpy.inf), suffix = "-"),
-            FitParameter("eta_s", 2.53,
+                    valueRange = (0, numpy.inf)),
+            Parameter("eta_s", 2.53e14,
                     displayName = "Shell SLD",
                     generator = RandomUniform,
-                    valueRange = (0, numpy.inf), suffix = "-"),
-            FitParameter("eta_sol", 0.,
+                    valueRange = (0, numpy.inf)),
+            Parameter("eta_sol", 0.,
                     displayName = "Solvent SLD",
                     generator = RandomUniform,
-                    valueRange = (0, numpy.inf), suffix = "-"),
-            FitParameter("intDiv", 100,
+                    valueRange = (0, numpy.inf)),
+            Parameter("intDiv", 100,
                     displayName = "Orientation Integration Divisions",
                     generator = RandomUniform,
-                    valueRange = (0, 1e4), suffix = "-"),
+                    valueRange = (0, 1e4)),
     )
     parameters[0].setActive(True)
+    parameters[0].unit = SASUnit(magnitudedict = "length",
+            simagnitudename = u'm',
+            displaymagnitudename = u'nm')
+    parameters[1].unit = SASUnit(magnitudedict = "length",
+            simagnitudename = u'm',
+            displaymagnitudename = u'nm')
+    parameters[2].unit = SASUnit(magnitudedict = "length",
+            simagnitudename = u'm',
+            displaymagnitudename = u'nm')
+    parameters[3].unit = SASUnit(magnitudedict = "SLD",
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
+    parameters[4].unit = SASUnit(magnitudedict = "SLD",
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
+    parameters[5].unit = SASUnit(magnitudedict = "SLD",
+            simagnitudename = u'm⁻²',
+            displaymagnitudename = u'Å⁻²')
+    parameters[6].unit = SASUnit(magnitudedict = "none",
+            simagnitudename = u'-',
+            displaymagnitudename = u'-')
 
     def __init__(self):
         ScatteringModel.__init__(self)
@@ -90,6 +112,9 @@ class EllipsoidalCoreShell(ScatteringModel):
     def volume(self):
         v = 4./3 * pi * (self.a() + self.t()) * (self.b() + self.t())**2
         return v**self.compensationExponent
+
+    def absVolume(self):
+        return self.volume() #TODO: check how to do this.
 
 EllipsoidalCoreShell.factory()
 
