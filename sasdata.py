@@ -62,7 +62,7 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def sphericalSizeEstText(self):
-        return u"{0:.3g} ≤ R [{rUnitName}] ≤ {1:.3g}".format(
+        return u"{0:.3g} ≤ R ({rUnitName}) ≤ {1:.3g}".format(
                 *self.sphericalSizeEst() / self._rMeta.magnitudeConversion(), 
                 rUnitName = self._rMeta.displayMagnitudeName)
 
@@ -91,7 +91,7 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def qLimsString(self):
-        return u"{0:.3g} ≤ Q [{qMagnitudeName}] ≤ {1:.3g}".format(
+        return u"{0:.3g} ≤ Q ({qMagnitudeName}) ≤ {1:.3g}".format(
                 self.qMin / self._qMeta.magnitudeConversion(), 
                 self.qMax / self._qMeta.magnitudeConversion(), 
                 qMagnitudeName = self._qMeta.displayMagnitudeName)
