@@ -413,7 +413,7 @@ class PlotResults(object):
 
         #get information for labels:
         plotTitle = plotPar.displayName()
-        xLabel = '{}, {}'.format(plotPar.name(), plotPar.suffix())
+        xLabel = u'{}, {}'.format(plotPar.name(), plotPar.suffix())
 
         if parHist.xscale == 'log':
             xLim = (histXLowerEdge.min() * (1 - self._axisMargin), 
