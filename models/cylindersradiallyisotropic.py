@@ -28,7 +28,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
             FitParameter("psiAngle", 0.17,
                     displayName = "in-plane cylinder rotation",
                     generator = RandomUniform,
-                    valueRange = (0.1, 360.1)),
+                    valueRange = (0.01, 2 * pi + 0.01)),
             Parameter("psiAngleDivisions", 303., #setting to int gives OverflowError
                     displayName = "in-plane angle divisions",
                     valueRange = (1, numpy.inf)),
@@ -47,7 +47,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
             simagnitudename = u'-', 
             displaymagnitudename = u'-')
     parameters[2].unit = SASUnit(magnitudedict = 'angle', 
-            simagnitudename = u'˚', 
+            simagnitudename = u'rad', 
             displaymagnitudename = u'˚')
     parameters[3].unit = SASUnit(magnitudedict = 'none', 
             simagnitudename = u'-', 
@@ -66,7 +66,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
         #used in the equation for a cylinder from Pedersen, 1997
 
-        dToR = pi/180. #degrees to radian
+        # dToR = pi/180. #degrees to radian not necessary since unit conversion
         psiRange = self.psiAngle.valueRange()
         psi = numpy.linspace(psiRange[0], psiRange[1], self.psiAngleDivisions())
 
@@ -80,8 +80,8 @@ class CylindersRadiallyIsotropic(ScatteringModel):
 
         #rotation can be used to get slightly better results, but
         #ONLY FOR RADIAL SYMMETRY, NOT SPHERICAL.
-        qRsina = numpy.outer(dataset.q, self.radius() * sin(((psi - self.psiAngle()) * dToR)))
-        qLcosa = numpy.outer(dataset.q, self.radius() * self.aspect() * cos(((psi - self.psiAngle()) * dToR)))
+        qRsina = numpy.outer(dataset.q, self.radius() * sin(((psi - self.psiAngle()) )))
+        qLcosa = numpy.outer(dataset.q, self.radius() * self.aspect() * cos(((psi - self.psiAngle()))))
         #leave the rotation out of it for now.
         #qRsina=numpy.outer(q,radi*sin(((psi)*dToR)))
         #qLcosa=numpy.outer(q,radi*asp*cos(((psi)*dToR)))
