@@ -46,9 +46,9 @@ class LMADenseSphere(ScatteringModel):
     parameters[0].unit = SASUnit(magnitudedict = "length",
             simagnitudename = u"m",
             displaymagnitudename = u"nm")
-    parameters[1].unit = SASUnit(magnitudedict = "none",
+    parameters[1].unit = SASUnit(magnitudedict = "fraction",
             simagnitudename = u"-",
-            displaymagnitudename = u"-")
+            displaymagnitudename = u"%")
     parameters[2].unit = SASUnit(magnitudedict = "none",
             simagnitudename = u"-",
             displaymagnitudename = u"-")

@@ -76,6 +76,9 @@ class SASUnit(object):
                            1e0 : u"m⁻¹"},
             'I' :  {       1e2 : u"(cm sr)⁻¹",
                            1e0 : u"(m sr)⁻¹"},
+            'fraction' : {1e-2 : u"%",
+                            1. : u"-",
+                            1. : u""},
             'none' : {      1. : u"",
                             1. : u"-"}
 
