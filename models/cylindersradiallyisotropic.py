@@ -33,7 +33,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
                     displayName = "in-plane angle divisions",
                     valueRange = (1, numpy.inf)),
             Parameter("sld", 1e14,
-                    displayName = "scattering length density",
+                    displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf))
     )
     parameters[0].setActive(True)

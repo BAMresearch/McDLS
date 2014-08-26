@@ -36,7 +36,7 @@ class EllipsoidsIsotropic(ScatteringModel):
                     displayName = "Orientation Integration Divisions",
                     valueRange = (0, 1e4)),
             Parameter("sld", 1e14,
-                    displayName = "Scattering length density",
+                    displayName = "Scattering length density difference",
                     valueRange = (0, 1e4)),
     )
     parameters[0].setActive(True)

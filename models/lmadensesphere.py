@@ -39,7 +39,7 @@ class LMADenseSphere(ScatteringModel):
                     decimals = 1,
                     displayValues = {-1.: "auto"}),
             Parameter("sld", 1e14,
-                    displayName = "Scattering length density",
+                    displayName = "Scattering length density difference",
                     valueRange = (0, 1e15))
             )
     parameters[0].setActive(True)

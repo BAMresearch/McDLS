@@ -17,7 +17,7 @@ class Sphere(ScatteringModel):
                     generator = RandomUniform,
                     decimals = 1), 
                   Parameter("sld", 1e14,
-                    displayName = "scattering length density",
+                    displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
                     decimals = 1), )
     parameters[0].setActive(True)
