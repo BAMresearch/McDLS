@@ -70,7 +70,7 @@ class RandomXorShiftUniform(NumberGenerator):
             seedData = cls.getSeed()
         cls.s = seedData
         cls.p = numpy.random.random_integers(cls._count) - 1
-        print >>sys.__stderr__, "got seed:", cls.s
+        # print >>sys.__stderr__, "got seed:", cls.s
 
     @classmethod
     def next(cls):
@@ -81,7 +81,7 @@ class RandomXorShiftUniform(NumberGenerator):
         s1 ^= rshift(s1, 11) # b
         s0 ^= rshift(s0, 30) # c
         cls.s[ cls.p ] = s0 ^ s1
-        print >>sys.__stderr__, "next", cls.s 
+        # print >>sys.__stderr__, "next", cls.s 
         return numpy.uint64(cls.s[ cls.p ]) * numpy.uint64(1181783497276652981) # star8/M_8
 
     @classmethod
