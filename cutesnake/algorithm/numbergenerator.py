@@ -40,10 +40,14 @@ class RandomXorShiftUniform(NumberGenerator):
     >>> RandomXorShiftUniform.get()
     >>> RandomXorShiftUniform.get(3)
     """
-    _dtype = numpy.uint64
+    _dtype = numpy.dtype(numpy.uint64)
     _count = 16
     s = None
     p = None
+
+    @classmethod
+    def dtype(cls):
+        return cls._dtype
 
     @classmethod
     def getSeed(cls):
@@ -55,19 +59,18 @@ class RandomXorShiftUniform(NumberGenerator):
         seedData = numpy.zeros(cls._count, dtype = cls._dtype) # init empty array
         for i in range(cls._count): # for each 64bit uint
             seedData[i] = (lshift(rand32(), 32)) + rand32()
+        # replacement:
+        # return numpy.random.rand(cls._count).view(numpy.uint64)
         return seedData
 
     @classmethod
     def setSeed(cls, seedData = None):
-        try:
-            seedData = seedData.flatten()
-            assert(len(seedData) == cls._count)
-            assert(seedData.dtype is cls._dtype)
-        except StandardError:
-            seedData = None
         if seedData is None:
             # seed it ourselves
             seedData = cls.getSeed()
+        assert(len(seedData) == cls._count)
+        assert(seedData.dtype is cls._dtype)
+        seedData = seedData.flatten()
         cls.s = seedData
         cls.p = numpy.random.random_integers(cls._count) - 1
         # print >>sys.__stderr__, "got seed:", cls.s
@@ -94,6 +97,67 @@ class RandomXorShiftUniform(NumberGenerator):
             res[i] = getFloat()
         numpy.seterr(**old_settings)
         return res
+
+import unittest
+import struct
+
+class RandomXorShiftUniformTest(unittest.TestCase):
+    """Tests RandomXorShiftUniform output against reference C implementation.
+    The full path to the executable has to be specified.
+    Call it like this::
+
+      nosetests cutesnake.algorithm.numbergenerator
+
+    """
+    _p = None         # subprocess instance of reference binary
+    _seedSize = None
+
+    def setUp(self):
+        import os.path
+        import subprocess
+
+        EXECNAME = "xorshift1024star8-stdout"
+        PATH = "/usr/src/xorshift-1.1.0/c"
+        EXECPATH = os.path.join(PATH, EXECNAME)
+
+        A, B, C = 31, 11, 30
+        SEED = RandomXorShiftUniform.getSeed()
+        self._seedSize = len(SEED)
+        ARGS = (EXECPATH, 0, A, B, C) + tuple(SEED)
+        ARGS = tuple((str(a) for a in ARGS))
+
+        # print >>sys.__stderr__, " ".join(ARGS)
+
+        self._p = subprocess.Popen(ARGS,
+                                   stdout = subprocess.PIPE,
+                                   stderr = subprocess.PIPE)
+        # set up RandomXorShiftUniform
+        RandomXorShiftUniform.setSeed(SEED)
+        RandomXorShiftUniform.p = 0
+        numpy.seterr(all = 'ignore')
+        self.getRef() # skip the first number which is 0
+
+    def getRef(self):
+        data = self._p.stdout.read(8)
+        return numpy.uint64(struct.unpack('<Q', data)[0])
+
+    def tearDown(self):
+        self._p.terminate()
+
+    @classmethod
+    def generateTests(cls):
+        def test(self):
+            for i in range(self._seedSize * 5): # testing thrice the seed size
+                numRef = self.getRef()
+                numThis = RandomXorShiftUniform.next()
+                self.assertEqual(numRef, numThis, msg =
+                    "Number {i}: {ref}(ref) != {this}(this) with seed '{seed}'"
+                    .format(i = i, seed = tuple(RandomXorShiftUniform.getSeed()),
+                            ref = numRef, this = numThis))
+        for t in range(0, 5):
+            setattr(cls, "test{0}".format(t), test)
+
+RandomXorShiftUniformTest.generateTests()
 
 class RandomExponential(NumberGenerator):
     lower, upper = 0., 1.
