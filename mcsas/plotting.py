@@ -11,6 +11,7 @@ from cutesnake.utils import isList, isString
 import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
+from matplotlib.pyplot import savefig
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
@@ -148,6 +149,8 @@ class PlotResults(object):
         # trigger plot window popup
         self._fig.canvas.draw()
         self._fig.show()
+        # save figure; Diamond beamtime hack:
+        savefig('{}.pdf'.format(self._figureTitle))
 
     def plotGrid(self, figh):
         #make axis active:
