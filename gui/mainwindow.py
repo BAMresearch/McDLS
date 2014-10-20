@@ -652,7 +652,7 @@ class AlgorithmWidget(SettingsWidget):
         # allowed parameters could be configurable from file too
         #for i, p in enumerate(("qUnits", "iUnits", "convergenceCriterion", 
         for i, p in enumerate(( "convergenceCriterion", 
-                    "histogramBins", "numReps", 
+                    "numReps", 
                     "numContribs", "findBackground")):
             p = getattr(self.algorithm, p, None)
             if p is None: continue

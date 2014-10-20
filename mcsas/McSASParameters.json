@@ -107,9 +107,9 @@
     },
     "qMin" : {
         "displayName" : "Lower Q-limit",
-        "valueRange" : [0,Infinity],
+        "valueRange" : [0.00,Infinity],
         "description" : "Lower bound of the Q-limits in between which the MC fit should be applied.",
-        "default" : 0,
+        "default" : 0.00,
         "isActive" : false 
     },
     "qMax" : {
