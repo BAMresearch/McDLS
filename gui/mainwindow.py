@@ -640,7 +640,7 @@ class AlgorithmWidget(SettingsWidget):
 
     def __init__(self, *args, **kwargs):
         SettingsWidget.__init__(self, *args, **kwargs)
-        self.title = TitleHandler.setup(self, "Algorithm Settings")
+        self.title = TitleHandler.setup(self, "Algorithm")
         # create a new layout
         layout = QGridLayout(self)
         layout.setObjectName("algorithmLayout")
@@ -694,7 +694,7 @@ class ModelWidget(SettingsWidget):
 
     def __init__(self, *args, **kwargs):
         SettingsWidget.__init__(self, *args, **kwargs)
-        self.title = TitleHandler.setup(self, "Model Settings")
+        self.title = TitleHandler.setup(self, "Model")
 
         layout = QVBoxLayout(self)
         layout.setObjectName("modelLayout")
@@ -901,7 +901,7 @@ class MainWindow(MainWindowBase):
         # setup similar to the file widget
         self.statsWidget = RangeList(parent = self,
                                      calculator = self.calculator,
-                                     title = "Set up Statistics",
+                                     title = "Post-fit Analysis",
                                      withBtn = False, nestedItems = False)
         self.modelWidget.setStatsWidget(self.statsWidget)
         self.modelWidget.sigModelChanged.connect(self.statsWidget.updateHistograms)
