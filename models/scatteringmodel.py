@@ -14,7 +14,7 @@ from sasdata import SASData
 
 class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
-    compensationExponent = 0.5 # default
+    # compensationExponent = 1./2 # default, overridden with that from JSON dict
 
     # it doesn't belong to the model?
     # should be instrumentation geometry ...
@@ -30,16 +30,17 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 
     def vol(self, compensationExponent = None, useSLD = False):
         # restore the exponent from class level of the particular model
-        self.compensationExponent = type(self).compensationExponent
-        if compensationExponent is not None: # set custom exponent
-            self.compensationExponent = compensationExponent
+        # self.compensationExponent = type(self).compensationExponent
+        # if compensationExponent is not None: # set custom exponent
+        #     self.compensationExponent = compensationExponent
+        self.compensationExponent = compensationExponent
         # calling user provided custom model
         if useSLD and hasattr(self, "absVolume"):
             v = self.absVolume()
         else:
             v = self.volume()
         # restore the exponent from class level of the particular model
-        self.compensationExponent = type(self).compensationExponent
+        # self.compensationExponent = type(self).compensationExponent
         # volume always returns a single value
         assert isNumber(v)
         return v

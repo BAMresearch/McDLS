@@ -64,7 +64,7 @@ def getSettings(testfn, expectedfn):
     settings = dict(Q = q, I = i, IError = numpy.maximum(0.01*i, e),
                     numContribs = 200, numReps = 20,
                     convergenceCriterion = 1, maxIterations = 1e5,
-                    histogramXScale = 'log', deltaRhoSquared = 1e30,
+                    deltaRhoSquared = 1e30,
                     doPlot = False)
     # get number of repetitions+contributions from expected test data
     if isinstance(expected, dict):

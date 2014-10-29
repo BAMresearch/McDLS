@@ -475,6 +475,7 @@ class McSAS(AlgorithmBase):
         data = self.dataPrepared
         prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, self.model.activeParamCount()))
+        compensationExponent = self.compensationExponent()
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
@@ -517,7 +518,7 @@ class McSAS(AlgorithmBase):
             logging.info("size now: {}".format(rset.shape))
 
         # NOTE: put prior into each Parameter, initially
-        it, vset = self.calcModel(data, rset)
+        it, vset = self.calcModel(data, rset, compensationExponent)
         vst = sum(vset**2) # total volume squared
 
         # Optimize the intensities and calculate convergence criterium
@@ -547,10 +548,11 @@ class McSAS(AlgorithmBase):
                not self.stop):
             rt = self.model.generateParameters()
             # calculate contribution intensity:
-            itt, vtt = self.calcModel(data, rt)
+            itt, vtt = self.calcModel(data, rt, compensationExponent)
             # Calculate new total intensity, subtract old intensity, add new:
             itest = None
-            io, dummy = self.calcModel(data, rset[ri].reshape((1, -1)))
+            io, dummy = self.calcModel(data, rset[ri].reshape((1, -1)), 
+                    compensationExponent)
             itest = (it.flatten() - io + itt) # is this numerically stable?
             # is numerically stable (so far). Can calculate final uncertainty
             # based on number of valid "moves" and sys.float_info.epsilon
@@ -725,7 +727,7 @@ class McSAS(AlgorithmBase):
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
-            it, vset = self.calcModel(data, rset)
+            it, vset = self.calcModel(data, rset, self.compensationExponent())
             vst = sum(vset**2) # total compensated volume squared 
             it = self.model.smear(it)
             
@@ -769,7 +771,8 @@ class McSAS(AlgorithmBase):
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
                 # again, partial intensities for this size only required
-                ir, dummy = self.calcModel(data, rset[c].reshape((1, -1)))
+                ir, dummy = self.calcModel(data, rset[c].reshape((1, -1)), 
+                        self.compensationExponent())
                 # determine where this maximum observability is
                 # of contribution c (index)
                 qmi = numpy.argmax(ir.flatten()/it.flatten())
@@ -923,7 +926,7 @@ class McSAS(AlgorithmBase):
             logging.info('regenerating set {} of {}'.format(ri, numReps-1))
             rset = contribs[:, :, ri]
             # calculate their form factors
-            it, vset = self.calcModel(data, rset)
+            it, vset = self.calcModel(data, rset, compensationExponent)
             vst = sum(vset**2) # total volume squared
             # Optimize the intensities and calculate convergence criterium
             it = self.model.smear(it)

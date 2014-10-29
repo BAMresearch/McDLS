@@ -20,6 +20,13 @@
         "description" : "Maximum number of iterations allowed before failing.",
         "isActive" : false 
     },
+    "compensationExponent" : {
+        "displayName" : "weighting compensation",
+        "valueRange" : [0.01,1.0],
+	    "default" : 0.66666667,
+        "description" : "Compensates the weighting of contributions, default volume-weighted.",
+        "isActive" : false 
+    },
     "convergenceCriterion" : {
         "displayName" : "convergence criterion",
         "valueRange" : [0,Infinity],
