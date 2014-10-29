@@ -33,20 +33,6 @@
         "default" : true,
         "isActive" : false 
     },
-    "histogramXScale" : {
-        "displayName" : "X-axis scaling of the histogram",
-        "valueRange" : ["linear","log"],
-        "description" : "can be 'linear' or 'log' ",
-        "default" : "log",
-        "isActive" : false 
-    },
-    "histogramWeighting" : {
-        "displayName" : "Number-weighted or Volume weighted distributions",
-        "valueRange" : ["number","volume"],
-        "description" : "Can be 'number' or 'volume' ",
-        "default" : "volume",
-        "isActive" : false 
-    },
     "startFromMinimum" : {
         "displayName" : "depreciated",
         "description" : "Sets the initial guess to minimal values rather than a uniform dist.",
@@ -69,12 +55,6 @@
     "maskZeroInt" : {
         "displayName" : "Masks intensity values of 0",
         "description" : "Renders intensity values that are zero invalid for fitting",
-        "default" : false,
-        "isActive" : false 
-    },
-    "lowMemoryFootprint" : {
-        "displayName" : "Trade speed for a drastically reduced memory footprint",
-        "description" : "Should be used when fitting large 2D datasets",
         "default" : false,
         "isActive" : false 
     },
