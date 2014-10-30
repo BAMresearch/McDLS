@@ -51,8 +51,7 @@ class PlotResults(object):
         self._figureTitle = figureTitle
         self._mcsasInstance = mcsasInstance
         try:
-            self._BG = (np.mean(self._result['scalingFactors'][1, :]), 
-                np.std(self._result['scalingFactors'][1, :], ddof = 1 ) )
+            self._BG = self._result['background']
         except:
             self._BG = (0., 0.)
 
