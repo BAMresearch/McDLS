@@ -6,12 +6,13 @@ Add docstring
 
 import logging
 import numpy as np # For arrays
-from numpy import size, log10
+from numpy import size, log10, sort
 from cutesnake.utils import isList, isString
 import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
 from matplotlib.pyplot import savefig
+import inspect
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
@@ -122,19 +123,16 @@ class PlotResults(object):
                             for p in self._mcsasInstance.model.activeParams())
                         for parHist in histograms)):
                 plotPar = parHist.param
-                # histogram data:
-#                    parStat = parHist.moments
-                # get data:
-                # histogram axis index:
-#                res = self._allRes[parami]
-                res = None
                 # prep axes:
                 hAxis = self._ah[hi + (self._nHists + 1) + 1]
+
                 # plot partial contribution in qAxis
-# not yet available:
-#                   fitIntensity, fitSTD = parStat.intensity
-#                   self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
-                self.plotHist(res, plotPar, parHist, 
+                # not yet available, need to find partial intensities:
+                # print sort(dict(inspect.getmembers(parHist)).keys())
+                # fitIntensity, fitSTD = parStat.intensity
+                # self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
+
+                self.plotHist(plotPar, parHist, 
                         hAxis, self._axisMargin, rangei)
 
                 # put the rangeInfo in the plot above
@@ -281,11 +279,11 @@ class PlotResults(object):
         xlim(QX)
         ylim(QY)
 
-    def plotPartial(self, fitQ, fitIntensity, fitSTD, qAxis):
+    def plotPartial(self, fitQ, fitIntensity, fitSTD, qAxis, label = 'MC partial intensity'):
         """plots 1D data and fit"""
         #make active:
         axes(qAxis)
-        plot(fitQ, fitIntensity, 'b-', lw = 1, label = 'MC partial intensity')
+        plot(fitQ, fitIntensity, 'b-', lw = 1, label = label)
 
     def plot1D(self, dataset, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
@@ -335,13 +333,12 @@ class PlotResults(object):
         xlim(xLim)
         ylim(yLim)
 
-
     def plotInfo(self, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
         delta = 0.001 #minor offset
-        #make active:
+        # make active:
         axes(InfoAxis)
-        #show volume-weighted info:
+        # show volume-weighted info:
         ovString = self.formatAlgoInfo()
         tvObj = text(0. - delta, 0. + delta, ovString,
                 family = "monospace", size = "small", 
@@ -353,10 +350,10 @@ class PlotResults(object):
 
     def plotStats(self, parHist, mcsasInstance, rangei, fig, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
-        delta = 0.001 #minor offset
-        #make active:
+        delta = 0.001 # minor offset
+        # make active:
         axes(InfoAxis)
-        #show volume-weighted info:
+        # show volume-weighted info:
         ovString = self.formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 0)
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.95},
@@ -367,30 +364,11 @@ class PlotResults(object):
         fig.show()
         axis('tight')
         return # stop here
-        #get bounding box
-        #bb = tvObj.get_window_extent()
-        #width = bb.width
-        #height = bb.height
-        #print('width: {}, height: {}'.format(width, height))
-        aLim = axis()
-        #axis('tight')
-        #add number-weighted info:
-        onString = self.formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 1)
-        tnObj = text(0. + delta, 0. + delta, onString, bbox = 
-                {'facecolor' : 'white', 'alpha': 0.95},
-                family = "monospace", size = "small", 
-                horizontalalignment = 'left',
-                multialignment = 'right',
-                verticalalignment = 'center')
-        fig.show()
-        axis('tight')
 
-
-    def plotHist(self, res, plotPar, parHist, hAxis, axisMargin, rangei):
+    def plotHist(self, plotPar, parHist, hAxis, axisMargin, rangei):
         """histogram plot"""
-        #make active:
+        # make active:
         axes(hAxis)
-        # hRange = parHist.ranges[rangei]
         try:
             magConv = plotPar.unit.magnitudeConversion()
         except AttributeError:
@@ -399,21 +377,12 @@ class PlotResults(object):
         histXLowerEdge = parHist.xLowerEdge / magConv
         histXMean = parHist.xMean / magConv
         histXWidth = parHist.xWidth / magConv
-        # plot volume weighted by default, both would be good
-        # can we plot both weightings? perhaps, with different colors?
-        # e.g. red/orange (current) and blue/lightblue?
-        volHistYMean = parHist.bins.mean
-        volHistMinReq = parHist.observability
-        volHistYStd = parHist.bins.std
-        #elif params[parameterId[parami]].histogram().hasWeighting('num'):
-        #    volHistYMean = res['numberHistogramYMean']
-        #    volHistMinReq = res['numberHistogramMinimumRequired']
-        #    volHistYStd = res['numberHistogramYStd']
-        #else: 
-        #    "Incorrect value for histWeighting: "\
-        #    "should be either 'volume' or 'number'"
+        # either volume or number, whichever is chosen
+        HistYMean = parHist.bins.mean
+        HistMinReq = parHist.observability
+        HistYStd = parHist.bins.std
 
-        #get information for labels:
+        # get information for labels:
         plotTitle = plotPar.displayName()
         xLabel = u'{}, {}'.format(plotPar.name(), plotPar.suffix())
 
@@ -427,7 +396,7 @@ class PlotResults(object):
                     histXLowerEdge.max() * (1 + self._axisMargin))
             xScale = 'linear'
 
-        yLim = (0, volHistYMean.max() * (1 + self._axisMargin) )
+        yLim = (0, HistYMean.max() * (1 + self._axisMargin) )
         # histogram axes settings:
         hAxDict = self._AxDict.copy()
         # change axis settings:
@@ -446,32 +415,22 @@ class PlotResults(object):
         self.plotGrid(hAxis)
 
         # fill axes
-        # plot inactive histogram:
-        bar(histXLowerEdge[0:-1], volHistYMean, 
-                width = histXWidth, color = 'grey',
-                edgecolor = 'black', linewidth = 0.5, zorder = 2, alpha = 0.5,
-                )
         # plot active histogram:
         validi = ( (histXLowerEdge >= (parHist.lower / magConv)) * 
                 (histXLowerEdge <= parHist.upper / magConv) )
         validi[-1] = 0
         if not (validi.sum()==0):
-            bar(histXLowerEdge[validi], volHistYMean[validi[0:-1]], 
+            bar(histXLowerEdge[validi], HistYMean[validi[0:-1]], 
                     width = histXWidth[validi[0:-1]], color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
                     label = 'MC size histogram')
         # plot observability limit
-        plot(histXMean, volHistMinReq, 'ro', 
+        plot(histXMean, HistMinReq, 'ro', 
                 ms = 5, markeredgecolor = 'r',
                 label = 'Minimum visibility limit', zorder = 3)
-        # plot inactive uncertainties
-        errorbar(histXMean, volHistYMean, volHistYStd,
-                zorder = 4, fmt = 'k.', ecolor = 'k',
-                elinewidth = 0.5, capsize = 3, ms = 0, lw = 0.5,
-                solid_capstyle = 'round', solid_joinstyle = 'miter')
         # plot active uncertainties
-        errorbar(histXMean[validi[0:-1]], volHistYMean[validi[0:-1]], 
-            volHistYStd[validi[0:-1]],
+        errorbar(histXMean[validi[0:-1]], HistYMean[validi[0:-1]], 
+            HistYStd[validi[0:-1]],
                 zorder = 4, fmt = 'k.', ecolor = 'k',
                 elinewidth = 2, capsize = 4, ms = 0, lw = 2,
                 solid_capstyle = 'round', solid_joinstyle = 'miter')
