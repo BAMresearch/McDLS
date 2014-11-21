@@ -111,7 +111,7 @@ class Moments(object):
         self._skew     = (skw.mean(), skw.std(ddof = 1))
         self._kurtosis = (krt.mean(), krt.std(ddof = 1))
 
-    #partial intensities not parameter-specific. Move to model?
+    #partial intensities not parameter-specific. Move to model/histogram?
     def _calcPartialIntensities(self, contribs, scalingFactors, algo):
         """scalingFactors: scaling and background for each repetition.
         contribs: all contributions also of other parameters; not required

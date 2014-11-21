@@ -26,6 +26,7 @@ from cutesnake.widgets.mixins.titlehandler import TitleHandler
 from cutesnake.utilsgui.filedialog import getOpenFiles
 from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBase
 from cutesnake.utils.lastpath import LastPath
+from cutesnake.algorithm.parameter import ParameterFloat #instance for test
 from utils import isList, isString, processEventLoop
 from cutesnake.utils.tests import testfor
 from cutesnake.utilsgui.displayexception import DisplayException
@@ -196,21 +197,21 @@ class RangeDialog(QDialog):
         return entryWidget
 
     def _createLower(self):
-        #add input for lower limit
+        # add input for lower limit
         lentry = SciEntryBox(self)
         lentry.setPrefix("lower: ")
         self.lentry = lentry
         return lentry
 
     def _createUpper(self):
-        #add input for upper limit
+        # add input for upper limit
         uentry = SciEntryBox(self)
         uentry.setPrefix("upper: ")
         self.uentry = uentry
         return uentry
 
     def _createBins(self):
-        #number of histogram bin input box
+        # number of histogram bin input box
         bentry = QSpinBox(self)
         bentry.setPrefix("# bins: ")
         bentry.setRange(1, 200)
@@ -220,7 +221,7 @@ class RangeDialog(QDialog):
         return bentry
 
     def _createParamBox(self):
-        #add a parameter choice list
+        # add a parameter choice list
         pbox = QComboBox(self)
         for p in self._model.params():
             if not hasattr(p, "isActive"):
@@ -237,7 +238,7 @@ class RangeDialog(QDialog):
         return pbox
 
     def _createXScale(self):
-        #histogram scaling choice (X-axis only at this point)
+        # histogram scaling choice (X-axis only at this point)
         sentry = QComboBox(self)
         for name in Histogram.xscaling():
             sentry.addItem(name)
@@ -245,7 +246,7 @@ class RangeDialog(QDialog):
         return sentry
 
     def _createYWeight(self):
-        #histogram weighting input
+        # histogram weighting input
         wentry = QComboBox(self)
         for name in Histogram.yweighting():
             wentry.addItem(name)
@@ -258,14 +259,17 @@ class RangeDialog(QDialog):
         p = getattr(self._model, pname)
         # perhaps, use testfor() for that:
         assert p is not None, "Could not find parameter from selection box" 
-        lower = min(type(p).valueRange())
-        upper = max(type(p).valueRange())
-        self.lentry.setRange(lower, upper)
-        self.uentry.setRange(lower, upper)
-        lower = min(p.valueRange())
-        upper = max(p.valueRange())
-        self.lentry.setValue(lower)
-        self.uentry.setValue(upper)
+        if isinstance(p, ParameterFloat):
+            # account for units conversion:
+            llim, ulim = type(p).displayValueRange()
+            lval, uval = p.displayValueRange()
+        else:
+            llim, ulim = type(p).valueRange()
+            lval, uval = p.valueRange()
+        self.lentry.setRange(llim, ulim)
+        self.uentry.setRange(llim, ulim)
+        self.lentry.setValue(lval)
+        self.uentry.setValue(uval)
 
     def _createButtons(self):
         btnWidget = QWidget(self)
@@ -288,8 +292,17 @@ class RangeDialog(QDialog):
             p = getattr(self._model, pname)
         except:
             return None
-        output = Histogram(p,
-                self.lentry.value(), self.uentry.value(),
+        if isinstance(p, ParameterFloat):
+            # take units into account:
+            magConv = p.unit.magnitudeConversion()   
+            # convert from display units to SI units for internal use:
+            lval, uval = (self.lentry.value() * magConv, 
+                    self.uentry.value() * magConv)
+        else: 
+            lval, uval = (self.lentry.value(), self.uentry.value())
+
+        print 'Histogram range values: {} to {}'.format(lval, uval)
+        output = Histogram(p, lval, uval,
                 self.bentry.value(), self.sentry.currentText(),
                 self.wentry.currentText())
         return output
@@ -326,7 +339,7 @@ class RangeList(DataList):
     def loadData(self, ranges = None):
         """Overridden base class method for adding entries to the list."""
         # add only one item at a time into the list
-        #set up dialog window for "add range"
+        # set up dialog window for "add range"
         dialog = RangeDialog(self, self._calculator.model)
         newHist = dialog.output()
         if not isinstance(newHist, Histogram):
@@ -458,7 +471,10 @@ class SettingsWidget(SettingsWidgetBase):
         maxValue = self.get(key+"max")
         if isNotNone(minValue, maxValue):
             # update value range for numerical parameters
-            p.setValueRange((minValue, maxValue))
+            if isinstance(p, ParameterFloat):
+                p.setDisplayValueRange((minValue, maxValue))
+            else:
+                p.setValueRange((minValue, maxValue))
         # update the value input widget itself
         newValue = self.get(key)
         minWidget = parent.findChild(QWidget, key+"min")
