@@ -301,7 +301,6 @@ class RangeDialog(QDialog):
         else: 
             lval, uval = (self.lentry.value(), self.uentry.value())
 
-        print 'Histogram range values: {} to {}'.format(lval, uval)
         output = Histogram(p, lval, uval,
                 self.bentry.value(), self.sentry.currentText(),
                 self.wentry.currentText())
