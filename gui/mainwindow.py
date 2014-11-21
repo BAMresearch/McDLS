@@ -483,6 +483,8 @@ class SettingsWidget(SettingsWidgetBase):
                 newValue = max(minWidget.minimum(), newValue)
                 newValue = min(maxWidget.maximum(), newValue)
             except AttributeError:
+                # TODO: BUG: this will retain old value if value is changed beyond parameter limits!!
+                # TODO: BP: This is where BP needs to adjust unit-aware limits handling.
                 pass
             p.setDisplayValue(newValue)
         # fit parameter related updates
