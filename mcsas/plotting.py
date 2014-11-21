@@ -51,6 +51,7 @@ class PlotResults(object):
         self._parameterIdx = parameterIdx
         self._figureTitle = figureTitle
         self._mcsasInstance = mcsasInstance
+        self._times = self._result['times']
         try:
             self._BG = self._result['background']
         except:
@@ -179,13 +180,15 @@ class PlotResults(object):
         """Preformats the algorithm information ready for printing
         the colons are surrounded by string-marks, to force laTeX rendering"""
         oString = ' Fitting of data$:$ {} '.format(self._figureTitle)
-        oString += '\n Q-range$:$ {0:03g} to {1:03g} '.format(
+        oString += '\n Q-range$:$ {0:3.3g} to {1:3.3g} '.format(
             self._dataset.qMin, self._dataset.qMax)
         #oString.append('\n number of datapoints: {}'.format(len(self._q)))
         oString += '\n Active parameters$:$ {}, ranges: {} '.format(
             self._mcsasInstance.model.activeParamCount(), self._nR)
-        oString += '\n Background level: {0:03g} $\pm$ {1:03g}'.format(
+        oString += '\n Background level: {0:3.3g} $\pm$ {1:3.3g}'.format(
                 self._BG[0], self._BG[1])
+        oString += '\n Timing: {0:d} repetitions of {1:3.3g} $\pm$ {2:3.3g} seconds'.format(
+                np.size(self._times), self._times.mean(), self._times.std(ddof = 1))
 
         return oString
 
@@ -384,7 +387,7 @@ class PlotResults(object):
 
         # get information for labels:
         plotTitle = plotPar.displayName()
-        xLabel = u'{}, {}'.format(plotPar.name(), plotPar.suffix())
+        xLabel = u'{} ({})'.format(plotPar.name(), plotPar.suffix())
 
         if parHist.xscale == 'log':
             xLim = (histXLowerEdge.min() * (1 - self._axisMargin), 

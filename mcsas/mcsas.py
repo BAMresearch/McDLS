@@ -398,13 +398,14 @@ class McSAS(AlgorithmBase):
             self.numReps()))
         numIter = zeros(numReps)
         backgrounds = zeros(numReps)
+        times = zeros(numReps)
         contribIntensity = zeros([1, len(data.q), numReps])
-        start = time.time() # for time estimation and reporting
 
+        priorsflag = False
         # This is the loop that repeats the MC optimization numReps times,
         # after which we can calculate an uncertainty on the Results.
-        priorsflag = False
         for nr in range(numReps):
+            elapsedStart = time.time() # for tracking elapsed time
             if (len(prior) <= 0 and len(priors) > 0) or priorsflag:
                 # this flag needs to be set as prior will be set after
                 # the first pass
@@ -435,19 +436,23 @@ class McSAS(AlgorithmBase):
                                     "within {0} attempts, exiting..."
                                     .format(self.maxRetries() + 2))
                     return
+            # in minutes:
             # keep track of how many iterations were needed to reach converg.
             numIter[nr] = details.get('numIterations', 0)
             backgrounds[nr] = details.get('background', 0) 
+            elapsedTime = (time.time() - elapsedStart)
+            times[nr] = elapsedTime 
 
-            # in minutes:
-            tottime = (time.time() - start)/60. # total elapsed time
-            avetime = (tottime / (nr+1)) # average time per MC optimization
-            remtime = (avetime*numReps - tottime) # est. remaining time
+            tottime = times.sum() /60. # total elapsed time in minutes
+            avetime = times[times > 0].mean() / 60. # average optimization time
+            remtime = (avetime * numReps - tottime) # est. remaining time
             logging.info("finished optimization number {0} of {1}\n"
                     "  total elapsed time: {2} minutes\n"
                     "  average time per optimization {3} minutes\n"
                     "  total time remaining {4} minutes"
                     .format(nr+1, numReps, tottime, avetime, remtime))
+
+
         
         # store in output dict
         self.result.append(dict(
@@ -457,6 +462,7 @@ class McSAS(AlgorithmBase):
             fitQ = data.q,
             # background details:
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
+            times = times,
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
 
