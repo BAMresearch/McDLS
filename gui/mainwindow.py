@@ -262,10 +262,10 @@ class RangeDialog(QDialog):
         if isinstance(p, ParameterFloat):
             # account for units conversion:
             llim, ulim = type(p).displayValueRange()
-            lval, uval = p.displayValueRange()
+            lval, uval = p.displayActiveRange()
         else:
             llim, ulim = type(p).valueRange()
-            lval, uval = p.valueRange()
+            lval, uval = p.activeRange()
         self.lentry.setRange(llim, ulim)
         self.uentry.setRange(llim, ulim)
         self.lentry.setValue(lval)
@@ -465,31 +465,33 @@ class SettingsWidget(SettingsWidgetBase):
         # get the parent of the updated widget and other input for this param
         parent = widget.parent()
         valueWidget = parent.findChild(QWidget, key)
+        minWidget = parent.findChild(QWidget, key+"min")
+        maxWidget = parent.findChild(QWidget, key+"max")
         # get changed value range if any
         minValue = self.get(key+"min")
         maxValue = self.get(key+"max")
         if isNotNone(minValue, maxValue):
             # update value range for numerical parameters
             if isinstance(p, ParameterFloat):
-                p.setDisplayValueRange((minValue, maxValue))
+                p.setDisplayActiveRange((minValue, maxValue))
+                clippedVals = p.displayActiveRange() # get updated values
             else:
-                p.setValueRange((minValue, maxValue))
+                p.setActiveRange((minValue, maxValue))
+                clippedVals = p.activeRange()
+            # somehow move clippedVals back to widgets, does not update
+            minWidget.setValue(min(clippedVals)) 
+            maxWidget.setValue(max(clippedVals))
+            self.sigRangeChanged.emit()
         # update the value input widget itself
         newValue = self.get(key)
-        minWidget = parent.findChild(QWidget, key+"min")
-        maxWidget = parent.findChild(QWidget, key+"max")
         if newValue is not None:
-            # clipping function will be in parameter def, rendering this obsolete
-            # try: # assert the new value is within allowed bounds
-                # nv = newValue
-                # newValue = max(minWidget.minimum(), newValue)
-                # newValue = min(maxWidget.maximum(), newValue)
-                # print "NewVal: {}, min: {}, max: {}, clipped to: {}".format(
-                #         nv, minWidget.minimum(), maxWidget.maximum(), newValue)
-            # except AttributeError:
-                # TODO: BUG: this will retain old value if value is changed beyond parameter limits!!
-            #     pass
+            # clipping function in cutesnake.algorithm.parameter def
             p.setDisplayValue(newValue)
+            clippedVal = p.displayValue()
+            try: 
+                valueWidget.setValue(clippedVal)
+            except AttributeError:
+                pass
         # fit parameter related updates
         newActive = self.get(key+"active")
         if isinstance(newActive, bool): # None for non-fit parameters
@@ -505,9 +507,6 @@ class SettingsWidget(SettingsWidgetBase):
                 minWidget.hide()
                 maxWidget.hide()
             except: pass
-        if isNotNone(minValue, maxValue):
-            # the range was updated
-            self.sigRangeChanged.emit()
 
     def setStatsWidget(self, statsWidget):
         """Sets the statistics widget to use for updating ranges."""

@@ -53,7 +53,7 @@ which is behaves like a default value.
 from math import log10 as math_log10
 from math import fabs as math_fabs
 from inspect import getmembers
-import numpy
+import numpy as np
 import sys
 import logging
 from cutesnake.utils import isString, isNumber, isList, isMap
@@ -70,8 +70,8 @@ def generateValues(numberGenerator, defaultRange, lower, upper, count):
         lower = vRange[0]
     if upper is None:
         upper = vRange[1]
-    vRange = (numpy.maximum(vRange[0], lower),
-              numpy.minimum(vRange[1], upper))
+    vRange = (np.maximum(vRange[0], lower),
+              np.minimum(vRange[1], upper))
     if isList(vRange[0]) and isList(vRange[1]):
         assert len(vRange[0]) == len(vRange[1]), \
             "Provided value range is unsymmetrical!"
@@ -347,12 +347,15 @@ class ParameterNumerical(ParameterBase):
     # getter/setter for them. For specialized versions they can be
     # overridden as usual.
     ParameterBase.setAttributes(locals(), "valueRange", "suffix",
-                  "stepping", "displayValues", "generator")
+                  "stepping", "displayValues", "generator", "activeRange")
 
     @mixedmethod
-    def setValue(selforcls, newValue):
+    def setValue(selforcls, newValue, clip = False):
         testfor(isNumber(newValue), DefaultValueError,
                 "A value has to be numerical!")
+        if clip:
+            # clip to min/max values:
+            newValue = selforcls.clip(newValue)
         super(ParameterNumerical, selforcls).setValue(newValue)
 
     @mixedmethod
@@ -364,15 +367,27 @@ class ParameterNumerical(ParameterBase):
         testfor(all([isNumber(v) for v in newRange]), ValueRangeError,
                 "A value range has to consist of numbers only!")
         minVal, maxVal = min(newRange), max(newRange)
-        #minVal = max(minVal, -sys.float_info.max)
-        #maxVal = min(maxVal,  sys.float_info.max)
-        minVal = max(minVal, -1e200) # as good as -inf...
-        maxVal = min(maxVal,  1e200) # as good as inf...
+        # minVal = max(minVal, -sys.float_info.max) 
+        # maxVal = min(maxVal,  sys.float_info.max)
+        minVal = max(minVal, -1e200) # as good as -inf?...
+        maxVal = min(maxVal,  1e200) # as good as inf?...
         selforcls._valueRange = minVal, maxVal
-        if selforcls._value < minVal:
-            selforcls._value = minVal
-        if selforcls._value > maxVal:
-            selforcls._value = maxVal
+        # apply limits to value:
+        selforcls._value = selforcls.clip()
+
+    @mixedmethod
+    def setActiveRange(selforcls, newRange):
+        # tests nicked from above
+        testfor(len(newRange) == 2, ValueRangeError,
+                "Active ranges have to consist of two values!")
+        # always clip range settings to min/max values:
+        newRange = selforcls.clip(newRange)
+        # sets range for active fitting parameter limits
+        selforcls._activeRange = (min(newRange), max(newRange))
+
+    @mixedmethod
+    def activeRange(selforcls):
+        return selforcls._activeRange 
 
     @mixedmethod
     def setSuffix(selforcls, newSuffix):
@@ -429,10 +444,23 @@ class ParameterNumerical(ParameterBase):
         return selforcls.valueRange()[1]
 
     @mixedmethod
-    def clip(selforcls, value):
-        # clips value to within set min/max limits. Hang on, where are they?
-        return value
+    def clip(selforcls, value = None):
+        if value is None:
+            value = selforcls.value()
+            if value is None: # no value set yet
+                return None
 
+        minv, maxv = (selforcls.min(), selforcls.max())
+        if (minv is None) and (maxv is None):
+            return value
+        # clips value to within set min/max limits. 
+        valueType = type(value)
+        # clip to min/max independent on if value is list, int, float or array
+        # print "arrayval: {}, min: {}, max: {}".format(value, selforcls.min(), selforcls.max())
+        value = np.clip(np.array(value), minv, maxv)
+        # return to original type:
+        value = valueType(value)
+        return value
 
     @mixedmethod
     def displayValues(selforcls, key = None, default = None):
@@ -457,7 +485,7 @@ class ParameterNumerical(ParameterBase):
                                                self.stepping()))))
 
     def generate(self, lower = None, upper = None, count = 1):
-        return generateValues(self.generator(), self.valueRange(),
+        return generateValues(self.generator(), self.activeRange(),
                                                 lower, upper, count
                                 ).astype(self.dtype)
 
@@ -486,22 +514,30 @@ class ParameterFloat(ParameterNumerical):
     def setDisplayValue(self, newVal):
         """sets value given in display units (str in displayValueUnit)"""
         magConv = self.unit.magnitudeConversion()  
-        self.setValue(newVal * magConv) 
+        self.setValue(newVal * magConv, clip = True) 
 
     @mixedmethod
     def displayValueRange(selforcls):
-        """sets value range after converting input from display to SI units"""
+        """Upper and lower limits a parameter can assume in display unit"""
         magConv = selforcls.unit.magnitudeConversion()  
         vRange = selforcls.valueRange()
         newRange = (min(vRange) / magConv, max(vRange) / magConv)
         return newRange
 
     @mixedmethod
-    def setDisplayValueRange(selforcls, newRange):
+    def displayActiveRange(selforcls):
+        """value bounds in display units used for parameter generator"""
+        magConv = selforcls.unit.magnitudeConversion()  
+        vRange = selforcls.activeRange()
+        newRange = (min(vRange) / magConv, max(vRange) / magConv)
+        return newRange
+
+    @mixedmethod
+    def setDisplayActiveRange(selforcls, newRange):
         """sets value range after converting input from display to SI units"""
         magConv = selforcls.unit.magnitudeConversion()  
         newRange = (min(newRange) * magConv, max(newRange) * magConv)
-        selforcls.setValueRange(newRange)
+        selforcls.setActiveRange(newRange)
 
     @mixedmethod
     def setDecimals(selforcls, newDecimals):
@@ -528,9 +564,9 @@ class ParameterFloat(ParameterNumerical):
         return (ParameterNumerical.__str__(self) +
                 ", {0} decimals".format(self.decimals()))
 
-    def generate(self, lower = None, upper = None, count = 1):
-        return generateValues(self.generator(), self.valueRange(),
-                                                lower, upper, count)
+    # def generate(self, lower = None, upper = None, count = 1):
+    #     return generateValues(self.generator(), self.activeRange(),
+    #                                             lower, upper, count)
 
 class ParameterLog(ParameterFloat):
     """Used to select an UI input widget with logarithmic behaviour."""

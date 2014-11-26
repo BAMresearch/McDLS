@@ -495,7 +495,7 @@ class McSAS(AlgorithmBase):
         if size(prior) == 0:
             if self.startFromMinimum():
                 for idx, param in enumerate(self.model.activeParams()):
-                    mb = min(param.valueRange())
+                    mb = min(param.activeRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
                         mb = pi / (q.max())
                     rset[:, idx] = numpy.ones(numContribs) * mb * .5
@@ -813,13 +813,13 @@ class McSAS(AlgorithmBase):
                 # histogramXLowerEdge contains #histogramBins+1 bin edges,
                 # or class limits.
                 histogramXLowerEdge = numpy.linspace(
-                        min(param.valueRange()),
-                        max(param.valueRange()),
+                        min(param.activeRange()),
+                        max(param.activeRange()),
                         param.histogram().binCount + 1)
             else:
                 histogramXLowerEdge = numpy.logspace(
-                        log10(min(param.valueRange())),
-                        log10(max(param.valueRange())),
+                        log10(min(param.activeRange())),
+                        log10(max(param.activeRange())),
                         param.histogram().binCount + 1)
 
             def initHist(reps = 0):
