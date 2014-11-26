@@ -479,13 +479,16 @@ class SettingsWidget(SettingsWidgetBase):
         minWidget = parent.findChild(QWidget, key+"min")
         maxWidget = parent.findChild(QWidget, key+"max")
         if newValue is not None:
-            try: # assert the new value is within allowed bounds
-                newValue = max(minWidget.minimum(), newValue)
-                newValue = min(maxWidget.maximum(), newValue)
-            except AttributeError:
+            # clipping function will be in parameter def, rendering this obsolete
+            # try: # assert the new value is within allowed bounds
+                # nv = newValue
+                # newValue = max(minWidget.minimum(), newValue)
+                # newValue = min(maxWidget.maximum(), newValue)
+                # print "NewVal: {}, min: {}, max: {}, clipped to: {}".format(
+                #         nv, minWidget.minimum(), maxWidget.maximum(), newValue)
+            # except AttributeError:
                 # TODO: BUG: this will retain old value if value is changed beyond parameter limits!!
-                # TODO: BP: This is where BP needs to adjust unit-aware limits handling.
-                pass
+            #     pass
             p.setDisplayValue(newValue)
         # fit parameter related updates
         newActive = self.get(key+"active")

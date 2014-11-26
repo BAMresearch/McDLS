@@ -366,8 +366,8 @@ class ParameterNumerical(ParameterBase):
         minVal, maxVal = min(newRange), max(newRange)
         #minVal = max(minVal, -sys.float_info.max)
         #maxVal = min(maxVal,  sys.float_info.max)
-        minVal = max(minVal, -1e200)
-        maxVal = min(maxVal,  1e200)
+        minVal = max(minVal, -1e200) # as good as -inf...
+        maxVal = min(maxVal,  1e200) # as good as inf...
         selforcls._valueRange = minVal, maxVal
         if selforcls._value < minVal:
             selforcls._value = minVal
@@ -427,6 +427,12 @@ class ParameterNumerical(ParameterBase):
     @mixedmethod
     def max(selforcls):
         return selforcls.valueRange()[1]
+
+    @mixedmethod
+    def clip(selforcls, value):
+        # clips value to within set min/max limits. Hang on, where are they?
+        return value
+
 
     @mixedmethod
     def displayValues(selforcls, key = None, default = None):
