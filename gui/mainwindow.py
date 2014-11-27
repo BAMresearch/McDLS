@@ -481,7 +481,6 @@ class SettingsWidget(SettingsWidgetBase):
             # somehow move clippedVals back to widgets, does not update
             minWidget.setValue(min(clippedVals)) 
             maxWidget.setValue(max(clippedVals))
-            self.sigRangeChanged.emit()
         # update the value input widget itself
         newValue = self.get(key)
         if newValue is not None:
@@ -507,6 +506,9 @@ class SettingsWidget(SettingsWidgetBase):
                 minWidget.hide()
                 maxWidget.hide()
             except: pass
+        if isNotNone(minValue, maxValue):
+            # the range was updated
+            self.sigRangeChanged.emit()
 
     def setStatsWidget(self, statsWidget):
         """Sets the statistics widget to use for updating ranges."""
