@@ -272,9 +272,16 @@ class ParameterBase(object):
         else:
             sufx = self.suffix()
 
+        if hasattr(self, "displayActiveRange"):
+            AR = self.displayActiveRange()
+            displayValue = u'{0}, Active range: [{1}, {2}]'.format(
+                    self.displayValue(), AR[0], AR[1])
+        else:
+            displayValue = self.displayValue()
+
         return u"{0}: {1} ({2})".format(
                 self.displayName(), 
-                self.displayValue(), 
+                displayValue, 
                 sufx)
 
     __repr__ = __str__
@@ -387,7 +394,10 @@ class ParameterNumerical(ParameterBase):
 
     @mixedmethod
     def activeRange(selforcls):
-        return selforcls._activeRange 
+        if selforcls._activeRange is None:
+            return (None, None)
+        else:
+            return selforcls._activeRange 
 
     @mixedmethod
     def setSuffix(selforcls, newSuffix):
@@ -480,9 +490,8 @@ class ParameterNumerical(ParameterBase):
         return isNumber(value) and not isinstance(value, float)
 
     def __str__(self):
-        return (ParameterBase.__str__(self) + u" in [{0}, {1}]{2}, {3} steps"
-                .format(*(self.valueRange() + (self.suffix(),
-                                               self.stepping()))))
+        return (ParameterBase.__str__(self) + u" in [{0}, {1}] ({sfx})"
+                .format(*(self.valueRange()), sfx = self.suffix()))
 
     def generate(self, lower = None, upper = None, count = 1):
         return generateValues(self.generator(), self.activeRange(),
@@ -560,9 +569,10 @@ class ParameterFloat(ParameterNumerical):
     def isDataType(cls, value):
         return isinstance(value, cls.dtype)
 
-    def __str__(self):
-        return (ParameterNumerical.__str__(self) +
-                ", {0} decimals".format(self.decimals()))
+    # def __str__(self):
+        # Not quite clear what decimals was supposed to do...
+        # return (ParameterNumerical.__str__(self) +
+        #         ", {0} decimals".format(self.decimals()))
 
     # def generate(self, lower = None, upper = None, count = 1):
     #     return generateValues(self.generator(), self.activeRange(),
