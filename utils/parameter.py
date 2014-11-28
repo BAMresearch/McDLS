@@ -498,6 +498,8 @@ class Histogram(DataSet, DisplayMixin):
     def __init__(self, param, lower, upper, binCount = 50,
                  xscale = None, yweight = None):
         """Creates an histogram with default bin count, will be updated later."""
+        logging.debug('Hist init: {} [{}, {}]'
+                .format(param.name(), lower, upper))
         DataSet.__init__(self, "({0}, {1})".format(lower, upper), None)
         # add it to the parameter here
         self.param = param # parameter we belong to is mandatory

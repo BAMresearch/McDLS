@@ -78,10 +78,11 @@ class Calculator(object):
         oldHandler = log.log.handlers[0]
         log.addHandler(logFile)
 
-        bounds = dataset.sphericalSizeEst()
-        logging.info("The following parameters are used for 'Analyze_1D':")
-        logging.info("bounds: [{0:.4f}; {1:.4f}]"
-                     .format(bounds[0], bounds[1]))
+        # obsolete? 2014-11-28:
+        # bounds = dataset.sphericalSizeEst()
+        # logging.info("The following parameters are used for 'Analyze_1D':")
+        # logging.info("bounds: [{0:.4f}; {1:.4f}]"
+        #              .format(bounds[0], bounds[1]))
         mcargs = dict(contribParamBounds = bounds,
                       doPlot = False)
         self._writeSettings(mcargs, dataset)
