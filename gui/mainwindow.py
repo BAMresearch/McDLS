@@ -261,10 +261,12 @@ class RangeDialog(QDialog):
         assert p is not None, "Could not find parameter from selection box" 
         if isinstance(p, ParameterFloat):
             # account for units conversion:
-            llim, ulim = type(p).displayValueRange()
+            # llim, ulim = type(p).displayValueRange()
+            llim, ulim = p.displayValueRange()
             lval, uval = p.displayActiveRange()
         else:
-            llim, ulim = type(p).valueRange()
+            # llim, ulim = type(p).valueRange()
+            llim, ulim = p.valueRange()
             lval, uval = p.activeRange()
         self.lentry.setRange(llim, ulim)
         self.uentry.setRange(llim, ulim)
@@ -364,10 +366,17 @@ class RangeList(DataList):
         self.setToolTip(
             "Right-click to add additional ranges."
         )
+        # self.addMenuEntry(name = "edit", text = "Edit selected", 
+        #                   menuStates = "hasSelection",
+        #                   callbacks = self.editEntry)
         self.addMenuEntry(name = "recalc", text = "recalc selected",
                           menuStates = "hasSelection",
                           callbacks = self.recalc)
 
+    def editEntry(self):
+        return
+        # more on the TODO list... Will figure this out later.
+    
     def recalc(self):
         return
         # does not work yet! missing arguments for Hist.calc()
