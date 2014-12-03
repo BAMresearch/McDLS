@@ -83,8 +83,7 @@ class Calculator(object):
         # logging.info("The following parameters are used for 'Analyze_1D':")
         # logging.info("bounds: [{0:.4f}; {1:.4f}]"
         #              .format(bounds[0], bounds[1]))
-        mcargs = dict(contribParamBounds = bounds,
-                      doPlot = False)
+        mcargs = dict(doPlot = False)
         self._writeSettings(mcargs, dataset)
         if self.nolog:
             log.removeHandler(oldHandler)

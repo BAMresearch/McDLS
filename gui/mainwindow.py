@@ -602,7 +602,8 @@ class SettingsWidget(SettingsWidgetBase):
         if isinstance(param, ParameterNumerical):
             # create input boxes for user specified min/max
             # within default upper/lower from class definition
-            minmaxValue = type(param).min(), type(param).max()
+            # minmaxValue = type(param).min(), type(param).max()
+            minmaxValue = param.min(), param.max()
             for bound in "min", "max":
                 w = self._makeEntry(param.name() + bound, param.dtype,
                                     getattr(param, bound)(),
