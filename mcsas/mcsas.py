@@ -44,12 +44,6 @@ class McSAS(AlgorithmBase):
 
         - *Psi*: 2D array
             Detector angle values, only required for 2D pattern fitting.
-        - *contribParamBounds*: list
-            Two-element vector or list indicating upper and lower size
-            bounds of the particle radii used in the fitting procedure. If
-            not provided, these will be estimated as:
-            :math:`R_{max} = {pi \over q_{min}}` and
-            :math:`R_{min} = {pi \over q_{max}}`. Units in meter.
         - *compensationExponent*: float, default: :math:`1.5 \over 3`
             Parameter used to compensate the :math:`volume^2` scaling of each
             sphere contribution to the simulated I(q).
