@@ -820,18 +820,32 @@ class ModelWidget(SettingsWidget):
 
     @property
     def algorithm(self):
+        # This should really be called "model", not "algorithm" to avoid 
+        # confusion
         if self.calculator is None:
             return None
         return self.calculator.model
 
     def setSphericalSizeRange(self, minVal, maxVal):
-        if self.modelBox.currentText() != "Sphere":
-            return
+        # if self.modelBox.currentText() != "Sphere":
+        #     return
+
         key = "radius"
+        # get parameter display order of magnitude: 
+        magConv = None
+        for p in self.algorithm.params():
+            if p.name() == key: #"is" does not work with unicode strings
+                magConv = p.unit.magnitudeConversion()
+        if magConv is None:
+            logging.debug('No "radius"-named parameter, cannot get magConv')
+            magConv = 1.
+
         keymin, keymax = key+"min", key+"max"
+        # logging.debug('magConv: {}, minVal: {}, maxVal: {}'
+        #         .format(magConv, minVal, maxVal))
         if self.get(keymin) is not None and self.get(keymax) is not None:
-            self.set(keymin, minVal)
-            self.set(keymax, maxVal)
+            self.set(keymin, minVal / magConv)
+            self.set(keymax, maxVal / magConv)
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))
