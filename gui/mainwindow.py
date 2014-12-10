@@ -637,7 +637,7 @@ class SettingsWidget(SettingsWidgetBase):
                                 param.isActive(),
                                 widgetType = QPushButton,
                                 parent = widget)
-            w.setText("Fit")
+            w.setText("Active")
         w.setFixedWidth(FIXEDWIDTH*.5)
         widgets.append(w)
 
