@@ -6,6 +6,7 @@ from utils import mixedmethod
 from utils.parameter import FitParameter, Parameter
 from models import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
+from sasunit import SASUnit
 
 class GaussianChain(ScatteringModel):
     r"""Form factor of flexible polymer chains which are not selfavoiding
@@ -25,21 +26,33 @@ class GaussianChain(ScatteringModel):
             FitParameter("rg", 1.0,
                     displayName = "radius of gyration, Rg",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
+                    valueRange = (0., numpy.inf)),
             FitParameter("bp", 100.0,
                     displayName = "scattering length of the polymer",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf), suffix = "cm"),
+                    valueRange = (0., numpy.inf)),
             FitParameter("etas", 1.0,
                     displayName = "scattering length density of the solvent",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf), suffix = "cm<sup>-1</sup>"),
+                    valueRange = (0., numpy.inf)),
             FitParameter("k", 1.0,
                     displayName = "volumetric scaling factor of Rg",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf), suffix = "nm")
+                    valueRange = (0., numpy.inf))
     )
     parameters[0].setActive(True)
+    parameters[0].unit = SASUnit(magnitudedict = 'length',
+            simagnitudename = u'm', 
+            displaymagnitudename = u'nm')
+    parameters[1].unit = SASUnit(magnitudedict = 'length',
+            simagnitudename = u'm', 
+            displaymagnitudename = u'cm')
+    parameters[2].unit = SASUnit(magnitudedict = 'SLD',
+            simagnitudename = u'm⁻²', 
+            displaymagnitudename = u'Å⁻²')
+    parameters[3].unit = SASUnit(magnitudedict = 'none',
+            simagnitudename = u'-', 
+            displaymagnitudename = u'-')
 
     def __init__(self):
         super(GaussianChain, self).__init__()

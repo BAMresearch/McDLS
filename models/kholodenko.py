@@ -8,6 +8,7 @@ from scipy.integrate import quad
 from utils.parameter import FitParameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
+from sasunit import SASUnit 
 
 LASTMSG = set()
 
@@ -55,19 +56,28 @@ class Kholodenko(ScatteringModel):
             FitParameter("radius", 1.0,
                     displayName = "Radius",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
+                    valueRange = (0., numpy.inf)),
             FitParameter("lenKuhn", 1.0,
                     displayName = "kuhn length",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf), suffix = "nm"),
+                    valueRange = (0., numpy.inf)),
             FitParameter("lenContour", 1.0,
                     displayName = "contour length",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf), suffix = "nm")
+                    valueRange = (0., numpy.inf))
     )
     parameters[0].setActive(True)
     parameters[1].setActive(True)
     parameters[2].setActive(True)
+    parameters[0].unit = SASUnit(magnitudedict = 'length',
+        simagnitudename = u'm',
+        displaymagnitudename = u'nm')
+    parameters[1].unit = SASUnit(magnitudedict = 'length',
+        simagnitudename = u'm',
+        displaymagnitudename = u'nm')
+    parameters[2].unit = SASUnit(magnitudedict = 'length',
+        simagnitudename = u'm',
+        displaymagnitudename = u'nm')
 
     def __init__(self):
         ScatteringModel.__init__(self)
