@@ -9,8 +9,13 @@ from cutesnake.algorithm import Parameter
 from cutesnake.dataset import DataSet, DisplayMixin
 
 import logging
-import numpy
+import numpy as np
 from cutesnake.utils.tests import testfor
+from cutesnake.algorithm.numbergenerator import NumberGenerator, RandomUniform  
+from cutesnake.algorithm.parameter import ParameterError, ValueRangeError
+
+class ParameterGeneratorError(ParameterError):
+    pass
 
 def _makeProperty(varName):
     def getter(selforcls):
@@ -69,7 +74,7 @@ class Moments(object):
         """
         testfor(contribs.ndim == 2, ValueError)
         numContribs, numReps = contribs.shape
-        self._validRange = numpy.zeros_like(contribs.T, dtype = bool)
+        self._validRange = np.zeros_like(contribs.T, dtype = bool)
         for ri in range(numReps):
             # the single set of R for this calculation
             rset = contribs[:, ri]
@@ -84,11 +89,11 @@ class Moments(object):
         fraction: number or volume fraction
         """
         numContribs, numReps = contribs.shape
-        val = numpy.zeros(numReps)
-        mu  = numpy.zeros(numReps)
-        var = numpy.zeros(numReps)
-        skw = numpy.zeros(numReps)
-        krt = numpy.zeros(numReps)
+        val = np.zeros(numReps)
+        mu  = np.zeros(numReps)
+        var = np.zeros(numReps)
+        skw = np.zeros(numReps)
+        krt = np.zeros(numReps)
         # loop over each repetition
         for ri in range(numReps):
             # the single set of R for this calculation
@@ -99,7 +104,7 @@ class Moments(object):
             val[ri] = sum(frac)
             mu[ri]  = sum(rset * frac)/sum(frac)
             var[ri] = sum( (rset-mu[ri])**2 * frac )/sum(frac)
-            sigma   = numpy.sqrt(abs(var[ri]))
+            sigma   = np.sqrt(abs(var[ri]))
             skw[ri] = ( sum( (rset-mu[ri])**3 * frac )
                      / (sum(frac) * sigma**3))
             krt[ri] = ( sum( (rset-mu[ri])**4 * frac )
@@ -123,7 +128,7 @@ class Moments(object):
         numContribs, numParams, numReps = contribs.shape
         data = algo.dataPrepared
         # loop over each repetition
-        partialIntensities = numpy.zeros((numReps, data.q.shape[0]))
+        partialIntensities = np.zeros((numReps, data.q.shape[0]))
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
@@ -305,11 +310,11 @@ class Histogram(DataSet, DisplayMixin):
         if 'lin' in self.xscale:
             # histogramXLowerEdge contains #histogramBins+1 bin edges,
             # or class limits.
-            self._xLowerEdge = numpy.linspace(
+            self._xLowerEdge = np.linspace(
                     self.lower, self.upper, self.binCount + 1)
         else:
-            self._xLowerEdge = numpy.logspace(
-                    numpy.log10(self.lower), numpy.log10(self.upper),
+            self._xLowerEdge = np.logspace(
+                    np.log10(self.lower), np.log10(self.upper),
                     self.binCount + 1)
         self._setXWidth()
         self._setXMean()
@@ -323,7 +328,7 @@ class Histogram(DataSet, DisplayMixin):
             return
         # NOTE: isn't this the same as:
         # self.xWidth * .5 + self.xLowerEdge
-        self._xMean = numpy.zeros(self.binCount)
+        self._xMean = np.zeros(self.binCount)
         for i in range(self.binCount):
             self._xMean[i] = self.xLowerEdge[i:i+2].mean()
 
@@ -334,7 +339,7 @@ class Histogram(DataSet, DisplayMixin):
     def _setXWidth(self):
         if self.xLowerEdge is None:
             return
-        self._xWidth = numpy.diff(self.xLowerEdge)
+        self._xWidth = np.diff(self.xLowerEdge)
 
     @property
     def bins(self):
@@ -349,14 +354,14 @@ class Histogram(DataSet, DisplayMixin):
         return self._observability
 
     def _setObservability(self, allObservability):
-        self._observability = numpy.zeros(self.binCount)
+        self._observability = np.zeros(self.binCount)
         if allObservability is None:
             return
         testfor(allObservability.shape[0] == self.binCount, ValueError)
         for bi in range(self.binCount):
             # for observabilities over all repetitions select the largest
             obs = allObservability[bi, :]
-            self._observability[bi] = obs[obs < numpy.inf].max()
+            self._observability[bi] = obs[obs < np.inf].max()
 
     @property
     def moments(self):
@@ -396,17 +401,17 @@ class Histogram(DataSet, DisplayMixin):
             obsLst.append(binObs)
             cdfLst.append(cdf)
         # set final result: y values, CDF and observability of all bins
-        self._bins = VectorResult(numpy.vstack(binLst).T)
-        self._cdf = VectorResult(numpy.vstack(cdfLst).T)
-        self._setObservability(numpy.vstack(obsLst).T)
+        self._bins = VectorResult(np.vstack(binLst).T)
+        self._cdf = VectorResult(np.vstack(cdfLst).T)
+        self._setObservability(np.vstack(obsLst).T)
         self._moments = Moments(contribs, paramIndex, self.xrange, fractions)
 
     def _calcBins(self, contribs, parValues, fraction, minReq):
-        """Returns numpy arrays for the bin values, observability and the CDF
+        """Returns np arrays for the bin values, observability and the CDF
         based on the bin values."""
         # single set of R for this calculation
-        bins = numpy.zeros(self.binCount)
-        binObs = numpy.zeros(self.binCount)
+        bins = np.zeros(self.binCount)
+        binObs = np.zeros(self.binCount)
         for bi in range(self.binCount):
             val, obs = self._calcBin(
                     self._binMask(bi, parValues),
@@ -422,7 +427,7 @@ class Histogram(DataSet, DisplayMixin):
         """
         # y contains the volume fraction for that radius bin
         binValue = sum(fraction[binMask])
-        if numpy.isnan(binValue):
+        if np.isnan(binValue):
             binValue = 0.
         # observability below
         if not any(binMask):
@@ -432,7 +437,7 @@ class Histogram(DataSet, DisplayMixin):
         return binValue, binMinReq
 
     def _calcCDF(self, bins):
-        cdf = numpy.zeros_like(bins)
+        cdf = np.zeros_like(bins)
         cdf[0] = bins[0]
         for i in range(1, len(cdf)):
             cdf[i] = cdf[i - 1] + bins[i]
@@ -540,7 +545,7 @@ class FitParameterBase(ParameterBase):
     cutesnake.algorithm.parameter to introduce more specific fit
     related attributes."""
     ParameterBase.setAttributes(locals(), histograms = None,
-                                activeValues = list())
+            activeValues = list(), activeRange = (None, None))
 
     def __init__(self):
         super(FitParameterBase, self).__init__()
@@ -571,7 +576,10 @@ class FitParameterBase(ParameterBase):
         histgram setup for each parameter is implemented elsewhere"""
         if isActive and not selforcls.isActive():
             # set only if there is no histogram defined already
-            lo, hi = selforcls.valueRange()
+            if None in selforcls.activeRange():
+                lo, hi = selforcls.valueRange()
+            else:
+                lo, hi = selforcls.activeRange()
             selforcls.setHistograms(Histograms()) # init histogram list
             # add a default histogram
             # NOTE: apply default bin count from MCSASParameters here
@@ -623,6 +631,74 @@ class FitParameterBase(ParameterBase):
         tempVal = selforcls.activeValues()
         tempVal[index] = val
         selforcls.setActiveValues(tempVal)
+    
+    # Following should be moved to FitParameterNumerical
+    ParameterBase.setAttributes(locals(), "generator")
+
+    @mixedmethod
+    def setActiveRange(selforcls, newRange):                                       
+        # tests nicked from above 
+        testfor(len(newRange) == 2, ValueRangeError,
+                "Active ranges have to consist of two values!") 
+        # always clip range settings to min/max values:
+        newRange = selforcls.clip(newRange)
+        # sets range for active fitting parameter limits
+        selforcls._activeRange = (min(newRange), max(newRange))
+
+    @mixedmethod
+    def activeRange(selforcls): 
+        if selforcls._activeRange is None:
+            return (None, None)
+        else:
+            return selforcls._activeRange
+
+    @mixedmethod                                                               
+    def displayActiveRange(selforcls):                                         
+        """value bounds in display units used for parameter generator"""       
+        magConv = selforcls.unit.magnitudeConversion()                         
+        vRange = selforcls.activeRange()                                       
+        newRange = (min(vRange) / magConv, max(vRange) / magConv)              
+        return newRange                                                        
+
+    @mixedmethod                                                               
+    def setDisplayActiveRange(selforcls, newRange):                            
+        """sets value range after converting input from display to SI units""" 
+        magConv = selforcls.unit.magnitudeConversion()                         
+        newRange = (min(newRange) * magConv, max(newRange) * magConv)          
+        selforcls.setActiveRange(newRange)                                     
+
+    @mixedmethod                                                               
+    def setGenerator(selforcls, newGenerator):
+        if isinstance(newGenerator, type):
+            testfor(issubclass(newGenerator, NumberGenerator), 
+                    ParameterGeneratorError, "NumberGenerator type expected!")
+        else:
+            newGenerator = RandomUniform
+        selforcls._generator = newGenerator
+
+    def generateValues(selforcls, numberGenerator, 
+            defaultRange, lower, upper, count):        
+        # works with vectors of multiple bounds too                                
+        vRange = defaultRange
+        if lower is None:
+            lower = vRange[0]
+        if upper is None:
+            upper = vRange[1] 
+        vRange = (np.maximum(vRange[0], lower), np.minimum(vRange[1], upper))
+        if isList(vRange[0]) and isList(vRange[1]):
+            assert len(vRange[0]) == len(vRange[1]), "Provided value range is unsymmetrical!"
+        try: # update count to length of provided bound vectors                    
+            count = max(count, min([len(x) for x in vRange]))                      
+        except:                                                                    
+            pass                                                                   
+        values = numberGenerator.get(count)                                        
+        # scale numbers to requested range                                         
+        return values * (vRange[1] - vRange[0]) + vRange[0]                        
+
+    def generate(self, lower = None, upper = None, count = 1):                 
+        return self.generateValues(self.generator(), self.activeRange(), 
+                lower, upper, count).astype(self.dtype)  
+
 
 class FitParameterString(FitParameterBase, ParameterString):
     pass
@@ -633,7 +709,7 @@ class FitParameterBoolean(FitParameterBase, ParameterBoolean):
 class FitParameterNumerical(FitParameterBase, ParameterNumerical):
     pass
 
-class FitParameterFloat(FitParameterBase, ParameterFloat):
+class FitParameterFloat(FitParameterNumerical, ParameterFloat):
     pass
 
 class FitParameterLog(FitParameterBase, ParameterLog):

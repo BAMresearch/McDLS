@@ -30,7 +30,8 @@ from cutesnake.algorithm.parameter import ParameterFloat #instance for test
 from utils import isList, isString, processEventLoop
 from cutesnake.utils.tests import testfor
 from cutesnake.utilsgui.displayexception import DisplayException
-from utils.parameter import ParameterNumerical, Histogram, FitParameterBase
+from utils.parameter import (ParameterNumerical, Histogram, FitParameterBase,
+                    FitParameterNumerical)
 from version import version
 from calc import Calculator
 from sasdata import SASData
@@ -597,13 +598,33 @@ class SettingsWidget(SettingsWidgetBase):
         widget.setLayout(layout)
         if isString(param.__doc__):
             widget.setToolTip(param.__doc__)
+
+        if isString(param.__doc__):
+            #add description as tooltip if available for parameter
+            widget.setToolTip(param.__doc__)
+
+        # create scalar value input widget with min/max limits
         minmaxValue, widgets = None, []
-        # instead of create/remove widgets, show/hide them on active toggle
         if isinstance(param, ParameterNumerical):
-            # create input boxes for user specified min/max
+            minmaxValue = param.min(), param.max()
+
+        w = self._makeEntry(param.name(), param.dtype, param.displayValue(),
+                                      minmax = minmaxValue, parent = widget)
+        try: # set special value text for lower bound, simple solution
+            special = param.displayValues(w.minimum())
+            w.setSpecialValueText(special)
+        except: 
+            pass
+        w.setFixedWidth(FIXEDWIDTH)
+        widgets.insert(len(widgets)/2, w)
+        w = QWidget()
+
+        # Special widget settings for active fitting parameters:
+        activeBtns = activeBtns and isinstance(param, FitParameterBase)
+        if activeBtns:
+            # create input boxes for user specified active fitting range
             # within default upper/lower from class definition
             # minmaxValue = type(param).min(), type(param).max()
-            minmaxValue = param.min(), param.max()
             for bound in "min", "max":
                 w = self._makeEntry(param.name() + bound, param.dtype,
                                     getattr(param, bound)(),
@@ -611,30 +632,15 @@ class SettingsWidget(SettingsWidgetBase):
                 w.setPrefix(bound + ": ")
                 w.setFixedWidth(FIXEDWIDTH)
                 widgets.append(w)
-
-        if isString(param.__doc__):
-            #add description as tooltip if available for parameter
-            widget.setToolTip(param.__doc__)
-        # create scalar value input widget
-        w = self._makeEntry(param.name(), param.dtype, param.displayValue(),
-                                      minmax = minmaxValue, parent = widget)
-        try: # set special value text for lower bound, simple solution
-            special = param.displayValues(w.minimum())
-            w.setSpecialValueText(special)
-        except: pass
-        w.setFixedWidth(FIXEDWIDTH)
-        widgets.insert(len(widgets)/2, w)
-        activeBtns = activeBtns and isinstance(param, FitParameterBase)
-        w = QWidget()
-        if activeBtns:
             # create *active* buttons for FitParameters only
             w = self._makeEntry(param.name()+"active", bool,
                                 param.isActive(),
                                 widgetType = QPushButton,
                                 parent = widget)
-            w.setText("active")
+            w.setText("Fit")
         w.setFixedWidth(FIXEDWIDTH*.5)
         widgets.append(w)
+
         # add input widgets to the layout
         for w in widgets:
             layout.addWidget(w)
