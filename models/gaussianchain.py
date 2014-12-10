@@ -50,9 +50,9 @@ class GaussianChain(ScatteringModel):
     parameters[2].unit = SASUnit(magnitudedict = 'SLD',
             simagnitudename = u'm⁻²', 
             displaymagnitudename = u'Å⁻²')
-    parameters[3].unit = SASUnit(magnitudedict = 'none',
-            simagnitudename = u'-', 
-            displaymagnitudename = u'-')
+    parameters[3].unit = SASUnit(magnitudedict = 'length',
+            simagnitudename = u'm', 
+            displaymagnitudename = u'nm')
 
     def __init__(self):
         super(GaussianChain, self).__init__()
