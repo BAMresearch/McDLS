@@ -19,7 +19,7 @@ class CylindersIsotropic(ScatteringModel):
             FitParameter("radius", 1.0e-9,
                     displayName = "Cylinder Radius",
                     generator = RandomExponential,
-                    valueRange = (0.1e-10, numpy.inf)),
+                    valueRange = (1e-10, numpy.inf)),
             Parameter("useAspect", True,
                     displayName = "Use aspect ratio (checked) or length "),
             FitParameter("length", 10.0e-9,

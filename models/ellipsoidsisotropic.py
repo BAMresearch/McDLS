@@ -59,8 +59,8 @@ class EllipsoidsIsotropic(ScatteringModel):
     def __init__(self):
         ScatteringModel.__init__(self)
         # some presets, are these still necessary? defined above..
-        self.a.setValueRange((0.1, 1e3))
-        self.c.setValueRange((1., 1e4))
+        self.a.setDisplayActiveRange((0.1, 1e3))
+        self.c.setDisplayActiveRange((1., 1e4))
 
     def formfactor(self, dataset):
         #From Pedersen, adv. colloid interf. sci. 70 (1997), 171--210

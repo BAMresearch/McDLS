@@ -72,9 +72,9 @@ class Kholodenko(ScatteringModel):
     def __init__(self):
         ScatteringModel.__init__(self)
         # some presets
-        self.radius.setValueRange((1, 5))
-        self.lenKuhn.setValueRange((10, 50))
-        self.lenContour.setValueRange((100, 1000))
+        self.radius.setDisplayActiveRange((1, 5))
+        self.lenKuhn.setDisplayActiveRange((10, 50))
+        self.lenContour.setDisplayActiveRange((100, 1000))
 
     def formfactor(self, dataset):
         # vectorized data and arguments

@@ -58,8 +58,8 @@ class SphericalCoreShell(ScatteringModel):
     def __init__(self):
         ScatteringModel.__init__(self)
         # some presets
-        self.radius.setValueRange((0.1, 1e3))
-        self.t.setValueRange((0.1, 1e3))
+        self.radius.setDisplayActiveRange((0.1, 1e3))
+        self.t.setDisplayActiveRange((0.1, 1e3))
 
     def formfactor(self, dataset):
         def k(q, r, dEta):

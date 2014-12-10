@@ -44,10 +44,10 @@ class GaussianChain(ScatteringModel):
     def __init__(self):
         super(GaussianChain, self).__init__()
         # some presets
-        self.rg.setValueRange((1, 1e2))
-        self.bp.setValueRange((0.1, 1e3))
-        self.etas.setValueRange((0.1, 10.))
-        self.k.setValueRange((0.1, 10.))
+        self.rg.setDisplayActiveRange((1, 1e2))
+        self.bp.setDisplayActiveRange((0.1, 1e3))
+        self.etas.setDisplayActiveRange((0.1, 10.))
+        self.k.setDisplayActiveRange((0.1, 10.))
 
     def formfactor(self, dataset):
         # vectorized data

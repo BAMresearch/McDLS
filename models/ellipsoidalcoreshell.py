@@ -72,9 +72,9 @@ class EllipsoidalCoreShell(ScatteringModel):
     def __init__(self):
         ScatteringModel.__init__(self)
         # some presets
-        self.a.setValueRange((0.1, 1e3))
-        self.b.setValueRange((1., 1e4))
-        self.t.setValueRange((0.1, 1e3))
+        self.a.setDisplayActiveRange((0.1, 1e3))
+        self.b.setDisplayActiveRange((1., 1e4))
+        self.t.setDisplayActiveRange((0.1, 1e3))
 
     def formfactor(self, dataset):
         def j1(x):
