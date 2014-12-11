@@ -556,40 +556,40 @@ class FitParameterBase(ParameterBase):
                 self.histograms()[i].param = self
 
     @mixedmethod
-    def setValueRange(self, newRange):
+    def setValueRange(selforcls, newRange):
         try:
-            super(FitParameterBase, self).setValueRange(newRange)
-            self.histograms().updateRanges()
+            super(FitParameterBase, selforcls).setValueRange(newRange)
+            selforcls.histograms().updateRanges()
         except:
             pass
 
     @mixedmethod
-    def isActive(self):
+    def isActive(selforcls):
         """Tests if there is an histogram defined.
         Provided for convenience."""
-        return isList(self.histograms())
+        return isList(selforcls.histograms())
 
     @mixedmethod
-    def setActive(self, isActive):
+    def setActive(selforcls, isActive):
         """Sets this parameter as active. It will be fitted.
         Temporary in replacement of setIsActive(). Can be removed later if
         histgram setup for each parameter is implemented elsewhere"""
-        if isActive and not self.isActive():
+        if isActive and not selforcls.isActive():
             # set only if there is no histogram defined already
-            if None in self.activeRange():
-                lo, hi = self.valueRange()
+            if None in selforcls.activeRange():
+                lo, hi = selforcls.valueRange()
             else:
-                lo, hi = self.activeRange()
-            self.setHistograms(Histograms()) # init histogram list
+                lo, hi = selforcls.activeRange()
+            selforcls.setHistograms(Histograms()) # init histogram list
             # add a default histogram
             # NOTE: apply default bin count from MCSASParameters here
             # or in Histogram.__init__ defaults
-            self.histograms().append(Histogram(self, lo, hi))
+            selforcls.histograms().append(Histogram(selforcls, lo, hi))
         elif not isActive:
-            self.setHistograms(None)
+            selforcls.setHistograms(None)
 
     @mixedmethod
-    def activeVal(self, val, index = None):
+    def activeVal(selforcls, val, index = None):
         """
         activeVal is set after a successful MC run. It is a list of arrays, 
         with each array storing the parameter values of a successful run.
@@ -597,13 +597,13 @@ class FitParameterBase(ParameterBase):
         otherwise the entire list is returned.
         """
         if index is None:
-            return self.activeValues()
+            return selforcls.activeValues()
         else:
-            return self.activeValues()[
-                    index%len(self.activeValues())]
+            return selforcls.activeValues()[
+                    index%len(selforcls.activeValues())]
 
     @mixedmethod
-    def setActiveVal(self, val, index = None):
+    def setActiveVal(selforcls, val, index = None):
         """
         Sets or appends to the list of activeVal. There *could* be a race
         condition if two mcFit instances try to append at the same time. 
@@ -615,68 +615,68 @@ class FitParameterBase(ParameterBase):
         """
         if index is None:
             # append to end
-            index = len(self.activeValues())
+            index = len(selforcls.activeValues())
 
-        while len(self.activeValues()) < (index + 1):
+        while len(selforcls.activeValues()) < (index + 1):
             # expand list to allow storage of value
-            tempVal = self.activeValues()
+            tempVal = selforcls.activeValues()
             tempVal.append(None)
-            self.setActiveValues(tempVal)
+            selforcls.setActiveValues(tempVal)
 
-        if not self.isActive():
+        if not selforcls.isActive():
             logging.error(
             'value of parameter cannot be set, parameter not active')
             return
 
-        tempVal = self.activeValues()
+        tempVal = selforcls.activeValues()
         tempVal[index] = val
-        self.setActiveValues(tempVal)
+        selforcls.setActiveValues(tempVal)
     
-    # Following methods should be moved to FitParameterNumerical:
+    # Following should be moved to FitParameterNumerical
     ParameterBase.setAttributes(locals(), "generator")
 
     @mixedmethod
-    def setActiveRange(self, newRange):                                       
+    def setActiveRange(selforcls, newRange):                                       
         # tests nicked from above 
         testfor(len(newRange) == 2, ValueRangeError,
                 "Active ranges have to consist of two values!") 
         # always clip range settings to min/max values:
-        newRange = self.clip(newRange)
+        newRange = selforcls.clip(newRange)
         # sets range for active fitting parameter limits
-        self._activeRange = (min(newRange), max(newRange))
+        selforcls._activeRange = (min(newRange), max(newRange))
 
     @mixedmethod
-    def activeRange(self): 
-        if self._activeRange is None:
+    def activeRange(selforcls): 
+        if selforcls._activeRange is None:
             return (None, None)
         else:
-            return self._activeRange
+            return selforcls._activeRange
 
     @mixedmethod                                                               
-    def displayActiveRange(self):                                         
+    def displayActiveRange(selforcls):                                         
         """value bounds in display units used for parameter generator"""       
-        magConv = self.unit.magnitudeConversion()                         
-        vRange = self.activeRange()                                       
+        magConv = selforcls.unit.magnitudeConversion()                         
+        vRange = selforcls.activeRange()                                       
         newRange = (min(vRange) / magConv, max(vRange) / magConv)              
         return newRange                                                        
 
     @mixedmethod                                                               
-    def setDisplayActiveRange(self, newRange):                            
+    def setDisplayActiveRange(selforcls, newRange):                            
         """sets value range after converting input from display to SI units""" 
-        magConv = self.unit.magnitudeConversion()                         
+        magConv = selforcls.unit.magnitudeConversion()                         
         newRange = (min(newRange) * magConv, max(newRange) * magConv)          
-        self.setActiveRange(newRange)                                     
+        selforcls.setActiveRange(newRange)                                     
 
     @mixedmethod                                                               
-    def setGenerator(self, newGenerator):
+    def setGenerator(selforcls, newGenerator):
         if isinstance(newGenerator, type):
             testfor(issubclass(newGenerator, NumberGenerator), 
                     ParameterGeneratorError, "NumberGenerator type expected!")
         else:
             newGenerator = RandomUniform
-        self._generator = newGenerator
+        selforcls._generator = newGenerator
 
-    def generateValues(self, numberGenerator, 
+    def generateValues(selforcls, numberGenerator, 
             defaultRange, lower, upper, count):        
         # works with vectors of multiple bounds too                                
         vRange = defaultRange
