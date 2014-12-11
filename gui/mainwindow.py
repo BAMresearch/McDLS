@@ -597,9 +597,6 @@ class SettingsWidget(SettingsWidgetBase):
 
         widget.setLayout(layout)
         if isString(param.__doc__):
-            widget.setToolTip(param.__doc__)
-
-        if isString(param.__doc__):
             #add description as tooltip if available for parameter
             widget.setToolTip(param.__doc__)
 
