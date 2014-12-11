@@ -424,7 +424,7 @@ class SettingsWidget(SettingsWidgetBase):
             query = p.name()
             try:
                 p.isActive() # fails for non-FitParameters
-                query = QRegExp(p.name()+".*")
+                query = QRegExp("^" + p.name() + ".*")
             except: pass
             for w in self.findChildren(QWidget, query):
                 yield w.objectName()
