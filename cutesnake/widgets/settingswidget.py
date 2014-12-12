@@ -52,7 +52,13 @@ class SettingsWidget(QWidget):
             except:
                 value = child.property(attr)
             else:
-                value = valueGetter()
+                try: # float conversion may fail
+                    value = valueGetter()
+                except ValueError:
+                    value = None
+                    # stop here and return None,
+                    # otherwise another getter is tried which may return text
+                    break
             if value is not None:
                 break
         return value
@@ -84,7 +90,7 @@ class SettingsWidget(QWidget):
                 value.lower() == "false"):
                 value = ""
             setter(dtype(value))
-        except TypeError:
+        except (TypeError, ValueError):
             raise IndexError("Could not set widget '{0}' to '{1}'!".
                              format(key, value))
         else:

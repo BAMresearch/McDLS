@@ -450,7 +450,10 @@ class SettingsWidget(SettingsWidgetBase):
         self.appSettings.beginGroup(section)
         for key in self.keys:
             value = self.appSettings.value(key)
-            self.set(key, value)
+            try:
+                self.set(key, value)
+            except StandardError, e:
+                logging.warn(e)
         self.appSettings.endGroup()
 
     def _updateParam(self, widget):
@@ -480,13 +483,15 @@ class SettingsWidget(SettingsWidgetBase):
         # get changed value range if any
         minValue = self.get(key+"min")
         maxValue = self.get(key+"max")
-        if isNotNone(minValue, maxValue):
-            # update value range for numerical parameters
+        # update value range for numerical parameters
+        if isinstance(p, FitParameterBase):
             if isinstance(p, ParameterFloat):
-                p.setDisplayActiveRange((minValue, maxValue))
+                if isNotNone(minValue, maxValue):
+                    p.setDisplayActiveRange((minValue, maxValue))
                 clippedVals = p.displayActiveRange() # get updated values
             else:
-                p.setActiveRange((minValue, maxValue))
+                if isNotNone(minValue, maxValue):
+                    p.setActiveRange((minValue, maxValue))
                 clippedVals = p.activeRange()
             # somehow move clippedVals back to widgets, does not update
             minWidget.setValue(min(clippedVals)) 
@@ -571,6 +576,8 @@ class SettingsWidget(SettingsWidgetBase):
             if isList(minmax) and len(minmax):
                 widget.setMinimum(min(minmax))
                 widget.setMaximum(max(minmax))
+                widget.setToolTip("A value between {lo} and {hi} (including)."
+                        .format(lo = widget.minimum(), hi = widget.maximum()))
             widget.setValue(value)
         self.connectInputWidgets(widget)
         return widget
@@ -604,6 +611,8 @@ class SettingsWidget(SettingsWidgetBase):
         minmaxValue, widgets = None, []
         if isinstance(param, ParameterNumerical):
             minmaxValue = param.min(), param.max()
+        if isinstance(param, ParameterFloat):
+            minmaxValue = param.displayValueRange()
 
         w = self._makeEntry(param.name(), param.dtype, param.displayValue(),
                                       minmax = minmaxValue, parent = widget)
