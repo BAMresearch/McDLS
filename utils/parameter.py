@@ -699,7 +699,6 @@ class FitParameterBase(ParameterBase):
         return self.generateValues(self.generator(), self.activeRange(), 
                 lower, upper, count).astype(self.dtype)  
 
-
 class FitParameterString(FitParameterBase, ParameterString):
     pass
 
@@ -707,7 +706,13 @@ class FitParameterBoolean(FitParameterBase, ParameterBoolean):
     pass
 
 class FitParameterNumerical(FitParameterBase, ParameterNumerical):
-    pass
+
+    def __str__(self):
+        lo, hi = self.displayActiveRange()
+        displayValue = u', active range: [{0}, {1}]'.format(lo, hi)
+        return (super(FitParameterNumerical, self).__str__() + u"{0} ({1})".format(
+                displayValue,
+                self.suffix()))
 
 class FitParameterFloat(FitParameterNumerical, ParameterFloat):
     pass
