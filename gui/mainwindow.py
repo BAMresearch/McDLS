@@ -614,7 +614,6 @@ class SettingsWidget(SettingsWidgetBase):
             pass
         w.setFixedWidth(FIXEDWIDTH)
         widgets.insert(len(widgets)/2, w)
-        w = QWidget()
 
         # Special widget settings for active fitting parameters:
         activeBtns = activeBtns and isinstance(param, FitParameterBase)
@@ -635,8 +634,8 @@ class SettingsWidget(SettingsWidgetBase):
                                 widgetType = QPushButton,
                                 parent = widget)
             w.setText("Active")
-        w.setFixedWidth(FIXEDWIDTH*.5)
-        widgets.append(w)
+            w.setFixedWidth(FIXEDWIDTH*.5)
+            widgets.append(w)
 
         # add input widgets to the layout
         for w in widgets:
