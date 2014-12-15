@@ -7,39 +7,36 @@ McSAS Quick Usage guide
 Introduction
 ============
 
-This guide is intended as an aid to getting the first fits using McSAS. For comprehensive details of what goes on under the hood, please refer as a baseline to the paper. Additionally, the code is open source, and provides the best "documentation" of what actually takes place.
+This guide is intended as an aid to getting the first fits using McSAS. 
 
-When publishing results using this code, please be so kind as to cite the paper as:
+For comprehensive details of what goes on under the hood, please refer as a baseline to the available publications. Additionally, the code is open source, and provides the best "documentation" of what actually takes place.
+
+When publishing results using this code, the user is requested to cite either or both of the following works:
+
+    Bressler, I, Pauw, B. R, and Thuenemann, A., submitted to J. Appl. Cryst., arXiv:1412.1900
 
     Pauw, B. R., Pedersen, J. S., Tardif, S., Takata, M. and Iversen, B. B.,
-    J. Appl. Cryst. 46 (2013), *in press*
-
-This document assumes a modicum of proficiency with the Python language, to a level sufficient for  reading in a dataset.
-
-Changes since the paper include:
---------------------------------
-
-A replacement of :math:`p_c` by :math:`Rpfactor`, where :math:`Rpfactor = 1 - \frac{p_c}{6}`. Setting :math:`Rpfactor = \frac{1}{2}` will work in most cases.
+    J. Appl. Cryst. 46 (2013), 365—371.
 
 Scope of the code capabilities
 ------------------------------
 
 The McSAS code at the moment can:
 
-1. Fit supplied data to a set of polydisperse spheres
-2. Plot the data and fit alongside the distribution
-3. Rebin the result
-4. Export the result to a semilcolon-delimited CSV file.
+1. Fit supplied data to a variety of models, with absolute unit support.
+2. Graphically show the distributions of selected parameters and associated parameter ranges.
+3. Graphical output includes distribution population modes with uncertainties.
+4. Output the fit, data, settings, and distributions for further processing.
+5. Can be used with or without user interface, using command-line arguments. 
 
-These aspects will be discussed in that order in this document.
-
--1. Loading the Python functions
+-1. Starting McSAS
 ================================
 
-Assuming you have a suitable Python prompt, such as provided by iPython from the Enthought
-Python Distribution, you can load the McSAS functions using::
+McSAS can be used on both Linux / Unix systems (including MacOS X) as well as personal computers running Windows. 
+On Unix- and Unix-like computers, McSAS can be started from any terminal by typing: 
+	$ /path/to/mcsas/main.py
 
-    execfile('McSAS.py')
+On Windows, the compiled executable can be double-clicked to start. 
 
 0. Loading test data
 ====================
