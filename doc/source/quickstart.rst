@@ -9,9 +9,12 @@ Introduction
 
 This guide is intended as an aid to getting the first fits using McSAS. 
 
-For comprehensive details of what goes on under the hood, please refer as a baseline to the available publications. Additionally, the code is open source, and provides the best "documentation" of what actually takes place.
+For comprehensive details of what goes on under the hood, please refer as a 
+baseline to the available publications. Additionally, the code is open source, 
+and provides the best "documentation" of what actually takes place.
 
-When publishing results using this code, the user is requested to cite either or both of the following works:
+When publishing results using this code, the user is requested to cite either or 
+both of the following works:
 
     Bressler, I, Pauw, B. R, and Thuenemann, A., submitted to J. Appl. Cryst., arXiv:1412.1900
 
@@ -24,7 +27,8 @@ Scope of the code capabilities
 The McSAS code at the moment can:
 
 1. Fit supplied data to a variety of models, with absolute unit support.
-2. Graphically show the distributions of selected parameters and associated parameter ranges.
+2. Graphically show the distributions of selected parameters and associated 
+    parameter ranges.
 3. Graphical output includes distribution population modes with uncertainties.
 4. Output the fit, data, settings, and distributions for further processing.
 5. Can be used with or without user interface, using command-line arguments. 
@@ -32,7 +36,9 @@ The McSAS code at the moment can:
 -1. Starting McSAS
 ================================
 
-McSAS can be used on both Linux / Unix systems (including MacOS X) as well as personal computers running Windows. 
+McSAS can be used on both Linux / Unix systems (including MacOS X) as well as 
+personal computers running Windows. 
+
 On Unix- and Unix-like computers, McSAS can be started from any terminal by typing: 
 	$ /path/to/mcsas/main.py
 
@@ -41,29 +47,35 @@ On Windows, the compiled executable can be double-clicked to start.
 0. Loading test data
 ====================
 
-A set of test data has been included in the directory, with concatenated data from two measurements (measured over different angular ranges). The sample is a porous organic material. The uncertainty has been estimated as outlined in the paper. 
+A demonstration dataset has been simulated using SASFit, and output in a 
+three-column file "McSAS_demo1.csv"
 
-The dataset can be loaded using the pickle functions provided in McSAS::
+The dataset can be loaded by right-clicking in the empty list in the 
+"Data Files"-tab. 
+When loaded, the list shows some information of the data: its length, content, 
+q-limits, and scatterer radius limits calculated using the Q limits 
+(theoretically, the spacing between Q-points also dictates the size limits, but
+the tendency of users to use much too narrowly-spaced Q-points would result in 
+unworkable estimates).
 
-    QIE = pickle_load('test_data.pydat')
-    q = QIE[0,:]
-    I = QIE[1,:]
-    E = QIE[2,:]
+Lastly, the "log"-window shows how many datapoints had an uncertainty estimate 
+below 1% of the intensity. These datapoint uncertainty values have been adjusted
+to 1%, as that is a practically demonstrated limit of SAS data accuracy. 
 
-1. Fitting a dataset
+1. Configuring the algorithm 
 ====================
+The algorithm uses several internal parameters. Some of these can be adjusted 
+in the "Algorithm"-tab of the user interface. They are: 
+  1. The convergence criterion. If the uncertainty estimates provided with the 
+  data are not accurate, or if the fitting model chosen is unsuitable or 
+  incompletely descriptive, the algorithm may not arrive at a final solution
+  (a convergence criterion of 1 or below). 
 
-It is assumed that a dataset has been loaded into Python, and that the 1D q-vector, accompanying 1D intensity and uncertainty ("error", or standard deviation) is available as "q", "I", and "E", respectively. For consistency throughout the calculation and its parameters, all length units are given in meters, which is particularly important if the measurement is done in absolute units, and retrieval of the actual volume fraction is required.
+If necessary, the other internal parameters can be changed through careful 
+editing of the "McSASParameters.json" parameter dictionary. This should not 
+be needed for common use. 
 
-This implies that "q" must have the units of :math:`\left[ 1 \over m \right]` and "I" and "E" must have the units of :math:`\left[ 1 \over {m \cdot sr} \right]`. Additionally, the optional size bounds are to be given in meters, and the scattering contrast, delta rho 2 squared, should be given in :math:`\left[ 1 \over m \right]`.
 
-If, on the other hand, the intensity is in relative units, or if the size distribution can be in relative volume fraction, the units do not matter much. They should be consistent, but q can then be given in 1/nm, and the size bounds likewise in nm. The resulting distribution will then have the same units.
-
-The most straightforward way of fitting is by running::
-
-    Result = Analyze_1D(q, I, E)
-
-Which after a minute or so (or about five minutes for the provided extended dataset on an Intel i7 at 1.8 GHz (MacBook Air) will result in a dictionary called Result with all the fitting details in it.
 
 2. Plotting the result
 ======================
