@@ -56,7 +56,7 @@ if sys.platform in "win32":
 TARGETNAME = version.name() + EXEC_SUFFIX
 
 INCLUDEFILES = [
-        "mcsas/McSASParameters.json",
+        "mcsas/mcsasparameters.json",
         "resources/background_files.svg",
         "resources/background_ranges.svg",
         ]

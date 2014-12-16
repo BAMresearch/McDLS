@@ -83,7 +83,7 @@ class McSASParameters(PropertyNames):
 
     # new defaults for loading parameters
     parameters = list()
-    paramDefFile = os.path.join("mcsas", "McSASParameters.json")
+    paramDefFile = os.path.join("mcsas", "mcsasparameters.json")
 
     def loadParameters(self, filename):
         # load parameter definitions from file and add to list:

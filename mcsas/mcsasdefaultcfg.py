@@ -58,18 +58,18 @@ class cInfo(object):
         where appropriate
         default parameter file can be provided using kwarg:
         paramDefFile = 'path/to/file'
-        McSASParameters.json should be in the same directory as this function
+        mcsasparameters.json should be in the same directory as this function
         """
         fname = kwargs.get("paramDefFile", None)
         if fname is None:
-            if os.path.exists("McSASParameters.json"):
-                fname = "McSASParameters.json"
+            if os.path.exists("mcsasparameters.json"):
+                fname = "mcsasparameters.json"
             else:
                 #try one more:
                 #determine the directory in which McSASDefaultsCfg is located:
                 #settings should be in the same directory:
                 fdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-                fname = os.path.join(fdir, "McSASParameters.json")
+                fname = os.path.join(fdir, "mcsasparameters.json")
 
         if not os.path.exists(fname):
             logging.error('no default parameter file found!')

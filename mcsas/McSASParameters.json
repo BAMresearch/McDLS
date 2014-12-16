@@ -31,7 +31,7 @@
         "displayName" : "convergence criterion",
         "valueRange" : [0,Infinity],
         "description" : "Reduced Chi-squared value to reach for optimisation success.",
-        "default" : 1.0,
+        "default" : 1.00,
         "isActive" : false 
     },
     "findBackground" : {

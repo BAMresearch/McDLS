@@ -10,7 +10,7 @@ McSASCfg.parameters.parameters.[parname]
 which can be mapped to more convenient names.
 Alternatively, McSASCfg.parameter.getPar([parname]) returns the
 handle to a parameter.
-The parameter definitions are read from the McSASParameters.json
+The parameter definitions are read from the mcsasparameters.json
 dictionary, and new parameters can be easily defined through there.
 """
 
