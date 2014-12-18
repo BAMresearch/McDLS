@@ -70,13 +70,10 @@ class Kholodenko(ScatteringModel):
     parameters[1].setActive(True)
     parameters[2].setActive(True)
     parameters[0].unit = Length(
-        simagnitudename = u'm',
         displaymagnitudename = u'nm')
     parameters[1].unit = Length(
-        simagnitudename = u'm',
         displaymagnitudename = u'nm')
     parameters[2].unit = Length(
-        simagnitudename = u'm',
         displaymagnitudename = u'nm')
 
     def __init__(self):

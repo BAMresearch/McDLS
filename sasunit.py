@@ -38,22 +38,17 @@ from cutesnake.utils.classproperty import classproperty
 
 class SASUnit(object):
     _magnitudeMap = None
-    _siMagnitudeName = u"" 
+    _siMagnitudeName = None
     _displayMagnitudeName = u""
 
     def __init__(self, **kwargs):
         """process display. Input should contain keywords defined above"""
-        outArg = kwargs.get('simagnitudename', None)
         inArg = kwargs.get('displaymagnitudename', None)
 
         # TODO: assert given in/out args exist in selected magDict
 #        import sys
 #        print >>sys.__stderr__, "SASUnit:", inArg, outArg, self.magnitudeMapping, outArg in self.magnitudeMapping
 #        print >>sys.__stderr__, self.magnitudeMapping.items()
-        if outArg is not None:
-            testfor(outArg in self.magnitudeMapping, ValueError,
-                    "si magnitude name not in chosen magnitude dict!")
-            self.siMagnitudeName = outArg
         if inArg is not None:
             testfor(inArg in self.magnitudeMapping, ValueError,
                     "display magnitude name not in chosen magnitude dict!")
@@ -73,14 +68,9 @@ class SASUnit(object):
 
     @property
     def siMagnitudeName(self):
+        if self._siMagnitudeName is None:
+            raise NotImplementedError
         return self._siMagnitudeName
-
-    @siMagnitudeName.setter
-    def siMagnitudeName(self, name):
-        if name in self.magnitudeMapping:
-            self._siMagnitudeName = name
-        else:
-            logging.warning('no valid si magnitude name used.')
 
     @property
     def displayMagnitude(self):
@@ -100,6 +90,8 @@ class SASUnit(object):
     @classproperty
     @classmethod
     def magnitudeMapping(cls):
+        if cls._magnitudeMap is None:
+            raise NotImplementedError
         return cls._magnitudeMap
 
     def invName(self, unitString):
@@ -142,6 +134,7 @@ class Length(SASUnit):
         u"cm": 1e-2,
         u"m" : 1e0
     }
+    _siMagnitudeName = u"m"
 
 class Area(SASUnit):
     _magnitudeMap = {
@@ -151,6 +144,7 @@ class Area(SASUnit):
         u"mm²": 1e-6,
         u"m²" : 1e0,
     }
+    _siMagnitudeName = u"m²"
 
 class Volume(SASUnit):
     _magnitudeMap = {
@@ -160,6 +154,7 @@ class Volume(SASUnit):
         u"mm³": 1e-9,
         u"m³" : 1e0,
     }
+    _siMagnitudeName = u"m³"
 
 class Angle(SASUnit):
     _magnitudeMap = {
@@ -168,6 +163,7 @@ class Angle(SASUnit):
         u'"'  :   0.05/pi,
         u"rad":   1.0,
     }
+    _siMagnitudeName = u"rad"
 
 class SLD(SASUnit):
     _magnitudeMap = {
@@ -178,6 +174,7 @@ class SLD(SASUnit):
         u"cm⁻²": 1e4,
         u"m⁻²" : 1e0,
     }
+    _siMagnitudeName = u"m⁻²"
 
 class ScatteringVector(SASUnit):
     _magnitudeMap = {
@@ -188,12 +185,14 @@ class ScatteringVector(SASUnit):
         u"cm⁻¹": 1e2,
         u"m⁻¹" : 1e0,
     }
+    _siMagnitudeName = u"m⁻¹"
 
 class ScatteringIntensity(SASUnit):
     _magnitudeMap = {
         u"(cm sr)⁻¹": 1e2,
         u"(m sr)⁻¹" : 1e0,
     }
+    _siMagnitudeName = u"(m sr)⁻¹"
 
 class Fraction(SASUnit):
     _magnitudeMap = {
@@ -201,12 +200,14 @@ class Fraction(SASUnit):
         u"-": 1e0,
         u"" : 1e0,
     }
+    _siMagnitudeName = u"-"
 
 class NoUnit(SASUnit):
     _magnitudeMap = {
         u"" : 1e0,
         u"-": 1e0,
     }
+    _siMagnitudeName = u"-"
 
 if __name__ == "__main__":
     import doctest

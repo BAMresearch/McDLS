@@ -6,7 +6,7 @@ from utils import mixedmethod
 from utils.parameter import FitParameter, Parameter
 from models import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
-from sasunit import Length, SLD
+from sasunit import Length, SLD, NoUnit
 
 class GaussianChain(ScatteringModel):
     r"""Form factor of flexible polymer chains which are not selfavoiding
@@ -42,17 +42,13 @@ class GaussianChain(ScatteringModel):
     )
     parameters[0].setActive(True)
     parameters[0].unit = Length(
-            simagnitudename = u'm', 
             displaymagnitudename = u'nm')
     parameters[1].unit = Length(
-            simagnitudename = u'm', 
             displaymagnitudename = u'cm')
     parameters[2].unit = SLD(
-            simagnitudename = u'm⁻²', 
             displaymagnitudename = u'Å⁻²')
-    parameters[3].unit = Length(
-            simagnitudename = u'm', 
-            displaymagnitudename = u'nm')
+    parameters[3].unit = NoUnit(
+            displaymagnitudename = u'')
 
     def __init__(self):
         super(GaussianChain, self).__init__()

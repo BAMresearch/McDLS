@@ -43,22 +43,16 @@ class CylindersIsotropic(ScatteringModel):
     )
     parameters[0].setActive(True)
     parameters[0].unit = Length(
-            simagnitudename = u"m",
             displaymagnitudename = u'nm')
     parameters[2].unit = Length(
-            simagnitudename = u"m",
             displaymagnitudename = u'nm')
     parameters[3].unit = NoUnit(
-            simagnitudename = u"-",
             displaymagnitudename = u'-')
     parameters[4].unit = Angle(
-            simagnitudename = u"rad",
             displaymagnitudename = u'˚')
     parameters[5].unit = NoUnit(
-            simagnitudename = u"-",
             displaymagnitudename = u'-')
     parameters[6].unit = SLD(
-            simagnitudename = u'm⁻²',
             displaymagnitudename = u'Å⁻²')
 
     def __init__(self):

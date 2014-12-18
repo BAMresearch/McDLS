@@ -23,10 +23,8 @@ class Sphere(ScatteringModel):
     parameters[0].setActive(True)
     # set units
     parameters[0].unit = Length(
-            simagnitudename = u'm',
             displaymagnitudename = u'nm')
     parameters[1].unit = SLD(
-            simagnitudename = u'm⁻²',
             displaymagnitudename = u'Å⁻²')
     #set suffix (normally set in above FitParameter definition) identical
     #to displayname (temporary). Eventually, GUI should use unit metadata

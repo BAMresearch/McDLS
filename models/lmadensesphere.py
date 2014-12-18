@@ -44,16 +44,12 @@ class LMADenseSphere(ScatteringModel):
             )
     parameters[0].setActive(True)
     parameters[0].unit = Length(
-            simagnitudename = u"m",
             displaymagnitudename = u"nm")
     parameters[1].unit = Fraction(
-            simagnitudename = u"-",
             displaymagnitudename = u"%")
     parameters[2].unit = NoUnit(
-            simagnitudename = u"-",
             displaymagnitudename = u"-")
     parameters[3].unit = SLD(
-            simagnitudename = u'm⁻²',
             displaymagnitudename = u'Å⁻²')
 
     def __init__(self):
