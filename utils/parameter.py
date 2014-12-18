@@ -636,41 +636,41 @@ class FitParameterBase(ParameterBase):
     ParameterBase.setAttributes(locals(), "generator")
 
     @mixedmethod
-    def setActiveRange(selforcls, newRange):                                       
-        # tests nicked from above 
+    def setActiveRange(selforcls, newRange):
+        # tests nicked from above
         testfor(len(newRange) == 2, ValueRangeError,
-                "Active ranges have to consist of two values!") 
+                "Active ranges have to consist of two values!")
         # always clip range settings to min/max values:
         newRange = selforcls.clip(newRange)
         # sets range for active fitting parameter limits
         selforcls._activeRange = (min(newRange), max(newRange))
 
     @mixedmethod
-    def activeRange(selforcls): 
+    def activeRange(selforcls):
         if selforcls._activeRange is None:
             return (None, None)
         else:
             return selforcls._activeRange
 
-    @mixedmethod                                                               
-    def displayActiveRange(selforcls):                                         
-        """value bounds in display units used for parameter generator"""       
-        magConv = selforcls.unit.magnitudeConversion()                         
-        vRange = selforcls.activeRange()                                       
-        newRange = (min(vRange) / magConv, max(vRange) / magConv)              
-        return newRange                                                        
+    @mixedmethod
+    def displayActiveRange(selforcls):
+        """value bounds in display units used for parameter generator"""
+        magConv = selforcls.unit.magnitudeConversion()
+        vRange = selforcls.activeRange()
+        newRange = (min(vRange) / magConv, max(vRange) / magConv)
+        return newRange
 
-    @mixedmethod                                                               
-    def setDisplayActiveRange(selforcls, newRange):                            
+    @mixedmethod
+    def setDisplayActiveRange(selforcls, newRange):
         """sets value range after converting input from display to SI units""" 
-        magConv = selforcls.unit.magnitudeConversion()                         
-        newRange = (min(newRange) * magConv, max(newRange) * magConv)          
-        selforcls.setActiveRange(newRange)                                     
+        magConv = selforcls.unit.magnitudeConversion()
+        newRange = (min(newRange) * magConv, max(newRange) * magConv)
+        selforcls.setActiveRange(newRange)
 
-    @mixedmethod                                                               
+    @mixedmethod
     def setGenerator(selforcls, newGenerator):
         if isinstance(newGenerator, type):
-            testfor(issubclass(newGenerator, NumberGenerator), 
+            testfor(issubclass(newGenerator, NumberGenerator),
                     ParameterGeneratorError, "NumberGenerator type expected!")
         else:
             newGenerator = RandomUniform

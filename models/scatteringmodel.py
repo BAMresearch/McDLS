@@ -29,18 +29,13 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         raise NotImplemented
 
     def vol(self, compensationExponent = None, useSLD = False):
-        # restore the exponent from class level of the particular model
-        # self.compensationExponent = type(self).compensationExponent
-        # if compensationExponent is not None: # set custom exponent
-        #     self.compensationExponent = compensationExponent
         self.compensationExponent = compensationExponent
         # calling user provided custom model
         if useSLD and hasattr(self, "absVolume"):
+            # FIXME: perhaps, adding a default ScatteringModel.absVolume() forwarding volume()?
             v = self.absVolume()
         else:
             v = self.volume()
-        # restore the exponent from class level of the particular model
-        # self.compensationExponent = type(self).compensationExponent
         # volume always returns a single value
         assert isNumber(v)
         return v

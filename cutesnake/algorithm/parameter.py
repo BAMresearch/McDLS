@@ -362,28 +362,13 @@ class ParameterNumerical(ParameterBase):
         minVal, maxVal = min(newRange), max(newRange)
         # minVal = max(minVal, -sys.float_info.max) 
         # maxVal = min(maxVal,  sys.float_info.max)
+        # avoid inf/nan showing up somewhere
+        # otherwise, inf might be ok if UI elements support it (going in&out)
         minVal = max(minVal, -1e200) # as good as -inf?...
         maxVal = min(maxVal,  1e200) # as good as inf?...
         selforcls._valueRange = minVal, maxVal
         # apply limits to value:
         selforcls._value = selforcls.clip()
-
-    # @mixedmethod
-    # def setActiveRange(selforcls, newRange):
-    #     # tests nicked from above
-    #     testfor(len(newRange) == 2, ValueRangeError,
-    #             "Active ranges have to consist of two values!")
-    #     # always clip range settings to min/max values:
-    #     newRange = selforcls.clip(newRange)
-    #     # sets range for active fitting parameter limits
-    #     selforcls._activeRange = (min(newRange), max(newRange))
-
-    # @mixedmethod
-    # def activeRange(selforcls):
-    #     if selforcls._activeRange is None:
-    #         return (None, None)
-    #     else:
-    #         return selforcls._activeRange 
 
     @mixedmethod
     def setSuffix(selforcls, newSuffix):
@@ -478,7 +463,7 @@ class ParameterNumerical(ParameterBase):
     def __str__(self):
         return (ParameterBase.__str__(self) + u" in [{0}, {1}] ({sfx})"
                 .format(*(self.valueRange()), sfx = self.suffix()))
-        
+
     # def generate(self, lower = None, upper = None, count = 1):
     #     return generateValues(self.generator(), self.activeRange(),
     #                                             lower, upper, count
@@ -500,39 +485,24 @@ class ParameterFloat(ParameterNumerical):
         selforcls.unit.displayMagnitudeName = newSuffix
 
     @mixedmethod
-    def displayValue(self):                                                        
-        """shows value converted to display units (str in displayValueUnit)"""         
-        magConv = self.unit.magnitudeConversion() 
-        return self.value() / magConv 
+    def displayValue(self):
+        """shows value converted to display units (str in displayValueUnit)"""
+        magConv = self.unit.magnitudeConversion()
+        return self.value() / magConv
 
     @mixedmethod
     def setDisplayValue(self, newVal):
         """sets value given in display units (str in displayValueUnit)"""
-        magConv = self.unit.magnitudeConversion()  
-        self.setValue(newVal * magConv, clip = True) 
+        magConv = self.unit.magnitudeConversion()
+        self.setValue(newVal * magConv, clip = True)
 
     @mixedmethod
     def displayValueRange(selforcls):
         """Upper and lower limits a parameter can assume in display unit"""
-        magConv = selforcls.unit.magnitudeConversion()  
+        magConv = selforcls.unit.magnitudeConversion()
         vRange = selforcls.valueRange()
         newRange = (min(vRange) / magConv, max(vRange) / magConv)
         return newRange
-
-    # @mixedmethod
-    # def displayActiveRange(selforcls):
-    #     """value bounds in display units used for parameter generator"""
-    #     magConv = selforcls.unit.magnitudeConversion()  
-    #     vRange = selforcls.activeRange()
-    #     newRange = (min(vRange) / magConv, max(vRange) / magConv)
-    #     return newRange
-
-    # @mixedmethod
-    # def setDisplayActiveRange(selforcls, newRange):
-    #     """sets value range after converting input from display to SI units"""
-    #     magConv = selforcls.unit.magnitudeConversion()  
-    #     newRange = (min(newRange) * magConv, max(newRange) * magConv)
-    #     selforcls.setActiveRange(newRange)
 
     @mixedmethod
     def setDecimals(selforcls, newDecimals):
