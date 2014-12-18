@@ -13,9 +13,8 @@ Required keyword arguments:
 
 Example usage: 
 
->>> rUnit = SASUnit(magnitudedict = {1e-9 : u"nm", 1e0 : u"m"},
-...                 simagnitudename = "m",
-...                 displaymagnitudename = "nm")
+>>> rUnit = Length(simagnitudename = "m",
+...                displaymagnitudename = "nm")
 >>> rUnit.magnitudeConversion('nm', 'm')
 1e-09
 
@@ -24,9 +23,8 @@ or:
 1e-09
 
 Selecting a default: 
->>> qUnit = SASUnit(magnitudedict = 'q',
-...                 simagnitudename = u"m⁻¹",
-...                 displaymagnitudename = u"cm⁻¹")
+>>> qUnit = ScatteringVector(simagnitudename = u"m⁻¹",
+...                          displaymagnitudename = u"cm⁻¹")
 >>> qUnit.magnitudeConversion(u"cm⁻¹")
 100.0
 
@@ -36,95 +34,35 @@ import logging
 import numpy as np # For arrays
 from numpy import pi
 from cutesnake.utils.tests import testfor
+from cutesnake.utils.classproperty import classproperty
 
 class SASUnit(object):
-    _magnitudeDict = dict()
+    _magnitudeDict = None
     _siMagnitudeName = u"" 
     _displayMagnitudeName = u""
-    # default library, if growing out of bounds should be put in json dict
-    # FIXME: hard code the inverse mapping, this one is not used in practice
-    # Additionally, this mapping is not unique, see below, but the inverse is
-    # -> a unit text maps to a factor unambigously
-    #    but a factor may be valid for multiple units
-    _defaultDicts = {
-            'length' : { 1e-10 : u"Å", 
-                          1e-9 : u"nm",
-                          1e-6 : u"µm",
-                          1e-3 : u"mm",
-                          1e-2 : u"cm",
-                           1e0 : u"m"},
-            'area' : {   1e-20 : u"Å²",
-                         1e-18 : u"nm²",
-                         1e-12 : u"µm²",
-                          1e-6 : u"mm²",
-                            1. : u"m²"},
-            'volume' : { 1e-30 : u"Å³",
-                         1e-27 : u"nm³",
-                         1e-18 : u"µm³",
-                          1e-9 : u"mm³",
-                            1. : u"m³"},
-            'angle' : {180./pi : u"˚",
-                         3./pi : u"'",
-                       0.05/pi : u'"',
-                            1. : u"rad"},
-            'SLD' : {     1e20 : u"Å⁻²",
-                          1e18 : u"nm⁻²",
-                          1e12 : u"µm⁻²",
-                           1e6 : u"mm⁻²",
-                           1e4 : u"cm⁻²",
-                            1. : u"m⁻²"},
-            'q' :  {      1e10 : u"Å⁻¹",
-                           1e9 : u"nm⁻¹",
-                           1e6 : u"µm⁻¹",
-                           1e3 : u"mm⁻¹",
-                           1e2 : u"cm⁻¹",
-                           1e0 : u"m⁻¹"},
-            'I' :  {       1e2 : u"(cm sr)⁻¹",
-                           1e0 : u"(m sr)⁻¹"},
-            'fraction' : {1e-2 : u"%",
-                            1. : u"-", # this one will be overwritten by the following
-                            1. : u""},
-            'none' : {      1. : u"",
-                            1. : u"-"}
-
-            }
 
     def __init__(self, **kwargs):
         """process display. Input should contain keywords defined above"""
-        dictArg = kwargs.get('magnitudedict', None)
         outArg = kwargs.get('simagnitudename', None)
         inArg = kwargs.get('displaymagnitudename', None)
 
-        if dictArg is not None:
-            if isinstance(dictArg, dict):
-                #set the dict
-                self.magnitudeDict = dictArg
-            else: 
-                #select one of the predefined dicts
-                self.magnitudeDict = self.defaultDict(dictArg)
         # TODO: assert given in/out args exist in selected magDict
+#        import sys
+#        print >>sys.__stderr__, "SASUnit:", inArg, outArg, self.invMagnitudeDict, outArg in self.invMagnitudeDict
+#        print >>sys.__stderr__, self.invMagnitudeDict.items()
         if outArg is not None:
-#            testfor(outArg in self.invMagnitudeDict(), ValueError,
-#                    "si magnitude name not in chosen magnitude dict!")
+            testfor(outArg in self.invMagnitudeDict, ValueError,
+                    "si magnitude name not in chosen magnitude dict!")
             self.siMagnitudeName = outArg
         if inArg is not None:
-#            testfor(inArg in self.invMagnitudeDict(), ValueError,
-#                    "display magnitude name not in chosen magnitude dict!")
+            testfor(inArg in self.invMagnitudeDict, ValueError,
+                    "display magnitude name not in chosen magnitude dict!")
             self.displayMagnitudeName = inArg
-
-    def defaultDict(self, dictArg = None):
-        if dictArg in self._defaultDicts.keys():
-            return self._defaultDicts[dictArg]
-        else:
-            logging.warning('dictionary for {} not found'.format(dictArg))
-        logging.info('Default dictionaries available for: {}'
-                .format(self._defaultDicts.keys()))
-        return None
 
     def magnitude(self, name):
         """Returns a (numerical) magnitude matching a magnitude name"""
         try:
-            return self.invMagnitudeDict()[name]
+            return self.invMagnitudeDict[name]
         except KeyError:
             logging.warning('no matching magnitude to name {} found'
                     .format(name))
@@ -139,7 +77,7 @@ class SASUnit(object):
 
     @siMagnitudeName.setter
     def siMagnitudeName(self, name):
-        if name in self.invMagnitudeDict():
+        if name in self.invMagnitudeDict:
             self._siMagnitudeName = name
         else:
             logging.warning('no valid si magnitude name used.')
@@ -154,26 +92,15 @@ class SASUnit(object):
 
     @displayMagnitudeName.setter
     def displayMagnitudeName(self, name):
-        if name in self.invMagnitudeDict():
+        if name in self.invMagnitudeDict:
             self._displayMagnitudeName = name
         else:
             logging.warning('no valid display magnitude name: {}'.format(name))
 
-    @property
-    def magnitudeDict(self):
-        return self._magnitudeDict
-
-    @magnitudeDict.setter
-    def magnitudeDict(self, dictionary):
-        if isinstance(dictionary, dict):
-            self._magnitudeDict = dictionary
-        #defaults not working yet
-        #elif isStr(dictionary):
-        #    if dictionary.lower() == 'length':
-        #        self._MagnitudeDict = self._lengthMagnitudeDict
-
-    def invMagnitudeDict(self):
-        return {v:k for k, v in self.magnitudeDict.items()}
+    @classproperty
+    @classmethod
+    def invMagnitudeDict(cls):
+        return cls._magnitudeDict
 
     def invName(self, unitString):
         u""" Adds an ⁻¹ sign or removes it if already present"""
@@ -201,10 +128,85 @@ class SASUnit(object):
             simagnitudename = self.siMagnitudeName
 
         #find display units:
-        iUnit = self.invMagnitudeDict()[displaymagnitudename.strip()]
+        iUnit = self.invMagnitudeDict[displaymagnitudename.strip()]
         #find si units
-        oUnit = self.invMagnitudeDict()[simagnitudename.strip()]
+        oUnit = self.invMagnitudeDict[simagnitudename.strip()]
         return iUnit / oUnit
+
+class Length(SASUnit):
+    _magnitudeDict = {
+        u"Å" : 1e-10,
+        u"nm": 1e-9,
+        u"µm": 1e-6,
+        u"mm": 1e-3,
+        u"cm": 1e-2,
+        u"m" : 1e0
+    }
+
+class Area(SASUnit):
+    _magnitudeDict = {
+        u"Å²" : 1e-20,
+        u"nm²": 1e-18,
+        u"µm²": 1e-12,
+        u"mm²": 1e-6,
+        u"m²" : 1e0,
+    }
+
+class Volume(SASUnit):
+    _magnitudeDict = {
+        u"Å³" : 1e-30,
+        u"nm³": 1e-27,
+        u"µm³": 1e-18,
+        u"mm³": 1e-9,
+        u"m³" : 1e0,
+    }
+
+class Angle(SASUnit):
+    _magnitudeDict = {
+        u"˚"  : 180.0/pi,
+        u"'"  :   3.0/pi,
+        u'"'  :   0.05/pi,
+        u"rad":   1.0,
+    }
+
+class SLD(SASUnit):
+    _magnitudeDict = {
+        u"Å⁻²" : 1e20,
+        u"nm⁻²": 1e18,
+        u"µm⁻²": 1e12,
+        u"mm⁻²": 1e6,
+        u"cm⁻²": 1e4,
+        u"m⁻²" : 1e0,
+    }
+
+class ScatteringVector(SASUnit):
+    _magnitudeDict = {
+        u"Å⁻¹" : 1e10,
+        u"nm⁻¹": 1e9,
+        u"µm⁻¹": 1e6,
+        u"mm⁻¹": 1e3,
+        u"cm⁻¹": 1e2,
+        u"m⁻¹" : 1e0,
+    }
+
+class ScatteringIntensity(SASUnit):
+    _magnitudeDict = {
+        u"(cm sr)⁻¹": 1e2,
+        u"(m sr)⁻¹" : 1e0,
+    }
+
+class Fraction(SASUnit):
+    _magnitudeDict = {
+        u"%": 1e-2,
+        u"-": 1e0,
+        u"" : 1e0,
+    }
+
+class NoUnit(SASUnit):
+    _magnitudeDict = {
+        u"" : 1e0,
+        u"-": 1e0,
+    }
 
 if __name__ == "__main__":
     import doctest

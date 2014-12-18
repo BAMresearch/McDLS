@@ -7,7 +7,7 @@ import logging
 from cutesnake.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
-from sasunit import SASUnit
+from sasunit import Length, Fraction, NoUnit, SLD
 
 class LMADenseSphere(ScatteringModel):
     """Form factor of a sphere convoluted with a structure factor,
@@ -43,16 +43,16 @@ class LMADenseSphere(ScatteringModel):
                     valueRange = (0, 1e15))
             )
     parameters[0].setActive(True)
-    parameters[0].unit = SASUnit(magnitudedict = "length",
+    parameters[0].unit = Length(
             simagnitudename = u"m",
             displaymagnitudename = u"nm")
-    parameters[1].unit = SASUnit(magnitudedict = "fraction",
+    parameters[1].unit = Fraction(
             simagnitudename = u"-",
             displaymagnitudename = u"%")
-    parameters[2].unit = SASUnit(magnitudedict = "none",
+    parameters[2].unit = NoUnit(
             simagnitudename = u"-",
             displaymagnitudename = u"-")
-    parameters[3].unit = SASUnit(magnitudedict = "SLD",
+    parameters[3].unit = SLD(
             simagnitudename = u'm⁻²',
             displaymagnitudename = u'Å⁻²')
 

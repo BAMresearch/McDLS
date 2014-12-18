@@ -32,7 +32,7 @@ from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.dataset import DataSet, DisplayMixin
 from cutesnake.utils import isList
 from cutesnake.utilsgui import processEventLoop
-from sasunit import SASUnit
+from sasunit import Length, ScatteringVector, ScatteringIntensity
 
 class SASData(DataSet, DisplayMixin):
     """Represents one set of data from a unique source (a file, for example).
@@ -178,13 +178,13 @@ class SASData(DataSet, DisplayMixin):
 
     def __init__(self, *args):
         #set unit definitions for display and internal units
-        self._qMeta = SASUnit(magnitudedict = 'q', #see SASUnits._defaultDicts
+        self._qMeta = ScatteringVector(
                 simagnitudename = u"m⁻¹", # we use 1/m internally
                 displaymagnitudename = u"nm⁻¹") # display is assumed to be 1/nm
-        self._iMeta = SASUnit(magnitudedict = 'I', #see SASUnits._defaultDicts
+        self._iMeta = ScatteringIntensity(
                 simagnitudename = u"(m sr)⁻¹", # internal units
                 displaymagnitudename = u"(m sr)⁻¹") # display units
-        self._rMeta = SASUnit(magnitudedict = 'length', 
+        self._rMeta = Length(
                 simagnitudename = u"m", # we use m internally
                 displaymagnitudename = u"nm") # display is assumed to be nm
 

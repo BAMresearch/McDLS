@@ -61,7 +61,7 @@ from cutesnake.utils.tests import testfor, assertName
 from cutesnake.utils.mixedmethod import mixedmethod
 from cutesnake.utils.classproperty import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
-from sasunit import SASUnit
+from sasunit import NoUnit
 from utils import clip
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
@@ -460,7 +460,7 @@ class ParameterNumerical(ParameterBase):
 
 class ParameterFloat(ParameterNumerical):
     ParameterNumerical.setAttributes(locals(), "decimals")
-    unit = SASUnit(magnitudedict = 'none',
+    unit = NoUnit(
             simagnitudename = u'-',
             displaymagnitudename = u'-') #set unit metadata as blank
 

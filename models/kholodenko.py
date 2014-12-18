@@ -8,7 +8,7 @@ from scipy.integrate import quad
 from utils.parameter import FitParameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
-from sasunit import SASUnit 
+from sasunit import Length
 
 LASTMSG = set()
 
@@ -69,13 +69,13 @@ class Kholodenko(ScatteringModel):
     parameters[0].setActive(True)
     parameters[1].setActive(True)
     parameters[2].setActive(True)
-    parameters[0].unit = SASUnit(magnitudedict = 'length',
+    parameters[0].unit = Length(
         simagnitudename = u'm',
         displaymagnitudename = u'nm')
-    parameters[1].unit = SASUnit(magnitudedict = 'length',
+    parameters[1].unit = Length(
         simagnitudename = u'm',
         displaymagnitudename = u'nm')
-    parameters[2].unit = SASUnit(magnitudedict = 'length',
+    parameters[2].unit = Length(
         simagnitudename = u'm',
         displaymagnitudename = u'nm')
 

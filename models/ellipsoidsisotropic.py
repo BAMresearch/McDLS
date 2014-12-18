@@ -7,7 +7,7 @@ from numpy import pi, sin, cos, sqrt
 from utils.parameter import FitParameter, Parameter
 from cutesnake.algorithm import RandomUniform, RandomExponential
 from scatteringmodel import ScatteringModel
-from sasunit import SASUnit
+from sasunit import Length, NoUnit, SLD
 
 # parameters must not be inf
 
@@ -40,19 +40,19 @@ class EllipsoidsIsotropic(ScatteringModel):
                     valueRange = (0, 1e4)),
     )
     parameters[0].setActive(True)
-    parameters[0].unit = SASUnit(magnitudedict = "length",
+    parameters[0].unit = Length(
             simagnitudename = u'm',
             displaymagnitudename = u'nm')
-    parameters[2].unit = SASUnit(magnitudedict = "length",
+    parameters[2].unit = Length(
             simagnitudename = u'm',
             displaymagnitudename = u'nm')
-    parameters[3].unit = SASUnit(magnitudedict = "none",
+    parameters[3].unit = NoUnit(
             simagnitudename = u'-',
             displaymagnitudename = u'-')
-    parameters[4].unit = SASUnit(magnitudedict = "none",
+    parameters[4].unit = NoUnit(
             simagnitudename = u'-',
             displaymagnitudename = u'-')
-    parameters[5].unit = SASUnit(magnitudedict = "SLD",
+    parameters[5].unit = SLD(
             simagnitudename = u'm⁻²',
             displaymagnitudename = u'Å⁻²')
 

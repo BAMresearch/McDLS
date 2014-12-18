@@ -6,7 +6,7 @@ from numpy import pi, sin, cos
 from cutesnake.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
-from sasunit import SASUnit
+from sasunit import Length, SLD
 
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""
@@ -21,11 +21,11 @@ class Sphere(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     decimals = 1), )
     parameters[0].setActive(True)
-    #set units
-    parameters[0].unit = SASUnit(magnitudedict = 'length', 
+    # set units
+    parameters[0].unit = Length(
             simagnitudename = u'm',
             displaymagnitudename = u'nm')
-    parameters[1].unit = SASUnit(magnitudedict = 'SLD', 
+    parameters[1].unit = SLD(
             simagnitudename = u'm⁻²',
             displaymagnitudename = u'Å⁻²')
     #set suffix (normally set in above FitParameter definition) identical

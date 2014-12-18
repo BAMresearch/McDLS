@@ -6,7 +6,7 @@ from numpy import pi, zeros, sin, cos
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
-from sasunit import SASUnit
+from sasunit import Length, NoUnit, Angle, SLD
 
 # parameters must not be inf
 
@@ -40,19 +40,19 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     parameters[1].setActive(False) # not expected to vary
     parameters[2].setActive(True)  # better when random
 
-    parameters[0].unit = SASUnit(magnitudedict = 'length', 
+    parameters[0].unit = Length(
             simagnitudename = u'm', 
             displaymagnitudename = u'nm')
-    parameters[1].unit = SASUnit(magnitudedict = 'none', 
+    parameters[1].unit = NoUnit(
             simagnitudename = u'-', 
             displaymagnitudename = u'-')
-    parameters[2].unit = SASUnit(magnitudedict = 'angle', 
+    parameters[2].unit = Angle(
             simagnitudename = u'rad', 
             displaymagnitudename = u'˚')
-    parameters[3].unit = SASUnit(magnitudedict = 'none', 
+    parameters[3].unit = NoUnit(
             simagnitudename = u'-', 
             displaymagnitudename = u'-')
-    parameters[4].unit = SASUnit(magnitudedict = 'SLD', 
+    parameters[4].unit = SLD(
             simagnitudename = u'm⁻²', 
             displaymagnitudename = u'Å⁻²')
 
