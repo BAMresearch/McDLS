@@ -832,14 +832,11 @@ class ModelWidget(SettingsWidget):
         return self.calculator.model
 
     def setSphericalSizeRange(self, minVal, maxVal):
-        # if self.modelBox.currentText() != "Sphere":
-        #     return
-
         key = "radius"
         # get parameter display order of magnitude: 
         magConv = None
         for p in self.algorithm.params():
-            if p.name() == key: #"is" does not work with unicode strings
+            if p.name() == key: # "is" does not work with unicode strings
                 magConv = p.unit.magnitudeConversion()
         if magConv is None:
             logging.debug('No "radius"-named parameter, cannot get magConv')

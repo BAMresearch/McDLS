@@ -247,7 +247,7 @@ class ParameterBase(object):
         if (not isString(newName) or len(newName) <= 0):
             newName = selforcls.name()
         selforcls._displayName = newName
-    
+
     #in ParameterFloat, this is scaled to units used. For GUI display
     @mixedmethod
     def displayValue(selforcls):

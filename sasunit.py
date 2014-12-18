@@ -35,12 +35,17 @@ Selecting a default:
 import logging
 import numpy as np # For arrays
 from numpy import pi
+from cutesnake.utils.tests import testfor
 
 class SASUnit(object):
     _magnitudeDict = dict()
     _siMagnitudeName = u"" 
     _displayMagnitudeName = u""
-    #default library, if growing out of bounds should be put in json dict
+    # default library, if growing out of bounds should be put in json dict
+    # FIXME: hard code the inverse mapping, this one is not used in practice
+    # Additionally, this mapping is not unique, see below, but the inverse is
+    # -> a unit text maps to a factor unambigously
+    #    but a factor may be valid for multiple units
     _defaultDicts = {
             'length' : { 1e-10 : u"Å", 
                           1e-9 : u"nm",
@@ -77,7 +82,7 @@ class SASUnit(object):
             'I' :  {       1e2 : u"(cm sr)⁻¹",
                            1e0 : u"(m sr)⁻¹"},
             'fraction' : {1e-2 : u"%",
-                            1. : u"-",
+                            1. : u"-", # this one will be overwritten by the following
                             1. : u""},
             'none' : {      1. : u"",
                             1. : u"-"}
@@ -97,9 +102,14 @@ class SASUnit(object):
             else: 
                 #select one of the predefined dicts
                 self.magnitudeDict = self.defaultDict(dictArg)
+        # TODO: assert given in/out args exist in selected magDict
         if outArg is not None:
+#            testfor(outArg in self.invMagnitudeDict(), ValueError,
+#                    "si magnitude name not in chosen magnitude dict!")
             self.siMagnitudeName = outArg
         if inArg is not None:
+#            testfor(inArg in self.invMagnitudeDict(), ValueError,
+#                    "display magnitude name not in chosen magnitude dict!")
             self.displayMagnitudeName = inArg
 
     def defaultDict(self, dictArg = None):
@@ -123,14 +133,6 @@ class SASUnit(object):
     def siMagnitude(self):
         return self.magnitude(self.siMagnitudeName)
 
-    @siMagnitude.setter
-    def siMagnitude(self, magnum):
-        try:
-            self.siMagnitudeName = self.magnitudeDict[magnum]
-        except KeyError:
-            logging.warning('no matching magnitude name for si magnitude {}'
-                    .format(magname))
-
     @property
     def siMagnitudeName(self):
         return self._siMagnitudeName
@@ -145,14 +147,6 @@ class SASUnit(object):
     @property
     def displayMagnitude(self):
         return self.magnitude(self.displayMagnitudeName)
-
-    @displayMagnitude.setter
-    def displayMagnitude(self, magnum):
-        try:
-            self.displayMagnitudeName = self.magnitudeDict[magnum]
-        except KeyError:
-            logging.warning('no matching magnitude name for display magnitude {}'
-                    .format(magname))
 
     @property
     def displayMagnitudeName(self):
