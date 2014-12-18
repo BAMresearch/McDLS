@@ -576,8 +576,6 @@ class SettingsWidget(SettingsWidgetBase):
             if isList(minmax) and len(minmax):
                 widget.setMinimum(min(minmax))
                 widget.setMaximum(max(minmax))
-                widget.setToolTip("A value between {lo} and {hi} (including)."
-                        .format(lo = widget.minimum(), hi = widget.maximum()))
             widget.setValue(value)
         self.connectInputWidgets(widget)
         return widget
@@ -630,9 +628,11 @@ class SettingsWidget(SettingsWidgetBase):
             # create input boxes for user specified active fitting range
             # within default upper/lower from class definition
             # minmaxValue = type(param).min(), type(param).max()
+            activeRange = {"min": param.displayActiveRange()[0],
+                           "max": param.displayActiveRange()[1] }
             for bound in "min", "max":
                 w = self._makeEntry(param.name() + bound, param.dtype,
-                                    getattr(param, bound)(),
+                                    activeRange[bound],
                                     minmax = minmaxValue, parent = widget)
                 w.setPrefix(bound + ": ")
                 w.setFixedWidth(FIXEDWIDTH)

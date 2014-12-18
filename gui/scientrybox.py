@@ -14,53 +14,41 @@ class SciEntryValidator(QDoubleValidator):
         self.setNotation(QDoubleValidator.ScientificNotation)
         self.setRange(-1e200, 1e200)
         self.setDecimals(9)
-        self.fmt = "{0:." + str(self.decimals()) + "f}"
 
     def validate(self, input, pos):
         state, value, pos = QDoubleValidator.validate(self, input, pos)
         if state is QValidator.State.Invalid:
             # do not accept any invalid text, usually not float compatible
             return state, value, pos
-        elif state is QValidator.State.Acceptable:
-            # verfiy the value range again,
-            # QDoubleValidator.validate() fails sometimes on the range
-            try:
-                value = float(value)
-                if value < self.bottom() or value > self.top():
-                    raise ValueError
-            except:
-                state = QValidator.State.Intermediate
-        # highlight the input on errorneous values
+        # highlight the input on errorneous values, but accept them
         self.parent().indicateCorrectness(state is QValidator.State.Acceptable)
         if self.parent().hasFocus(): # change nothing, by default
             return QValidator.State.Acceptable, input, pos
+        # verfiy the value range in any case,
+        # QDoubleValidator.validate() fails sometimes on the range
+        input = self.fixup(input)
         # else: on focus left, fix it if required and validate again
         if state is not QValidator.State.Acceptable:
-            input = self.fixup(input)
-            state, value, pos = QDoubleValidator.validate(self, input, pos)
+            state, input, pos = QDoubleValidator.validate(self, input, pos)
             if state is not QValidator.State.Acceptable: # keep focus
                 self.parent().setFocus(Qt.OtherFocusReason)
-        return state, unicode(value), pos
-
-    def setTop(self, value):
-        """Work around numerical issues for comparing numbers from user input
-        with calculation results."""
-        QDoubleValidator.setTop(self, float(str(value)))
-
-    def setBottom(self, value):
-        """Work around numerical issues for comparing numbers from user input
-        with calculation results."""
-        QDoubleValidator.setBottom(self, float(str(value)))
+        self.parent().indicateCorrectness(state is QValidator.State.Acceptable)
+        return state, input, pos
 
     def fixup(self, input):
+        """Restricts the value to the valid range defined by setTop() and
+        setBottom(). Limits the precision as well."""
         # restrict the value to the valid range
         try:
-            input = self.fmt.format(
+            input = self.parent().fmt.format(
                 clip(float(input), self.bottom(), self.top()))
-        except: pass # do nothing if float conversion fails
-        return input
+        except ValueError:
+            pass # do nothing if float conversion fails
+        return unicode(input)
 
 class SciEntryBox(QLineEdit):
+    toolTipFmt = "A value between {lo} and {hi} (including)."
+
     def __init__(self, parent):
         QLineEdit.__init__(self, parent)
 
@@ -68,12 +56,29 @@ class SciEntryBox(QLineEdit):
         self.setValidator(val)
         self.setAlignment(Qt.AlignRight)
         self.setMaxLength(14)
-        setattr(self, "setMinimum", val.setBottom)
-        setattr(self, "setMaximum", val.setTop)
         setattr(self, "minimum", val.bottom)
         setattr(self, "maximum", val.top)
         setattr(self, "setDecimals", val.setDecimals)
         setattr(self, "decimals", val.decimals)
+        # according to https://docs.python.org/2/library/string.html#formatspec
+        self.fmt = "{0:." + str(self.decimals() - 3) + "g}"
+
+    def _updateToolTip(self):
+        self.setToolTip(
+            self.toolTipFmt.format(
+                lo = self.minimum(), hi = self.maximum()))
+
+    def setMinimum(self, value):
+        """Work around issues regarding round-off errors by the 'g' format type
+        when comparing numbers from user input with calculation results."""
+        self.validator().setBottom(float(self.fmt.format(value)))
+        self._updateToolTip()
+
+    def setMaximum(self, value):
+        """Work around issues regarding round-off errors by the 'g' format type
+        when comparing numbers from user input with calculation results."""
+        self.validator().setTop(float(self.fmt.format(value)))
+        self._updateToolTip()
 
     def indicateCorrectness(self, isValid):
         if not isValid:
@@ -86,8 +91,7 @@ class SciEntryBox(QLineEdit):
         self.setMaximum(hi)
         
     def setValue(self, value):
-        fstr = "{:." + str(self.decimals()) + "g}" 
-        self.setText(unicode(fstr.format(value)))
+        self.setText(unicode(self.fmt.format(value)))
 
     def value(self):
         return float(self.text())

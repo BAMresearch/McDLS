@@ -541,7 +541,7 @@ class FitParameterBase(ParameterBase):
     cutesnake.algorithm.parameter to introduce more specific fit
     related attributes."""
     ParameterBase.setAttributes(locals(), histograms = None,
-            activeValues = list(), activeRange = (None, None))
+            activeValues = list(), activeRange = None)
 
     def __init__(self):
         super(FitParameterBase, self).__init__()
@@ -572,7 +572,7 @@ class FitParameterBase(ParameterBase):
         histgram setup for each parameter is implemented elsewhere"""
         if isActive and not selforcls.isActive():
             # set only if there is no histogram defined already
-            if None in selforcls.activeRange():
+            if selforcls.activeRange() is None or None in selforcls.activeRange():
                 lo, hi = selforcls.valueRange()
             else:
                 lo, hi = selforcls.activeRange()
@@ -641,7 +641,7 @@ class FitParameterBase(ParameterBase):
     @mixedmethod
     def activeRange(selforcls):
         if selforcls._activeRange is None:
-            return (None, None)
+            return selforcls.valueRange() # fallback
         else:
             return selforcls._activeRange
 
