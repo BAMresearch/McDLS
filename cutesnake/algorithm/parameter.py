@@ -60,30 +60,30 @@ from cutesnake.utils import isString, isNumber, isList, isMap
 from cutesnake.utils.tests import testfor, assertName
 from cutesnake.utils.mixedmethod import mixedmethod
 from cutesnake.utils.classproperty import classproperty
-# from numbergenerator import NumberGenerator, RandomUniform
+from numbergenerator import NumberGenerator, RandomUniform
 from sasunit import SASUnit
 from utils import clip
 
-# def generateValues(numberGenerator, defaultRange, lower, upper, count):
-#     # works with vectors of multiple bounds too
-#     vRange = defaultRange
-#     if lower is None:
-#         lower = vRange[0]
-#     if upper is None:
-#         upper = vRange[1]
-#     vRange = (np.maximum(vRange[0], lower),
-#               np.minimum(vRange[1], upper))
-#     if isList(vRange[0]) and isList(vRange[1]):
-#         assert (len(vRange[0]) == len(vRange[1]), 
-#            "Provided value range is unsymmetrical!)"
-#    try: # update count to length of provided bound vectors
-#        count = max(count, min([len(x) for x in vRange]))
-#    except:
-#        pass
-#    values = numberGenerator.get(count)
-#    # scale numbers to requested range
-#    return values * (vRange[1] - vRange[0]) + vRange[0]
-#
+def generateValues(numberGenerator, defaultRange, lower, upper, count):
+    # works with vectors of multiple bounds too
+    vRange = defaultRange
+    if lower is None:
+        lower = vRange[0]
+    if upper is None:
+        upper = vRange[1]
+    vRange = (np.maximum(vRange[0], lower),
+              np.minimum(vRange[1], upper))
+    if isList(vRange[0]) and isList(vRange[1]):
+        assert len(vRange[0]) == len(vRange[1]), (
+                "Provided value range is unsymmetrical!")
+    try: # update count to length of provided bound vectors
+        count = max(count, min([len(x) for x in vRange]))
+    except:
+        pass
+    values = numberGenerator.get(count)
+    # scale numbers to requested range
+    return values * (vRange[1] - vRange[0]) + vRange[0]
+
 class ParameterError(StandardError):
     pass
 
@@ -108,8 +108,8 @@ class DecimalsError(ParameterError):
 class DisplayValuesError(ParameterError):
     pass
 
-# class ParameterGeneratorError(ParameterError):
-#     pass
+class ParameterGeneratorError(ParameterError):
+    pass
 
 def _makeGetter(varName):
     def getter(selforcls):
@@ -341,7 +341,7 @@ class ParameterNumerical(ParameterBase):
     # getter/setter for them. For specialized versions they can be
     # overridden as usual.
     ParameterBase.setAttributes(locals(), "valueRange", "suffix",
-                  "stepping", "displayValues")
+                  "stepping", "displayValues", "generator")
 
     @mixedmethod
     def setValue(selforcls, newValue, clip = False):
@@ -400,16 +400,16 @@ class ParameterNumerical(ParameterBase):
         # TODO: also add reverse lookup
         selforcls._displayValues = newDisplayValues
 
-    # @mixedmethod
-    # def setGenerator(selforcls, newGenerator):
-    #     if isinstance(newGenerator, type):
-    #         testfor(issubclass(newGenerator, NumberGenerator),
-    #                 ParameterGeneratorError, "NumberGenerator type expected!")
-    #     else:
-    #         newGenerator = RandomUniform
-    #     selforcls._generator = newGenerator
-    #    logging.info("Parameter {0} uses {1} distribution."
-    #                 .format(selforcls._name, newGenerator.__name__))
+    @mixedmethod
+    def setGenerator(selforcls, newGenerator):
+        if isinstance(newGenerator, type):
+            testfor(issubclass(newGenerator, NumberGenerator),
+                    ParameterGeneratorError, "NumberGenerator type expected!")
+        else:
+            newGenerator = RandomUniform
+        selforcls._generator = newGenerator
+    # logging.info("Parameter {0} uses {1} distribution."
+    #              .format(selforcls._name, newGenerator.__name__))
 
     @mixedmethod
     def valueRange(selforcls):
@@ -454,10 +454,9 @@ class ParameterNumerical(ParameterBase):
         return (ParameterBase.__str__(self) + u" in [{0}, {1}] ({sfx})"
                 .format(*(self.valueRange()), sfx = self.suffix()))
 
-    # def generate(self, lower = None, upper = None, count = 1):
-    #     return generateValues(self.generator(), self.activeRange(),
-    #                                             lower, upper, count
-    #                             ).astype(self.dtype)
+    def generate(self, lower = None, upper = None, count = 1):
+        return generateValues(self.generator(), self.valueRange(),
+                              lower, upper, count).astype(self.dtype)
 
 class ParameterFloat(ParameterNumerical):
     ParameterNumerical.setAttributes(locals(), "decimals")
@@ -514,15 +513,6 @@ class ParameterFloat(ParameterNumerical):
     @classmethod
     def isDataType(cls, value):
         return isinstance(value, cls.dtype)
-
-    # def __str__(self):
-        # Not quite clear what decimals was supposed to do...
-        # return (ParameterNumerical.__str__(self) +
-        #         ", {0} decimals".format(self.decimals()))
-
-    # def generate(self, lower = None, upper = None, count = 1):
-    #     return generateValues(self.generator(), self.activeRange(),
-    #                                             lower, upper, count)
 
 class ParameterLog(ParameterFloat):
     """Used to select an UI input widget with logarithmic behaviour."""

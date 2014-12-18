@@ -11,11 +11,7 @@ from cutesnake.dataset import DataSet, DisplayMixin
 import logging
 import numpy as np
 from cutesnake.utils.tests import testfor
-from cutesnake.algorithm.numbergenerator import NumberGenerator, RandomUniform  
-from cutesnake.algorithm.parameter import ParameterError, ValueRangeError
-
-class ParameterGeneratorError(ParameterError):
-    pass
+from cutesnake.algorithm.parameter import ValueRangeError
 
 def _makeProperty(varName):
     def getter(selforcls):
@@ -632,9 +628,6 @@ class FitParameterBase(ParameterBase):
         tempVal[index] = val
         selforcls.setActiveValues(tempVal)
     
-    # Following should be moved to FitParameterNumerical
-    ParameterBase.setAttributes(locals(), "generator")
-
     @mixedmethod
     def setActiveRange(selforcls, newRange):
         # tests nicked from above
@@ -667,38 +660,6 @@ class FitParameterBase(ParameterBase):
         newRange = (min(newRange) * magConv, max(newRange) * magConv)
         selforcls.setActiveRange(newRange)
 
-    @mixedmethod
-    def setGenerator(selforcls, newGenerator):
-        if isinstance(newGenerator, type):
-            testfor(issubclass(newGenerator, NumberGenerator),
-                    ParameterGeneratorError, "NumberGenerator type expected!")
-        else:
-            newGenerator = RandomUniform
-        selforcls._generator = newGenerator
-
-    def generateValues(selforcls, numberGenerator, 
-            defaultRange, lower, upper, count):        
-        # works with vectors of multiple bounds too                                
-        vRange = defaultRange
-        if lower is None:
-            lower = vRange[0]
-        if upper is None:
-            upper = vRange[1] 
-        vRange = (np.maximum(vRange[0], lower), np.minimum(vRange[1], upper))
-        if isList(vRange[0]) and isList(vRange[1]):
-            assert len(vRange[0]) == len(vRange[1]), "Provided value range is unsymmetrical!"
-        try: # update count to length of provided bound vectors                    
-            count = max(count, min([len(x) for x in vRange]))                      
-        except:                                                                    
-            pass                                                                   
-        values = numberGenerator.get(count)                                        
-        # scale numbers to requested range                                         
-        return values * (vRange[1] - vRange[0]) + vRange[0]                        
-
-    def generate(self, lower = None, upper = None, count = 1):                 
-        return self.generateValues(self.generator(), self.activeRange(), 
-                lower, upper, count).astype(self.dtype)  
-
 class FitParameterString(FitParameterBase, ParameterString):
     pass
 
@@ -710,9 +671,24 @@ class FitParameterNumerical(FitParameterBase, ParameterNumerical):
     def __str__(self):
         lo, hi = self.displayActiveRange()
         displayValue = u', active range: [{0}, {1}]'.format(lo, hi)
-        return (super(FitParameterNumerical, self).__str__() + u"{0} ({1})".format(
-                displayValue,
-                self.suffix()))
+        return (super(FitParameterNumerical, self).__str__()
+                + u"{0} ({1})".format(displayValue, self.suffix()))
+
+    # ParameterNumerical has a generator, using the active fit range here
+    def generate(self, lower = None, upper = None, count = 1):
+        # self.activeRange() is always within self.valueRange() per definition
+        # therefore, using the parent implementation
+        if lower is None:
+            lower = min(self.activeRange())
+        if upper is None:
+            upper = max(self.activeRange())
+
+        return super(FitParameterNumerical, self).generate(
+                     lower = lower, upper = upper,
+# alternatively ignoring lower/upper args directly:
+#                     lower = min(self.activeRange()),
+#                     upper = max(self.activeRange()),
+                     count = count)
 
 class FitParameterFloat(FitParameterNumerical, ParameterFloat):
     pass
