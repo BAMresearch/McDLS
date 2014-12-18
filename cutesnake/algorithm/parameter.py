@@ -62,6 +62,7 @@ from cutesnake.utils.mixedmethod import mixedmethod
 from cutesnake.utils.classproperty import classproperty
 # from numbergenerator import NumberGenerator, RandomUniform
 from sasunit import SASUnit
+from utils import clip
 
 # def generateValues(numberGenerator, defaultRange, lower, upper, count):
 #     # works with vectors of multiple bounds too
@@ -430,18 +431,7 @@ class ParameterNumerical(ParameterBase):
             value = selforcls.value()
         if value is None: # no value set yet
             return None
-
-        minv, maxv = (selforcls.min(), selforcls.max())
-        if (minv is None) and (maxv is None):
-            return value
-        # clips value to within set min/max limits. 
-        valueType = type(value)
-        # clip to min/max independent on if value is list, int, float or array
-        # print "arrayval: {}, min: {}, max: {}".format(value, selforcls.min(), selforcls.max())
-        value = np.clip(np.array(value), minv, maxv)
-        # return to original type:
-        value = valueType(value)
-        return value
+        return clip(value, selforcls.min(), selforcls.max())
 
     @mixedmethod
     def displayValues(selforcls, key = None, default = None):

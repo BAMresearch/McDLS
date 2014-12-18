@@ -3,7 +3,7 @@
 
 from QtGui import QLineEdit, QDoubleValidator, QValidator
 from QtCore import Qt
-from utils import clamp
+from utils import clip
 
 class SciEntryValidator(QDoubleValidator):
     """Assumes the associated QLineEdit is provided as parent object
@@ -54,7 +54,7 @@ class SciEntryValidator(QDoubleValidator):
     def fixup(self, input):
         # restrict the value to the valid range
         try:
-            input = str(clamp(float(input), (self.bottom(), self.top())))
+            input = str(clip(float(input), self.bottom(), self.top()))
         except: pass # do nothing if float conversion fails
         return input
 
