@@ -47,20 +47,13 @@ class EllipsoidalCoreShell(ScatteringModel):
                     valueRange = (0, 1e4)),
     )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[1].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[2].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[3].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
-    parameters[4].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
-    parameters[5].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
-    parameters[6].unit = NoUnit(
-            displaymagnitudename = u'-')
+    parameters[0].unit = Length(u'nm')
+    parameters[1].unit = Length(u'nm')
+    parameters[2].unit = Length(u'nm')
+    parameters[3].unit = SLD(u'Å⁻²')
+    parameters[4].unit = SLD(u'Å⁻²')
+    parameters[5].unit = SLD(u'Å⁻²')
+    parameters[6].unit = NoUnit()
 
     def __init__(self):
         ScatteringModel.__init__(self)

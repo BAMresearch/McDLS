@@ -460,9 +460,7 @@ class ParameterNumerical(ParameterBase):
 
 class ParameterFloat(ParameterNumerical):
     ParameterNumerical.setAttributes(locals(), "decimals")
-    unit = NoUnit(
-            simagnitudename = u'-',
-            displaymagnitudename = u'-') #set unit metadata as blank
+    unit = NoUnit() # set unit metadata as blank
 
     #link suffix directly to displayMagnitudeName of unit metadata
     @mixedmethod

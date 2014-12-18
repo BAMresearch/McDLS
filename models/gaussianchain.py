@@ -41,14 +41,10 @@ class GaussianChain(ScatteringModel):
                     valueRange = (0., numpy.inf))
     )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[1].unit = Length(
-            displaymagnitudename = u'cm')
-    parameters[2].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
-    parameters[3].unit = NoUnit(
-            displaymagnitudename = u'')
+    parameters[0].unit = Length(u'nm')
+    parameters[1].unit = Length(u'cm')
+    parameters[2].unit = SLD(u'Å⁻²')
+    parameters[3].unit = NoUnit()
 
     def __init__(self):
         super(GaussianChain, self).__init__()

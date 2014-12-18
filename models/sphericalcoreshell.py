@@ -39,16 +39,11 @@ class SphericalCoreShell(ScatteringModel):
                     valueRange = (0, numpy.inf)),
     )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[1].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[2].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
-    parameters[3].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
-    parameters[4].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
+    parameters[0].unit = Length(u'nm')
+    parameters[1].unit = Length(u'nm')
+    parameters[2].unit = SLD(u'Å⁻²')
+    parameters[3].unit = SLD(u'Å⁻²')
+    parameters[4].unit = SLD(u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)

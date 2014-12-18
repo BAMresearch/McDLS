@@ -178,15 +178,9 @@ class SASData(DataSet, DisplayMixin):
 
     def __init__(self, *args):
         #set unit definitions for display and internal units
-        self._qMeta = ScatteringVector(
-                simagnitudename = u"m⁻¹", # we use 1/m internally
-                displaymagnitudename = u"nm⁻¹") # display is assumed to be 1/nm
-        self._iMeta = ScatteringIntensity(
-                simagnitudename = u"(m sr)⁻¹", # internal units
-                displaymagnitudename = u"(m sr)⁻¹") # display units
-        self._rMeta = Length(
-                simagnitudename = u"m", # we use m internally
-                displaymagnitudename = u"nm") # display is assumed to be nm
+        self._qMeta = ScatteringVector(u"nm⁻¹")
+        self._iMeta = ScatteringIntensity(u"(m sr)⁻¹")
+        self._rMeta = Length(u"nm")
 
         DataSet.__init__(self, *args)
         self._sizeEst = np.pi / np.array([self.q.max(),

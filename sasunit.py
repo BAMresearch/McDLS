@@ -13,8 +13,11 @@ Required keyword arguments:
 
 Example usage: 
 
->>> rUnit = Length(simagnitudename = "m",
-...                displaymagnitudename = "nm")
+>>> rUnit = Length("nm")
+>>> rUnit.siMagnitudeName
+u'm'
+>>> rUnit.displayMagnitudeName
+u'nm'
 >>> rUnit.magnitudeConversion('nm', 'm')
 1e-09
 
@@ -23,8 +26,7 @@ or:
 1e-09
 
 Selecting a default: 
->>> qUnit = ScatteringVector(simagnitudename = u"m⁻¹",
-...                          displaymagnitudename = u"cm⁻¹")
+>>> qUnit = ScatteringVector(u"cm⁻¹")
 >>> qUnit.magnitudeConversion(u"cm⁻¹")
 100.0
 
@@ -39,20 +41,18 @@ from cutesnake.utils.classproperty import classproperty
 class SASUnit(object):
     _magnitudeMap = None
     _siMagnitudeName = None
-    _displayMagnitudeName = u""
+    _displayMagnitudeName = None
 
-    def __init__(self, **kwargs):
-        """process display. Input should contain keywords defined above"""
-        inArg = kwargs.get('displaymagnitudename', None)
-
-        # TODO: assert given in/out args exist in selected magDict
-#        import sys
-#        print >>sys.__stderr__, "SASUnit:", inArg, outArg, self.magnitudeMapping, outArg in self.magnitudeMapping
-#        print >>sys.__stderr__, self.magnitudeMapping.items()
-        if inArg is not None:
-            testfor(inArg in self.magnitudeMapping, ValueError,
-                    "display magnitude name not in chosen magnitude dict!")
-            self.displayMagnitudeName = inArg
+    def __init__(self, magnitudeName = None):
+        """Set up a unit of measurement. The provided magnitude name is used
+        by default in the UI. Using SI units if unspecified."""
+        if magnitudeName is None:
+            magnitudeName = self.siMagnitudeName
+        elif magnitudeName not in self.magnitudeMapping:
+            logging.warning("Provided default magnitude name '{mn}' is not "
+                            "available: '{map}'!".format(
+                            nm = magnitudeName, map = self.magnitudeMapping))
+        self._displayMagnitudeName = unicode(magnitudeName)
 
     def magnitude(self, name):
         """Returns a (numerical) magnitude matching a magnitude name"""
@@ -79,13 +79,6 @@ class SASUnit(object):
     @property
     def displayMagnitudeName(self):
         return self._displayMagnitudeName
-
-    @displayMagnitudeName.setter
-    def displayMagnitudeName(self, name):
-        if name in self.magnitudeMapping:
-            self._displayMagnitudeName = name
-        else:
-            logging.warning('no valid display magnitude name: {}'.format(name))
 
     @classproperty
     @classmethod

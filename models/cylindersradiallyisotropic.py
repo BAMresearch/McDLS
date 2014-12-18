@@ -40,16 +40,11 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     parameters[1].setActive(False) # not expected to vary
     parameters[2].setActive(True)  # better when random
 
-    parameters[0].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[1].unit = NoUnit(
-            displaymagnitudename = u'-')
-    parameters[2].unit = Angle(
-            displaymagnitudename = u'˚')
-    parameters[3].unit = NoUnit(
-            displaymagnitudename = u'-')
-    parameters[4].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
+    parameters[0].unit = Length(u'nm')
+    parameters[1].unit = NoUnit()
+    parameters[2].unit = Angle(u'˚')
+    parameters[3].unit = NoUnit()
+    parameters[4].unit = SLD(u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)

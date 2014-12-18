@@ -40,16 +40,11 @@ class EllipsoidsIsotropic(ScatteringModel):
                     valueRange = (0, 1e4)),
     )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[2].unit = Length(
-            displaymagnitudename = u'nm')
-    parameters[3].unit = NoUnit(
-            displaymagnitudename = u'-')
-    parameters[4].unit = NoUnit(
-            displaymagnitudename = u'-')
-    parameters[5].unit = SLD(
-            displaymagnitudename = u'Å⁻²')
+    parameters[0].unit = Length(u'nm')
+    parameters[2].unit = Length(u'nm')
+    parameters[3].unit = NoUnit()
+    parameters[4].unit = NoUnit()
+    parameters[5].unit = SLD(u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)
