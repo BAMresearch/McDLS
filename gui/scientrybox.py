@@ -14,6 +14,7 @@ class SciEntryValidator(QDoubleValidator):
         self.setNotation(QDoubleValidator.ScientificNotation)
         self.setRange(-1e200, 1e200)
         self.setDecimals(9)
+        self.fmt = "{0:." + str(self.decimals()) + "f}"
 
     def validate(self, input, pos):
         state, value, pos = QDoubleValidator.validate(self, input, pos)
@@ -54,7 +55,8 @@ class SciEntryValidator(QDoubleValidator):
     def fixup(self, input):
         # restrict the value to the valid range
         try:
-            input = str(clip(float(input), self.bottom(), self.top()))
+            input = self.fmt.format(
+                clip(float(input), self.bottom(), self.top()))
         except: pass # do nothing if float conversion fails
         return input
 
