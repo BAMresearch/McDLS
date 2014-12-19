@@ -66,7 +66,8 @@ class SciEntryBox(QLineEdit):
     def _updateToolTip(self):
         self.setToolTip(
             self.toolTipFmt.format(
-                lo = self.minimum(), hi = self.maximum()))
+                lo = self.fmt.format(self.minimum()),
+                hi = self.fmt.format(self.maximum())))
 
     def setMinimum(self, value):
         """Work around issues regarding round-off errors by the 'g' format type
