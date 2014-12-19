@@ -290,11 +290,11 @@ class PlotResults(object):
 
     def plot1D(self, dataset, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
-        q = dataset._qMeta.toDisplay(dataset.q)
-        qUnitLabel = dataset._qMeta.displayMagnitudeName
-        intensity = dataset._iMeta.toDisplay(dataset.i)
-        iUnitLabel = dataset._iMeta.displayMagnitudeName
-        intError = dataset._iMeta.toDisplay(dataset.e)
+        q = dataset.qUnit.toDisplay(dataset.q)
+        qUnitLabel = dataset.qUnit.displayMagnitudeName
+        intensity = dataset.iUnit.toDisplay(dataset.i)
+        iUnitLabel = dataset.iUnit.displayMagnitudeName
+        intError = dataset.iUnit.toDisplay(dataset.e)
 
         xLim = (q.min() * (1 - self._axisMargin), 
                 q.max() * (1 + self._axisMargin))
@@ -318,12 +318,12 @@ class PlotResults(object):
                  label = 'Measured intensity', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         self.plotGrid(qAxis)
-        plot(dataset._qMeta.toDisplay(fitQ),
-             dataset._iMeta.toDisplay(fitIntensity), 'r-',
+        plot(dataset.qUnit.toDisplay(fitQ),
+             dataset.iUnit.toDisplay(fitIntensity), 'r-',
                 lw = 3, label = 'MC Fit intensity', zorder = 4)
         try:
-            plot(dataset._qMeta.toDisplay(fitQ),
-                 dataset._iMeta.toDisplay(self._BG[0] + 0*fitQ),
+            plot(dataset.qUnit.toDisplay(fitQ),
+                 dataset.iUnit.toDisplay(self._BG[0] + 0*fitQ),
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})' .format(
                      self._BG[0]), zorder = 3)

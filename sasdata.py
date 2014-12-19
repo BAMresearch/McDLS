@@ -63,8 +63,8 @@ class SASData(DataSet, DisplayMixin):
     @property
     def sphericalSizeEstText(self):
         return u"{0:.3g} ≤ R ({rUnitName}) ≤ {1:.3g}".format(
-                *self._rUnit.toDisplay(self.sphericalSizeEst()),
-                rUnitName = self._rUnit.displayMagnitudeName)
+                *self.rUnit.toDisplay(self.sphericalSizeEst()),
+                rUnitName = self.rUnit.displayMagnitudeName)
 
     @property
     def qClipRange(self):
@@ -92,9 +92,9 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qLimsString(self):
         return u"{0:.3g} ≤ Q ({qMagnitudeName}) ≤ {1:.3g}".format(
-                self._qUnit.toDisplay(self.qMin),
-                self._qUnit.toDisplay(self.qMax),
-                qMagnitudeName = self._qUnit.displayMagnitudeName)
+                self.qUnit.toDisplay(self.qMin),
+                self.qUnit.toDisplay(self.qMax),
+                qMagnitudeName = self.qUnit.displayMagnitudeName)
 
     @property
     def dataContent(self):
@@ -147,17 +147,17 @@ class SASData(DataSet, DisplayMixin):
     @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self._qUnit.toSi(self.origin[:, 0])
+        return self.qUnit.toSi(self.origin[:, 0])
 
     @property
     def i(self):
         """Measured intensity at q."""
-        return self._iUnit.toSi(self.origin[:, 1])
+        return self.iUnit.toSi(self.origin[:, 1])
 
     @property
     def e(self):
         """Uncertainty or Error of the intensity at q."""
-        return self._iUnit.toSi(self.origin[:, 2])
+        return self.iUnit.toSi(self.origin[:, 2])
 
     @property
     def p(self):
@@ -175,6 +175,18 @@ class SASData(DataSet, DisplayMixin):
         """Returns True if this data set has an error bar for its
         intensities."""
         return self.origin.shape[1] > 2
+
+    @property
+    def qUnit(self):
+        return self._qUnit
+
+    @property
+    def iUnit(self):
+        return self._iUnit
+
+    @property
+    def rUnit(self):
+        return self._rUnit
 
     def __init__(self, *args):
         #set unit definitions for display and internal units
