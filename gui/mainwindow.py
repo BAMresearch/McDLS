@@ -1049,4 +1049,9 @@ class MainWindow(MainWindowBase):
         self.onStartStopClick(False)
         self.onCloseSignal.emit()
 
+    def keyPressEvent(self, keyEvent):
+        if keyEvent.key() == Qt.Key_Escape and self.startStopBtn.isChecked():
+            self.onStartStopClick(False) # hit 'stop'
+            logging.info("Calculation aborted by user interupt!")
+
 # vim: set ts=4 sts=4 sw=4 tw=0:
