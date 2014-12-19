@@ -3,7 +3,7 @@
 
 import numpy
 from numpy import pi, sin, cos
-from cutesnake.algorithm import RandomUniform
+from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from utils.units import Length, SLD

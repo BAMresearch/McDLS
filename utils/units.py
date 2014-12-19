@@ -35,7 +35,7 @@ Selecting a default:
 import logging
 import numpy as np # For arrays
 from numpy import pi
-from cutesnake.utils.classproperty import classproperty
+from utils.classproperty import classproperty
 
 class Unit(object):
     _magnitudeMap = None

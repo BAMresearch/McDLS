@@ -4,7 +4,7 @@
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
-from cutesnake.algorithm import RandomUniform, RandomExponential
+from bases.algorithm import RandomUniform, RandomExponential
 from scatteringmodel import ScatteringModel
 from utils.units import Length, NoUnit, SLD
 
@@ -102,8 +102,7 @@ EllipsoidalCoreShell.factory()
 #    sys.path.append('..')
 #    sys.path.append('.')
 #    sys.path.append('../utils')
-#    sys.path.append('../cutesnake')
-#    from cutesnake.datafile import PDHFile, AsciiFile
+#    from bases.datafile import PDHFile, AsciiFile
 #    from models.EllipsoidalCoreShell import EllipsoidalCoreShell
 #    # FIXME: use SASData.load() instead
 #    pf = PDHFile("testData/EllCoreShell_a100_b150_t500_c3p16_s2p53_sol0.csv")

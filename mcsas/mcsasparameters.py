@@ -2,13 +2,13 @@
 # mcsas/mcsasparameters.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
-from utils.propertynames import PropertyNames
-# more flexible parameter definitions:
-from mcsasdefaultcfg import cInfo
 import os
 import inspect
 import logging                                                                 
 import json
+from utils.propertynames import PropertyNames
+# more flexible parameter definitions:
+from mcsasdefaultcfg import cInfo
 from utils.parameter import Parameter
 from utils import isString
 from main import makeAbsolutePath

@@ -7,7 +7,7 @@ import inspect
 from abc import ABCMeta, abstractmethod
 import numpy
 from utils import isList, isNumber, mixedmethod, testfor
-from cutesnake.algorithm import AlgorithmBase
+from bases.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
 from utils.parameter import isActiveParam
 from sasdata import SASData

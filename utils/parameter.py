@@ -2,16 +2,15 @@
 # utils/parameter.py
 
 from utils import mixedmethod, isList, testfor, isInteger
-from cutesnake.algorithm import (ParameterBase, ParameterFloat,
-                                 ParameterNumerical, ParameterBoolean,
-                                 ParameterLog, ParameterString)
-from cutesnake.algorithm import Parameter
-from cutesnake.dataset import DataSet, DisplayMixin
+from bases.algorithm import (ParameterBase, ParameterFloat,
+                             ParameterNumerical, ParameterBoolean,
+                             ParameterLog, ParameterString)
+from bases.algorithm import Parameter
+from bases.dataset import DataSet, DisplayMixin
 
 import logging
 import numpy as np
-from cutesnake.utils.tests import testfor
-from cutesnake.algorithm.parameter import ValueRangeError
+from bases.algorithm.parameter import ValueRangeError
 
 def _makeProperty(varName):
     def getter(selforcls):
@@ -538,7 +537,7 @@ def isActiveParam(param):
 
 class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
-    cutesnake.algorithm.parameter to introduce more specific fit
+    bases.algorithm.parameter to introduce more specific fit
     related attributes."""
     ParameterBase.setAttributes(locals(), histograms = None,
             activeValues = list(), activeRange = None)

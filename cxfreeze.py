@@ -71,7 +71,7 @@ BUILDOPTIONS = dict(
     packages = [],
     includes = ["PySide", "PySide.QtCore", "PySide.QtGui",
                 "PySide.QtSvg", "PySide.QtXml",
-                "multiprocessing", "cutesnake",
+                "multiprocessing",
                 "scipy.sparse.csgraph._validation",
                 "scipy.sparse.linalg.dsolve.umfpack", "scipy.integrate.vode",
                 "scipy.integrate.lsoda",

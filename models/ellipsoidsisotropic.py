@@ -5,7 +5,7 @@ import scipy, scipy.special
 import numpy as np
 from numpy import pi, sin, cos, sqrt
 from utils.parameter import FitParameter, Parameter
-from cutesnake.algorithm import RandomUniform, RandomExponential
+from bases.algorithm import RandomUniform, RandomExponential
 from scatteringmodel import ScatteringModel
 from utils.units import Length, NoUnit, SLD
 

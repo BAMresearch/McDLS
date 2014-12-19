@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-# version.py
+# gui/version.py
 
-from cutesnake.appversion import QAppVersion
+from __future__ import absolute_import # PEP328
+from gui.utils.appversion import QAppVersion
 
 version = QAppVersion(
     programName = "MCSAS",

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# __init__.py
+# gui/__init__.py
 
 pass
 

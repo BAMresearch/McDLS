@@ -5,7 +5,7 @@ import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
-from cutesnake.algorithm import RandomExponential, RandomUniform
+from bases.algorithm import RandomExponential, RandomUniform
 from utils.units import Length, SLD
 
 class SphericalCoreShell(ScatteringModel):
@@ -83,8 +83,7 @@ SphericalCoreShell.factory()
 #    sys.path.append('..')
 #    sys.path.append('.')
 #    sys.path.append('../utils')
-#    sys.path.append('../cutesnake')
-#    from cutesnake.datafile import PDHFile, AsciiFile
+#    from bases.datafile import PDHFile, AsciiFile
 #    from models.SphericalCoreShell import SphericalCoreShell
 #    # FIXME: use SASData.load() instead
 #    pf = PDHFile("testData/SphCoreShell_R100_dR150_c3p16_s2p53.csv")

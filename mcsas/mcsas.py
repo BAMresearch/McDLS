@@ -2,6 +2,7 @@
 # mcsas/mcsas.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
+from __future__ import absolute_import # PEP328
 import numpy # For arrays
 from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,
@@ -13,20 +14,19 @@ import sys # For printing of slightly more advanced messages to stdout
 import logging
 logging.basicConfig(level = logging.INFO)
 
-from cutesnake.utils import isList, isFrozen
-from cutesnake.dataset import DataSet
-from cutesnake.utils import isList, isString, isFrozen
-from cutesnake.algorithm import (AlgorithmBase,
-                                 RandomUniform, RandomExponential)
+from utils import isList, isFrozen, isString
+from bases.dataset import DataSet
+from bases.algorithm import (AlgorithmBase,
+                             RandomUniform, RandomExponential)
 from utils.parameter import ParameterBase, Histogram, isActiveParam
 from utils.propertynames import PropertyNames
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
-from cutesnake.utilsgui import processEventLoop
+from gui.utils import processEventLoop
 
-from plotting import PlotResults
+from mcsas.plotting import PlotResults
 from sasdata import SASData
-from mcsasparameters import McSASParameters
+from mcsas.mcsasparameters import McSASParameters
 
 class McSAS(AlgorithmBase):
     r"""

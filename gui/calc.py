@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-# calc.py
+# gui/calc.py
 
+from __future__ import absolute_import # PEP328
 import sys
 import logging
 import time
@@ -9,15 +10,15 @@ import ConfigParser
 import numpy
 import numpy as np
 import pickle
-from cutesnake.qt import QtCore
+
+from gui.qt import QtCore
 from QtCore import QUrl
-from cutesnake.dataset import DataSet, DisplayMixin
-from cutesnake.utils import isList, isString, testfor
-from cutesnake.utils.lastpath import LastPath
-from cutesnake.datafile import PDHFile, AsciiFile
-from cutesnake.utilsgui.displayexception import DisplayException
-from cutesnake.log import timestamp, addHandler
-import cutesnake.log as log
+from bases.dataset import DataSet, DisplayMixin
+from utils import isList, isString, testfor
+from utils.lastpath import LastPath
+from bases.datafile import PDHFile, AsciiFile
+from gui.utils.displayexception import DisplayException
+import log
 from mcsas.mcsas import McSAS
 from utils.parameter import Histogram, Moments, isActiveParam
 

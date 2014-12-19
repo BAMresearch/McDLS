@@ -1,39 +1,38 @@
 # -*- coding: utf-8 -*-
-# mainwindow.py
+# gui/mainwindow.py
 
-# sorry, this file is not well structured atm and is subject to change
-# (the author)
-
+from __future__ import absolute_import # PEP328
 import os.path
 import re
 import sys
 import logging
+
 from numpy import inf as numpy_inf
-from cutesnake.qt import QtCore, QtGui
-from cutesnake.utils.signal import Signal
+from gui.qt import QtCore, QtGui
+from gui.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp, QFileInfo
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
                    QTreeWidgetItem, QTreeWidget, QToolBox, QPalette,
                    QDialog, QDoubleSpinBox, QSpinBox)
-from cutesnake.dataset import DataSet, DisplayMixin
-from cutesnake.widgets.mainwindow import MainWindow as MainWindowBase
-from cutesnake.widgets.logwidget import LogWidget
-from cutesnake.widgets.datalist import DataList
-from cutesnake.widgets.dockwidget import DockWidget
-from cutesnake.widgets.mixins.titlehandler import TitleHandler
-from cutesnake.utilsgui.filedialog import getOpenFiles
-from cutesnake.widgets.settingswidget import SettingsWidget as SettingsWidgetBase
-from cutesnake.utils.lastpath import LastPath
-from cutesnake.algorithm.parameter import ParameterFloat #instance for test
-from utils import isList, isString, processEventLoop
-from cutesnake.utils.tests import testfor
-from cutesnake.utilsgui.displayexception import DisplayException
+from bases.dataset import DataSet, DisplayMixin
+from gui.bases.mainwindow import MainWindow as MainWindowBase
+from gui.bases.logwidget import LogWidget
+from gui.bases.datalist import DataList
+from gui.bases.dockwidget import DockWidget
+from gui.bases.mixins.titlehandler import TitleHandler
+from gui.bases.settingswidget import SettingsWidget as SettingsWidgetBase
+from gui.utils.filedialog import getOpenFiles
+from utils.lastpath import LastPath
+from bases.algorithm.parameter import ParameterFloat # instance for test
+from utils import isList, isString, testfor
+from gui.utils import processEventLoop
+from gui.utils.displayexception import DisplayException
 from utils.parameter import (ParameterNumerical, Histogram, FitParameterBase,
-                    FitParameterNumerical)
-from version import version
-from calc import Calculator
+                                FitParameterNumerical)
+from gui.version import version
+from gui.calc import Calculator
 from sasdata import SASData
 from mcsas.mcsas import McSAS
 
@@ -130,7 +129,7 @@ MODELS = OrderedDict((
 FIXEDWIDTH = 120
 
 # required for svg graphics support
-from cutesnake.qt import QtSvg, QtXml, pluginDirs
+from gui.qt import QtSvg, QtXml, pluginDirs
 from main import makeAbsolutePath
 
 def eventLoop(args):
@@ -498,7 +497,7 @@ class SettingsWidget(SettingsWidgetBase):
         # update the value input widget itself
         newValue = self.get(key)
         if newValue is not None:
-            # clipping function in cutesnake.algorithm.parameter def
+            # clipping function in bases.algorithm.parameter def
             p.setDisplayValue(newValue)
             clippedVal = p.displayValue()
             try: 

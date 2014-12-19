@@ -7,7 +7,7 @@ Add docstring
 import logging
 import numpy as np # For arrays
 from numpy import size, log10, sort
-from cutesnake.utils import isList, isString
+from utils import isList, isString
 import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec

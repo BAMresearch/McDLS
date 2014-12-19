@@ -5,7 +5,7 @@ import numpy
 from utils import mixedmethod
 from utils.parameter import FitParameter, Parameter
 from models import ScatteringModel
-from cutesnake.algorithm import RandomUniform, RandomExponential
+from bases.algorithm import RandomUniform, RandomExponential
 from utils.units import Length, SLD, NoUnit
 
 class GaussianChain(ScatteringModel):

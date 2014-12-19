@@ -7,7 +7,7 @@ from scipy.special import j1 as bessel_j1
 from scipy.integrate import quad
 from utils.parameter import FitParameter
 from scatteringmodel import ScatteringModel
-from cutesnake.algorithm import RandomUniform, RandomExponential
+from bases.algorithm import RandomUniform, RandomExponential
 from utils.units import Length
 
 LASTMSG = set()

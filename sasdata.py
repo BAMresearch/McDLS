@@ -25,13 +25,14 @@ True
 True
 """
 
+from __future__ import absolute_import # PEP328
 import os # Miscellaneous operating system interfaces
 import logging
 import numpy as np # For arrays
-from cutesnake.datafile import PDHFile, AsciiFile
-from cutesnake.dataset import DataSet, DisplayMixin
-from cutesnake.utils import isList
-from cutesnake.utilsgui import processEventLoop
+from bases.datafile import PDHFile, AsciiFile
+from bases.dataset import DataSet, DisplayMixin
+from utils import isList
+from gui.utils import processEventLoop
 from utils.units import Length, ScatteringVector, ScatteringIntensity
 
 class SASData(DataSet, DisplayMixin):

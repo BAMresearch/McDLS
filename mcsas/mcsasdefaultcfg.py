@@ -13,11 +13,11 @@ __date__ = "2013-12-21"
 __status__ = "alpha"
 version = "0.0.1"
 
-from utils.parameter import (Parameter, ParameterFloat,
-        ParameterBoolean, ParameterNumerical, ParameterString)
 import logging, json
 import os, inspect
 import numpy as np
+from utils.parameter import (Parameter, ParameterFloat,
+        ParameterBoolean, ParameterNumerical, ParameterString)
 
 class ExtendedEncoder(json.JSONEncoder):
     """JSON encoder extended to deal with Unicode, arrays and cls descriptions"""

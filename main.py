@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import #PEP328
 import sys
 import os.path
 
 def getScriptPath():
     """Returns the full path to the current script file which calls this
-    function. See cutesnake.utils"""
+    function."""
     thisFile = sys.executable # works for frozen app
     try: # __file__ not defined if frozen
         thisFile = os.path.join(os.getcwd(), __file__)
@@ -23,7 +24,7 @@ if not hasattr(sys, "frozen") and SCRIPT_PATH not in sys.path:
 
 import argparse
 import logging
-from cutesnake.log import replaceStdOutErr
+from log import replaceStdOutErr
 
 def makeAbsolutePath(relpath):
 #    logging.info("SCRIPT_PATH: '{}'".format(SCRIPT_PATH))

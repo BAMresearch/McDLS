@@ -5,7 +5,7 @@ import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
-from cutesnake.algorithm import RandomUniform, RandomExponential
+from bases.algorithm import RandomUniform, RandomExponential
 from utils.units import Length, NoUnit, Angle, SLD
 
 # parameters must not be inf
@@ -83,7 +83,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
 CylindersRadiallyIsotropic.factory()
 
 #if __name__ == "__main__":
-#    from cutesnake.datafile import PDHFile, AsciiFile
+#    from bases.datafile import PDHFile, AsciiFile
 #    # FIXME: use SASData.load() instead
 #    pf = PDHFile("sasfit_gauss2-1-100-1-1.dat")
 #    model = CylindersRadiallyIsotropic()
