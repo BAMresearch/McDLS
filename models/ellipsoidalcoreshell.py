@@ -17,27 +17,27 @@ class EllipsoidalCoreShell(ScatteringModel):
     """
     shortName = "Core-Shell Ellipsoid"
     parameters = (
-            FitParameter("a", 1.0e-9,
+            FitParameter("a", 1.0e-9, unit = Length(u'nm'),
                     displayName = "Principal Core Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("b", 10.0e-9,
+            FitParameter("b", 10.0e-9, unit = Length(u'nm'),
                     displayName = "Equatorial Core Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("t", 1.0e-9,
+            FitParameter("t", 1.0e-9, unit = Length(u'nm'),
                     displayName = "Thickness of Shell",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            Parameter("eta_c", 3.15e14,
+            Parameter("eta_c", 3.15e14, unit = SLD(u'Å⁻²'),
                     displayName = "Core SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
-            Parameter("eta_s", 2.53e14,
+            Parameter("eta_s", 2.53e14, unit = SLD(u'Å⁻²'),
                     displayName = "Shell SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
-            Parameter("eta_sol", 0.,
+            Parameter("eta_sol", 0., unit = SLD(u'Å⁻²'),
                     displayName = "Solvent SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
@@ -47,13 +47,6 @@ class EllipsoidalCoreShell(ScatteringModel):
                     valueRange = (0, 1e4)),
     )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(u'nm')
-    parameters[1].unit = Length(u'nm')
-    parameters[2].unit = Length(u'nm')
-    parameters[3].unit = SLD(u'Å⁻²')
-    parameters[4].unit = SLD(u'Å⁻²')
-    parameters[5].unit = SLD(u'Å⁻²')
-    parameters[6].unit = NoUnit()
 
     def __init__(self):
         ScatteringModel.__init__(self)

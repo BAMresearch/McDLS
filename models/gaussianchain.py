@@ -23,15 +23,15 @@ class GaussianChain(ScatteringModel):
     """
     shortName = "Gaussian Chain"
     parameters = (
-            FitParameter("rg", 1.0,
+            FitParameter("rg", 1.0, unit = Length(u'nm'),
                     displayName = "radius of gyration, Rg",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("bp", 100.0,
+            FitParameter("bp", 100.0, unit = Length(u'nm'),
                     displayName = "scattering length of the polymer",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf)),
-            FitParameter("etas", 1.0,
+            FitParameter("etas", 1.0, unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density of the solvent",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf)),
@@ -41,10 +41,6 @@ class GaussianChain(ScatteringModel):
                     valueRange = (0., numpy.inf))
     )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(u'nm')
-    parameters[1].unit = Length(u'cm')
-    parameters[2].unit = SLD(u'Å⁻²')
-    parameters[3].unit = NoUnit()
 
     def __init__(self):
         super(GaussianChain, self).__init__()

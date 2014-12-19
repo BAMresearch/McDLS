@@ -11,19 +11,16 @@ from sasunit import Length, SLD
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
-    parameters = (FitParameter("radius", 1.0,
+    parameters = (FitParameter("radius", 1.0, unit = Length(u'nm'),
                     displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     decimals = 1), 
-                  Parameter("sld", 1e14,
+                  Parameter("sld", 1e14, unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
                     decimals = 1), )
     parameters[0].setActive(True)
-    # set units
-    parameters[0].unit = Length(u'nm')
-    parameters[1].unit = SLD(u'Å⁻²')
     #set suffix (normally set in above FitParameter definition) identical
     #to displayname (temporary). Eventually, GUI should use unit metadata
     #now done automatically through definition in ParameterFloat: 

@@ -298,8 +298,8 @@ class RangeDialog(QDialog):
         if isinstance(p, ParameterFloat):
             # take units into account,
             # convert from display units to SI units for internal use
-            lval, uval = (p.unit.toSi(self.lentry.value()),
-                          p.unit.toSi(self.uentry.value()))
+            lval, uval = (p.toSi(self.lentry.value()),
+                          p.toSi(self.uentry.value()))
         else: 
             lval, uval = (self.lentry.value(), self.uentry.value())
 
@@ -844,8 +844,8 @@ class ModelWidget(SettingsWidget):
             return # nothing to do
         keymin, keymax = key+"min", key+"max"
         if self.get(keymin) is not None and self.get(keymax) is not None:
-            self.set(keymin, param.unit.toDisplay(minVal))
-            self.set(keymax, param.unit.toDisplay(maxVal))
+            self.set(keymin, param.toDisplay(minVal))
+            self.set(keymax, param.toDisplay(maxVal))
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))

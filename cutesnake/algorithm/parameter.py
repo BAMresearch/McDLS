@@ -459,34 +459,49 @@ class ParameterNumerical(ParameterBase):
                               lower, upper, count).astype(self.dtype)
 
 class ParameterFloat(ParameterNumerical):
-    ParameterNumerical.setAttributes(locals(), "decimals")
-    unit = NoUnit() # set unit metadata as blank
+    ParameterNumerical.setAttributes(locals(), "decimals", unit = NoUnit())
+
+    # some unit wrappers
+
+    @mixedmethod
+    def toDisplay(selforcls, value):
+        return selforcls.unit().toDisplay(value)
+
+    @mixedmethod
+    def toSi(selforcls, value):
+        return selforcls.unit().toSi(value)
+
+    @mixedmethod
+    def displayMagnitudeName(selforcls):
+        return selforcls.unit().displayMagnitudeName
 
     #link suffix directly to displayMagnitudeName of unit metadata
     @mixedmethod
     def suffix(selforcls):
-        return selforcls.unit.displayMagnitudeName
+        return selforcls.displayMagnitudeName()
 
     @mixedmethod
     def setSuffix(selforcls, newSuffix):
-        selforcls.unit.displayMagnitudeName = newSuffix
+# not used atm
+#        selforcls.unit.displayMagnitudeName = newSuffix
+        pass
 
     @mixedmethod
     def displayValue(selforcls):
         """shows value converted to display units (str in displayValueUnit)"""
-        return selforcls.unit.toDisplay(selforcls.value())
+        return selforcls.toDisplay(selforcls.value())
 
     @mixedmethod
     def setDisplayValue(selforcls, newVal):
         """sets value given in display units (str in displayValueUnit)"""
-        selforcls.setValue(selforcls.unit.toSi(newVal), clip = True)
+        selforcls.setValue(selforcls.toSi(newVal), clip = True)
 
     @mixedmethod
     def displayValueRange(selforcls):
         """Upper and lower limits a parameter can assume in display unit"""
         vRange = selforcls.valueRange()
-        newRange = (selforcls.unit.toDisplay(min(vRange)),
-                    selforcls.unit.toDisplay(max(vRange)))
+        newRange = (selforcls.toDisplay(min(vRange)),
+                    selforcls.toDisplay(max(vRange)))
         return newRange
 
     @mixedmethod

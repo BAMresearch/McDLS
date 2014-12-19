@@ -649,15 +649,15 @@ class FitParameterBase(ParameterBase):
     def displayActiveRange(selforcls):
         """value bounds in display units used for parameter generator"""
         vRange = selforcls.activeRange()
-        newRange = (selforcls.unit.toDisplay(min(vRange)),
-                    selforcls.unit.toDisplay(max(vRange)))
+        newRange = (selforcls.toDisplay(min(vRange)),
+                    selforcls.toDisplay(max(vRange)))
         return newRange
 
     @mixedmethod
     def setDisplayActiveRange(selforcls, newRange):
         """sets value range after converting input from display to SI units""" 
-        newRange = (selforcls.unit.toSi(min(newRange)),
-                    selforcls.unit.toSi(max(newRange)))
+        newRange = (selforcls.toSi(min(newRange)),
+                    selforcls.toSi(max(newRange)))
         selforcls.setActiveRange(newRange)
 
 class FitParameterString(FitParameterBase, ParameterString):

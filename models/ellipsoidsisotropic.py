@@ -18,13 +18,13 @@ class EllipsoidsIsotropic(ScatteringModel):
     """
     shortName = "Isotropic Ellipsoids"
     parameters = (
-            FitParameter("a", 1.0,
+            FitParameter("a", 1.0, unit = Length(u'nm'),
                     displayName = "Radius of semi-axes a, b",
                     generator = RandomExponential,
                     valueRange = (1e-10, 1e1)),
             Parameter("useAspect", True,
                     displayName = "Use aspect ratio (checked) or length to define c-axis"),
-            FitParameter("c", 10.0,
+            FitParameter("c", 10.0, unit = Length(u'nm'),
                     displayName = "Radius of semi-axes c",
                     generator = RandomExponential,
                     valueRange = (1e-10, 1e1)),
@@ -35,16 +35,11 @@ class EllipsoidsIsotropic(ScatteringModel):
             Parameter("intDiv", 100,
                     displayName = "Orientation Integration Divisions",
                     valueRange = (0, 1e4)),
-            Parameter("sld", 1e14,
+            Parameter("sld", 1e14, unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
                     valueRange = (0, 1e4)),
     )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(u'nm')
-    parameters[2].unit = Length(u'nm')
-    parameters[3].unit = NoUnit()
-    parameters[4].unit = NoUnit()
-    parameters[5].unit = SLD(u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)

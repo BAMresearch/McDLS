@@ -373,9 +373,9 @@ class PlotResults(object):
         # make active:
         axes(hAxis)
 
-        histXLowerEdge = plotPar.unit.toDisplay(parHist.xLowerEdge)
-        histXMean =      plotPar.unit.toDisplay(parHist.xMean)
-        histXWidth =     plotPar.unit.toDisplay(parHist.xWidth)
+        histXLowerEdge = plotPar.toDisplay(parHist.xLowerEdge)
+        histXMean =      plotPar.toDisplay(parHist.xMean)
+        histXWidth =     plotPar.toDisplay(parHist.xWidth)
         # either volume or number, whichever is chosen
         HistYMean = parHist.bins.mean
         HistMinReq = parHist.observability
@@ -415,8 +415,8 @@ class PlotResults(object):
 
         # fill axes
         # plot active histogram:
-        validi = ( (histXLowerEdge >= plotPar.unit.toDisplay(parHist.lower)) * 
-                   (histXLowerEdge <= plotPar.unit.toDisplay(parHist.upper)) )
+        validi = ( (histXLowerEdge >= plotPar.toDisplay(parHist.lower)) * 
+                   (histXLowerEdge <= plotPar.toDisplay(parHist.upper)) )
         validi[-1] = 0
         if not (validi.sum()==0):
             bar(histXLowerEdge[validi], HistYMean[validi[0:-1]], 

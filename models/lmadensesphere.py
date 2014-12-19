@@ -22,12 +22,12 @@ class LMADenseSphere(ScatteringModel):
 
     shortName = "LMADenseSphere"
     parameters = (
-            FitParameter("radius", 1.0e-9,
+            FitParameter("radius", 1.0e-9, unit = Length(u"nm"),
                     displayName = "Sphere radius",
                     valueRange = (1e-10, 1e1),
                     generator = RandomUniform,
                     decimals = 1),
-            FitParameter("volFrac", 0.1,
+            FitParameter("volFrac", 0.1, unit = Fraction(u"%"),
                     displayName = "Volume fraction of spheres",
                     valueRange = (0, 1.),
                     generator = RandomUniform,
@@ -38,15 +38,11 @@ class LMADenseSphere(ScatteringModel):
                     generator = RandomUniform,
                     decimals = 1,
                     displayValues = {-1.: "auto"}),
-            Parameter("sld", 1e14,
+            Parameter("sld", 1e14, unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
                     valueRange = (0, 1e15))
             )
     parameters[0].setActive(True)
-    parameters[0].unit = Length(u"nm")
-    parameters[1].unit = Fraction(u"%")
-    parameters[2].unit = NoUnit()
-    parameters[3].unit = SLD(u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)

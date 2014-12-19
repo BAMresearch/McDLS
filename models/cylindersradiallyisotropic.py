@@ -17,7 +17,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     """
     shortName = "Radially (in-plane) isotropic cylinders"
     parameters = (
-            FitParameter("radius", 1.0e-9,
+            FitParameter("radius", 1.0e-9, unit = Length(u'nm'),
                     displayName = "Cylinder radius",
                     generator = RandomExponential,
                     valueRange = (1e-10, numpy.inf)),
@@ -25,26 +25,20 @@ class CylindersRadiallyIsotropic(ScatteringModel):
                     displayName = "Aspect ratio L/(2R) of the cylinder",
                     generator = RandomUniform,
                     valueRange = (0.1, numpy.inf)),
-            FitParameter("psiAngle", 0.17,
+            FitParameter("psiAngle", 0.17, unit = Angle(u'˚'),
                     displayName = "in-plane cylinder rotation",
                     generator = RandomUniform,
                     valueRange = (0.01, 2 * pi + 0.01)),
             Parameter("psiAngleDivisions", 303., #setting to int gives OverflowError
                     displayName = "in-plane angle divisions",
                     valueRange = (1, numpy.inf)),
-            Parameter("sld", 1e14,
+            Parameter("sld", 1e14, unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf))
     )
     parameters[0].setActive(True)
     parameters[1].setActive(False) # not expected to vary
     parameters[2].setActive(True)  # better when random
-
-    parameters[0].unit = Length(u'nm')
-    parameters[1].unit = NoUnit()
-    parameters[2].unit = Angle(u'˚')
-    parameters[3].unit = NoUnit()
-    parameters[4].unit = SLD(u'Å⁻²')
 
     def __init__(self):
         ScatteringModel.__init__(self)

@@ -53,15 +53,15 @@ class Kholodenko(ScatteringModel):
     """
     shortName = "Kholodenko Worm"
     parameters = (
-            FitParameter("radius", 1.0,
+            FitParameter("radius", 1e-9, unit = Length(u'nm'),
                     displayName = "Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("lenKuhn", 1.0,
+            FitParameter("lenKuhn", 1e-9, unit = Length(u'nm'),
                     displayName = "kuhn length",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf)),
-            FitParameter("lenContour", 1.0,
+            FitParameter("lenContour", 1e-9, unit = Length(u'nm'),
                     displayName = "contour length",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf))
@@ -69,9 +69,6 @@ class Kholodenko(ScatteringModel):
     parameters[0].setActive(True)
     parameters[1].setActive(True)
     parameters[2].setActive(True)
-    parameters[0].unit = Length(u'nm')
-    parameters[1].unit = Length(u'nm')
-    parameters[2].unit = Length(u'nm')
 
     def __init__(self):
         ScatteringModel.__init__(self)
