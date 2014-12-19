@@ -290,11 +290,11 @@ class PlotResults(object):
 
     def plot1D(self, dataset, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
-        q = dataset.q / dataset._qMeta.magnitudeConversion()
+        q = dataset._qMeta.toDisplay(dataset.q)
         qUnitLabel = dataset._qMeta.displayMagnitudeName
-        intensity = dataset.i / dataset._iMeta.magnitudeConversion()
+        intensity = dataset._iMeta.toDisplay(dataset.i)
         iUnitLabel = dataset._iMeta.displayMagnitudeName
-        intError = dataset.e / dataset._iMeta.magnitudeConversion()
+        intError = dataset._iMeta.toDisplay(dataset.e)
 
         xLim = (q.min() * (1 - self._axisMargin), 
                 q.max() * (1 + self._axisMargin))
@@ -318,12 +318,12 @@ class PlotResults(object):
                  label = 'Measured intensity', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         self.plotGrid(qAxis)
-        plot(fitQ / dataset._qMeta.magnitudeConversion(), 
-                fitIntensity / dataset._iMeta.magnitudeConversion(), 'r-', 
+        plot(dataset._qMeta.toDisplay(fitQ),
+             dataset._iMeta.toDisplay(fitIntensity), 'r-',
                 lw = 3, label = 'MC Fit intensity', zorder = 4)
         try:
-            plot(fitQ / dataset._qMeta.magnitudeConversion(), 
-                    (self._BG[0] + 0*fitQ) / dataset._iMeta.magnitudeConversion(),
+            plot(dataset._qMeta.toDisplay(fitQ),
+                 dataset._iMeta.toDisplay(self._BG[0] + 0*fitQ),
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n\t ({0:03.3g})' .format(
                      self._BG[0]), zorder = 3)
@@ -372,14 +372,10 @@ class PlotResults(object):
         """histogram plot"""
         # make active:
         axes(hAxis)
-        try:
-            magConv = plotPar.unit.magnitudeConversion()
-        except AttributeError:
-            magConv = 1.
 
-        histXLowerEdge = parHist.xLowerEdge / magConv
-        histXMean = parHist.xMean / magConv
-        histXWidth = parHist.xWidth / magConv
+        histXLowerEdge = plotPar.unit.toDisplay(parHist.xLowerEdge)
+        histXMean =      plotPar.unit.toDisplay(parHist.xMean)
+        histXWidth =     plotPar.unit.toDisplay(parHist.xWidth)
         # either volume or number, whichever is chosen
         HistYMean = parHist.bins.mean
         HistMinReq = parHist.observability
@@ -419,8 +415,8 @@ class PlotResults(object):
 
         # fill axes
         # plot active histogram:
-        validi = ( (histXLowerEdge >= (parHist.lower / magConv)) * 
-                (histXLowerEdge <= parHist.upper / magConv) )
+        validi = ( (histXLowerEdge >= plotPar.unit.toDisplay(parHist.lower)) * 
+                   (histXLowerEdge <= plotPar.unit.toDisplay(parHist.upper)) )
         validi[-1] = 0
         if not (validi.sum()==0):
             bar(histXLowerEdge[validi], HistYMean[validi[0:-1]], 

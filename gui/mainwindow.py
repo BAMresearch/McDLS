@@ -296,11 +296,10 @@ class RangeDialog(QDialog):
         except:
             return None
         if isinstance(p, ParameterFloat):
-            # take units into account:
-            magConv = p.unit.magnitudeConversion()   
-            # convert from display units to SI units for internal use:
-            lval, uval = (self.lentry.value() * magConv, 
-                    self.uentry.value() * magConv)
+            # take units into account,
+            # convert from display units to SI units for internal use
+            lval, uval = (p.unit.toSi(self.lentry.value()),
+                          p.unit.toSi(self.uentry.value()))
         else: 
             lval, uval = (self.lentry.value(), self.uentry.value())
 
@@ -834,20 +833,19 @@ class ModelWidget(SettingsWidget):
     def setSphericalSizeRange(self, minVal, maxVal):
         key = "radius"
         # get parameter display order of magnitude: 
-        magConv = None
+        param = None
         for p in self.algorithm.params():
             if p.name() == key: # "is" does not work with unicode strings
-                magConv = p.unit.magnitudeConversion()
-        if magConv is None:
-            logging.debug('No "radius"-named parameter, cannot get magConv')
-            magConv = 1.
-
+                param = p
+                break
+        if param is None:
+            logging.debug("No 'radius'-named parameter found, "
+                          "not setting spherical size range!")
+            return # nothing to do
         keymin, keymax = key+"min", key+"max"
-        # logging.debug('magConv: {}, minVal: {}, maxVal: {}'
-        #         .format(magConv, minVal, maxVal))
         if self.get(keymin) is not None and self.get(keymax) is not None:
-            self.set(keymin, minVal / magConv)
-            self.set(keymax, maxVal / magConv)
+            self.set(keymin, param.unit.toDisplay(minVal))
+            self.set(keymax, param.unit.toDisplay(maxVal))
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))

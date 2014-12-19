@@ -18,16 +18,16 @@ Example usage:
 u'm'
 >>> rUnit.displayMagnitudeName
 u'nm'
->>> rUnit.magnitudeConversion('nm', 'm')
+>>> rUnit.magnitudeConversion
 1e-09
 
 or:
->>> rUnit.magnitudeConversion('nm')
-1e-09
+>>> rUnit.toSi(32)
+3.2e-08
 
 Selecting a default: 
 >>> qUnit = ScatteringVector(u"cm⁻¹")
->>> qUnit.magnitudeConversion(u"cm⁻¹")
+>>> qUnit.magnitudeConversion
 100.0
 
 """
@@ -56,6 +56,7 @@ class SASUnit(object):
 
     def magnitude(self, name):
         """Returns a (numerical) magnitude matching a magnitude name"""
+        name = unicode(name)
         try:
             return self.magnitudeMapping[name]
         except KeyError:
@@ -89,13 +90,14 @@ class SASUnit(object):
 
     def invName(self, unitString):
         u""" Adds an ⁻¹ sign or removes it if already present"""
+        unitString = unicode(unitString)
         if not u"⁻¹" in unitString:
             return unitString + u"⁻¹"
         else: 
             return unitString.replace( u"⁻¹", u"" )
 
-    def magnitudeConversion(self, displaymagnitudename = None, 
-            simagnitudename = None):
+    @property
+    def magnitudeConversion(self):
         """
         Scaling factor to move from display magnitude to si units.
         Required display argument:
@@ -107,16 +109,17 @@ class SASUnit(object):
         Returns: 
         *float* : A scaling factor for display unit to scale to si unit.
         """
-        if displaymagnitudename is None:
-            displaymagnitudename = self.displayMagnitudeName
-        if simagnitudename is None:
-            simagnitudename = self.siMagnitudeName
-
-        #find display units:
-        iUnit = self.magnitudeMapping[displaymagnitudename.strip()]
-        #find si units
-        oUnit = self.magnitudeMapping[simagnitudename.strip()]
+        # find display units:
+        iUnit = self.magnitudeMapping[self.displayMagnitudeName]
+        # find si units
+        oUnit = self.magnitudeMapping[self.siMagnitudeName]
         return iUnit / oUnit
+
+    def toSi(self, value):
+        return value * self.magnitudeConversion
+
+    def toDisplay(self, value):
+        return value / self.magnitudeConversion
 
 class Length(SASUnit):
     _magnitudeMap = {

@@ -63,7 +63,7 @@ class SASData(DataSet, DisplayMixin):
     @property
     def sphericalSizeEstText(self):
         return u"{0:.3g} ≤ R ({rUnitName}) ≤ {1:.3g}".format(
-                *self.sphericalSizeEst() / self._rMeta.magnitudeConversion(), 
+                *self._rMeta.toDisplay(self.sphericalSizeEst()),
                 rUnitName = self._rMeta.displayMagnitudeName)
 
     @property
@@ -92,8 +92,8 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qLimsString(self):
         return u"{0:.3g} ≤ Q ({qMagnitudeName}) ≤ {1:.3g}".format(
-                self.qMin / self._qMeta.magnitudeConversion(), 
-                self.qMax / self._qMeta.magnitudeConversion(), 
+                self._qMeta.toDisplay(self.qMin),
+                self._qMeta.toDisplay(self.qMax),
                 qMagnitudeName = self._qMeta.displayMagnitudeName)
 
     @property
@@ -147,17 +147,17 @@ class SASData(DataSet, DisplayMixin):
     @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self.origin[:, 0] * self._qMeta.magnitudeConversion()
+        return self._qMeta.toSi(self.origin[:, 0])
 
     @property
     def i(self):
         """Measured intensity at q."""
-        return self.origin[:, 1] * self._iMeta.magnitudeConversion()
+        return self._iMeta.toSi(self.origin[:, 1])
 
     @property
     def e(self):
         """Uncertainty or Error of the intensity at q."""
-        return self.origin[:, 2] * self._iMeta.magnitudeConversion()
+        return self._iMeta.toSi(self.origin[:, 2])
 
     @property
     def p(self):

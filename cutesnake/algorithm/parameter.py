@@ -472,23 +472,21 @@ class ParameterFloat(ParameterNumerical):
         selforcls.unit.displayMagnitudeName = newSuffix
 
     @mixedmethod
-    def displayValue(self):
+    def displayValue(selforcls):
         """shows value converted to display units (str in displayValueUnit)"""
-        magConv = self.unit.magnitudeConversion()
-        return self.value() / magConv
+        return selforcls.unit.toDisplay(selforcls.value())
 
     @mixedmethod
-    def setDisplayValue(self, newVal):
+    def setDisplayValue(selforcls, newVal):
         """sets value given in display units (str in displayValueUnit)"""
-        magConv = self.unit.magnitudeConversion()
-        self.setValue(newVal * magConv, clip = True)
+        selforcls.setValue(selforcls.unit.toSi(newVal), clip = True)
 
     @mixedmethod
     def displayValueRange(selforcls):
         """Upper and lower limits a parameter can assume in display unit"""
-        magConv = selforcls.unit.magnitudeConversion()
         vRange = selforcls.valueRange()
-        newRange = (min(vRange) / magConv, max(vRange) / magConv)
+        newRange = (selforcls.unit.toDisplay(min(vRange)),
+                    selforcls.unit.toDisplay(max(vRange)))
         return newRange
 
     @mixedmethod
