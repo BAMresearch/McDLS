@@ -523,7 +523,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                 errorOccured = True
                 logging.error(str(e).replace("\n"," ") + " ... skipping")
                 continue
-            else:
+            if data is not None:
                 lastItem = self.add(data)
                 lastItem.setAlignment(alignment)
             if progress is not None and progress.update():
