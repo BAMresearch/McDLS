@@ -17,19 +17,19 @@ class SphericalCoreShell(ScatteringModel):
     """
     shortName = "Core-Shell Sphere"
     parameters = (
-            FitParameter("radius", 1.0e-9, unit = Length(u'nm'),
+            FitParameter("radius", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Core Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("t", 1.0e-9, unit = Length(u'nm'),
+            FitParameter("t", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Thickness of Shell",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            Parameter("eta_c", 3.16e14, unit = SLD(u'Å⁻²'),
+            Parameter("eta_c", SLD(u'Å⁻²').toSi(3.16e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Core SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
-            Parameter("eta_s", 2.53e14, unit = SLD(u'Å⁻²'),
+            Parameter("eta_s", SLD(u'Å⁻²').toSi(2.53e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Shell SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
@@ -44,7 +44,7 @@ class SphericalCoreShell(ScatteringModel):
         ScatteringModel.__init__(self)
         # some presets
         self.radius.setDisplayActiveRange((0.1, 1e3))
-        self.t.setDisplayActiveRange((0.1, 1e3))
+        self.t.setDisplayActiveRange(     (0.1, 1e3))
 
     def formfactor(self, dataset):
         def k(q, r, dEta):

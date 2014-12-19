@@ -53,15 +53,15 @@ class Kholodenko(ScatteringModel):
     """
     shortName = "Kholodenko Worm"
     parameters = (
-            FitParameter("radius", 1e-9, unit = Length(u'nm'),
+            FitParameter("radius", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("lenKuhn", 1e-9, unit = Length(u'nm'),
+            FitParameter("lenKuhn", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "kuhn length",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf)),
-            FitParameter("lenContour", 1e-9, unit = Length(u'nm'),
+            FitParameter("lenContour", Length(u'nm').toSi(2.), unit = Length(u'nm'),
                     displayName = "contour length",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf))

@@ -22,14 +22,14 @@ class LMADenseSphere(ScatteringModel):
 
     shortName = "LMADenseSphere"
     parameters = (
-            FitParameter("radius", 1.0e-9, unit = Length(u"nm"),
+            FitParameter("radius", Length(u"nm").toSi(1.), unit = Length(u"nm"),
                     displayName = "Sphere radius",
-                    valueRange = (1e-10, 1e1),
+                    valueRange = (Length(u"nm").toSi(0.1), Length(u"nm").toSi(1e10)),
                     generator = RandomUniform,
                     decimals = 1),
-            FitParameter("volFrac", 0.1, unit = Fraction(u"%"),
+            FitParameter("volFrac", Fraction(u"%").toSi(10), unit = Fraction(u"%"),
                     displayName = "Volume fraction of spheres",
-                    valueRange = (0, 1.),
+                    valueRange = (Fraction(u"%").toSi(0.), Fraction(u"%").toSi(100.)),
                     generator = RandomUniform,
                     decimals = 1),
             FitParameter("mf", -1., # auto
@@ -38,9 +38,9 @@ class LMADenseSphere(ScatteringModel):
                     generator = RandomUniform,
                     decimals = 1,
                     displayValues = {-1.: "auto"}),
-            Parameter("sld", 1e14, unit = SLD(u'Å⁻²'),
+            Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
-                    valueRange = (0, 1e15))
+                    valueRange = (0., SLD(u'Å⁻²').toSi(1e-5))),
             )
     parameters[0].setActive(True)
 

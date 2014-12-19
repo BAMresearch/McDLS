@@ -11,12 +11,13 @@ from sasunit import Length, SLD
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
-    parameters = (FitParameter("radius", 1.0, unit = Length(u'nm'),
+    parameters = (FitParameter("radius",
+                    Length(u'nm').toSi(10.), unit = Length(u'nm'),
                     displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
                     generator = RandomUniform,
                     decimals = 1), 
-                  Parameter("sld", 1e14, unit = SLD(u'Å⁻²'),
+                  Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
                     decimals = 1), )
@@ -28,8 +29,7 @@ class Sphere(ScatteringModel):
 
     def __init__(self):
         super(Sphere, self).__init__()
-        #stored in SI units. GUI input must convert upon ingestion
-        self.radius.setValueRange((1.0e-10, 1e-6))
+        self.radius.setDisplayActiveRange((1., 1000.))
 
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)

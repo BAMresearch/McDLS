@@ -17,23 +17,23 @@ class EllipsoidalCoreShell(ScatteringModel):
     """
     shortName = "Core-Shell Ellipsoid"
     parameters = (
-            FitParameter("a", 1.0e-9, unit = Length(u'nm'),
+            FitParameter("a", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Principal Core Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("b", 10.0e-9, unit = Length(u'nm'),
+            FitParameter("b", Length(u'nm').toSi(10.), unit = Length(u'nm'),
                     displayName = "Equatorial Core Radius",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("t", 1.0e-9, unit = Length(u'nm'),
+            FitParameter("t", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Thickness of Shell",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            Parameter("eta_c", 3.15e14, unit = SLD(u'Å⁻²'),
+            Parameter("eta_c", SLD(u'Å⁻²').toSi(3.15e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Core SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
-            Parameter("eta_s", 2.53e14, unit = SLD(u'Å⁻²'),
+            Parameter("eta_s", SLD(u'Å⁻²').toSi(2.53e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Shell SLD",
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
@@ -52,7 +52,7 @@ class EllipsoidalCoreShell(ScatteringModel):
         ScatteringModel.__init__(self)
         # some presets
         self.a.setDisplayActiveRange((0.1, 1e3))
-        self.b.setDisplayActiveRange((1., 1e4))
+        self.b.setDisplayActiveRange((1.0, 1e4))
         self.t.setDisplayActiveRange((0.1, 1e3))
 
     def formfactor(self, dataset):

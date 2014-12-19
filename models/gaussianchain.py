@@ -23,15 +23,15 @@ class GaussianChain(ScatteringModel):
     """
     shortName = "Gaussian Chain"
     parameters = (
-            FitParameter("rg", 1.0, unit = Length(u'nm'),
+            FitParameter("rg", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "radius of gyration, Rg",
                     generator = RandomExponential,
                     valueRange = (0., numpy.inf)),
-            FitParameter("bp", 100.0, unit = Length(u'nm'),
+            FitParameter("bp", Length(u'nm').toSi(100.), unit = Length(u'nm'),
                     displayName = "scattering length of the polymer",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf)),
-            FitParameter("etas", 1.0, unit = SLD(u'Å⁻²'),
+            FitParameter("etas", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density of the solvent",
                     generator = RandomUniform,
                     valueRange = (0., numpy.inf)),
@@ -45,10 +45,10 @@ class GaussianChain(ScatteringModel):
     def __init__(self):
         super(GaussianChain, self).__init__()
         # some presets
-        self.rg.setDisplayActiveRange((1, 1e2))
-        self.bp.setDisplayActiveRange((0.1, 1e3))
+        self.rg.setDisplayActiveRange(  (1.0, 1e2))
+        self.bp.setDisplayActiveRange(  (0.1, 1e3))
         self.etas.setDisplayActiveRange((0.1, 10.))
-        self.k.setDisplayActiveRange((0.1, 10.))
+        self.k.setDisplayActiveRange(   (0.1, 10.))
 
     def formfactor(self, dataset):
         # vectorized data

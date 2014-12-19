@@ -15,15 +15,15 @@ class CylindersIsotropic(ScatteringModel):
     """
     shortName = "Cylinders defined by aspect ratio"
     parameters = (
-            FitParameter("radius", 1.0,
+            FitParameter("radius", Length("nm").toSi(1.), unit = Length("nm"),
                     displayName = "Cylinder radius",
                     valueRange = (0., numpy.inf), suffix = "nm"),
             FitParameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
                     valueRange = (0., numpy.inf), suffix = "-"),
-            FitParameter("psiAngle", 10.0,
+            FitParameter("psiAngle", Angle("°").toSi(10.), unit = Angle("°"),
                     displayName = "in-plane cylinder rotation",
-                    valueRange = (0., 180.), suffix = "deg."),
+                    valueRange = (0., Angle("°").toSi(180.))),
             FitParameter("psiAngleDivisions", 303.,
                     displayName = "in-plane angle divisions",
                     valueRange = (0, numpy.inf), suffix = "-"),
@@ -37,7 +37,7 @@ class CylindersIsotropic(ScatteringModel):
         ScatteringModel.__init__(self)
         # some presets
         self.radius.setValueRange((0.1, 1e3))
-        self.aspect.setValueRange((1, 20))
+        self.aspect.setValueRange((1.0, 20))
 
     def formfactor(self, dataset):
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010

@@ -16,16 +16,17 @@ class CylindersIsotropic(ScatteringModel):
     """
     shortName = "Isotropic Cylinders"
     parameters = (
-            FitParameter("radius", 1.0e-9, unit = Length(u'nm'),
+            FitParameter("radius", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Cylinder Radius",
                     generator = RandomExponential,
-                    valueRange = (1e-10, numpy.inf)),
+                    valueRange = (Length(u'nm').toSi(0.1), numpy.inf)),
             Parameter("useAspect", True,
                     displayName = "Use aspect ratio (checked) or length "),
-            FitParameter("length", 10.0e-9, unit = Length(u'nm'),
+            FitParameter("length", Length(u'nm').toSi(10.), unit = Length(u'nm'),
                     displayName = "Length L of the Cylinder",
                     generator = RandomExponential,
-                    valueRange = (1e-10, 1e1 )),
+                    valueRange = (Length(u'nm').toSi(0.1),
+                                  Length(u'nm').toSi(1e10))),
             FitParameter("aspect", 10.0,
                     displayName = "Aspect ratio of the Cylinder",
                     generator = RandomExponential,
@@ -37,7 +38,7 @@ class CylindersIsotropic(ScatteringModel):
             Parameter("psiAngleDivisions", 303.,
                     displayName = "Orientation Integration Divisions",
                     valueRange = (1, numpy.inf)),
-            Parameter("sld", 1e14, unit = SLD(u'Å⁻²'),
+            Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
                     valueRange = (0, numpy.inf))
     )
