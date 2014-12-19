@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# mcsas/sasdata.py
+# utils/units.py
 
 u"""
 Defines methods for using and manipulating units of variables. 
@@ -35,10 +35,9 @@ Selecting a default:
 import logging
 import numpy as np # For arrays
 from numpy import pi
-from cutesnake.utils.tests import testfor
 from cutesnake.utils.classproperty import classproperty
 
-class SASUnit(object):
+class Unit(object):
     _magnitudeMap = None
     _siMagnitudeName = None
     _displayMagnitudeName = None
@@ -121,7 +120,7 @@ class SASUnit(object):
     def toDisplay(self, value):
         return value / self.magnitudeConversion
 
-class Length(SASUnit):
+class Length(Unit):
     _magnitudeMap = {
         u"Å" : 1e-10,
         u"nm": 1e-9,
@@ -132,7 +131,7 @@ class Length(SASUnit):
     }
     _siMagnitudeName = u"m"
 
-class Area(SASUnit):
+class Area(Unit):
     _magnitudeMap = {
         u"Å²" : 1e-20,
         u"nm²": 1e-18,
@@ -142,7 +141,7 @@ class Area(SASUnit):
     }
     _siMagnitudeName = u"m²"
 
-class Volume(SASUnit):
+class Volume(Unit):
     _magnitudeMap = {
         u"Å³" : 1e-30,
         u"nm³": 1e-27,
@@ -152,7 +151,7 @@ class Volume(SASUnit):
     }
     _siMagnitudeName = u"m³"
 
-class Angle(SASUnit):
+class Angle(Unit):
     _magnitudeMap = {
         u"˚"  : 180.0/pi,
         u"'"  :   3.0/pi,
@@ -161,7 +160,7 @@ class Angle(SASUnit):
     }
     _siMagnitudeName = u"rad"
 
-class SLD(SASUnit):
+class SLD(Unit):
     _magnitudeMap = {
         u"Å⁻²" : 1e20,
         u"nm⁻²": 1e18,
@@ -172,7 +171,7 @@ class SLD(SASUnit):
     }
     _siMagnitudeName = u"m⁻²"
 
-class ScatteringVector(SASUnit):
+class ScatteringVector(Unit):
     _magnitudeMap = {
         u"Å⁻¹" : 1e10,
         u"nm⁻¹": 1e9,
@@ -183,14 +182,14 @@ class ScatteringVector(SASUnit):
     }
     _siMagnitudeName = u"m⁻¹"
 
-class ScatteringIntensity(SASUnit):
+class ScatteringIntensity(Unit):
     _magnitudeMap = {
         u"(cm sr)⁻¹": 1e2,
         u"(m sr)⁻¹" : 1e0,
     }
     _siMagnitudeName = u"(m sr)⁻¹"
 
-class Fraction(SASUnit):
+class Fraction(Unit):
     _magnitudeMap = {
         u"%": 1e-2,
         u"-": 1e0,
@@ -198,7 +197,7 @@ class Fraction(SASUnit):
     }
     _siMagnitudeName = u"-"
 
-class NoUnit(SASUnit):
+class NoUnit(Unit):
     _magnitudeMap = {
         u"" : 1e0,
         u"-": 1e0,

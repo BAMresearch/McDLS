@@ -6,7 +6,7 @@ from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomExponential, RandomUniform
-from sasunit import Length, NoUnit, Angle, SLD
+from utils.units import Length, NoUnit, Angle, SLD
 
 # parameters must not be inf
 

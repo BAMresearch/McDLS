@@ -6,7 +6,7 @@ from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomExponential, RandomUniform
-from sasunit import Length, SLD
+from utils.units import Length, SLD
 
 class SphericalCoreShell(ScatteringModel):
     r"""Form factor for a spherical core shell structure

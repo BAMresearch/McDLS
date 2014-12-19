@@ -8,7 +8,7 @@ from scipy.integrate import quad
 from utils.parameter import FitParameter
 from scatteringmodel import ScatteringModel
 from cutesnake.algorithm import RandomUniform, RandomExponential
-from sasunit import Length
+from utils.units import Length
 
 LASTMSG = set()
 

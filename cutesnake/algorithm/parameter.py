@@ -61,7 +61,7 @@ from cutesnake.utils.tests import testfor, assertName
 from cutesnake.utils.mixedmethod import mixedmethod
 from cutesnake.utils.classproperty import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
-from sasunit import NoUnit
+from utils.units import NoUnit
 from utils import clip
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):

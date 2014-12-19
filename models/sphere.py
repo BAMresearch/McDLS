@@ -6,7 +6,7 @@ from numpy import pi, sin, cos
 from cutesnake.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
-from sasunit import Length, SLD
+from utils.units import Length, SLD
 
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""

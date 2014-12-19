@@ -32,7 +32,7 @@ from cutesnake.datafile import PDHFile, AsciiFile
 from cutesnake.dataset import DataSet, DisplayMixin
 from cutesnake.utils import isList
 from cutesnake.utilsgui import processEventLoop
-from sasunit import Length, ScatteringVector, ScatteringIntensity
+from utils.units import Length, ScatteringVector, ScatteringIntensity
 
 class SASData(DataSet, DisplayMixin):
     """Represents one set of data from a unique source (a file, for example).
@@ -41,9 +41,9 @@ class SASData(DataSet, DisplayMixin):
     _emin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
-    _qMeta = None # will be instance of SASUnit, defines units
-    _iMeta = None # will be instance of SASUnit, defines units
-    _rMeta = None # defines units for r used in sizeest
+    _qUnit = None # will be instance of SASUnit, defines units
+    _iUnit = None # will be instance of SASUnit, defines units
+    _rUnit = None # defines units for r used in sizeest
     _qClipRange = [-np.inf, np.inf] # manually set Q clip range for this dataset
 
     @staticmethod
@@ -63,8 +63,8 @@ class SASData(DataSet, DisplayMixin):
     @property
     def sphericalSizeEstText(self):
         return u"{0:.3g} ≤ R ({rUnitName}) ≤ {1:.3g}".format(
-                *self._rMeta.toDisplay(self.sphericalSizeEst()),
-                rUnitName = self._rMeta.displayMagnitudeName)
+                *self._rUnit.toDisplay(self.sphericalSizeEst()),
+                rUnitName = self._rUnit.displayMagnitudeName)
 
     @property
     def qClipRange(self):
@@ -92,9 +92,9 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qLimsString(self):
         return u"{0:.3g} ≤ Q ({qMagnitudeName}) ≤ {1:.3g}".format(
-                self._qMeta.toDisplay(self.qMin),
-                self._qMeta.toDisplay(self.qMax),
-                qMagnitudeName = self._qMeta.displayMagnitudeName)
+                self._qUnit.toDisplay(self.qMin),
+                self._qUnit.toDisplay(self.qMax),
+                qMagnitudeName = self._qUnit.displayMagnitudeName)
 
     @property
     def dataContent(self):
@@ -147,17 +147,17 @@ class SASData(DataSet, DisplayMixin):
     @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self._qMeta.toSi(self.origin[:, 0])
+        return self._qUnit.toSi(self.origin[:, 0])
 
     @property
     def i(self):
         """Measured intensity at q."""
-        return self._iMeta.toSi(self.origin[:, 1])
+        return self._iUnit.toSi(self.origin[:, 1])
 
     @property
     def e(self):
         """Uncertainty or Error of the intensity at q."""
-        return self._iMeta.toSi(self.origin[:, 2])
+        return self._iUnit.toSi(self.origin[:, 2])
 
     @property
     def p(self):
@@ -178,9 +178,9 @@ class SASData(DataSet, DisplayMixin):
 
     def __init__(self, *args):
         #set unit definitions for display and internal units
-        self._qMeta = ScatteringVector(u"nm⁻¹")
-        self._iMeta = ScatteringIntensity(u"(m sr)⁻¹")
-        self._rMeta = Length(u"nm")
+        self._qUnit = ScatteringVector(u"nm⁻¹")
+        self._iUnit = ScatteringIntensity(u"(m sr)⁻¹")
+        self._rUnit = Length(u"nm")
 
         DataSet.__init__(self, *args)
         self._sizeEst = np.pi / np.array([self.q.max(),
