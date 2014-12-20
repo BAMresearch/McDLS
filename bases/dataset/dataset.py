@@ -5,18 +5,20 @@ from abc import ABCMeta, abstractproperty
 from titlemixin import TitleMixin
 from originmixin import OriginMixin
 from hierarchicalmixin import HierarchicalMixin
-from utils import isString
+from utils import isString, classproperty
 
 class DisplayMixin(object):
     """Provides additional data to display in a list or tree view."""
     __metaclass__ = ABCMeta
 
-    @staticmethod
+    @classproperty
+    @classmethod
     def displayDataDescr(cls):
         return ("data title", )
 
-    @property
-    def displayData(self):
+    @classproperty
+    @classmethod
+    def displayData(cls):
         return ("title", )
 
     @property

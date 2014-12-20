@@ -8,6 +8,7 @@ from tests import (isList, isString, isNonEmptyString, isMap, isSet,
 from tests import isLinux, isMac, isWindows, isFrozen
 from tests import testfor, assertName
 from mixedmethod import mixedmethod
+from classproperty import classproperty
 
 EPS = sys.float_info.epsilon
 

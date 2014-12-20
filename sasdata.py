@@ -31,7 +31,7 @@ import logging
 import numpy as np # For arrays
 from bases.datafile import PDHFile, AsciiFile
 from bases.dataset import DataSet, DisplayMixin
-from utils import isList
+from utils import isList, classproperty
 from gui.utils import processEventLoop
 from utils.units import Length, ScatteringVector, ScatteringIntensity
 
@@ -47,13 +47,15 @@ class SASData(DataSet, DisplayMixin):
     _rUnit = None # defines units for r used in sizeest
     _qClipRange = [-np.inf, np.inf] # manually set Q clip range for this dataset
 
-    @staticmethod
-    def displayDataDescr():
+    @classproperty
+    @classmethod
+    def displayDataDescr(cls):
         return ("filename", "data points", "data content", 
                 "Q limits", "est. sphere size")
 
-    @property
-    def displayData(self):
+    @classproperty
+    @classmethod
+    def displayData(cls):
         return ("title", "count", "dataContent", 
                 "qLimsString", "sphericalSizeEstText")
 

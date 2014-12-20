@@ -361,7 +361,7 @@ class RangeList(DataList):
         self.action("load").setText("add range") # fix default action name
 # FIXME        self.loadData([(0., numpy_inf)]) # default range
         self.clearSelection()
-        self.setHeader(Histogram.displayDataDescr())
+        self.setHeader(Histogram.displayDataDescr)
         self.setToolTip(
             "Right-click to add additional ranges."
         )
@@ -600,7 +600,7 @@ class SettingsWidget(SettingsWidgetBase):
 
         widget.setLayout(layout)
         if isString(param.__doc__):
-            #add description as tooltip if available for parameter
+            # add description as tooltip if available for parameter
             widget.setToolTip(param.__doc__)
 
         # create scalar value input widget with min/max limits
@@ -927,7 +927,7 @@ class MainWindow(MainWindowBase):
         # set up file widget
         fileWidget = FileList(self, title = "Data Files",
                               withBtn = False, nestedItems = False)
-        fileWidget.setHeader(SASData.displayDataDescr())
+        fileWidget.setHeader(SASData.displayDataDescr)
         fileWidget.setToolTip(
                 "Right-click to add datafiles.\n" +
                 "Double click to use the estimated size for the model.")

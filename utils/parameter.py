@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 # utils/parameter.py
 
-from utils import mixedmethod, isList, testfor, isInteger
+import logging
+import numpy as np
+from utils import mixedmethod, isList, testfor, isInteger, classproperty
+from bases.algorithm.parameter import ValueRangeError
 from bases.algorithm import (ParameterBase, ParameterFloat,
                              ParameterNumerical, ParameterBoolean,
                              ParameterLog, ParameterString)
 from bases.algorithm import Parameter
 from bases.dataset import DataSet, DisplayMixin
-
-import logging
-import numpy as np
-from bases.algorithm.parameter import ValueRangeError
 
 def _makeProperty(varName):
     def getter(selforcls):
@@ -257,8 +256,10 @@ class Histogram(DataSet, DisplayMixin):
         to keep it valid."""
         self.xrange = self.xrange # call getter & setter again
 
-    @staticmethod
-    def displayDataDescr():
+    @classproperty
+    @classmethod
+    def displayDataDescr(cls):
+        """Descriptive text of fields for UI display."""
         return (
                 "parameter",
                 "lower",
@@ -268,8 +269,10 @@ class Histogram(DataSet, DisplayMixin):
                 "Y-axis weighting"
                 )
 
-    @property
-    def displayData(self):
+    @classproperty
+    @classmethod
+    def displayData(cls):
+        """Properties used for UI display."""
         return (
                 "paramName",
                 "lower",
