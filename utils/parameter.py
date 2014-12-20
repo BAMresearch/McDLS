@@ -251,6 +251,16 @@ class Histogram(DataSet, DisplayMixin):
     def upper(self):
         return self._xrange[1]
 
+    @property
+    def lowerDisplay(self):
+        """Lower limit in display units including the unit text."""
+        return "{0:g} ({1})".format(self._param.toDisplay(self.lower), self._param.displayMagnitudeName())
+
+    @property
+    def upperDisplay(self):
+        """Upper limit in display units including the unit text."""
+        return "{0:g} ({1})".format(self._param.toDisplay(self.upper), self._param.displayMagnitudeName())
+
     def updateRange(self):
         """Updates histogram range according to a changed parameter range
         to keep it valid."""
@@ -275,8 +285,8 @@ class Histogram(DataSet, DisplayMixin):
         """Properties used for UI display."""
         return (
                 "paramName",
-                "lower",
-                "upper",
+                "lowerDisplay",
+                "upperDisplay",
                 "binCount",
                 "xscale",
                 "yweight"
