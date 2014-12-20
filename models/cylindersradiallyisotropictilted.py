@@ -24,10 +24,14 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
     parameters = (
             FitParameter("radius", 1.0,
                     displayName = "Cylinder radius",
-                    valueRange = (0.1, numpy.inf), suffix = "nm"),
+                    valueRange = (0.1, numpy.inf),
+                    activeRange = (0.1, 1e3),
+                    suffix = "nm"),
             FitParameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
-                    valueRange = (0.1, numpy.inf), suffix = "-"),
+                    valueRange = (0.1, numpy.inf),
+                    activeRange = (1, 20),
+                    suffix = "-"),
             FitParameter("psiAngle", 0.1,
                     displayName = "in-plane cylinder rotation",
                     valueRange = (0.1, 180.1), suffix = "deg."),
@@ -52,8 +56,6 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
     def __init__(self):
         ScatteringModel.__init__(self)
         # some presets
-        self.radius.setValueRange((0.1, 1e3))
-        self.aspect.setValueRange((1, 20))
 
     def formfactor(self, dataset):
         #the remaining values are never active fitting parameters
