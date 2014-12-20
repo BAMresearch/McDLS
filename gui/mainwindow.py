@@ -10,7 +10,7 @@ import logging
 from numpy import inf as numpy_inf
 from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
-from QtCore import Qt, QSettings, QRegExp, QFileInfo
+from QtCore import Qt, QSettings, QRegExp, QFileInfo, QMargins
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
@@ -168,6 +168,7 @@ class RangeDialog(QDialog):
     """Creates a modal dialog window to ask the user for a range to be
     added."""
     _model = None
+    _labels = None
 
     def __init__(self, parent = None, model = None):
         QDialog.__init__(self, parent)
@@ -185,12 +186,24 @@ class RangeDialog(QDialog):
     def _createEntries(self):
         entryWidget = QWidget(self)
         entryLayout = QHBoxLayout(entryWidget)
-        entryLayout.addWidget(self._createParamBox())
-        entryLayout.addWidget(self._createLower())
-        entryLayout.addWidget(self._createUpper())
-        entryLayout.addWidget(self._createBins())
-        entryLayout.addWidget(self._createXScale())
-        entryLayout.addWidget(self._createYWeight())
+        inputWidgets = (self._createParamBox(), self._createLower(),
+                        self._createUpper(), self._createBins(),
+                        self._createXScale(), self._createYWeight())
+        self._labels = dict()
+        # assumes same ordering of entryWidgets above and Histogram.displayData
+        for col, inputWidget in zip(Histogram.displayData, inputWidgets):
+            fieldWidget = QWidget(self) # combines label + input
+            fieldLayout = QVBoxLayout(fieldWidget)
+            fieldLayout.setContentsMargins(QMargins())
+            # create label, text is set in _selectParam()
+            self._labels[col] = QLabel(self)
+            self._labels[col].setAlignment(Qt.AlignHCenter)
+            # stack label + input
+            fieldLayout.addWidget(self._labels[col])
+            fieldLayout.addWidget(inputWidget)
+            fieldWidget.setLayout(fieldLayout)
+            # add field to row of inputs
+            entryLayout.addWidget(fieldWidget)
         entryWidget.setLayout(entryLayout)
         self.pbox.setCurrentIndex(0)
         self.lentry.selectAll() # select the first input by default
@@ -213,7 +226,6 @@ class RangeDialog(QDialog):
     def _createBins(self):
         # number of histogram bin input box
         bentry = QSpinBox(self)
-        bentry.setPrefix("# bins: ")
         bentry.setRange(1, 200)
         bentry.setValue(50)
         bentry.setSingleStep(10)
@@ -259,19 +271,27 @@ class RangeDialog(QDialog):
         p = getattr(self._model, pname)
         # perhaps, use testfor() for that:
         assert p is not None, "Could not find parameter from selection box" 
-        if isinstance(p, ParameterFloat):
-            # account for units conversion:
-            # llim, ulim = type(p).displayValueRange()
-            llim, ulim = p.displayValueRange()
-            lval, uval = p.displayActiveRange()
-        else:
-            # llim, ulim = type(p).valueRange()
-            llim, ulim = p.valueRange()
-            lval, uval = p.activeRange()
+        llim, ulim = p.valueRange()
+        lval, uval = p.activeRange()
+        try:
+            # account for units conversion
+            llim, ulim = p.toDisplay(llim), p.toDisplay(ulim)
+            lval, uval = p.toDisplay(lval), p.toDisplay(uval)
+        except AttributeError:
+            raise
+            pass
         self.lentry.setRange(llim, ulim)
         self.uentry.setRange(llim, ulim)
         self.lentry.setValue(lval)
         self.uentry.setValue(uval)
+        # set labels
+        for col, text in zip(Histogram.displayData, Histogram.displayDataDescr):
+            if "lower" in col or "upper" in col:
+                text = u"{t} ({u})".format(t = text, u = p.displayMagnitudeName())
+            elif "axis" in text:
+                # break long descriptions to keep them short
+                text = text.replace(" ", "\n")
+            self._labels[col].setText(text)
 
     def _createButtons(self):
         btnWidget = QWidget(self)
@@ -294,13 +314,13 @@ class RangeDialog(QDialog):
             p = getattr(self._model, pname)
         except:
             return None
-        if isinstance(p, ParameterFloat):
+        lval, uval = (self.lentry.value(), self.uentry.value())
+        try:
             # take units into account,
             # convert from display units to SI units for internal use
-            lval, uval = (p.toSi(self.lentry.value()),
-                          p.toSi(self.uentry.value()))
-        else: 
-            lval, uval = (self.lentry.value(), self.uentry.value())
+            lval, uval = (p.toSi(lval), p.toSi(uval))
+        except AttributeError:
+            pass
 
         output = Histogram(p, lval, uval,
                 self.bentry.value(), self.sentry.currentText(),
