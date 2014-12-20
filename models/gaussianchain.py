@@ -26,29 +26,28 @@ class GaussianChain(ScatteringModel):
             FitParameter("rg", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "radius of gyration, Rg",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((1.0, 1e2))), # preset
             FitParameter("bp", Length(u'nm').toSi(100.), unit = Length(u'nm'),
                     displayName = "scattering length of the polymer",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((0.1, 1e3))), # preset
             FitParameter("etas", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density of the solvent",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = SLD(u'Å⁻²').toSi((0.1, 10.))), # preset
             FitParameter("k", 1.0,
                     displayName = "volumetric scaling factor of Rg",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf))
+                    valueRange = (0., numpy.inf),
+                    activeRange = (0.1, 10.)), # preset
     )
     parameters[0].setActive(True)
 
     def __init__(self):
         super(GaussianChain, self).__init__()
-        # some presets
-        self.rg.setDisplayActiveRange(  (1.0, 1e2))
-        self.bp.setDisplayActiveRange(  (0.1, 1e3))
-        self.etas.setDisplayActiveRange((0.1, 10.))
-        self.k.setDisplayActiveRange(   (0.1, 10.))
 
     def formfactor(self, dataset):
         # vectorized data

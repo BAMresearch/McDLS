@@ -15,21 +15,17 @@ class Sphere(ScatteringModel):
                     Length(u'nm').toSi(10.), unit = Length(u'nm'),
                     displayName = "Sphere radius",
                     valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((1., 1000.)),
                     generator = RandomUniform,
                     decimals = 1), 
                   Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
                     decimals = 1), )
-    parameters[0].setActive(True)
-    #set suffix (normally set in above FitParameter definition) identical
-    #to displayname (temporary). Eventually, GUI should use unit metadata
-    #now done automatically through definition in ParameterFloat: 
-    # parameters[0].setSuffix( parameters[0].unit.displayMagnitudeName )
 
     def __init__(self):
         super(Sphere, self).__init__()
-        self.radius.setDisplayActiveRange((1., 1000.))
+        self.radius.setActive(True)
 
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)

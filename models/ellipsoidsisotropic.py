@@ -21,15 +21,15 @@ class EllipsoidsIsotropic(ScatteringModel):
             FitParameter("a", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Radius of semi-axes a, b",
                     generator = RandomExponential,
-                    valueRange = (Length(u'nm').toSi(0.1),
-                                  Length(u'nm').toSi(1e10))),
+                    valueRange = Length(u'nm').toSi((0.1, 1e10)),
+                    activeRange = Length(u'nm').toSi((0.1, 1e3))), # preset
             Parameter("useAspect", True,
                     displayName = "Use aspect ratio (checked) or length to define c-axis"),
             FitParameter("c", Length(u'nm').toSi(10.), unit = Length(u'nm'),
                     displayName = "Radius of semi-axes c",
                     generator = RandomExponential,
-                    valueRange = (Length(u'nm').toSi(0.1),
-                                  Length(u'nm').toSi(1e10))),
+                    valueRange = Length(u'nm').toSi((0.1, 1e10)),
+                    activeRange = Length(u'nm').toSi((1., 1e4))), # preset
             FitParameter("aspect", 10.0,
                     displayName = "aspect ratio of semi-axes c to a, b",
                     generator = RandomExponential,
@@ -45,9 +45,6 @@ class EllipsoidsIsotropic(ScatteringModel):
 
     def __init__(self):
         ScatteringModel.__init__(self)
-        # some presets, are these still necessary? defined above..
-        self.a.setDisplayActiveRange((0.1, 1e3))
-        self.c.setDisplayActiveRange((1.0, 1e4))
 
     def formfactor(self, dataset):
         #From Pedersen, adv. colloid interf. sci. 70 (1997), 171--210

@@ -20,15 +20,18 @@ class EllipsoidalCoreShell(ScatteringModel):
             FitParameter("a", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Principal Core Radius",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((0.1, 1e3))), # preset
             FitParameter("b", Length(u'nm').toSi(10.), unit = Length(u'nm'),
                     displayName = "Equatorial Core Radius",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((1.0, 1e4))), # preset
             FitParameter("t", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Thickness of Shell",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((0.1, 1e3))), # preset
             Parameter("eta_c", SLD(u'Å⁻²').toSi(3.15e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Core SLD",
                     generator = RandomUniform,
@@ -50,10 +53,6 @@ class EllipsoidalCoreShell(ScatteringModel):
 
     def __init__(self):
         ScatteringModel.__init__(self)
-        # some presets
-        self.a.setDisplayActiveRange((0.1, 1e3))
-        self.b.setDisplayActiveRange((1.0, 1e4))
-        self.t.setDisplayActiveRange((0.1, 1e3))
 
     def formfactor(self, dataset):
         def j1(x):

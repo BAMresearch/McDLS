@@ -20,11 +20,13 @@ class CylindersRadiallyIsotropic(ScatteringModel):
             FitParameter("radius", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Cylinder radius",
                     generator = RandomExponential,
-                    valueRange = (Length(u'nm').toSi(0.1), numpy.inf)),
+                    valueRange = Length(u'nm').toSi((0.1, numpy.inf)),
+                    activeRange = Length(u'nm').toSi((0.1, 1e3))), # preset
             FitParameter("aspect", 10.0,
                     displayName = "Aspect ratio L/(2R) of the cylinder",
                     generator = RandomUniform,
-                    valueRange = (0.1, numpy.inf)),
+                    valueRange = (0.1, numpy.inf),
+                    activeRange = (1.0, 20.)), # preset
             FitParameter("psiAngle", 0.17, unit = Angle(u'˚'),
                     displayName = "in-plane cylinder rotation",
                     generator = RandomUniform,
@@ -42,9 +44,6 @@ class CylindersRadiallyIsotropic(ScatteringModel):
 
     def __init__(self):
         ScatteringModel.__init__(self)
-        # some presets
-        self.radius.setDisplayActiveRange((0.1, 1e3))
-        self.aspect.setDisplayActiveRange((1.0, 20))
 
     def formfactor(self, dataset):
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010

@@ -56,15 +56,18 @@ class Kholodenko(ScatteringModel):
             FitParameter("radius", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "Radius",
                     generator = RandomExponential,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((1, 5))), # preset
             FitParameter("lenKuhn", Length(u'nm').toSi(1.), unit = Length(u'nm'),
                     displayName = "kuhn length",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf)),
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((10, 50))), # preset
             FitParameter("lenContour", Length(u'nm').toSi(2.), unit = Length(u'nm'),
                     displayName = "contour length",
                     generator = RandomUniform,
-                    valueRange = (0., numpy.inf))
+                    valueRange = (0., numpy.inf),
+                    activeRange = Length(u'nm').toSi((100, 1000))), # preset
     )
     parameters[0].setActive(True)
     parameters[1].setActive(True)
@@ -72,10 +75,6 @@ class Kholodenko(ScatteringModel):
 
     def __init__(self):
         ScatteringModel.__init__(self)
-        # some presets
-        self.radius.setDisplayActiveRange((1, 5))
-        self.lenKuhn.setDisplayActiveRange((10, 50))
-        self.lenContour.setDisplayActiveRange((100, 1000))
 
     def formfactor(self, dataset):
         # vectorized data and arguments
