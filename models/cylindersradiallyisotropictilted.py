@@ -54,7 +54,7 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
     parameters[5].setActive(False) # integration steps
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(CylindersRadiallyIsotropicTilted, self).__init__()
         # some presets
 
     def formfactor(self, dataset):

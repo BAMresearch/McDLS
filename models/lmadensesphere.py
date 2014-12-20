@@ -45,7 +45,7 @@ class LMADenseSphere(ScatteringModel):
     parameters[0].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(LMADenseSphere, self).__init__()
 
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)

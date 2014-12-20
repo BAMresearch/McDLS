@@ -44,7 +44,7 @@ class EllipsoidsIsotropic(ScatteringModel):
     parameters[0].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(EllipsoidsIsotropic, self).__init__()
 
     def formfactor(self, dataset):
         #From Pedersen, adv. colloid interf. sci. 70 (1997), 171--210

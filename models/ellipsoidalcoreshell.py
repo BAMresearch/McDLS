@@ -52,7 +52,7 @@ class EllipsoidalCoreShell(ScatteringModel):
     parameters[0].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(EllipsoidalCoreShell, self).__init__()
 
     def formfactor(self, dataset):
         def j1(x):

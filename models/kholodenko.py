@@ -74,7 +74,7 @@ class Kholodenko(ScatteringModel):
     parameters[2].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(Kholodenko, self).__init__()
 
     def formfactor(self, dataset):
         # vectorized data and arguments

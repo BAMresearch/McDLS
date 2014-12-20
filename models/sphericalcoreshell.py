@@ -43,7 +43,7 @@ class SphericalCoreShell(ScatteringModel):
     parameters[0].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(SphericalCoreShell, self).__init__()
 
     def formfactor(self, dataset):
         def k(q, r, dEta):

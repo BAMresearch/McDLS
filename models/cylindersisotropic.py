@@ -45,7 +45,7 @@ class CylindersIsotropic(ScatteringModel):
     parameters[0].setActive(True)
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(CylindersIsotropic, self).__init__()
 
     def formfactor(self, dataset):
         # psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010

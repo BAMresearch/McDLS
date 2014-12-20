@@ -43,7 +43,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
     parameters[2].setActive(True)  # better when random
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(CylindersRadiallyIsotropic, self).__init__()
 
     def formfactor(self, dataset):
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010

@@ -38,7 +38,7 @@ class CylindersIsotropic(ScatteringModel):
     parameters[3].setActive(False) # not expected to vary
 
     def __init__(self):
-        ScatteringModel.__init__(self)
+        super(CylindersIsotropic, self).__init__()
         # some presets
 
     def formfactor(self, dataset):
