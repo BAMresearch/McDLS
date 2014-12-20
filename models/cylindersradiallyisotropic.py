@@ -38,12 +38,13 @@ class CylindersRadiallyIsotropic(ScatteringModel):
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf))
     )
-    parameters[0].setActive(True)
-    parameters[1].setActive(False) # not expected to vary
-    parameters[2].setActive(True)  # better when random
 
     def __init__(self):
         super(CylindersRadiallyIsotropic, self).__init__()
+        # some presets of parameters to fit
+        self.radius.setActive(True)
+        self.aspect.setActive(False)  # not expected to vary
+        self.psiAngle.setActive(True) # better when random
 
     def formfactor(self, dataset):
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010

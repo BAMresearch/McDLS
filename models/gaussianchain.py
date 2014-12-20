@@ -44,10 +44,11 @@ class GaussianChain(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     activeRange = (0.1, 10.)), # preset
     )
-    parameters[0].setActive(True)
 
     def __init__(self):
         super(GaussianChain, self).__init__()
+        # some presets of parameters to fit
+        self.rg.setActive(True)
 
     def formfactor(self, dataset):
         # vectorized data

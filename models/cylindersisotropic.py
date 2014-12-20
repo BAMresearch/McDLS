@@ -42,10 +42,11 @@ class CylindersIsotropic(ScatteringModel):
                     displayName = "Scattering length density difference",
                     valueRange = (0, numpy.inf))
     )
-    parameters[0].setActive(True)
 
     def __init__(self):
         super(CylindersIsotropic, self).__init__()
+        # some presets of parameters to fit
+        self.radius.setActive(True)
 
     def formfactor(self, dataset):
         # psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010

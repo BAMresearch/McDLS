@@ -69,12 +69,13 @@ class Kholodenko(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     activeRange = Length(u'nm').toSi((100, 1000))), # preset
     )
-    parameters[0].setActive(True)
-    parameters[1].setActive(True)
-    parameters[2].setActive(True)
 
     def __init__(self):
         super(Kholodenko, self).__init__()
+        # some presets of parameters to fit
+        self.radius.setActive(True)
+        self.lenKuhn.setActive(True)
+        self.lenContour.setActive(True)
 
     def formfactor(self, dataset):
         # vectorized data and arguments

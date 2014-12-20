@@ -49,10 +49,11 @@ class EllipsoidalCoreShell(ScatteringModel):
                     generator = RandomUniform,
                     valueRange = (0, 1e4)),
     )
-    parameters[0].setActive(True)
 
     def __init__(self):
         super(EllipsoidalCoreShell, self).__init__()
+        # some presets of parameters to fit
+        self.a.setActive(True)
 
     def formfactor(self, dataset):
         def j1(x):

@@ -41,10 +41,11 @@ class EllipsoidsIsotropic(ScatteringModel):
                     displayName = "Scattering length density difference",
                     valueRange = (0, SLD(u'Å⁻²').toSi(1e-16))),
     )
-    parameters[0].setActive(True)
 
     def __init__(self):
         super(EllipsoidsIsotropic, self).__init__()
+        # some presets of parameters to fit
+        self.a.setActive(True)
 
     def formfactor(self, dataset):
         #From Pedersen, adv. colloid interf. sci. 70 (1997), 171--210

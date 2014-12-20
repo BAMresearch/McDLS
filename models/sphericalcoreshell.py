@@ -40,10 +40,11 @@ class SphericalCoreShell(ScatteringModel):
                     generator = RandomUniform,
                     valueRange = (0, numpy.inf)),
     )
-    parameters[0].setActive(True)
 
     def __init__(self):
         super(SphericalCoreShell, self).__init__()
+        # some presets of parameters to fit
+        self.radius.setActive(True)
 
     def formfactor(self, dataset):
         def k(q, r, dEta):

@@ -46,16 +46,16 @@ class CylindersRadiallyIsotropicTilted(ScatteringModel):
                     displayName = "out of plane integration divisions",
                     valueRange = (1, numpy.inf), suffix = "-"),
     )
-    parameters[0].setActive(True)
-    parameters[1].setActive(False) # not expected to vary
-    parameters[2].setActive(False) # keep out for now.
-    parameters[3].setActive(False) # not expected to vary
-    parameters[4].setActive(False) # gaussian width
-    parameters[5].setActive(False) # integration steps
 
     def __init__(self):
         super(CylindersRadiallyIsotropicTilted, self).__init__()
-        # some presets
+        # some presets of parameters to fit
+        self.radius.setActive(True)
+        self.aspect.setActive(False)            # not expected to vary
+        self.psiAngle.setActive(False)          # keep out for now.
+        self.psiAngleDivisions.setActive(False) # not expected to vary
+        self.phiDistWidth.setActive(False)      # gaussian width
+        self.phiDistDivisions.setActive(False)  # integration steps
 
     def formfactor(self, dataset):
         #the remaining values are never active fitting parameters

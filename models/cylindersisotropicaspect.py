@@ -32,14 +32,14 @@ class CylindersIsotropic(ScatteringModel):
                     displayName = "in-plane angle divisions",
                     valueRange = (0, numpy.inf), suffix = "-"),
     )
-    parameters[0].setActive(True)
-    parameters[1].setActive(False) # not expected to vary
-    parameters[2].setActive(True)  # better when random
-    parameters[3].setActive(False) # not expected to vary
 
     def __init__(self):
         super(CylindersIsotropic, self).__init__()
-        # some presets
+        # some presets of parameters to fit
+        self.radius.setActive(True)
+        self.aspect.setActive(False) # not expected to vary
+        self.psiAngle.setActive(True)  # better when random
+        self.psiAngleDivisions.setActive(False) # not expected to vary
 
     def formfactor(self, dataset):
         #psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010

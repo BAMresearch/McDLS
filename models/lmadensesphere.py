@@ -42,10 +42,11 @@ class LMADenseSphere(ScatteringModel):
                     displayName = "Scattering length density difference",
                     valueRange = (0., SLD(u'Å⁻²').toSi(1e-5))),
             )
-    parameters[0].setActive(True)
 
     def __init__(self):
         super(LMADenseSphere, self).__init__()
+        # some presets of parameters to fit
+        self.radius.setActive(True)
 
     def volume(self):
         result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)
