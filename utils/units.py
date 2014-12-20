@@ -33,6 +33,7 @@ Selecting a default:
 """
 
 import logging
+import collections
 import numpy as np # For arrays
 from numpy import pi
 from utils.classproperty import classproperty
@@ -115,9 +116,15 @@ class Unit(object):
         return iUnit / oUnit
 
     def toSi(self, value):
+        if isinstance(value, collections.Sequence): # for lists&tuples
+            return type(value)((v * self.magnitudeConversion for v in value))
+        # else:
         return value * self.magnitudeConversion
 
     def toDisplay(self, value):
+        if isinstance(value, collections.Sequence): # for lists&tuples
+            return type(value)((v / self.magnitudeConversion for v in value))
+        # else:
         return value / self.magnitudeConversion
 
 class Length(Unit):
