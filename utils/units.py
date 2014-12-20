@@ -54,41 +54,51 @@ class Unit(object):
                             nm = magnitudeName, map = self.magnitudeMapping))
         self._displayMagnitudeName = unicode(magnitudeName)
 
-    def magnitude(self, name):
+    @classmethod
+    # unit/factor mapping is defined for each class
+    def magnitude(cls, name):
         """Returns a (numerical) magnitude matching a magnitude name"""
         name = unicode(name)
         try:
-            return self.magnitudeMapping[name]
+            return cls.magnitudeMapping[name]
         except KeyError:
             logging.warning('no matching magnitude to name {} found'
                     .format(name))
 
-    @property
-    def siMagnitude(self):
-        return self.magnitude(self.siMagnitudeName)
+    @classproperty
+    @classmethod
+    # _siMagnitudeName and thus cls.siMagnitudeName is defined for each subclass
+    def siMagnitude(cls):
+        return cls.magnitude(cls.siMagnitudeName)
 
-    @property
-    def siMagnitudeName(self):
-        if self._siMagnitudeName is None:
+    @classproperty
+    @classmethod
+    # _siMagnitudeName is defined for each subclass
+    def siMagnitudeName(cls):
+        if cls._siMagnitudeName is None:
             raise NotImplementedError
-        return self._siMagnitudeName
+        return cls._siMagnitudeName
 
     @property
     def displayMagnitude(self):
         return self.magnitude(self.displayMagnitudeName)
 
     @property
+    # defined for instances only, given at init() time
     def displayMagnitudeName(self):
         return self._displayMagnitudeName
 
     @classproperty
     @classmethod
+    # unit/factor mapping is defined for each class
     def magnitudeMapping(cls):
         if cls._magnitudeMap is None:
             raise NotImplementedError
         return cls._magnitudeMap
 
-    def invName(self, unitString):
+    @staticmethod
+    # needs neither class not instance
+    def invName(unitString):
         u""" Adds an ⁻¹ sign or removes it if already present"""
         unitString = unicode(unitString)
         if not u"⁻¹" in unitString:
@@ -97,6 +107,7 @@ class Unit(object):
             return unitString.replace( u"⁻¹", u"" )
 
     @property
+    # for instances only, because of displayMagnitudeName
     def magnitudeConversion(self):
         """
         Scaling factor to move from display magnitude to si units.
@@ -138,6 +149,8 @@ class Length(Unit):
     }
     _siMagnitudeName = u"m"
 
+NM = Length(u"nm")
+
 class Area(Unit):
     _magnitudeMap = {
         u"Å²" : 1e-20,
@@ -177,6 +190,8 @@ class SLD(Unit):
         u"m⁻²" : 1e0,
     }
     _siMagnitudeName = u"m⁻²"
+
+AAInvSqr = SLD(u"Å⁻²")
 
 class ScatteringVector(Unit):
     _magnitudeMap = {
