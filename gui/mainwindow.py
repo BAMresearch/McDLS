@@ -974,8 +974,12 @@ class MainWindow(MainWindowBase):
         """Set up property widget with settings."""
         self.modelWidget = ModelWidget(self, self.calculator)
         self.fileWidget.sigSphericalSizeRange.connect(
-                self.modelWidget.setSphericalSizeRange)
+                self._onSphericalSizeRange)
         return self.modelWidget
+
+    def _onSphericalSizeRange(self, *args):
+        self.toolbox.setCurrentWidget(self.modelWidget)
+        self.modelWidget.setSphericalSizeRange(*args)
 
     def _setupStatsWidget(self):
         """Set up property widget with settings."""
