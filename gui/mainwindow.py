@@ -410,7 +410,7 @@ class SettingsWidget(SettingsWidgetBase):
 
     def __init__(self, parent, calculator = None):
         SettingsWidgetBase.__init__(self, parent)
-        self.sigValueChanged.connect(self._updateParam)
+        self.sigValueChanged.connect(self.updateParam)
         assert isinstance(calculator, Calculator)
         self._calculator = calculator
 
@@ -434,7 +434,7 @@ class SettingsWidget(SettingsWidgetBase):
         raise NotImplementedError
 
     @property
-    def keys(self):
+    def inputWidgets(self):
         """Returns all existing input names (for store/restore)."""
         if self.algorithm is None:
             return
@@ -445,7 +445,12 @@ class SettingsWidget(SettingsWidgetBase):
                 query = QRegExp("^" + p.name() + ".*")
             except: pass
             for w in self.findChildren(QWidget, query):
-                yield w.objectName()
+                yield w
+
+    @property
+    def keys(self):
+        for w in self.inputWidgets:
+            yield w.objectName()
 
     def storeSession(self, section = None):
         """Stores current UI configuration to persistent application settings.
@@ -474,8 +479,7 @@ class SettingsWidget(SettingsWidgetBase):
                 logging.warn(e)
         self.appSettings.endGroup()
 
-    def _updateParam(self, widget):
-        # get the parameter instance associated with this widget
+    def _paramFromWidget(self, widget):
         if self.algorithm is None:
             return
         p = None
@@ -483,14 +487,17 @@ class SettingsWidget(SettingsWidgetBase):
             p = getattr(self.algorithm, widget.parameterName)
         except AttributeError:
             p = None
-        if p is None:
-            return
-        self.updateParam(widget, p)
+        return p
 
-    def updateParam(self, widget, p):
+    def updateParam(self, widget):
         """Write UI settings back to the algorithm."""
         def isNotNone(*args):
             return all((a is not None for a in args))
+        p = self._paramFromWidget(widget)
+        if p is None:
+            logging.error("updateParam({}) could not find associated parameter!"
+                          .format(widget.objectName()))
+            return
         # persistent name due to changes to the class instead of instance
         key = p.name()
         # get the parent of the updated widget and other input for this param
@@ -542,6 +549,10 @@ class SettingsWidget(SettingsWidgetBase):
         if isNotNone(minValue, maxValue):
             # the range was updated
             self.sigRangeChanged.emit()
+
+    def updateAll(self):
+        for w in self.inputWidgets:
+            self.updateParam(w)
 
     def setStatsWidget(self, statsWidget):
         """Sets the statistics widget to use for updating ranges."""
@@ -671,7 +682,7 @@ class SettingsWidget(SettingsWidgetBase):
             # store the parameter name
             w.parameterName = param.name()
         # configure UI accordingly (hide/show widgets)
-        self.updateParam(widgets[-1], param)
+        self.updateParam(widgets[-1])
         return widget
 
     @staticmethod
@@ -1044,11 +1055,16 @@ class MainWindow(MainWindowBase):
         self.onStartStopClick(getattr(self._args, "start", False))
         self.logWidget.scrollToTop()
 
+    def _updateWidgets(self):
+        for w in self.findChildren(SettingsWidget):
+            w.updateAll()
+
     def onStartStopClick(self, checked):
         processEventLoop()
         if checked:
             self.startStopBtn.setText("stop")
             self.startStopBtn.setChecked(True)
+            self._updateWidgets() # get latest input in case sth didn't update
             self.calc()
         # run this also for 'start' after calculation
         self.calculator.stop()
