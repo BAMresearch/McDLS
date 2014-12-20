@@ -4,7 +4,6 @@
 from __future__ import absolute_import # PEP328
 from gui.qt import QtGui
 from QtGui import QSpinBox, QDoubleSpinBox, QLineEdit, QApplication
-from gui.widgets.expdoublespinbox import ExpDoubleSpinBox
 from gui.bases.settingswidget import SettingsWidget
 from utils import EPS
 
@@ -34,12 +33,5 @@ def testFloatingPointInputBox():
     testvalue = 23.424242
     dsp.setValue(testvalue)
     assert abs(w.get("dsp") - round(testvalue, dsp.decimals())) < EPS
-
-def testExponentialFloatingPointBox():
-    edsp = ExpDoubleSpinBox(w)
-    edsp.setObjectName("edsp")
-    testvalue = 42.23235
-    edsp.setValue(testvalue)
-    assert abs(w.get("edsp") - round(testvalue, edsp.decimals())) < EPS
 
 # vim: set sts=4 ts=4 sw=4 tw=0:
