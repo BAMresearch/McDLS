@@ -44,7 +44,9 @@ INFOTEXT = """One or more selected files are read in and passed to Brian Pauws M
 
 The convergence criterion can be set by the user. If it is not reached no output is generated, just this log is saved to file. On success, the resulting size distribution and the data fit are stored to files with uncertainties.
 
-Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results."""
+Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results.
+
+[ For more information, please see http://www.mcsas.net ]"""
 
 CHANGESTEXT = (u"""
 Latest changes:
