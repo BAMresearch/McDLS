@@ -413,7 +413,11 @@ class PlotResults(object):
             'xlabel' : xLabel,
             'xscale' : xScale,
             'yscale' : 'linear',
-            'ylabel' : '[Rel.] Volume Fraction' })
+            'ylabel' : '[Rel.] Fraction' })
+        if "vol" in parHist.yweight:
+            hAxDict['ylabel'] = '[Rel.] Volume Fraction'
+        elif "num" in parHist.yweight:
+            hAxDict['ylabel'] = '[Rel.] Number Fraction'
         # update axes settings:
         hAxis.update(hAxDict)
         # change axis settings not addressible through dictionary:
