@@ -22,8 +22,47 @@ import log
 from mcsas.mcsas import McSAS
 from utils.parameter import Histogram, Moments, isActiveParam
 
+class OutputFilename(object):
+    """Generates output filenames with a common time stamp and logs
+    appropriate messages."""
+    _outDir = None   # output directory
+    _basename = None # base file name for all output files
+    _indent = "    "
+
+    @property
+    def basename(self):
+        return self._basename
+
+    def __init__(self, dataset):
+        self._outDir = LastPath.get()
+        if not os.path.isdir(self._outDir):
+            logging.warning("Provided output path '{}' does not exist!"
+                            .format(self._outDir))
+            self._outDir = ""
+        self._basename = "{title}_{ts}".format(
+                title = dataset.title, ts = log.timestamp())
+
+    def filename(self, kind = None, extension = '.txt'):
+        """Creates a file name from data base name, its directory and the
+        current timestamp. It's created once so that all output files have
+        the same base name and timestamp."""
+        fn = [self._basename]
+        if isString(kind):
+            fn += ["_", kind]
+        if isString(extension):
+            fn += extension
+        return os.path.join(self._outDir, "".join(fn))
+
+    def filenameVerbose(self, kind, descr, extension = '.txt'):
+        fn = self.filename(kind, extension = extension)
+        logging.info("Writing {0} to:".format(descr))
+        logging.info("{0}'{1}'".format(self._indent,
+                                       QUrl.fromLocalFile(fn).toEncoded()))
+        return fn
+
 class Calculator(object):
-    _algo = None # McSAS algorithm instance
+    _algo = None  # McSAS algorithm instance
+    _outFn = None # handles output file names, creates directories
     # static settings, move this to global app settings later
     indent = "    "
     nolog = False
@@ -61,11 +100,6 @@ class Calculator(object):
     def isStopped(self):
         return self._algo.stop
 
-    def _setBaseFilename(self, dataset):
-        self.basefn = "{fn}_{ts}".format(
-                fn = os.path.join(LastPath.get(), dataset.title),
-                ts = log.timestamp())
-
     def __call__(self, dataset):
         if self.model is None:
             logging.warning("No model set!")
@@ -73,8 +107,8 @@ class Calculator(object):
         # start log file writing
         testfor(isinstance(dataset, DataSet), StandardError,
                 "{cls} requires a DataSet!".format(cls = type(self)))
-        self._setBaseFilename(dataset)
-        fn = self._getResultFilename("log", "this log")
+        self._outFn = OutputFilename(dataset)
+        fn = self._outFn.filenameVerbose("log", "this log")
         logFile = logging.FileHandler(fn, encoding = "utf8")
         oldHandler = log.log.handlers[0]
         log.addHandler(logFile)
@@ -88,9 +122,6 @@ class Calculator(object):
         self._writeSettings(mcargs, dataset)
         if self.nolog:
             log.removeHandler(oldHandler)
-        self._algo.figureTitle = os.path.basename(self.basefn)
-        # self._algo.calc(Q = dataset.q, I = dataset.i,
-        #                 IError = dataset.uncertainty, **mcargs)
         self._algo.calc(SASData = dataset, **mcargs)
         if self.nolog:
             log.addHandler(oldHandler)
@@ -105,7 +136,7 @@ class Calculator(object):
             if res is not None:
                 self._writeFit(res)
                 self._writeContribs(res)
-                self._algo.plot()
+                self._algo.plot(outputFilename = self._outFn)
         else:
             logging.info("No results available!")
 
@@ -152,17 +183,17 @@ class Calculator(object):
     def _writeContribs(self, mcResult):
         # Writes the contribution parameters to a pickled file.
         # Can be used to continue or reanalyse a previously fitted file
-        fn = self._getResultFilename("contributions",
-                                     "Model contribution parameters",
-                                     extension = '.pickle')
+        fn = self._outFn.filenameVerbose("contributions",
+                                         "Model contribution parameters",
+                                         extension = '.pickle')
         with open(fn,'w') as fh:
             pickle.dump(mcResult['contribs'], fh)
 
     def _writeSettings(self, mcargs, dataset):
         if self.model is None:
             return []
-        fn = self._getResultFilename("settings", "algorithm settings", 
-                                     extension = '.cfg')
+        fn = self._outFn.filenameVerbose("settings", "algorithm settings",
+                                         extension = '.cfg')
         config = ConfigParser.RawConfigParser()
 
         sectionName = "I/O Settings"
@@ -170,7 +201,7 @@ class Calculator(object):
         # the absolute filename with extension, see SASData.load()
         config.set(sectionName, 'fileName', dataset.filename)
         # the filename with timestamp of results
-        config.set(sectionName, 'outputBaseName', os.path.basename(self.basefn))
+        config.set(sectionName, 'outputBaseName', self._outFn.basename)
 
         sectionName = "MCSAS Settings"
         config.add_section(sectionName)
@@ -199,7 +230,7 @@ class Calculator(object):
         if not all(cn in mcResult for cn in columnNames):
             logging.warning('Result does not contain the requested data')
             return
-        fn = self._getResultFilename(fileKey, descr, extension = extension)
+        fn = self._outFn.filenameVerbose(fileKey, descr, extension = extension)
         logging.info("Containing the following columns:")
         cwidth = max([len(cn) for cn in columnNames])
         fmt = "{0}[ {1:" + str(cwidth) + "s} ]"
@@ -219,19 +250,5 @@ class Calculator(object):
         data = np.vstack([mcResult[cn] for cn in columnNames]).T
         # append to the header, do not overwrite:
         AsciiFile.appendFile(fn, data)
-
-    def _getResultFilename(self, fileKey, descr, extension = '.txt'):
-        fn = self._getFilename(fileKey, extension = extension)
-        logging.info("Writing {0} to:".format(descr))
-        logging.info("{0}'{1}'".format(self.indent,
-                                       QUrl.fromLocalFile(fn).toEncoded()))
-        return fn
-
-    def _getFilename(self, kind, extension = '.txt'):
-        """Creates a file name from data base name, its directory and the
-        current timestamp. It's created once so that all output files have
-        the same base name and timestamp."""
-        return "{fn}_{kind}{ext}".format(
-                fn = self.basefn, kind = kind, ext = extension)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

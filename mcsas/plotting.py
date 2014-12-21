@@ -5,6 +5,8 @@ Add docstring
 """
 
 import logging
+import inspect
+import os.path
 import numpy as np # For arrays
 from numpy import size, log10, sort
 from utils import isList, isString
@@ -12,7 +14,6 @@ import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
 from matplotlib.pyplot import savefig
-import inspect
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
@@ -37,7 +38,8 @@ class PlotResults(object):
     """
 
     def __init__(self, allRes, dataset, 
-                 axisMargin = 0.3, parameterIdx = None, figureTitle = None,
+                 axisMargin = 0.3, parameterIdx = None,
+                 outputFilename = None,
                  mcsasInstance = None):
         if not isList(allRes) or not len(allRes):
             logging.info("There are no results to plot, breaking up.")
@@ -49,7 +51,10 @@ class PlotResults(object):
         self._dataset = dataset
         self._axisMargin = axisMargin
         self._parameterIdx = parameterIdx
-        self._figureTitle = figureTitle
+        try:
+            self._figureTitle = outputFilename.basename
+        except AttributeError:
+            self._figureTitle = ""
         self._mcsasInstance = mcsasInstance
         self._times = self._result['times']
         try:
@@ -147,8 +152,11 @@ class PlotResults(object):
         # trigger plot window popup
         self._fig.canvas.draw()
         self._fig.show()
-        # save figure; Diamond beamtime hack:
-        savefig('{}.pdf'.format(self._figureTitle))
+        # save figure
+        try:
+            savefig(outputFilename.filenameVerbose(
+                    None, "plot PDF", extension = '.pdf'))
+        except AttributeError: pass
 
     def plotGrid(self, figh):
         #make axis active:

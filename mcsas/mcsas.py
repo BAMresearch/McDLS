@@ -165,8 +165,6 @@ class McSAS(AlgorithmBase):
     dataPrepared = None
     model = None
     result = None
-    figureTitle = None # FIXME: put this elsewhere, works for now
-                       # set to output file name incl. timestamp, atm
 
     # there are several ways to accomplish this depending on where/when
     # McSASParameters() should be called: when creating an instance or
@@ -220,7 +218,7 @@ class McSAS(AlgorithmBase):
             self.gen2DIntensity()
 
         if self.doPlot():
-            self.plot()
+            self.plot(**kwargs)
 
     def setData(self, kwargs):
         """Sets the supplied data in the proper location. Optional argument
@@ -947,9 +945,11 @@ class McSAS(AlgorithmBase):
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)
 
-    def plot(self, axisMargin = 0.3, parameterIdx = None):
+    def plot(self, axisMargin = 0.3, parameterIdx = None,
+             outputFilename = None):
+        """Expects outputFilename to be of type gui.calc.OutputFilename."""
         PlotResults(self.result, self.dataPrepared,
-                    axisMargin, parameterIdx, self.figureTitle, self)
+                    axisMargin, parameterIdx, outputFilename, self)
 
     # move this to ScatteringModel eventually?
     # which additional output might by useful/required?
