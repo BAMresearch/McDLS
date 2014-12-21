@@ -166,12 +166,12 @@ class Calculator(object):
                 stats[name].append(AsciiFile.formatValue(value))
         self._writeResultHelper(stats, "stats_"+param.name(),
                                 "distribution statistics",
-                                columnNames, extension = '.csv')
+                                columnNames, extension = '.dat')
 
     def _writeFit(self, mcResult):
         self._writeResultHelper(mcResult, "fit", "fit data",
             ('fitQ', 'fitIntensityMean', 'fitIntensityStd'),
-            extension = '.csv'
+            extension = '.dat'
         )
 
     def _writeDistrib(self, param):
@@ -186,7 +186,7 @@ class Calculator(object):
                 ("xMean", "xWidth", # fixed order of result columns
                  "yMean", "yStd", "Obs",
                  "cdfMean", "cdfStd"),
-                extension = '.csv'
+                extension = '.dat'
             )
 
     def _writeContribs(self, mcResult):
