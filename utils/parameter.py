@@ -485,7 +485,7 @@ class Histogram(DataSet, DisplayMixin):
         out = ["hist"]
         for attr in self.displayData:
             val = getattr(self, attr)
-            out.append(str(val))
+            out.append(str(val).replace(" ", ""))
         idx = self.displayData.index("paramName")
         # replace the parameter display name by its internal name
         # (short, no spaces)
