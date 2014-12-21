@@ -41,8 +41,7 @@ class Mock(object):
 # mock missing modules in readthedocs.org environment not required for docs
 for mod_name in ('scipy', 'numpy', 'numpy.ma', 'matplotlib',
                  'matplotlib.font_manager', 'matplotlib.pyplot', 'pylab',
-                 'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml',
-                 'cutesnake.qt'):
+                 'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml'):
     sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
