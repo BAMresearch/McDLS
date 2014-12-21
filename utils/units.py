@@ -191,8 +191,6 @@ class SLD(Unit):
     }
     _siMagnitudeName = u"m⁻²"
 
-AAInvSqr = SLD(u"Å⁻²")
-
 class ScatteringVector(Unit):
     _magnitudeMap = {
         u"Å⁻¹" : 1e10,

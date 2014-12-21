@@ -6,7 +6,7 @@ from numpy import pi, sin, cos
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
-from utils.units import Length, NM, SLD, AAInvSqr
+from utils.units import Length, NM, SLD
 
 class Sphere(ScatteringModel):
     """Form factor of a sphere"""
@@ -18,7 +18,7 @@ class Sphere(ScatteringModel):
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
                     decimals = 1), 
-                  Parameter("sld", AAInvSqr.toSi(1e-6), unit = AAInvSqr,
+                  Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
                     decimals = 1), )
