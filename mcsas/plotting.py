@@ -397,9 +397,9 @@ class PlotResults(object):
                     histXLowerEdge.max() * (1 + self._axisMargin))
             xScale = 'log'
         else:
-            xLim = (histXLowerEdge.min() - (1 - self._axisMargin)
-                    * histXLowerEdge.min(), 
-                    histXLowerEdge.max() * (1 + self._axisMargin))
+            xDiff = histXLowerEdge.max() - histXLowerEdge.min()
+            xLim = (histXLowerEdge.min() - 0.25 * self._axisMargin * xDiff, 
+                    histXLowerEdge.max() + 0.25 * self._axisMargin * xDiff) 
             xScale = 'linear'
 
         yLim = (0, HistYMean.max() * (1 + self._axisMargin) )
