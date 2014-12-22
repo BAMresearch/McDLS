@@ -449,6 +449,8 @@ class Histogram(DataSet, DisplayMixin):
         cdf[0] = bins[0]
         for i in range(1, len(cdf)):
             cdf[i] = cdf[i - 1] + bins[i]
+        if cdf.max() == 0.0:
+            return np.zeros_like(bins)
         cdf /= cdf.max() # normalized to max == 1
         return cdf
 

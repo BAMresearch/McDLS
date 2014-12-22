@@ -374,7 +374,6 @@ class PlotResults(object):
                 verticalalignment = 'center')
         fig.show()
         axis('tight')
-        return # stop here
 
     def plotHist(self, plotPar, parHist, hAxis, axisMargin, rangei):
         """histogram plot"""
@@ -449,7 +448,5 @@ class PlotResults(object):
         title(plotTitle, fontproperties = self._textfont,
               size = 'large')
         xlim(xLim)
-
-
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
