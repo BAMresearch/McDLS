@@ -206,7 +206,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         """Appends a new line of text."""
         wasEmpty = self.document().isEmpty()
         # self._appendBuffer(unicode(text)) # disabled \r handling, a must have?
-        self._buffer.extend(url2href(unicode(text).replace('\r', '')).splitlines())
+        self._buffer.extend(url2href(unicode(text.replace('\r', ''))).splitlines())
         self._bufferDirty = True
         if wasEmpty:
             self._updateContents()

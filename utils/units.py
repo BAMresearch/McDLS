@@ -49,9 +49,9 @@ class Unit(object):
         if magnitudeName is None:
             magnitudeName = self.siMagnitudeName
         elif magnitudeName not in self.magnitudeMapping:
-            logging.warning("Provided default magnitude name '{mn}' is not "
-                            "available: '{map}'!".format(
-                            nm = magnitudeName, map = self.magnitudeMapping))
+            logging.warning(u"Provided default magnitude name '{mn}' is not "
+                            u"available: '{map}'!".format(
+                            mn = magnitudeName, map = self.magnitudeMapping))
         self._displayMagnitudeName = unicode(magnitudeName)
 
     @classmethod
