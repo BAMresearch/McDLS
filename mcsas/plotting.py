@@ -338,8 +338,9 @@ class PlotResults(object):
             plot(dataset.qUnit.toDisplay(fitQ),
                  dataset.iUnit.toDisplay(self._BG[0] + 0*fitQ),
                  'g-', linewidth = 3,
-                 label = 'MC Background level:\n\t ({0:03.3g})' .format(
-                     self._BG[0]), zorder = 3)
+                 label = 'MC Background level:\n'
+                         '        ({0:03.3g})'.format(
+                            self._BG[0]), zorder = 3)
         except:
             logging.error('could not plot background')
             pass
