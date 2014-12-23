@@ -9,7 +9,7 @@ import inspect
 import os.path
 import numpy as np # For arrays
 from numpy import size, log10, sort
-from utils import isList, isString
+from utils import isList, isString, isWindows
 import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
@@ -21,6 +21,9 @@ try:
     # use() gives an error if calling twice
     matplotlib.rcParams['backend'] = 'QT4Agg'
     matplotlib.rcParams['backend.qt4'] = 'PySide'
+    if isWindows():
+        # required for superscript minus ⁻¹ being shown properly
+        matplotlib.rcParams['font.serif'] = 'DejaVu Serif'
 except ImportError:
     pass # no pyside
 
@@ -65,10 +68,8 @@ class PlotResults(object):
         # set plot font
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
         fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
-        self._plotfont = fm.FontProperties(
-                    family = fontFamilyArial)
-        self._textfont = fm.FontProperties(
-                    family = fontFamilyTimes)
+        self._plotfont = fm.FontProperties(family = fontFamilyArial)
+        self._textfont = fm.FontProperties(family = fontFamilyTimes)
 
         # set general axes settings:
         self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
