@@ -153,15 +153,15 @@ class PlotResults(object):
         # trigger plot window popup
         self._fig.canvas.draw()
         self._fig.show()
-        # pyplot.show() seems to be nescessary otherwise the plot window is
-        # unresponsive/hangs on Ubuntu or the whole program crashes on windows
-        # 'python stopped working'
-        matplotlib.pyplot.show()
         # save figure
         try:
             savefig(outputFilename.filenameVerbose(
                     None, "plot PDF", extension = '.pdf'))
         except AttributeError: pass
+        # pyplot.show() seems to be nescessary otherwise the plot window is
+        # unresponsive/hangs on Ubuntu or the whole program crashes on windows
+        # 'python stopped working'
+        matplotlib.pyplot.show()
 
     def plotGrid(self, figh):
         #make axis active:
