@@ -369,7 +369,7 @@ class PlotResults(object):
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.95},
                 family = "monospace", size = "small", 
-                horizontalalignment = 'right',
+                horizontalalignment = 'center',
                 multialignment = 'right',
                 verticalalignment = 'center')
         fig.show()
