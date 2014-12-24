@@ -67,6 +67,9 @@ class PlotResults(object):
         # set plot font
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
         fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
+        if isWindows():
+            # 'Times' doesn't show UTF8 superscript minus
+            fontFamilyTimes = ["serif"] # defined by rcParams, see above
         self._plotfont = fm.FontProperties(family = fontFamilyArial)
         self._textfont = fm.FontProperties(family = fontFamilyTimes)
 
