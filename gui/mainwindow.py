@@ -27,6 +27,7 @@ from gui.utils.filedialog import getOpenFiles
 from utils.lastpath import LastPath
 from bases.algorithm.parameter import ParameterFloat # instance for test
 from utils import isList, isString, testfor
+from utils.units import ScatteringVector, ScatteringIntensity
 from gui.utils import processEventLoop
 from gui.utils.displayexception import DisplayException
 from utils.parameter import (ParameterNumerical, Histogram, FitParameterBase,
@@ -884,8 +885,12 @@ class FileList(DataList):
 
     def loadData(self, fileList = None):
         if fileList is None or type(fileList) is bool:
-            fileList = getOpenFiles(self, "Load one or more data files",
-                                    LastPath.get(), multiple = True)
+            fileList = getOpenFiles(self,
+                # show same unit as in SASData.__init__()
+                u"Load one or more data files with q({qu}) and intensity({iu})"
+                .format(qu = ScatteringVector(u"nm⁻¹").displayMagnitudeName,
+                        iu = ScatteringIntensity(u"(m sr)⁻¹").displayMagnitudeName),
+                LastPath.get(), multiple = True)
         # populates to data list widget with items based on the return of
         # processSourceFunc(filename)
         DataList.loadData(self, sourceList = fileList, showProgress = False,
