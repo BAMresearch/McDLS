@@ -861,7 +861,9 @@ class McSAS(AlgorithmBase):
                     for parHist in histograms]
         # remove circular references first for pickling
         for i in range(len(histograms)):
-            histograms[i].param.setActive(False)
+            newParam = histograms[i].param.copy()
+            newParam.setActive(False)
+            histograms[i].param = newParam
         # arguments for plotting process below
         modelData = dict(activeParamCount = self.model.activeParamCount(),
                          histograms = histograms
