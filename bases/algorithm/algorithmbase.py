@@ -124,7 +124,7 @@ class AlgorithmBase(object):
     def __str__(self):
         text = [ self.name() ]
         for i, p in enumerate(self.params()):
-            text.append("  {0}: {1}".format(i, str(getattr(self, p.name()))))
+            text.append(u"  {0}: {1}".format(i, unicode(getattr(self, p.name()))))
         return "\n".join(text)
 
     @classmethod

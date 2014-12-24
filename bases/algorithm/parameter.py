@@ -178,7 +178,9 @@ class ParameterBase(object):
         base = selforcls
         if isinstance(base, object):
             base = type(base)
-        base = base.__mro__[1] # Parameter classes have only one direct subclass
+        # Parameter classes have only one direct subclass
+        # FIXME: not necessarily true, see FitParameter
+        base = base.__mro__[1]
         # store the direct base class for duplication later
         res = dict(cls = base, description = selforcls.__doc__)
         for name in selforcls.attributeNames():
