@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/algorithmbase_test.py
 
-from algorithmbase import AlgorithmBase, AlgorithmNameError, AlgorithmParameterError
+from __future__ import absolute_import # PEP328
 from nose.tools import raises, assert_raises
 from numpy import array as np_array
 from numpy import uint32, float64, dtype
-from parameter import factory as Parameter
+from bases.algorithm.algorithmbase import (AlgorithmBase, AlgorithmNameError,
+                                           AlgorithmParameterError)
+from bases.algorithm.parameter import factory as ParameterFactory
 
-TestPar = Parameter("testPar", 5.0, valueRange = (4.0, 13.0))
+TestPar = ParameterFactory("testPar", 5.0, valueRange = (4.0, 13.0))
 
 @raises(AlgorithmNameError)
 def testName():

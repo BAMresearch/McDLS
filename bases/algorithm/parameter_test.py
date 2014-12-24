@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/parameter_test.py
 
-from algorithm.parameter import (
+from __future__ import absolute_import # PEP328
+from bases.algorithm.parameter import (
         ParameterBase, ParameterNumerical, ParameterFloat, ParameterLog,
+        factory,
         ParameterNameError, DefaultValueError, ValueRangeError,
         SuffixError, SteppingError, DecimalsError, DisplayValuesError)
-from algorithm import Parameter
-from algorithm import NumberGenerator, RandomUniform
+from bases.algorithm import Parameter, NumberGenerator, RandomUniform
 from nose.tools import raises
 
 def testParameterName():
