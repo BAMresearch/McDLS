@@ -14,7 +14,7 @@ import sys # For printing of slightly more advanced messages to stdout
 import logging
 logging.basicConfig(level = logging.INFO)
 
-from utils import isList, isFrozen, isString
+from utils import isList, isFrozen, isString, isWindows
 from bases.dataset import DataSet
 from bases.algorithm import (AlgorithmBase,
                              RandomUniform, RandomExponential)
@@ -842,8 +842,37 @@ class McSAS(AlgorithmBase):
     def plot(self, axisMargin = 0.3, parameterIdx = None,
              outputFilename = None):
         """Expects outputFilename to be of type gui.calc.OutputFilename."""
-        PlotResults(self.result, self.dataPrepared,
-                    axisMargin, parameterIdx, outputFilename, self)
+        # the interactive plot figure usually blocks the app until it is closed
+        # -> no batch processing possible
+        # -> we have to call matplotlib plot in another thread
+        # on linux it does not block, can show multiple figures
+        # passing the model only, keeping the object hierarchy which is pickled
+        # as small as possible
+        # TODO: fix pickle support for Models, pickling Sphere() raises the
+        # memoize() AssertionsError on Windows
+        # It does not happen without the special __init__() constructor of Sphere
+        # It does not like circular references,
+        # reminder: histograms contain Parameter references too
+        # http://bytes.com/topic/python/answers/37656-assertionerror-pickles-memoize-function#post141263
+        # https://stackoverflow.com/questions/23706736/assertion-error-madness-with-qt-and-pickle
+        modelData = dict(activeParamCount = self.model.activeParamCount(),
+                         histograms = [parHist for histograms in
+                             (p.histograms() for p in self.model.activeParams())
+                                 for parHist in histograms]
+                         )
+        plotArgs = (self.result, self.dataPrepared,
+                    axisMargin, parameterIdx, outputFilename, modelData)
+        if True or isWindows():
+            print " PLOT IN SUBPROCESS"
+            # FIXME: logging
+            # does not work on linux:
+            # UI has to run in main thread (X server error)
+            # -> move (headless) calculations to another thread
+            from multiprocessing import Process
+            proc = Process(target = PlotResults, args = plotArgs)
+            proc.start()
+        else:
+            PlotResults(*plotArgs)
 
     # move this to ScatteringModel eventually?
     # which additional output might by useful/required?

@@ -42,7 +42,8 @@ class PlotResults(object):
     def __init__(self, allRes, dataset, 
                  axisMargin = 0.3, parameterIdx = None,
                  outputFilename = None,
-                 mcsasInstance = None):
+                 modelData = None):
+
         if not isList(allRes) or not len(allRes):
             logging.info("There are no results to plot, breaking up.")
             return
@@ -57,7 +58,7 @@ class PlotResults(object):
             self._figureTitle = outputFilename.basename
         except AttributeError:
             self._figureTitle = ""
-        self._mcsasInstance = mcsasInstance
+        self._modelData = modelData
         self._times = self._result['times']
         try:
             self._BG = self._result['background']
@@ -80,14 +81,11 @@ class PlotResults(object):
                 }
 
         # number of histograms:
-#        self._nHists = mcsasInstance.model.activeParamCount()
-        self._nHists = sum((len(p.histograms())
-                    for p in mcsasInstance.model.activeParams()))
+        self._nHists = len(modelData['histograms'])
         self._nR = 1
         # number of ranges: 
         if False and self._nHists > 0: # disabled for testing
-            self._ranges = ( mcsasInstance.model.activeParams()[0]
-                                .histogram().ranges )
+            self._ranges = ( modelData['histograms'][0].ranges )
             self._nR = len( self._ranges )
         else:
             self._nR = 1 # no active parameters
@@ -127,10 +125,7 @@ class PlotResults(object):
 
             # plot histograms
             # https://stackoverflow.com/a/952952
-            for hi, parHist in enumerate((parHist for histograms in
-                        (p.histograms()
-                            for p in self._mcsasInstance.model.activeParams())
-                        for parHist in histograms)):
+            for hi, parHist in enumerate(modelData['histograms']):
                 plotPar = parHist.param
                 # prep axes:
                 hAxis = self._ah[hi + (self._nHists + 1) + 1]
@@ -146,8 +141,7 @@ class PlotResults(object):
 
                 # put the rangeInfo in the plot above
                 InfoAxis = self._ah[hi + 1]
-                self.plotStats(parHist, self._mcsasInstance, 
-                        rangei, self._fig, InfoAxis)
+                self.plotStats(parHist, rangei, self._fig, InfoAxis)
 
             #plot labels in qAxis:
             axes(qAxis)
@@ -172,7 +166,7 @@ class PlotResults(object):
         grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
              dash_capstyle = 'round', zorder = -1)
             
-    def formatRangeInfo(self, parHist, RI, mcsasInstance, weighti = 0):
+    def formatRangeInfo(self, parHist, RI, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
         oString = 'Range {} to {}, {}-weighted'.format(
                 parHist.lower, parHist.upper,
@@ -199,7 +193,7 @@ class PlotResults(object):
             self._dataset.qMin, self._dataset.qMax)
         #oString.append('\n number of datapoints: {}'.format(len(self._q)))
         oString += '\n Active parameters$:$ {}, ranges: {} '.format(
-            self._mcsasInstance.model.activeParamCount(), self._nR)
+            self._modelData['activeParamCount'], self._nR)
         oString += '\n Background level: {0:3.3g} $\pm$ {1:3.3g}'.format(
                 self._BG[0], self._BG[1])
         oString += '\n Timing: {0:d} repetitions of {1:3.3g} $\pm$ {2:3.3g} seconds'.format(
@@ -367,13 +361,13 @@ class PlotResults(object):
         self._fig.show()
         axis('tight')
 
-    def plotStats(self, parHist, mcsasInstance, rangei, fig, InfoAxis):
+    def plotStats(self, parHist, rangei, fig, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
         delta = 0.001 # minor offset
         # make active:
         axes(InfoAxis)
         # show volume-weighted info:
-        ovString = self.formatRangeInfo(parHist, rangei, mcsasInstance, weighti = 0)
+        ovString = self.formatRangeInfo(parHist, rangei, weighti = 0)
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.95},
                 family = "monospace", size = "small", 
