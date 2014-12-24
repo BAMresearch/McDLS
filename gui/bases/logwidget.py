@@ -147,30 +147,6 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         super(LogWidget, self).clear()
         self._buffer = []
 
-    def _appendBuffer(self, text):
-        # Handling carriage return \r correctly for overwriting a single line
-        # makes this a bit complex ...
-        if getattr(self, "lastr", -1) >= 0 and len(self._buffer):
-            # delete \r preceding text in the previous line until previous \n
-            prev = self._buffer.pop(-1)
-            lastn = max(0, prev.rfind('\n', 0, self.lastr))
-            prev = prev[lastn-1:self.lastr]
-            if len(prev):
-                self._buffer.append(prev)
-                self._bufferDirty = True
-            self.lastr = -1 # reset
-        # look for \r in current line
-        self.lastr = text.rfind('\r')
-        lastn = -1
-        if self.lastr >= 0:
-            lastn = max(0, text.rfind('\n', 0, self.lastr))
-            if len(text[self.lastr+1:]):           # there is text following
-                text = text[lastn-1:self.lastr]    # delete preceding text
-                self.lastr = -1                    # reset
-        if len(text) and text[-1] == '\n':         # remove trailing newlines
-            text = text[:-1]
-        self._buffer.append(url2href(text.replace('\n', self._lineBreak)))
-        self._bufferDirty = True
 
     def _updateContents(self):
         if not self._bufferDirty:
@@ -205,7 +181,6 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
     def append(self, text):
         """Appends a new line of text."""
         wasEmpty = self.document().isEmpty()
-        # self._appendBuffer(unicode(text)) # disabled \r handling, a must have?
         self._buffer.extend(url2href(unicode(text.replace('\r', ''))).splitlines())
         self._bufferDirty = True
         if wasEmpty:
