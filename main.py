@@ -24,6 +24,7 @@ if not hasattr(sys, "frozen") and SCRIPT_PATH not in sys.path:
 
 import argparse
 import logging
+import multiprocessing
 from log import replaceStdOutErr
 
 def makeAbsolutePath(relpath):
@@ -67,6 +68,7 @@ def main(argv = None):
             logging.error(traceback.format_exc())
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
