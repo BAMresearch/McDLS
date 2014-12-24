@@ -29,8 +29,7 @@ except ImportError:
 
 from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
         text, plot, grid, legend, title, xlim, ylim, gca, axis,
-        close, colorbar, imshow, subplot, axes)
-from pylab import show
+        close, colorbar, imshow, subplot, axes, show)
 
 class PlotResults(object):
     """
@@ -158,10 +157,10 @@ class PlotResults(object):
             savefig(outputFilename.filenameVerbose(
                     None, "plot PDF", extension = '.pdf'))
         except AttributeError: pass
-        # pyplot.show() seems to be nescessary otherwise the plot window is
+        # show() seems to be nescessary otherwise the plot window is
         # unresponsive/hangs on Ubuntu or the whole program crashes on windows
         # 'python stopped working'
-        matplotlib.pyplot.show()
+        show()
 
     def plotGrid(self, figh):
         #make axis active:
