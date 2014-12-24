@@ -379,7 +379,7 @@ class PlotResults(object):
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.95},
                 family = "monospace", size = "small", 
-                horizontalalignment = 'right',
+                horizontalalignment = 'center',
                 multialignment = 'right',
                 verticalalignment = 'center')
         fig.show()
@@ -407,9 +407,9 @@ class PlotResults(object):
                     histXLowerEdge.max() * (1 + self._axisMargin))
             xScale = 'log'
         else:
-            xLim = (histXLowerEdge.min() - (1 - self._axisMargin)
-                    * histXLowerEdge.min(), 
-                    histXLowerEdge.max() * (1 + self._axisMargin))
+            xDiff = histXLowerEdge.max() - histXLowerEdge.min()
+            xLim = (histXLowerEdge.min() - 0.25 * self._axisMargin * xDiff, 
+                    histXLowerEdge.max() + 0.25 * self._axisMargin * xDiff) 
             xScale = 'linear'
 
         yLim = (0, HistYMean.max() * (1 + self._axisMargin) )
