@@ -159,4 +159,17 @@ def testParameterCompare():
             ):
         yield compareParameters, pType, kwargs
 
+def testParameterPickle():
+    import pickle
+    pType = factory(name = "radius", value = 3.4, valueRange = (1,5), decimals = 3)
+    r = pType()
+    data = pickle.dumps(r)
+    r2 = pickle.loads(data)
+    print r.attributes()
+    print r2.attributes()
+    assert r == r2
+
+if __name__ == "__main__":
+    testParameterPickle()
+
 # vim: set ts=4 sts=4 sw=4 tw=0:

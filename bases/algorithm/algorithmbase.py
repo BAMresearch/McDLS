@@ -149,6 +149,15 @@ class AlgorithmBase(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __reduce__(self):
+        return (_unpickleAlgo, (type(self), self.name(), self.params(),))
+
+def _unpickleAlgo(cls, name, params):
+    algo = cls.makeDefault()
+    for p in params:
+        setattr(algo, p.name(), p)
+    return algo
+
 if __name__ == "__main__":
     pass
 

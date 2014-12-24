@@ -72,4 +72,28 @@ def testCopy():
     assert a1.testPar != a2.testPar
     assert a1 != a2
 
+from models.scatteringmodel import ScatteringModel
+from utils.parameter import FitParameter
+
+class TestAlgo(ScatteringModel):
+    shortName = "Test"
+    parameters = (TestPar,FitParameter(name = "test", value = 3.4, valueRange = (1,5)))
+    def volume(*args): pass
+    def formfactor(*args): pass
+
+from models.sphere import Sphere
+def testPickle():
+    import pickle
+    ta = TestAlgo.factory()
+    a = ta()
+    a = Sphere()
+    data = pickle.dumps(a)
+    a2 = pickle.loads(data)
+    print repr(a)
+    print repr(a2)
+    assert a == a2
+
+if __name__ == "__main__":
+    testPickle()
+
 # vim: set ts=4 sts=4 sw=4 tw=0:
