@@ -33,6 +33,10 @@ class OutputFilename(object):
     def basename(self):
         return self._basename
 
+    @property
+    def outDir(self):
+        return self._outDir
+
     def __init__(self, dataset):
         self._outDir = LastPath.get()
         if not os.path.isdir(self._outDir):
@@ -121,6 +125,10 @@ class Calculator(object):
         logFile = logging.FileHandler(fn, encoding = "utf8")
         oldHandler = log.log.handlers[0]
         log.addHandler(logFile)
+        try:
+            oldHandler.widget.addWatchDir(self._outFn.outDir)
+        except:
+            pass
 
         # obsolete? 2014-11-28:
         # bounds = dataset.sphericalSizeEst()
@@ -129,7 +137,7 @@ class Calculator(object):
         #              .format(bounds[0], bounds[1]))
         mcargs = dict(doPlot = False)
         self._writeSettings(mcargs, dataset)
-        if self.nolog:
+        if self.nolog: # refers to the widgethandler
             log.removeHandler(oldHandler)
         self._algo.calc(SASData = dataset, **mcargs)
         if self.nolog:

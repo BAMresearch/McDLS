@@ -860,19 +860,11 @@ class McSAS(AlgorithmBase):
                              (p.histograms() for p in self.model.activeParams())
                                  for parHist in histograms]
                          )
-        plotArgs = (self.result, self.dataPrepared,
-                    axisMargin, parameterIdx, outputFilename, modelData)
-        if True or isWindows():
-            print " PLOT IN SUBPROCESS"
-            # FIXME: logging
-            # does not work on linux:
-            # UI has to run in main thread (X server error)
-            # -> move (headless) calculations to another thread
-            from multiprocessing import Process
-            proc = Process(target = PlotResults, args = plotArgs)
-            proc.start()
-        else:
-            PlotResults(*plotArgs)
+        from multiprocessing import Process
+        plotArgs = (self.result, self.dataPrepared, axisMargin,
+                    parameterIdx, outputFilename, modelData, True) # logToFile
+        proc = Process(target = PlotResults, args = plotArgs)
+        proc.start()
 
     # move this to ScatteringModel eventually?
     # which additional output might by useful/required?

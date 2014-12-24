@@ -5,6 +5,7 @@ from __future__ import absolute_import # PEP328
 import os.path
 import sys
 import re
+import glob
 from gui.qt import QtCore, QtGui
 from QtCore import Qt, QRegExp, QTimer
 from QtGui import (QApplication, QKeySequence, QTextBrowser, QDesktopServices)
@@ -100,6 +101,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         except: pass
         self._buffer = []
         self._bufferDirty = False
+        self._watchDirs = []
         self._timer = QTimer(self)
         self._timer.setInterval(self._updateInterval)
         self._timer.timeout.connect(self._updateContents)
@@ -147,8 +149,38 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         super(LogWidget, self).clear()
         self._buffer = []
 
+    def addWatchDir(self, path):
+        """Adds a directory to check for *plotlog* messages from
+        multiprocessing."""
+        if not os.path.exists(path):
+            return
+        self._watchDirs.append(path)
+
+    def _updateWatchedDirs(self):
+        """Checks a list of paths for log files of kind *plotlog* which are
+        created by the plotting routine running in another thread. Its log
+        messages are retrieved once if the file contains data. After reading
+        it once it is not watched anymore. (removed from watch list)
+        This is a quick fix for logging in multiprocessing environment."""
+        if not hasattr(self, "_watchDirs"):
+            return
+        toBeRemoved = []
+        for path in self._watchDirs:
+            if not os.path.exists(path):
+                continue
+            pattern = os.path.join(path, '*_plotlog.txt')
+            fileList = glob.glob(pattern)
+            for fn in fileList:
+                with open(fn, 'r') as fd:
+                    content = fd.read() # get all of it
+                    if len(content):
+                        self.append(content)
+                        toBeRemoved.append(path)
+        for path in toBeRemoved:
+            self._watchDirs.remove(path)
 
     def _updateContents(self):
+        self._updateWatchedDirs()
         if not self._bufferDirty:
             return
         # remember slider position if not at the bottom

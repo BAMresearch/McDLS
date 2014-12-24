@@ -9,11 +9,12 @@ import inspect
 import os.path
 import numpy as np # For arrays
 from numpy import size, log10, sort
-from utils import isList, isString, isWindows
 import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
 from matplotlib.pyplot import savefig
+from utils import isList, isString, isWindows
+import log
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
@@ -42,7 +43,14 @@ class PlotResults(object):
     def __init__(self, allRes, dataset, 
                  axisMargin = 0.3, parameterIdx = None,
                  outputFilename = None,
-                 modelData = None):
+                 modelData = None, logToFile = False):
+
+        # set up multiprocessing compatible logging
+        # redirect to file if requested, a workaround for the moment
+        if logToFile and outputFilename is not None:
+            fn = outputFilename.filename("plotlog")
+            fileHandler = logging.FileHandler(fn, encoding = "utf8")
+            log.replaceHandler(fileHandler)
 
         if not isList(allRes) or not len(allRes):
             logging.info("There are no results to plot, breaking up.")

@@ -26,6 +26,10 @@ class WidgetHandler(logging.Handler):
         assert hasattr(widget, 'append'), \
                 "append() method required for given widget!"
 
+    @property
+    def widget(self):
+        return self._widget
+
     def emit(self, record):
         if self._widget is None:
             return
