@@ -6,7 +6,7 @@ from gui.utils.appversion import QAppVersion
 
 version = QAppVersion(
     programName = "MCSAS",
-    versionNumber = "0.0.11",
+    versionNumber = "1.0 beta",
     organizationName = "NIMS, BAM"
 )
 
