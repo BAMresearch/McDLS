@@ -851,14 +851,20 @@ class McSAS(AlgorithmBase):
         # TODO: fix pickle support for Models, pickling Sphere() raises the
         # memoize() AssertionsError on Windows
         # It does not happen without the special __init__() constructor of Sphere
-        # It does not like circular references,
+        # It does not like circular references (param in hist and hists in param),
         # reminder: histograms contain Parameter references too
         # http://bytes.com/topic/python/answers/37656-assertionerror-pickles-memoize-function#post141263
         # https://stackoverflow.com/questions/23706736/assertion-error-madness-with-qt-and-pickle
+        # get histograms to pass them to plotting
+        histograms = [parHist for histograms in
+                (p.histograms() for p in self.model.activeParams())
+                    for parHist in histograms]
+        # remove circular references first for pickling
+        for i in range(len(histograms)):
+            histograms[i].param.setActive(False)
+        # arguments for plotting process below
         modelData = dict(activeParamCount = self.model.activeParamCount(),
-                         histograms = [parHist for histograms in
-                             (p.histograms() for p in self.model.activeParams())
-                                 for parHist in histograms]
+                         histograms = histograms
                          )
         from multiprocessing import Process
         plotArgs = (self.result, self.dataPrepared, axisMargin,
