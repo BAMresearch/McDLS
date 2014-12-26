@@ -14,7 +14,7 @@ import sys # For printing of slightly more advanced messages to stdout
 import logging
 logging.basicConfig(level = logging.INFO)
 
-from utils import isList, isFrozen, isString, isWindows
+from utils import isList, isFrozen, isString
 from bases.dataset import DataSet
 from bases.algorithm import (AlgorithmBase,
                              RandomUniform, RandomExponential)
