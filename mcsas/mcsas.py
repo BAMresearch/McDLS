@@ -20,6 +20,7 @@ from bases.algorithm import (AlgorithmBase,
                              RandomUniform, RandomExponential)
 from utils.parameter import ParameterBase, Histogram, isActiveParam
 from utils.propertynames import PropertyNames
+from utils.tests import isMac
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
 from gui.utils import processEventLoop
