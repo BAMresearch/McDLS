@@ -868,11 +868,14 @@ class McSAS(AlgorithmBase):
         modelData = dict(activeParamCount = self.model.activeParamCount(),
                          histograms = histograms
                          )
-        from multiprocessing import Process
         plotArgs = (self.result, self.dataPrepared, axisMargin,
                     parameterIdx, outputFilename, modelData, True) # logToFile
-        proc = Process(target = PlotResults, args = plotArgs)
-        proc.start()
+        if isMac():
+            PlotResults(*plotArgs)
+        else:
+            from multiprocessing import Process
+            proc = Process(target = PlotResults, args = plotArgs)
+            proc.start()
 
     # move this to ScatteringModel eventually?
     # which additional output might by useful/required?
