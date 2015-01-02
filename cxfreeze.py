@@ -45,7 +45,10 @@ if not os.path.isfile(SEVENZIP):
     sys.exit("7-Zip: '{path}' not found!".format(path = SEVENZIP))
 
 # target (temp) dir for mcsas package
-TARGETDIR = "{0}-{1}".format(version.name(), version.number())
+TARGETDIR = "{name}-{ver}_{plat}".format(
+                name = version.name(),
+                ver = version.number(),
+                plat = platform.system().lower())
 
 BASE = None
 EXEC_SUFFIX = ""
