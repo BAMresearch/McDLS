@@ -13,16 +13,18 @@ import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
 from matplotlib.pyplot import savefig
-from utils import isList, isString, isWindows
+from utils import isList, isString, isMac
 import log
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
-    import PySide # verify/test that we have pyside
+# actually, we're using the TkAgg backend via matplotlibrc
+# otherwise it crashes because of multiple GUI threads ... (only one allowed)
+#    import PySide # verify/test that we have pyside
     # use() gives an error if calling twice
-    matplotlib.rcParams['backend'] = 'QT4Agg'
-    matplotlib.rcParams['backend.qt4'] = 'PySide'
-    if isWindows():
+#    matplotlib.rcParams['backend'] = 'QT4Agg'
+#    matplotlib.rcParams['backend.qt4'] = 'PySide'
+    if not isMac():
         # required for superscript minus ⁻¹ being shown properly
         matplotlib.rcParams['font.serif'] = 'DejaVu Serif'
 except ImportError:
@@ -76,7 +78,7 @@ class PlotResults(object):
         # set plot font
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
         fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
-        if isWindows():
+        if not isMac():
             # 'Times' doesn't show UTF8 superscript minus
             fontFamilyTimes = ["serif"] # defined by rcParams, see above
         self._plotfont = fm.FontProperties(family = fontFamilyArial)

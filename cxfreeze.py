@@ -73,7 +73,17 @@ INCLUDEFILES = [
         ("mcsas/mcsasparameters.json", "mcsas/mcsasparameters.json"),
         ("resources/background_files.svg", "resources/background_files.svg"),
         ("resources/background_ranges.svg", "resources/background_ranges.svg"),
+        "matplotlibrc",
 ]
+if isLinux():
+    INCLUDEFILES += [
+        "/usr/lib/liblapack.so.3",
+        "/usr/lib/libblas.so.3",
+        "/usr/lib/x86_64-linux-gnu/libgfortran.so.3",
+        "/usr/lib/x86_64-linux-gnu/libquadmath.so.0",
+        "/usr/lib/x86_64-linux-gnu/libpyside-python2.7.so.1.2",
+        "/usr/lib/x86_64-linux-gnu/libshiboken-python2.7.so.1.2",
+    ]
 if isWindows():
     INCLUDEFILES += [
         'Microsoft.VC90.CRT',
