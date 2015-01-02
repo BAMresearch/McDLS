@@ -67,15 +67,17 @@ if sys.platform in "win32":
 
 TARGETNAME = version.name() + EXEC_SUFFIX
 
+# (source, target) pairs
+# without a target the file is placed in the top level directory of the package
 INCLUDEFILES = [
-        "mcsas/mcsasparameters.json",
-        "resources/background_files.svg",
-        "resources/background_ranges.svg",
-        ]
-if sys.platform in "win32":
+        ("mcsas/mcsasparameters.json", "mcsas/mcsasparameters.json"),
+        ("resources/background_files.svg", "resources/background_files.svg"),
+        ("resources/background_ranges.svg", "resources/background_ranges.svg"),
+]
+if isWindows():
     INCLUDEFILES += [
         'Microsoft.VC90.CRT',
-                    ]
+    ]
 
 BUILDOPTIONS = dict(
     compressed = False,
