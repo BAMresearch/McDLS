@@ -20,24 +20,33 @@ import re
 import os.path
 import subprocess
 import hashlib
+import platform
 from cx_Freeze import setup, Executable
 from gui.version import version
+from utils import isWindows, isLinux
 
 def get7ZipPath():
-	"""Retrieves 7-Zip install path and binary from Windows Registry.
-	This way, we do not rely on PATH containing 7-Zip.
-	"""
-	path = None
-	import win32api, win32con
-	for key in (win32con.HKEY_LOCAL_MACHINE, win32con.HKEY_CURRENT_USER):
-		try:
-			key = win32api.RegConnectRegistry(None, key)
-			key = win32api.RegOpenKeyEx(key, r"SOFTWARE\7-Zip")
-			path, dtype = win32api.RegQueryValueEx(key, "Path")
-			path = os.path.abspath(os.path.join(path, "7z.exe"))
-		except:
-			pass
-	return path
+    """Retrieves 7-Zip install path and binary from Windows Registry.
+    This way, we do not rely on PATH containing 7-Zip.
+    """
+    path = None
+    if isWindows():
+        import win32api, win32con
+        for key in (win32con.HKEY_LOCAL_MACHINE, win32con.HKEY_CURRENT_USER):
+            try:
+                key = win32api.RegConnectRegistry(None, key)
+                key = win32api.RegOpenKeyEx(key, r"SOFTWARE\7-Zip")
+                path, dtype = win32api.RegQueryValueEx(key, "Path")
+                path = os.path.abspath(os.path.join(path, "7z.exe"))
+            except:
+                pass
+    else:
+        p = subprocess.Popen(["which", "7z"],
+                stdout = subprocess.PIPE,
+                stderr = subprocess.PIPE)
+        out, err = p.communicate()
+        path = out.strip()
+    return path
 
 # 7z default on windows
 SEVENZIP = get7ZipPath()
