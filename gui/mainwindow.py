@@ -1062,9 +1062,9 @@ class MainWindow(MainWindowBase):
         self.loadFiles(filenames)
 
     def initUI(self):
+        self.logWidget.scrollToTop()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
-        self.logWidget.scrollToTop()
 
     def _updateWidgets(self):
         for w in self.findChildren(SettingsWidget):
@@ -1086,6 +1086,7 @@ class MainWindow(MainWindowBase):
         if len(self.fileWidget) <= 0:
             return
         self.logWidget.clear()
+        self.logWidget.scrollToBottom()
         self.fileWidget.updateData(updateFunc = self.calculator,
                                    stopFunc = self.calculator.isStopped,
                                    showProgress = False)
