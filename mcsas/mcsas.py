@@ -869,12 +869,14 @@ class McSAS(AlgorithmBase):
         modelData = dict(activeParamCount = self.model.activeParamCount(),
                          histograms = histograms
                          )
-        plotArgs = (self.result, self.dataPrepared, axisMargin,
-                    parameterIdx, outputFilename, modelData, True) # logToFile
+        plotArgs = [self.result, self.dataPrepared, axisMargin,
+                    parameterIdx, outputFilename, modelData]
         if isMac():
+            plotArgs.append(False) # logToFile, for multithreaded plotting below only
             PlotResults(*plotArgs)
         else:
             from multiprocessing import Process
+            plotArgs.append(True) # logToFile
             proc = Process(target = PlotResults, args = plotArgs)
             proc.start()
 
