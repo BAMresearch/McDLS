@@ -8,7 +8,6 @@ import logging
 import inspect
 import os.path
 import numpy as np # For arrays
-from numpy import size, log10, sort
 import matplotlib
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
@@ -282,8 +281,8 @@ class PlotResults(object):
                 (psi >   0) * (psi <=  90)]
         intShow[(psi > 180) * (psi <= 270)] = intensity2d[
                 (psi > 180) * (psi <= 270)]
-        xmidi = int(round(size(q, 1)/2))
-        ymidi = int(round(size(q, 0)/2))
+        xmidi = int(round(np.size(q, 1)/2))
+        ymidi = int(round(np.size(q, 0)/2))
         QX = np.array([-q[ymidi, 0], q[ymidi, -1]])
         QY = np.array([-q[0, xmidi], q[-1, xmidi]])
         extent = (QX[0], QX[1], QY[0], QY[1])
@@ -292,7 +291,7 @@ class PlotResults(object):
         qAxis.update( axisbg = (.95, .95, .95),
                                xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
                                ylabel = 'q_y, 1/m')
-        imshow(log10(intShow), extent = extent, origin = 'lower')
+        imshow(np.log10(intShow), extent = extent, origin = 'lower')
         qAxis = self.setAxis(qAxis)
         colorbar()
         title('Measured vs. Fitted intensity',
