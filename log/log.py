@@ -50,7 +50,7 @@ def replaceHandler(handler):
         return
     # get a copy of existing handlers, remove them later
     rootLogger = logging.getLogger()
-    oldHandlers = rootLogger.handlers[:]
+    oldHandlers = [h for h in rootLogger.handlers if h != handler]
     addHandler(handler)
     # remove previous existing handlers
     for h in oldHandlers:
