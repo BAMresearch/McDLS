@@ -74,6 +74,7 @@ INCLUDEFILES = [
         ("resources/background_files.svg", "resources/background_files.svg"),
         ("resources/background_ranges.svg", "resources/background_ranges.svg"),
         "matplotlibrc",
+        "dejavuserif.ttf",
 ]
 if isLinux():
     INCLUDEFILES += [

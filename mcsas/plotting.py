@@ -74,12 +74,9 @@ class PlotResults(object):
 
         # set plot font
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
-        fontFamilyTimes = ["Times", "DejaVu Serif", "serif"]
-        if not isMac():
-            # 'Times' doesn't show UTF8 superscript minus
-            fontFamilyTimes = ["serif"] # defined by rcParams, see above
         self._plotfont = fm.FontProperties(family = fontFamilyArial)
-        self._textfont = fm.FontProperties(family = fontFamilyTimes)
+        # DejaVu shows UTF8 superscript minus properly
+        self._textfont = fm.FontProperties(fname = "dejavuserif.ttf")
 
         # set general axes settings:
         self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
