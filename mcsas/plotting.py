@@ -20,6 +20,8 @@ try:
     if isMac():
         matplotlib.rcParams['backend'] = 'Qt4Agg'
         matplotlib.rcParams['backend.qt4'] = 'PySide'
+    else:
+        matplotlib.rcParams['backend'] = 'TkAgg'
 except ImportError:
     pass # no pyside
 
