@@ -9,29 +9,25 @@ import inspect
 import os.path
 import numpy as np # For arrays
 import matplotlib
-import matplotlib.font_manager as fm
-from matplotlib import gridspec
-from matplotlib.pyplot import savefig
 from utils import isList, isString, isMac
 import log
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
-# actually, we're using the TkAgg backend via matplotlibrc
-# otherwise it crashes because of multiple GUI threads ... (only one allowed)
-#    import PySide # verify/test that we have pyside
-    # use() gives an error if calling twice
-#    matplotlib.rcParams['backend'] = 'QT4Agg'
-#    matplotlib.rcParams['backend.qt4'] = 'PySide'
-    if not isMac():
-        # required for superscript minus ⁻¹ being shown properly
-        matplotlib.rcParams['font.serif'] = 'DejaVu Serif'
+    # actually, we're using the TkAgg backend via matplotlibrc (Windows/Linux)
+    # otherwise it crashes because of multiple GUI threads ... (only one allowed)
+    import PySide # verify/test that we have pyside
+    if isMac():
+        matplotlib.rcParams['backend'] = 'Qt4Agg'
+        matplotlib.rcParams['backend.qt4'] = 'PySide'
 except ImportError:
     pass # no pyside
 
+import matplotlib.font_manager as fm
+from matplotlib import gridspec
 from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
         text, plot, grid, legend, title, xlim, ylim, gca, axis,
-        close, colorbar, imshow, subplot, axes, show)
+        close, colorbar, imshow, subplot, axes, show, savefig)
 
 class PlotResults(object):
     """
