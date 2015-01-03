@@ -123,10 +123,12 @@ class Calculator(object):
         self._outFn = OutputFilename(dataset)
         fn = self._outFn.filenameVerbose("log", "this log")
         logFile = logging.FileHandler(fn, encoding = "utf8")
-        oldHandler = log.log.handlers[0]
+        widgetHandler = log.getWidgetHandlers()[0]
+        log.replaceHandler(widgetHandler) # remove everything else
         log.addHandler(logFile)
         try:
-            oldHandler.widget.addWatchDir(self._outFn.outDir)
+            # show last lines about pdf output from separate thread
+            widgetHandler.widget.addWatchDir(self._outFn.outDir)
         except:
             pass
 
@@ -138,10 +140,10 @@ class Calculator(object):
         mcargs = dict(doPlot = False)
         self._writeSettings(mcargs, dataset)
         if self.nolog: # refers to the widgethandler
-            log.removeHandler(oldHandler)
+            log.removeHandler(widgetHandler)
         self._algo.calc(SASData = dataset, **mcargs)
         if self.nolog:
-            log.addHandler(oldHandler)
+            log.addHandler(widgetHandler)
 
         if isList(self._algo.result) and len(self._algo.result):
             res = self._algo.result[0]

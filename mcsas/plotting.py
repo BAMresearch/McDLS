@@ -47,7 +47,7 @@ class PlotResults(object):
         if logToFile and outputFilename is not None:
             fn = outputFilename.filename("plotlog")
             fileHandler = logging.FileHandler(fn, encoding = "utf8")
-            log.replaceHandler(fileHandler)
+            log.addHandler(fileHandler)
 
         if not isList(allRes) or not len(allRes):
             logging.info("There are no results to plot, breaking up.")
