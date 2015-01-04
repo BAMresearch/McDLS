@@ -23,35 +23,61 @@ import hashlib
 import platform
 from cx_Freeze import setup, Executable
 from gui.version import version
-from utils import isWindows, isLinux
+from utils import isWindows, isLinux, testfor
 
-def get7ZipPath():
-    """Retrieves 7-Zip install path and binary from Windows Registry.
-    This way, we do not rely on PATH containing 7-Zip.
-    """
-    path = None
-    if isWindows():
-        import win32api, win32con
-        for key in (win32con.HKEY_LOCAL_MACHINE, win32con.HKEY_CURRENT_USER):
-            try:
-                key = win32api.RegConnectRegistry(None, key)
-                key = win32api.RegOpenKeyEx(key, r"SOFTWARE\7-Zip")
-                path, dtype = win32api.RegQueryValueEx(key, "Path")
-                path = os.path.abspath(os.path.join(path, "7z.exe"))
-            except:
-                pass
-    else:
-        p = subprocess.Popen(["which", "7z"],
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE)
-        out, err = p.communicate()
-        path = out.strip()
-    return path
+class Archiver7z(object):
+    _name = "7-Zip"
+    _path = None
 
-# 7z default on windows
-SEVENZIP = get7ZipPath()
-if not os.path.isfile(SEVENZIP):
-    sys.exit("7-Zip: '{path}' not found!".format(path = SEVENZIP))
+    @staticmethod
+    def _get7ZipPath():
+        """Retrieves 7-Zip install path and binary from Windows Registry.
+        This way, we do not rely on PATH containing 7-Zip.
+        """
+        path = None
+        if isWindows():
+            import win32api, win32con
+            for key in (win32con.HKEY_LOCAL_MACHINE, win32con.HKEY_CURRENT_USER):
+                try:
+                    key = win32api.RegConnectRegistry(None, key)
+                    key = win32api.RegOpenKeyEx(key, r"SOFTWARE\7-Zip")
+                    path, dtype = win32api.RegQueryValueEx(key, "Path")
+                    path = os.path.abspath(os.path.join(path, "7z.exe"))
+                except:
+                    pass
+        else:
+            p = subprocess.Popen(["which", "7z"],
+                    stdout = subprocess.PIPE,
+                    stderr = subprocess.PIPE)
+            out, err = p.communicate()
+            path = out.strip()
+        return path
+
+    def __init__(self):
+        self._path = self._get7ZipPath()
+        testfor(os.path.isfile(self._path), OSError,
+                "{name}: '{path}' not found!".format(
+                    name = self._name,
+                    path = self._path))
+
+    def getLogFilename(self):
+        return os.path.splitext(
+                os.path.basename(self._path))[0] + ".log" # 7z.log
+
+    def archive(self, targetPath):
+        """Expects an absolute target directory path"""
+        fnPackage = targetPath + ".7z"
+        fnLog = self.getLogFilename()
+        with open(fnLog, 'w') as fd:
+            retcode = subprocess.call([self._path, "a", "-t7z", "-mx=9",
+                                       fnPackage, targetPath],
+                                       stdout = fd,
+                                       stderr = fd)
+        if not os.path.exists(fnPackage):
+            fnPackage = None
+        return fnPackage
+
+archiver = Archiver7z()
 
 # target (temp) dir for mcsas package
 TARGETDIR = "{name}-{ver}_{plat}".format(
@@ -153,13 +179,7 @@ setup(
 # zip:
 # zip -r9 MCSAS-1.0.zip MCSAS-1.0/
 # package the freezed program into an 7z archive
-PACKAGEFN = TARGETDIR + ".7z"
-LOGFN = os.path.splitext(os.path.basename(SEVENZIP))[0] + ".log" # 7z.log
-with open(LOGFN, 'w') as fd:
-    RETCODE = subprocess.call([SEVENZIP, "a", "-t7z", "-mx=9",
-                               PACKAGEFN, TARGETDIR],
-                               stdout = fd,
-                               stderr = fd)
+PACKAGEFN = archiver.archive(TARGETDIR)
 
 # calc a checksum of the package
 def hashFile(filename, hasher, blocksize = 65536):
