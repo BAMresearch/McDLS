@@ -111,6 +111,12 @@ BUILDOPTIONS = dict(
     copy_dependent_files = True,
 )
 
+# experimenting with OSX bundle building
+# not working yet, getting error -10810
+MACOPTIONS = dict(
+    bundle_name = TARGETDIR,
+)
+
 # only set version number if compatible with pywin32
 versionNumber = version.number()
 try:
@@ -140,10 +146,12 @@ setup(
                   u"National Institute for Materials Science, \r\n\r\n"
                   u"1-2-1 Sengen, 305-0047, "
                   u"305-0047, Tsukuba, Japan",
-    options = dict(build_exe = BUILDOPTIONS),
+    options = dict(build_exe = BUILDOPTIONS, bdist_mac = MACOPTIONS),
     executables = [Executable("main.py", base = BASE,
                               targetName = TARGETNAME)])
 
+# zip:
+# zip -r9 MCSAS-1.0.zip MCSAS-1.0/
 # package the freezed program into an 7z archive
 PACKAGEFN = TARGETDIR + ".7z"
 LOGFN = os.path.splitext(os.path.basename(SEVENZIP))[0] + ".log" # 7z.log
