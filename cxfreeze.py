@@ -25,12 +25,32 @@ from cx_Freeze import setup, Executable
 from gui.version import version
 from utils import isWindows, isLinux, testfor
 
-class Archiver7z(object):
-    _name = "7-Zip"
+class Archiver(object):
+    _name = None # to be defined by sub classes
     _path = None
 
+    def __init__(self):
+        self._path = self._getPath()
+        testfor(os.path.isfile(self._path), OSError,
+                "{name}: '{path}' not found!".format(
+                    name = self._name,
+                    path = self._path))
+
+    @property
+    def execName(self):
+        return os.path.basename(self._path)
+
+    def getLogFilename(self):
+        return os.path.splitext(self.execName)[0] + ".log" # 7z.log
+
+    def archive(self, targetPath):
+        raise NotImplementedError
+
+class Archiver7z(Archiver):
+    _name = "7-Zip"
+
     @staticmethod
-    def _get7ZipPath():
+    def _getPath():
         """Retrieves 7-Zip install path and binary from Windows Registry.
         This way, we do not rely on PATH containing 7-Zip.
         """
@@ -53,17 +73,6 @@ class Archiver7z(object):
             path = out.strip()
         return path
 
-    def __init__(self):
-        self._path = self._get7ZipPath()
-        testfor(os.path.isfile(self._path), OSError,
-                "{name}: '{path}' not found!".format(
-                    name = self._name,
-                    path = self._path))
-
-    def getLogFilename(self):
-        return os.path.splitext(
-                os.path.basename(self._path))[0] + ".log" # 7z.log
-
     def archive(self, targetPath):
         """Expects an absolute target directory path"""
         fnPackage = targetPath + ".7z"
@@ -77,7 +86,40 @@ class Archiver7z(object):
             fnPackage = None
         return fnPackage
 
-archiver = Archiver7z()
+class ArchiverZip(Archiver):
+    _name = "Zip"
+
+    @staticmethod
+    def _getPath():
+        path = None
+        if isWindows():
+            pass # none yet
+        else:
+            p = subprocess.Popen(["which", "zip"],
+                    stdout = subprocess.PIPE,
+                    stderr = subprocess.PIPE)
+            out, err = p.communicate()
+            path = out.strip()
+        return path
+
+    def archive(self, targetPath):
+        """Expects an absolute target directory path"""
+        fnPackage = targetPath + ".zip"
+        fnLog = self.getLogFilename()
+        with open(fnLog, 'w') as fd:
+            retcode = subprocess.call([self._path, "-r9",
+                                       fnPackage, targetPath],
+                                       stdout = fd,
+                                       stderr = fd)
+        if not os.path.exists(fnPackage):
+            fnPackage = None
+        return fnPackage
+
+archiver = None
+if isMac():
+    archiver = ArchiverZip()
+else:
+    archiver = Archiver7z()
 
 # target (temp) dir for mcsas package
 TARGETDIR = "{name}-{ver}_{plat}".format(
