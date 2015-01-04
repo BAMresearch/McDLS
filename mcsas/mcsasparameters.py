@@ -8,7 +8,6 @@ import logging
 import json
 from utils.propertynames import PropertyNames
 # more flexible parameter definitions:
-from mcsasdefaultcfg import cInfo
 from utils.parameter import Parameter
 from utils import isString
 from main import makeAbsolutePath
@@ -89,6 +88,11 @@ class McSASParameters(PropertyNames):
         # load parameter definitions from file and add to list:
         parDict = dict()
         filename = makeAbsolutePath(filename)
+        if not os.path.exists(filename):
+            # trying one level up
+            dirname, basename = os.path.split(filename)
+            dirname = os.path.dirname(dirname)
+            filename = os.path.join(dirname, basename)
         try:
             with open(filename, 'r') as jfile:
                 logging.info("Loading parameters from file: '{}'"
@@ -112,7 +116,7 @@ class McSASParameters(PropertyNames):
         paramDefFile = 'path/to/file' relative to application root dir
         """
         # instantiate defaults:
-        if not isString(paramDefFile) or not(os.path.exists(paramDefFile)):
+        if not isString(paramDefFile) or not os.path.exists(paramDefFile):
             paramDefFile = self.paramDefFile
         self.loadParameters(paramDefFile)
 

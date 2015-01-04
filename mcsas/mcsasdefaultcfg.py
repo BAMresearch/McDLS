@@ -72,7 +72,8 @@ class cInfo(object):
                 fname = os.path.join(fdir, "mcsasparameters.json")
 
         if not os.path.exists(fname):
-            logging.error('no default parameter file found!')
+            logging.error("no default parameter file found! "
+                          "({})".format(fname))
             return false
 
         self.loadParams(fname = fname)
