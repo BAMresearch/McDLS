@@ -73,7 +73,6 @@ INCLUDEFILES = [
         ("mcsas/mcsasparameters.json", "mcsas/mcsasparameters.json"),
         ("resources/background_files.svg", "resources/background_files.svg"),
         ("resources/background_ranges.svg", "resources/background_ranges.svg"),
-        "matplotlibrc",
         "dejavuserif.ttf",
 ]
 if isLinux():
@@ -108,7 +107,7 @@ BUILDOPTIONS = dict(
 #    icon = "res/img/brianpauw.ico",
     path = [os.getcwd()] + sys.path,
     build_exe = TARGETDIR,
-    silent = True,
+    silent = False,
     copy_dependent_files = True,
 )
 
