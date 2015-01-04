@@ -70,7 +70,7 @@ TARGETNAME = version.name() + EXEC_SUFFIX
 # (source, target) pairs
 # without a target the file is placed in the top level directory of the package
 INCLUDEFILES = [
-        ("mcsas/mcsasparameters.json", "mcsas/mcsasparameters.json"),
+        "mcsas/mcsasparameters.json",
         ("resources/background_files.svg", "resources/background_files.svg"),
         ("resources/background_ranges.svg", "resources/background_ranges.svg"),
         "dejavuserif.ttf",
