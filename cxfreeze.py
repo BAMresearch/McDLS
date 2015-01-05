@@ -23,7 +23,7 @@ import hashlib
 import platform
 from cx_Freeze import setup, Executable
 from gui.version import version
-from utils import isWindows, isLinux, testfor
+from utils import isWindows, isLinux, isMac, testfor
 
 class Archiver(object):
     _name = None # to be defined by sub classes
@@ -181,9 +181,15 @@ BUILDOPTIONS = dict(
 
 # experimenting with OSX bundle building
 # not working yet, getting error -10810
+# not including any frameworks (python, qt)
+# -> package size >1GB
 MACOPTIONS = dict(
     bundle_name = TARGETDIR,
 )
+if isMac():
+    BUILDOPTIONS.pop("build_exe")
+    BUILDOPTIONS.pop("includes")
+    #BUILDOPTIONS["copy_dependent_files"] = False
 
 # only set version number if compatible with pywin32
 versionNumber = version.number()
