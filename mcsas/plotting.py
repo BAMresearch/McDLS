@@ -11,6 +11,7 @@ import numpy as np # For arrays
 import matplotlib
 from utils import isList, isString, isMac
 import log
+from main import makeAbsolutePath
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
@@ -76,7 +77,8 @@ class PlotResults(object):
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
         self._plotfont = fm.FontProperties(family = fontFamilyArial)
         # DejaVu shows UTF8 superscript minus properly
-        self._textfont = fm.FontProperties(fname = "dejavuserif.ttf")
+        fontPath = makeAbsolutePath("dejavuserif.ttf")
+        self._textfont = fm.FontProperties(fname = fontPath)
 
         # set general axes settings:
         self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
