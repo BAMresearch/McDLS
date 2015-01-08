@@ -188,7 +188,22 @@ MACOPTIONS = dict(
 )
 if isMac():
     BUILDOPTIONS.pop("build_exe")
-    BUILDOPTIONS.pop("includes")
+    BUILDOPTIONS["includes"] = [ # order in which they were requested
+        "PySide", "PySide.QtCore", "PySide.QtGui", "PySide.QtSvg", "PySide.QtXml",
+        "scipy.sparse.csgraph._validation",
+        "scipy.sparse.linalg.dsolve.umfpack",
+        "matplotlib.backends.backend_qt4agg",
+        "scipy.integrate.vode",
+        "scipy.integrate.lsoda",
+    ]
+    BUILDOPTIONS["bin_includes"] = [
+        "libpyside-python2.7.1.1.dylib",
+        "libshiboken-python2.7.1.1.dylib",
+#        "/usr/lib/libshiboken-python2.7.1.1.dylib",
+    ]
+    if False:
+        BUILDOPTIONS["replace_paths"] = [
+        ]
     #BUILDOPTIONS["copy_dependent_files"] = False
 
 # only set version number if compatible with pywin32
