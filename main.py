@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import #PEP328
 import sys
+import os
 import os.path
 
 def getScriptPath():
@@ -26,9 +27,9 @@ import argparse
 import logging
 import multiprocessing
 from log import replaceStdOutErr
+from utils import isMac
 
 def makeAbsolutePath(relpath):
-#    logging.info("SCRIPT_PATH: '{}'".format(SCRIPT_PATH))
     return os.path.abspath(os.path.join(SCRIPT_PATH, relpath))
 
 def main(argv = None):
@@ -45,7 +46,21 @@ def main(argv = None):
                         action = "store",
                         help = "One or more data files to analyse")
     # TODO: add info about output files to be created ...
-    args = parser.parse_args()
+    if isMac():
+        # on OSX remove automatically provided PID,
+        # otherwise argparse exits and the bundle start fails silently
+        for i in range(len(sys.argv)):
+            if sys.argv[i].startswith("-psn"): # PID provided by osx
+                del sys.argv[i]
+    try:
+        args = parser.parse_args()
+    except SystemExit, e:
+        # useful debugging code, ensure destination is writable!
+#        logfn = ("/tmp/{name}_unsupported_args.log"
+#                 .format(name = SCRIPT_FILENAME))
+#        with open(logfn, "w") as fd:
+#            fd.write("argv: " + str(sys.argv) + "\n")
+        raise
     # forwarding logging setting, quick fix 
     import gui.calc # importing here makes avoids import loops elsewhere
     gui.calc.Calculator.nolog = args.nolog
