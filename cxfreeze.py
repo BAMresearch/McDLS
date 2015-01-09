@@ -25,6 +25,21 @@ from cx_Freeze import setup, Executable
 from gui.version import version
 from utils import isWindows, isLinux, isMac, testfor
 
+def sanitizeVersionNumber(number):
+    """Removes non-digits to be compatible with pywin32"""
+    if not isWindows():
+        return number
+    match = re.match(r'[\d.]+', number)
+    if match is None:
+        return ""
+    number = match.group(0)
+    try:
+        bits = [int(i) for i in number.split(".")]
+        assert(len(bits))
+    except (AssertionError, IndexError, TypeError, ValueError):
+        number = "0" # do not set version number in win32 binary
+    return number
+
 class Archiver(object):
     _name = None # to be defined by sub classes
     _path = None
@@ -206,17 +221,9 @@ if isMac():
         ]
     #BUILDOPTIONS["copy_dependent_files"] = False
 
-# only set version number if compatible with pywin32
-versionNumber = version.number()
-try:
-    bits = [int(i) for i in versionNumber.split(".")]
-    assert(len(bits))
-except (AssertionError, IndexError, TypeError, ValueError):
-    versionNumber = "0" # do not set version number in win32 binary
-
 setup(
     name = version.name(),
-    version = versionNumber,
+    version = sanitizeVersionNumber(version.number()),
     description = version.name(),
     long_description = ("GUI for Monte-Carlo size distribution analysis"),
 #    url = "http://sourceforge.net/",
