@@ -194,15 +194,11 @@ BUILDOPTIONS = dict(
     copy_dependent_files = True,
 )
 
-# experimenting with OSX bundle building
-# not working yet, getting error -10810
-# not including any frameworks (python, qt)
-# -> package size >1GB
-MACOPTIONS = dict(
-    bundle_name = TARGETDIR,
-)
+# OSX bundle building
+MACOPTIONS = dict(bundle_name = TARGETDIR)
+DMGOPTIONS = dict(volume_label = TARGETDIR)
 if isMac():
-    BUILDOPTIONS.pop("build_exe")
+    BUILDOPTIONS.pop("build_exe") # bdist_mac expects plain 'build' directory
     BUILDOPTIONS["includes"] = [ # order in which they were requested
         "PySide", "PySide.QtCore", "PySide.QtGui", "PySide.QtSvg", "PySide.QtXml",
         "scipy.sparse.csgraph._validation",
@@ -214,7 +210,6 @@ if isMac():
     BUILDOPTIONS["bin_includes"] = [
         "libpyside-python2.7.1.1.dylib",
         "libshiboken-python2.7.1.1.dylib",
-#        "/usr/lib/libshiboken-python2.7.1.1.dylib",
     ]
     if False:
         BUILDOPTIONS["replace_paths"] = [
@@ -242,7 +237,9 @@ setup(
                   u"National Institute for Materials Science, \r\n\r\n"
                   u"1-2-1 Sengen, 305-0047, "
                   u"305-0047, Tsukuba, Japan",
-    options = dict(build_exe = BUILDOPTIONS, bdist_mac = MACOPTIONS),
+    options = dict(build_exe = BUILDOPTIONS,
+                   bdist_mac = MACOPTIONS,
+                   bdist_dmg = DMGOPTIONS),
     executables = [Executable("main.py", base = BASE,
                               targetName = TARGETNAME)])
 
