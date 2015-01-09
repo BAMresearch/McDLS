@@ -136,10 +136,12 @@ if isMac():
 else:
     archiver = Archiver7z()
 
-# target (temp) dir for mcsas package
-TARGETDIR = "{name}-{ver}_{plat}".format(
+PACKAGENAME = "{name}-{ver}".format(
                 name = version.name(),
-                ver = version.number(),
+                ver = version.number())
+# target (temp) dir for mcsas package
+TARGETDIR = "{pckg}_{plat}".format(
+                pckg = PACKAGENAME,
                 plat = platform.system().lower())
 
 BASE = None
@@ -195,8 +197,8 @@ BUILDOPTIONS = dict(
 )
 
 # OSX bundle building
-MACOPTIONS = dict(bundle_name = TARGETDIR)
-DMGOPTIONS = dict(volume_label = TARGETDIR)
+MACOPTIONS = dict(bundle_name = PACKAGENAME)
+DMGOPTIONS = dict(volume_label = PACKAGENAME)
 if isMac():
     BUILDOPTIONS.pop("build_exe") # bdist_mac expects plain 'build' directory
     BUILDOPTIONS["includes"] = [ # order in which they were requested
