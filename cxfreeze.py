@@ -90,6 +90,8 @@ class Archiver7z(Archiver):
 
     def archive(self, targetPath):
         """Expects an absolute target directory path"""
+        if not os.path.isdir(targetPath):
+            return None
         fnPackage = targetPath + ".7z"
         fnLog = self.getLogFilename()
         with open(fnLog, 'w') as fd:
@@ -119,6 +121,8 @@ class ArchiverZip(Archiver):
 
     def archive(self, targetPath):
         """Expects an absolute target directory path"""
+        if not os.path.isdir(targetPath):
+            return None
         fnPackage = targetPath + ".zip"
         fnLog = self.getLogFilename()
         with open(fnLog, 'w') as fd:
@@ -245,10 +249,10 @@ setup(
     executables = [Executable("main.py", base = BASE,
                               targetName = TARGETNAME)])
 
-# zip:
-# zip -r9 MCSAS-1.0.zip MCSAS-1.0/
-# package the freezed program into an 7z archive
+# package the freezed program into an archive file
 PACKAGEFN = archiver.archive(TARGETDIR)
+if PACKAGEFN is None or not os.path.isfile(PACKAGEFN):
+    return # nothing to do
 
 # calc a checksum of the package
 def hashFile(filename, hasher, blocksize = 65536):
