@@ -233,7 +233,7 @@ setup(
     maintainer_email = "ingo.bressler@bam.de",
     # additional metadata for modified version of cx_Freeze
     # displayed in copyright info
-    download_url = "2014, https://bitbucket.org/pkwasniew/mcsas",
+    download_url = "2015, http://www.mcsas.net",
     # company
     classifiers = u"NIMS\r\n"
                   u"National Institute for Materials Science, \r\n\r\n"
