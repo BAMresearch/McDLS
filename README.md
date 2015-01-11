@@ -10,13 +10,20 @@ Ingo Breßler, Brian R. Pauw, Andreas Thünemann, *"McSAS: A package for extract
 ### Features ###
 
 Several form factors have been included in the package, including:
-* Spheres
-* Cylinders (spherically isotropic)
-* Ellipsoids (spherically isotropic)
-* Core-shell spheres and ellipsoids
-* Gaussian chain
-* Kholodenko worm
-* Densely packed spheres (LMA-PY structure factor). 
+
+- Spheres
+
+- Cylinders (spherically isotropic)
+
+- Ellipsoids (spherically isotropic)
+
+- Core-shell spheres and ellipsoids
+
+- Gaussian chain
+
+- Kholodenko worm
+
+- Densely packed spheres (LMA-PY structure factor). 
 
 ### Current status ###
 The package is currently in beta state, no major issues remain with this version and it should run on a Python 2.7 installation (also works on Enthough Canopy Python).
@@ -26,11 +33,16 @@ A quick start guide and example data is included in the "doc"-directory that com
 
 ### Requirements ###
 To run McSAS from the source code repository (i.e. using a Python interpreter), the following items are required:
-* [Python (latest 2.7 branch)](https://www.python.org/downloads/), with the following packages:
-* [Numpy](http://www.scipy.org/scipylib/download.html) 
-* [Scipy](http://www.scipy.org/scipylib/download.html) 
-* [matplotlib](http://matplotlib.org/downloads.html) 
-* [PySide](http://qt-project.org/wiki/PySide) 
+
+- [Python (latest 2.7 branch)](https://www.python.org/downloads/), with the following packages:
+
+- [Numpy](http://www.scipy.org/scipylib/download.html) 
+
+- [Scipy](http://www.scipy.org/scipylib/download.html) 
+
+- [matplotlib](http://matplotlib.org/downloads.html) 
+
+- [PySide](http://qt-project.org/wiki/PySide) 
 
 ### Installation on systems with a working Python distribution ###
 For those unfamiliar with the Git versioning system, it is recommended to start by installing Altassian SourceTree (and perhaps reading [Bitbucket 101](https://confluence.atlassian.com/display/BITBUCKET/Bitbucket+101) ). 
@@ -39,7 +51,13 @@ This is a GUI around the Git versioning system that simplifies the usage and all
 Using the "clone" button on the top left side of this page, you can download a copy of the latest version. 
 Make sure when downloading to select the "restructuring"-branch. 
 Following this, McSAS can be started on Unix(-like) systems by opening a terminal window, changing directory to the location of McSAS, and typing 
+
+```
+#!shell
+
 $ ./main.py
+```
+
 On Windows systems, double-clicking the "main.py" file should open python and start McSAS.
 
 ### Standalone packages ###
