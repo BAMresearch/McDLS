@@ -15,7 +15,7 @@ import sys, os
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-# mock out the imports depend on C modules for readthedocs.org
+# mock out the imports depending on C modules for readthedocs.org
 class Mock(object):
     def __init__(self, *args, **kwargs):
         pass
@@ -36,12 +36,26 @@ class Mock(object):
 
     # some placeholders accessed on mocked modules
     inf = 1e300
+    pi = 3.14
     rcParams = dict()
+
+    @staticmethod
+    def array(value):
+        return value
+
+    @staticmethod
+    def clip(value, minv, maxv):
+        def limit(v):
+            return min(max(v, minv), maxv)
+        if isinstance(value, (tuple, list)):
+            return [limit(v) for v in value]
+        else:
+            return limit(value)
 
 # mock missing modules in readthedocs.org environment not required for docs
 for mod_name in ('scipy', 'numpy', 'numpy.ma', 'matplotlib',
                  'matplotlib.font_manager', 'matplotlib.pyplot', 'pylab',
-                 'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml'):
+                 'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'gui.qt'):
     sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
