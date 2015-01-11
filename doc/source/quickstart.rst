@@ -67,6 +67,7 @@ to 1%, as that is a practically demonstrated limit of SAS data accuracy.
 ============================
 The algorithm uses several internal parameters. Some of these can be adjusted 
 in the "Algorithm"-tab of the user interface. They are: 
+
   1. The convergence criterion. If the uncertainty estimates provided with the 
      data are not accurate, or if the fitting model chosen is unsuitable or 
      incompletely descriptive, the algorithm may not arrive at a final solution
@@ -137,6 +138,7 @@ estimates). These are valid for the entire range, and are calculated from the
 individual contributions (not from the histogram). 
 If we want to find the values for the individual populations, we need to set the
 correct ranges in the Post-fit Analysis list: 
+
     1. 3.14 - 20, (binning e.g. 20 bins, linearly spaced, volume-weighted)
     2. 20  -  75, (binning for example as above)
     3. 75  - 150, (ibid.)
@@ -163,6 +165,7 @@ In the directory that the "quickstartdemo1.csv"-file was located, you will find
 several more files after a successful fit. These are the automatically saved 
 results. They all contain a timestamp on when the fit was performed. 
 Files with an asterisk are only present if the fit was successful. They are:
+
   1. quickstartdemo1_[timestamp].pdf*: the autosaved plot
   2. quickstartdemo1_[timestamp]_log.txt: the fitting log window.
   3. quickstartdemo1_[timestamp]_contributions.pickle*: A pickled list of raw 
@@ -190,6 +193,7 @@ Good luck!
 ==============================
 SASfit version 0.94.5, precompiled Mac OS X version.
 quickstartdemo1.csv: 
+
     1. Spheres, gaussian dist, N = 0.00105, S = 10, X0 = 100, eta = 1.
     2. Spheres, gaussian dist, N = 0.0135,  S = 10, X0 = 40,  eta = 1.
     3. Spheres, gaussian dist, N = 0.4,     S = 3,  X0 = 8,   eta = 1.
