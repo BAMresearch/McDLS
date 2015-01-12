@@ -23,7 +23,6 @@ Submodules
    mcsas.main
    mcsas.mcsas_test
    mcsas.sasdata
-   mcsas.test_rand
 
 Module contents
 ---------------
