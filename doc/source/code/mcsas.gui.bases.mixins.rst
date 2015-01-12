@@ -4,30 +4,11 @@ mcsas.gui.bases.mixins package
 Submodules
 ----------
 
-mcsas.gui.bases.mixins.contextmenuwidget module
------------------------------------------------
+.. toctree::
 
-.. automodule:: mcsas.gui.bases.mixins.contextmenuwidget
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.bases.mixins.dropwidget module
-----------------------------------------
-
-.. automodule:: mcsas.gui.bases.mixins.dropwidget
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.bases.mixins.titlehandler module
-------------------------------------------
-
-.. automodule:: mcsas.gui.bases.mixins.titlehandler
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mcsas.gui.bases.mixins.contextmenuwidget
+   mcsas.gui.bases.mixins.dropwidget
+   mcsas.gui.bases.mixins.titlehandler
 
 Module contents
 ---------------

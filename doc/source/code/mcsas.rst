@@ -16,54 +16,14 @@ Subpackages
 Submodules
 ----------
 
-mcsas.autobuild module
-----------------------
+.. toctree::
 
-.. automodule:: mcsas.autobuild
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.cxfreeze module
----------------------
-
-.. automodule:: mcsas.cxfreeze
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.main module
------------------
-
-.. automodule:: mcsas.main
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.mcsas_test module
------------------------
-
-.. automodule:: mcsas.mcsas_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.sasdata module
---------------------
-
-.. automodule:: mcsas.sasdata
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.test_rand module
-----------------------
-
-.. automodule:: mcsas.test_rand
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mcsas.autobuild
+   mcsas.cxfreeze
+   mcsas.main
+   mcsas.mcsas_test
+   mcsas.sasdata
+   mcsas.test_rand
 
 Module contents
 ---------------

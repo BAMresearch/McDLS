@@ -11,54 +11,14 @@ Subpackages
 Submodules
 ----------
 
-mcsas.gui.utils.dialoginteraction module
-----------------------------------------
+.. toctree::
 
-.. automodule:: mcsas.gui.utils.dialoginteraction
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.utils.displayexception module
----------------------------------------
-
-.. automodule:: mcsas.gui.utils.displayexception
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.utils.filedialog module
----------------------------------
-
-.. automodule:: mcsas.gui.utils.filedialog
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.utils.progressdialog module
--------------------------------------
-
-.. automodule:: mcsas.gui.utils.progressdialog
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.utils.signal module
------------------------------
-
-.. automodule:: mcsas.gui.utils.signal
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.utils.translate module
---------------------------------
-
-.. automodule:: mcsas.gui.utils.translate
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mcsas.gui.utils.dialoginteraction
+   mcsas.gui.utils.displayexception
+   mcsas.gui.utils.filedialog
+   mcsas.gui.utils.progressdialog
+   mcsas.gui.utils.signal
+   mcsas.gui.utils.translate
 
 Module contents
 ---------------

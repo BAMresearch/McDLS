@@ -4,30 +4,11 @@ mcsas.bases.datafile package
 Submodules
 ----------
 
-mcsas.bases.datafile.asciifile module
--------------------------------------
+.. toctree::
 
-.. automodule:: mcsas.bases.datafile.asciifile
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.bases.datafile.datafile module
-------------------------------------
-
-.. automodule:: mcsas.bases.datafile.datafile
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.bases.datafile.pdhfile module
------------------------------------
-
-.. automodule:: mcsas.bases.datafile.pdhfile
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mcsas.bases.datafile.asciifile
+   mcsas.bases.datafile.datafile
+   mcsas.bases.datafile.pdhfile
 
 Module contents
 ---------------

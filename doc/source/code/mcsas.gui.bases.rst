@@ -12,46 +12,13 @@ Subpackages
 Submodules
 ----------
 
-mcsas.gui.bases.datalist module
--------------------------------
+.. toctree::
 
-.. automodule:: mcsas.gui.bases.datalist
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.bases.dockwidget module
----------------------------------
-
-.. automodule:: mcsas.gui.bases.dockwidget
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.bases.logwidget module
---------------------------------
-
-.. automodule:: mcsas.gui.bases.logwidget
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.bases.settingswidget module
--------------------------------------
-
-.. automodule:: mcsas.gui.bases.settingswidget
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.bases.settingswidget_test module
-------------------------------------------
-
-.. automodule:: mcsas.gui.bases.settingswidget_test
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mcsas.gui.bases.datalist
+   mcsas.gui.bases.dockwidget
+   mcsas.gui.bases.logwidget
+   mcsas.gui.bases.settingswidget
+   mcsas.gui.bases.settingswidget_test
 
 Module contents
 ---------------

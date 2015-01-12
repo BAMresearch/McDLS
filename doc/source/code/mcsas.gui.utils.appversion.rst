@@ -4,22 +4,10 @@ mcsas.gui.utils.appversion package
 Submodules
 ----------
 
-mcsas.gui.utils.appversion.appversion module
---------------------------------------------
+.. toctree::
 
-.. automodule:: mcsas.gui.utils.appversion.appversion
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mcsas.gui.utils.appversion.qappversion module
----------------------------------------------
-
-.. automodule:: mcsas.gui.utils.appversion.qappversion
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   mcsas.gui.utils.appversion.appversion
+   mcsas.gui.utils.appversion.qappversion
 
 Module contents
 ---------------

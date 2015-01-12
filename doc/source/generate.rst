@@ -32,7 +32,7 @@ The entry point ``index.html`` can be found in ``<mcsas>/doc/_build/html/``.
 Update Source Code Documentation
 ================================
 ::
-    $ sphinx-apidoc -H MCSAS -f -o doc/source/code .
+    $ sphinx-apidoc --separate --force --doc-project=MCSAS --output-dir=doc/source/code .
 
 This command automatically generates sphinx documentation files for all
 source code files in the directory. It assumes the current working
