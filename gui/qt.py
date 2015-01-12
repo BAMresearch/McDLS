@@ -3,7 +3,6 @@
 
 from __future__ import absolute_import # PEP328
 
-__all__ = ["QtGui", "QtCore", "QtSvg", "QtXml"]
 #QTLIB = "PyQt4"
 QTLIB = "PySide"
 try:
@@ -20,10 +19,16 @@ import importlib
 thismodule = sys.modules[__name__]
 
 # make qt modules available to be imported from this file/module
-for libname in __all__:
-    mod = importlib.import_module(".{0}".format(libname), QTLIB)
-    sys.modules[libname] = mod
-    setattr(thismodule, libname, mod)
+def provideQModules():
+    for libname in ["QtGui", "QtCore", "QtSvg", "QtXml"]:
+        mod = importlib.import_module(".{0}".format(libname), QTLIB)
+        sys.modules[libname] = mod
+        setattr(thismodule, libname, mod)
+
+try:
+    provideQModules()
+except ImportError: # works around sphinx docs error
+    pass
 
 def pluginDirs():
     libpath = sys.modules[QTLIB].__path__ # PySide.__path__

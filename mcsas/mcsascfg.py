@@ -22,7 +22,7 @@ __date__ = "2013-12-21"
 __status__ = "alpha"
 version = "0.0.1"
 
-from mcsas.mcsasdefaultcfg import cInfo
+from mcsasdefaultcfg import cInfo
 
 # instantiate a parameters class filled with defaults
 parameters = cInfo()

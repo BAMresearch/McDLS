@@ -5,6 +5,7 @@ import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import ScatteringModel
+from utils.units import Length, Angle
 
 # parameters must not be inf
 
@@ -25,9 +26,9 @@ class CylindersIsotropic(ScatteringModel):
                     valueRange = (0., numpy.inf),
                     activeRange = (1.0, 20),
                     suffix = "-"),
-            FitParameter("psiAngle", Angle("°").toSi(10.), unit = Angle("°"),
+            FitParameter("psiAngle", Angle(u"˚").toSi(10.), unit = Angle(u"˚"),
                     displayName = "in-plane cylinder rotation",
-                    valueRange = (0., Angle("°").toSi(180.))),
+                    valueRange = (0., Angle(u"˚").toSi(180.))),
             FitParameter("psiAngleDivisions", 303.,
                     displayName = "in-plane angle divisions",
                     valueRange = (0, numpy.inf), suffix = "-"),

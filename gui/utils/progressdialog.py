@@ -2,7 +2,7 @@
 # gui/utils/progressdialog.py
 
 from __future__ import absolute_import # PEP328
-from utils.translate import tr
+from gui.utils.translate import tr
 from gui.utils import processEventLoop
 from gui.qt import QtGui, QtCore
 from QtCore import Qt

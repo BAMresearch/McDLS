@@ -25,9 +25,9 @@ from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
 from gui.utils import processEventLoop
 
-from mcsas.plotting import PlotResults
+from . import PlotResults
+from . import McSASParameters
 from sasdata import SASData
-from mcsas.mcsasparameters import McSASParameters
 
 class McSAS(AlgorithmBase):
     r"""
