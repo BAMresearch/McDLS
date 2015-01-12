@@ -111,8 +111,10 @@ autodoc_default_flags = ['members', 'undoc-members' ]
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 rootpath = __file__
+print "__file__", __file__
 for i in range(0, 3):
     rootpath = os.path.dirname(rootpath)
+print "rootpath", rootpath
 sys.path.insert(0, rootpath)
 sys.path.insert(0, os.path.dirname(rootpath))
 print sys.path
