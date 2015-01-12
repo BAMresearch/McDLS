@@ -84,7 +84,7 @@ for mod_name in ('numpy', 'numpy.ma',
                  'matplotlib', 'matplotlib.font_manager', 'matplotlib.pyplot',
                  'pylab',
                  'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'gui.qt',
-                 'requests'):
+                 'requests', 'nose.tools', 'cx_Freeze'):
     sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
@@ -111,21 +111,19 @@ autodoc_default_flags = ['members', 'undoc-members' ]
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 rootpath = __file__
-print "__file__", __file__
 for i in range(0, 3):
     rootpath = os.path.dirname(rootpath)
-print "rootpath", rootpath
+
 if os.path.basename(rootpath) != "mcsas":
     # last component is not 'mcsas': sphinx will not find modules
+    # create a symlink 'mcsas' pointing to the actual rootpath
     parent = os.path.dirname(rootpath)
     os.chdir(parent)
     os.symlink(rootpath, "mcsas")
     rootpath = os.path.join(parent, "mcsas")
-    print "new rootpath", rootpath, "exists", os.path.exists(rootpath)
 
 sys.path.insert(0, rootpath)
 sys.path.insert(0, os.path.dirname(rootpath))
-print sys.path
 
 # patch problematic methods which may raise NotImplementedError
 import mcsas.utils.units
