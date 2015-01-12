@@ -98,9 +98,8 @@ def warn_undocumented_members(app, what, name, obj, options, lines):
         lines.append(".. Warning:: %s '%s' undocumented" % (what, name))
 
 def maybe_skip_member(app, what, name, obj, skip, options):
-    return False
-    print >>sys.__stderr__, app, what, name, obj, skip, options
-    return False
+#    print >>sys.__stderr__, app, what, name, obj, skip, options
+    return skip
 
 def setup(app):
     app.connect('autodoc-process-docstring', warn_undocumented_members);
@@ -154,7 +153,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'McSAS'
-copyright = u'2013, Brian R. Pauw'
+copyright = u'2015, Brian R. Pauw'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -187,7 +186,7 @@ exclude_patterns = ['_build']
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -197,7 +196,7 @@ exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+modindex_common_prefix = ['mcsas.']
 
 # append __init__(self) doctring to class docstring
 autoclass_content = 'both'
