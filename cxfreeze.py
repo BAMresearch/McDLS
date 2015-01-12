@@ -289,14 +289,6 @@ if __name__ == "__main__":
             "scipy.integrate.vode",
             "scipy.integrate.lsoda",
         ]
-        BUILDOPTIONS["bin_includes"] = [
-            "libpyside-python2.7.1.1.dylib",
-            "libshiboken-python2.7.1.1.dylib",
-        ]
-        if False:
-            BUILDOPTIONS["replace_paths"] = [
-            ]
-        #BUILDOPTIONS["copy_dependent_files"] = False
 
     setup(
         name = version.name(),
