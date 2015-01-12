@@ -28,16 +28,25 @@ class Mock(object):
         if name in ('__file__', '__path__'):
             return '/dev/null'
         elif name[0] == name[0].upper():
-            mockType = type(name, (), {})
+            mockType = type(name, (Mock,), locals())
             mockType.__module__ = __name__
             return mockType
         else:
             return Mock()
 
+    def __getitem__(self, dummy):
+        return type('Mock', (Mock,), locals())
+
     # some placeholders accessed on mocked modules
     inf = 1e300
     pi = 3.14
     rcParams = dict()
+    __version__ = "2.2.1"
+    Question = None
+    Information = None
+    Warning = None
+    Critical = None
+    pyqtSlot = None
 
     @staticmethod
     def array(value):
@@ -52,10 +61,30 @@ class Mock(object):
         else:
             return limit(value)
 
+    @staticmethod
+    def setApplicationName(dummy): pass
+    @staticmethod
+    def setApplicationVersion(dummy): pass
+    @staticmethod
+    def setOrganizationName(dummy): pass
+    @staticmethod
+    def setOrganizationDomain(dummy): pass
+    @staticmethod
+    def translate(dummy, dummy0): pass
+    @staticmethod
+    def connect(*args): pass
+    @staticmethod
+    def children(*args): return []
+
+Mock.pyqtSignal = Mock
+
 # mock missing modules in readthedocs.org environment not required for docs
-for mod_name in ('scipy', 'numpy', 'numpy.ma', 'matplotlib',
-                 'matplotlib.font_manager', 'matplotlib.pyplot', 'pylab',
-                 'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'gui.qt'):
+for mod_name in ('numpy', 'numpy.ma',
+                 'scipy', 'scipy.special', 'scipy.integrate', 'scipy.stats',
+                 'matplotlib', 'matplotlib.font_manager', 'matplotlib.pyplot',
+                 'pylab',
+                 'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'gui.qt',
+                 'requests'):
     sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
@@ -68,15 +97,32 @@ def warn_undocumented_members(app, what, name, obj, options, lines):
         # or modify the docstring so the rendered output is highlights the omission
         lines.append(".. Warning:: %s '%s' undocumented" % (what, name))
 
+def maybe_skip_member(app, what, name, obj, skip, options):
+    return False
+    print >>sys.__stderr__, app, what, name, obj, skip, options
+    return False
+
 def setup(app):
     app.connect('autodoc-process-docstring', warn_undocumented_members);
+    app.connect('autodoc-skip-member', maybe_skip_member)
 
 autodoc_default_flags = ['members', 'undoc-members' ]
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
+rootpath = __file__
+for i in range(0, 3):
+    rootpath = os.path.dirname(rootpath)
+sys.path.insert(0, rootpath)
+sys.path.insert(0, os.path.dirname(rootpath))
+print sys.path
+
+# patch problematic methods which may raise NotImplementedError
+import mcsas.utils.units
+mcsas.utils.units.Unit.siMagnitudeName = lambda cls: ""
+mcsas.utils.units.Unit.siMagnitude = lambda cls: ""
+mcsas.utils.units.Unit.magnitudeMapping = lambda cls: {}
 
 # -- General configuration -----------------------------------------------------
 

@@ -29,4 +29,13 @@ Generate HTML pages
 
 The entry point ``index.html`` can be found in ``<mcsas>/doc/_build/html/``.
 
+Update Source Code Documentation
+================================
+::
+    $ sphinx-apidoc -H MCSAS -f -o doc/source/code .
+
+This command automatically generates sphinx documentation files for all
+source code files in the directory. It assumes the current working
+directory is the MCSAS root directory.
+
 .. vim: set ts=4 sts=4 sw=4 tw=0:
