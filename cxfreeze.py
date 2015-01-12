@@ -1,9 +1,84 @@
 # -*- coding: utf-8 -*-
 # cxfreeze.py
-#
-# Usage on target platform:
-#  python cxfreeze.py build_exe
-# tested on Windows with MinGW/MSYS
+
+"""
+Overview
+========
+
+Creates a standalone program package for a particular platform to be by
+restricted users.
+
+This script is executable and has to be run on the platform for which a
+package shall be created. Please follow the instructions below for each
+particular platform.
+
+Common Package Dependencies:
+    - `Python 2.7 <https://www.python.org/download/releases/2.7/>`_
+    - `Qt 4.8 <http://qt-project.org/doc/qt-4.8/qt4-8-intro.html>`_ + `PySide <http://qt-project.org/wiki/Category:LanguageBindings::PySide::Downloads>`_
+    - | `NumPy and SciPy <http://www.scipy.org/scipylib/download.html>`_
+      | In order to work around freeze failures with newer versions it is
+        recommended to stick with Numpy 1.7 and SciPy 1.12 which was tested
+        successfully.
+    - `matplotlib <http://matplotlib.org/downloads.html>`_
+
+In addition to the dependencies of the MCSAS package listed above the
+`cx_Freeze package <http://cx-freeze.readthedocs.org/en/latest/>`_
+is used for freezing the python source code structure into a standalone
+package.
+
+Windows
+-------
+A self-contained archive consisting of ``MCSAS.exe`` and all necessary
+libraries and files is created by::
+
+    $ python cxfreeze.py build_exe
+
+This command is executed in a MinGW/MSYS environment which provides a shell
+on Windows similar to Linux.
+
+Mac OS X
+--------
+A disk image file (.dmg) consisting of the application bundle is created by::
+
+    $ python cxfreeze.py bdist_dmg
+
+Alternatively, for testing purposes the bundle can be created without
+packaging into a disk image by::
+
+    $ python cxfreeze.py bdist_mac
+
+Requirements
+^^^^^^^^^^^^
+The last successful test was accomplished with the following packages on a
+clean installation of OS X 10.8:
+
+    - | Xcode command line tools: for build essentials such as a compiler
+      | ( `xcode461_cltools_10_86938245a.dmg <https://developer.apple.com/downloads/download.action?path=Developer_Tools/command_line_tools_os_x_mountain_lion_for_xcode__march_2013/xcode461_cltools_10_86938245a.dmg>`_ )
+
+    - `Python 2.7.9 <https://www.python.org/ftp/python/2.7.9/python-2.7.9-macosx10.6.pkg>`_
+
+    - `Qt 4.8.6 <http://download.qt.io/official_releases/qt/4.8/4.8.6/qt-opensource-mac-4.8.6-1.dmg>`_
+
+    - `PySide 1.2.1 / Qt 4.8 <http://pyside.markus-ullmann.de/pyside-1.2.1-qt4.8.5-py27apple-developer-signed.pkg>`_
+
+    - `NumPy 1.7.1 <http://downloads.sourceforge.net/project/numpy/NumPy/1.7.1/numpy-1.7.1-py2.7-python.org-macosx10.6.dmg>`_
+
+    - `matplotlib 1.4.2 <https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.4.2/mac/matplotlib-1.4.2-cp27-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.whl>`_
+
+    - `a modified cx_Freeze 4.3.4 <https://bitbucket.org/ibressler/cx_freeze>`_
+      with local modifications for successful app freezing on OS X
+
+Ubuntu/Linux
+------------
+Similar to the procedure on Windows a self-contained archive containing all
+necessary libraries and files is created by::
+
+    $ python cxfreeze.py build_exe
+
+
+Internals
+=========
+"""
 
 import sys
 import gui.version
