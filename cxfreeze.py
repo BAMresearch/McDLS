@@ -5,8 +5,8 @@
 Overview
 ========
 
-Creates a standalone program package for a particular platform to be by
-restricted users.
+Creates a standalone program package for a particular platform to be run by
+restricted users without installing any additional packages.
 
 This script is executable and has to be run on the platform for which a
 package shall be created. Please follow the instructions below for each
