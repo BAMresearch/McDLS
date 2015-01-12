@@ -24,14 +24,6 @@ mcsas.autobuild module
     :undoc-members:
     :show-inheritance:
 
-mcsas.compare module
---------------------
-
-.. automodule:: mcsas.compare
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 mcsas.cxfreeze module
 ---------------------
 
