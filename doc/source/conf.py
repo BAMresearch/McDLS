@@ -309,8 +309,10 @@ latex_documents = [
 
 # removes obsolete empty pages in pdf
 latex_elements = {
-  'classoptions': ',openany,oneside',
-  'babel': '\\usepackage[english]{babel}',
+    'classoptions': ',openany,oneside',
+    'babel': '\\usepackage[english]{babel}',
+    # fix for superscript minus utf8 char:
+    'preamble': u'\\DeclareUnicodeCharacter{207B}{$^{-}$}',
 }
 
 # The name of an image file (relative to this directory) to place at the top of
