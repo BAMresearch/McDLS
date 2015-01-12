@@ -118,9 +118,11 @@ if os.path.basename(rootpath) != "mcsas":
     # last component is not 'mcsas': sphinx will not find modules
     # create a symlink 'mcsas' pointing to the actual rootpath
     parent = os.path.dirname(rootpath)
+    newpath = os.path.join(parent, "mcsas")
+    if os.path.exists(newpath):
+        os.remove(newpath)
     os.chdir(parent)
-    os.symlink(rootpath, "mcsas")
-    rootpath = os.path.join(parent, "mcsas")
+    os.symlink(rootpath, os.path.basename(newpath))
 
 sys.path.insert(0, rootpath)
 sys.path.insert(0, os.path.dirname(rootpath))
