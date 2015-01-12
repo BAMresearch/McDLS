@@ -212,38 +212,39 @@ class BitbucketClient(object):
             creds = fd.read()
         return creds.split()
 
-#bb = BitbucketClient("pkwasniew/mcsas")
-#print bb.upload(os.path.abspath("McSASGui-2014-05-21_19-35-17-restructuring-bb8c02e.7z"))
-#sys.exit(0)
+if __name__ == "__main__":
+    #bb = BitbucketClient("pkwasniew/mcsas")
+    #print bb.upload(os.path.abspath("McSASGui-2014-05-21_19-35-17-restructuring-bb8c02e.7z"))
+    #sys.exit(0)
 
-testForGit()
-clone()
-WORKDIR = os.path.join(WORKDIR, DIRNAME)
-branch = getLatestBranch()
-checkout(branch)
-datetime = getDateTime()
-hash = getHash()
-basename = "{DIRNAME} {datetime} {branch} {hash}".format(**locals())
-logging.info(basename)
-checksum, fn = freeze(datetime, branch, hash)
-fn = os.path.join(WORKDIR, fn)
-logging.info("Created package '{0}'.".format(fn))
-if os.path.isfile(fn):
-    logging.info("exists")
+    testForGit()
+    clone()
+    WORKDIR = os.path.join(WORKDIR, DIRNAME)
+    branch = getLatestBranch()
+    checkout(branch)
+    datetime = getDateTime()
+    hash = getHash()
+    basename = "{DIRNAME} {datetime} {branch} {hash}".format(**locals())
+    logging.info(basename)
+    checksum, fn = freeze(datetime, branch, hash)
+    fn = os.path.join(WORKDIR, fn)
+    logging.info("Created package '{0}'.".format(fn))
+    if os.path.isfile(fn):
+        logging.info("exists")
 
-# TODO: let freeze output the created file, upload it below
-# further:
-#   - setup logging into a file, outside with python stderr eventually?
-#     -> push it to a special branch ('buildlogs' or similar)
-#     -> make it available via https://readthedocs.org/projects/mcsas/
-#        (allows some formatting)
-#   - same goes for reports of automated tests later
-#     -> will be plugged in right after cloning
+    # TODO: let freeze output the created file, upload it below
+    # further:
+    #   - setup logging into a file, outside with python stderr eventually?
+    #     -> push it to a special branch ('buildlogs' or similar)
+    #     -> make it available via https://readthedocs.org/projects/mcsas/
+    #        (allows some formatting)
+    #   - same goes for reports of automated tests later
+    #     -> will be plugged in right after cloning
 
-#bb = BitbucketClient("pkwasniew/mcsas")
-#print bb.upload(os.path.abspath("README.md"))
-#url = self.upload("/home/ingo/code/mcsas/McSASGui-2014-05-19_19-47-53-restructuring-157d5b5.7z")
+    #bb = BitbucketClient("pkwasniew/mcsas")
+    #print bb.upload(os.path.abspath("README.md"))
+    #url = self.upload("/home/ingo/code/mcsas/McSASGui-2014-05-19_19-47-53-restructuring-157d5b5.7z")
 
-waitForUser()
+    waitForUser()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
