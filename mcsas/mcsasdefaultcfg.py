@@ -86,13 +86,13 @@ class cInfo(object):
         """
         with open(fname, 'r') as jfile:
             logging.info('loading parameters from file: {}'.format(fname))
-            parDict=json.load(jfile)
+            parDict = json.load(jfile)
 
         if self.parameters is None:
-            #create if it does not exist yet
-            self.parameters=lambda: None
+            # create if it does not exist yet
+            self.parameters = lambda: None
 
-        #now we cast this information into the Parameter class:
+        # now we cast this information into the Parameter class:
         for kw in parDict.keys():
             subDict = parDict[kw]
             name = kw
@@ -100,7 +100,7 @@ class cInfo(object):
             default = subDict.pop("default", None)
             if value is None and default is not None:
                 value = default
-            #determine parameter class:
+            # determine parameter class:
             cls = subDict.pop("cls", None)
             if cls == "int":
                 subDict.update(cls = ParameterNumerical)
@@ -111,7 +111,8 @@ class cInfo(object):
             elif cls == "str": 
                 subDict.update(cls = ParameterString)
             else:
-                logging.warning('parameter type {} for parameter {} not understood from {}'.format(cls, kw, fname ))
+                logging.warning('parameter type {} for parameter {} not '
+                                ' understood from {}'.format(cls, kw, fname))
 
             if kw in self.parameterNames:
                 #value exists, should be updated with supplied kwargs

@@ -6,11 +6,12 @@ class classproperty(property):
     Subclass property to make classmethod properties possible.
 
     Use it like this:
+    ::
 
-    @classproperty
-    @classmethod
-    def var(cls):
-        <code>
+        @classproperty
+        @classmethod
+        def var(cls):
+            <code>
 
     Getters only, see
     http://stackoverflow.com/questions/128573/using-property-on-classmethods

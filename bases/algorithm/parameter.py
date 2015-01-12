@@ -560,14 +560,15 @@ def factory(name, value, paramTypes = None, **kwargs):
     class for the resulting Parameter class type. Make sure in this case,
     all attributes mandatory for this base type are provided too.
 
-    *name*: short name of the new parameter without spaces
-    *value*: default value from which the type is derived if cls is not given
+    - *name*: short name of the new parameter without spaces
+    - *value*: default value from which the type is derived if cls is not given
 
     Optional arguments:
-    *paramTypes*:  tuple of available parameter types instead of the default
-    *cls*:         forces a certain Parameter type.
-    *description*: Updates the __doc__ attribute. May be displayed in the UI
-                   somewhere.
+
+    - *paramTypes*:  tuple of available parameter types instead of the default
+    - *cls*:         forces a certain Parameter type.
+    - *description*: Updates the __doc__ attribute. May be displayed in the UI
+                     somewhere.
     """
     kwargs.update(name = name, value = value)
     name = kwargs.get("name", None)

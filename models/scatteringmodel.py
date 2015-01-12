@@ -140,13 +140,13 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         to contain the parameter values which produce the provided intensity.
         Otherwise implement fixTestParams() for the particular model.
 
-        *filename*: Name of the file in cls.testDataDir to test against.
-        *cls.testRelErr*: Acceptable mean of relative error against reference
-                          intensity. Default: 1e-5
-        *cls.testVolExp*: Volume compensation exponent, sets the amount of
-                          volume contribution the intensity is scaled by.
-        *cls.testDataDir*: Directory of test data relative to program dir.
-                           Default: "testdata"
+        - *filename*: Name of the file in cls.testDataDir to test against.
+        - *cls.testRelErr*: Acceptable mean of relative error against reference
+                            intensity. Default: 1e-5
+        - *cls.testVolExp*: Volume compensation exponent, sets the amount of
+                            volume contribution the intensity is scaled by.
+        - *cls.testDataDir*: Directory of test data relative to program dir.
+                             Default: "testdata"
         """
         relerr = getattr(cls, "testRelErr", 1e-5)
         datadir = getattr(cls, "testDataDir", "testdata")

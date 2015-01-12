@@ -7,9 +7,10 @@ Some default magnitude-name dictionaries are provided, but the user can
 supply their own dictionary if required. Default unit to translate to 
 must be set.
 Required keyword arguments:
-*magnitudedict*: a dictionary of magnitude - name pairs. Names must be 
-    unicode strings.
-*simagnitudename*: the si magnitude name
+
+    - *magnitudedict*: a dictionary of magnitude - name pairs. Names must be
+                       unicode strings.
+    - *simagnitudename*: the si magnitude name.
 
 Example usage: 
 
@@ -67,13 +68,13 @@ class Unit(object):
 
     @classproperty
     @classmethod
-    # _siMagnitudeName and thus cls.siMagnitudeName is defined for each subclass
+    # see _siMagnitudeName and thus cls.siMagnitudeName is defined for each subclass
     def siMagnitude(cls):
         return cls.magnitude(cls.siMagnitudeName)
 
     @classproperty
     @classmethod
-    # _siMagnitudeName is defined for each subclass
+    # see _siMagnitudeName is defined for each subclass
     def siMagnitudeName(cls):
         if cls._siMagnitudeName is None:
             raise NotImplementedError
@@ -112,13 +113,16 @@ class Unit(object):
         """
         Scaling factor to move from display magnitude to si units.
         Required display argument:
-        *displaymagnitudename* : The name of the magnitude to convert from
-        Optional display argument:
-        *simagnitudename* : The name of the magnitude to convert to. 
-            Defaults to self.siMagnitudeName
 
-        Returns: 
-        *float* : A scaling factor for display unit to scale to si unit.
+            *displaymagnitudename* : The name of the magnitude to convert from
+
+        Optional display argument:
+
+            *simagnitudename* : The name of the magnitude to convert to.
+                                Defaults to self.siMagnitudeName
+
+        Returns:
+            *float* : A scaling factor for display unit to scale to si unit.
         """
         # find display units:
         iUnit = self.magnitudeMapping[self.displayMagnitudeName]

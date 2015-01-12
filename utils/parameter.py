@@ -63,8 +63,9 @@ class Moments(object):
 
     def _setValidRange(self, contribs, valueRange):
         """Calculate contributions mask to be within the given value range.
-        contribs: parameter value sets of shape
-                  <number of contributions x number of repetitions>
+
+        - contribs: parameter value sets of shape
+                    <number of contributions x number of repetitions>
         """
         testfor(contribs.ndim == 2, ValueError)
         numContribs, numReps = contribs.shape
@@ -78,9 +79,11 @@ class Moments(object):
     def _calcMoments(self, contribs, fraction):
         """Calculates the moments of the distribution of the current
         particular (implied) parameter.
-        contribs: parameter value sets of shape
-                  <number of contributions x number of repetitions>
-        fraction: number or volume fraction
+
+        - *contribs*: parameter value sets of shape
+                      <number of contributions x number of repetitions>
+        - *fraction*: number or volume fraction
+
         """
         numContribs, numReps = contribs.shape
         val = np.zeros(numReps)

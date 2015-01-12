@@ -48,6 +48,7 @@ class McSAS(AlgorithmBase):
         - *compensationExponent*: float, default: :math:`1.5 \over 3`
             Parameter used to compensate the :math:`volume^2` scaling of each
             sphere contribution to the simulated I(q).
+
         For more settings, see mcsas/mcsasparameters.json
 
     **Returns:**

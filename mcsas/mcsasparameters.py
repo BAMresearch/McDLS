@@ -14,7 +14,8 @@ from main import makeAbsolutePath
 logging.basicConfig(level = logging.INFO)                                      
 
 class McSASParameters(PropertyNames):
-    """Defines the static parameters used for the fitting procedure:
+    """
+    Defines the static parameters used for the fitting procedure:
         - *model*: an instance of McSAS.model defining the fitting model
         - *contribParamBounds*: Bounds of the active (fitting) parameter
         - *qBounds*: limits in *q* between which the fit is applied
@@ -47,30 +48,30 @@ class McSASParameters(PropertyNames):
             this integer of times.
         - *maskNegativeInt*: may be depreciated due to overlap with similar 
             functionality in the McSAS.data molule. Setting this will ignore 
-            datapoints with intensity values <0
-        - *maskZeroInt*: similar to above, but for intensity values =0
+            datapoints with intensity values < 0
+        - *maskZeroInt*: similar to above, but for intensity values = 0
         - *doPlot*: sets whether to automatically plot or not
 
-       Most of them should be moved to McSAS as dynamic parameters of type
-       *Parameter* which allows them to be configurable in the GUI.
-       Some, esp. *histogramBins* and *histogramXScale* should be moved to
-       a custom *FitParameter* class along with the *active* flag. (WIP)
-       
-       #######################
-       Extension in progress: the class can take keyword-value pairs to 
-       overwrite (some of) the parameter values. Additionally, a default
-       configuration file (json-style) can be provided using kwarg:
-       paramDefFile = 'path/to/file'
-       A (limited) set of custom parameters can be supplied in another i
-       configuration file that overwrite the defaults: 
-       paramFile = 'path/to/file'
-       The order is:
-       - default file, whose values are superseded by
-       - custom file, whose values are superseded by
-       - keyword-value pairs, which only set parameter *values*, or
-       - keyword-dict pairs, which sets parameter attributes as defined in the
-            supplied dictionary
+    Most of them should be moved to McSAS as dynamic parameters of type
+    *Parameter* which allows them to be configurable in the GUI.
+    Some, esp. *histogramBins* and *histogramXScale* should be moved to
+    a custom *FitParameter* class along with the *active* flag. (WIP)
 
+    Extension in progress: the class can take keyword-value pairs to 
+    overwrite (some of) the parameter values. Additionally, a default
+    configuration file (json-style) can be provided using kwarg:
+    ``paramDefFile = 'path/to/file'``
+    A (limited) set of custom parameters can be supplied in another
+    configuration file that overwrite the defaults:
+    ``paramFile = 'path/to/file'``
+
+    The order is:
+
+        - default file, whose values are superseded by
+        - custom file, whose values are superseded by
+        - keyword-value pairs, which only set parameter *values*, or
+        - keyword-dict pairs, which sets parameter attributes as defined in
+          the supplied dictionary
     """
     # set old-style defaults
     model = None

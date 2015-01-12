@@ -22,6 +22,9 @@ def getScriptPath():
 SCRIPT_PATH, SCRIPT_FILENAME = getScriptPath()
 if not hasattr(sys, "frozen") and SCRIPT_PATH not in sys.path:
     sys.path.append(SCRIPT_PATH)
+    # FIXME? sphinx assumes the upper directory as root,
+    # prefixes every module path with *mcsas*
+    # -> do it the same way? Would simplify some things ...
 
 import argparse
 import logging
