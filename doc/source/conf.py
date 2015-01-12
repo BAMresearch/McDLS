@@ -115,6 +115,7 @@ for i in range(0, 3):
     rootpath = os.path.dirname(rootpath)
 sys.path.insert(0, rootpath)
 sys.path.insert(0, os.path.dirname(rootpath))
+print sys.path
 
 # patch problematic methods which may raise NotImplementedError
 import mcsas.utils.units
