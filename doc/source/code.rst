@@ -4,10 +4,19 @@
 Source Code Documentation
 *************************
 
-.. inheritance-diagram:: mcsas.mcsas
-   :parts: 1
+Contents:
 
-.. automodule:: mcsas.mcsas
-   :members:
+.. toctree::
+   :maxdepth: 4
+
+   code/mcsas
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
 .. vim: set ts=4 sts=4 sw=4 tw=0:
