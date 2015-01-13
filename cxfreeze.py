@@ -121,7 +121,8 @@ class Archiver(object):
 
     def __init__(self):
         self._path = self._getPath()
-        testfor(os.path.isfile(self._path), OSError,
+        testfor(self._path is not None and os.path.isfile(self._path),
+                OSError,
                 "{name}: '{path}' not found!".format(
                     name = self._name,
                     path = self._path))
@@ -138,6 +139,16 @@ class Archiver(object):
 
 class Archiver7z(Archiver):
     _name = "7-Zip"
+    _types = ("7z", "zip")
+    _ext = None
+    _type = None
+
+    def __init__(self, filetype = "7z"):
+        super(Archiver7z, self).__init__()
+        if filetype not in self._types:
+            filetype = self._types[0]
+        self._type = filetype
+        self._ext = filetype
 
     @staticmethod
     def _getPath():
@@ -167,13 +178,14 @@ class Archiver7z(Archiver):
         """Expects an absolute target directory path"""
         if not os.path.isdir(targetPath):
             return None
-        fnPackage = targetPath + ".7z"
+        fnPackage = targetPath + "." + self._ext
         fnLog = self.getLogFilename()
         with open(fnLog, 'w') as fd:
-            retcode = subprocess.call([self._path, "a", "-t7z", "-mx=9",
-                                       fnPackage, targetPath],
-                                       stdout = fd,
-                                       stderr = fd)
+            retcode = subprocess.call(
+                [self._path, "a", "-t" + self._type, "-mx=9",
+                 fnPackage, targetPath],
+                stdout = fd,
+                stderr = fd)
         if not os.path.exists(fnPackage):
             fnPackage = None
         return fnPackage
@@ -210,11 +222,13 @@ class ArchiverZip(Archiver):
         return fnPackage
 
 if __name__ == "__main__":
+    # using zip by default, its preinstalled everywhere
     archiver = None
-    if isMac():
-        archiver = ArchiverZip()
+    # TODO: perhaps switch to pythons builtin zip?
+    if isWindows():
+        archiver = Archiver7z(filetype = "zip")
     else:
-        archiver = Archiver7z()
+        archiver = ArchiverZip()
 
     PACKAGENAME = "{name}-{ver}".format(
                     name = version.name(),
