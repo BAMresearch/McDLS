@@ -303,6 +303,9 @@ if __name__ == "__main__":
             "scipy.integrate.vode",
             "scipy.integrate.lsoda",
         ]
+        # tcl/tk is installed by default
+        BUILDOPTIONS["bin_excludes"] = ["Tcl", "Tk"]
+        BUILDOPTIONS["excludes"] = ["Tkinter"]
 
     setup(
         name = version.name(),
