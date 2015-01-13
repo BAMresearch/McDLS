@@ -13,6 +13,7 @@ package shall be created. Please follow the instructions below for each
 particular platform.
 
 Common Package Dependencies:
+
     - `Python 2.7 <https://www.python.org/download/releases/2.7/>`_
     - `Qt 4.8 <http://qt-project.org/doc/qt-4.8/qt4-8-intro.html>`_ + `PySide <http://qt-project.org/wiki/Category:LanguageBindings::PySide::Downloads>`_
     - | `NumPy and SciPy <http://www.scipy.org/scipylib/download.html>`_
@@ -29,12 +30,37 @@ package.
 Windows
 -------
 A self-contained archive consisting of ``MCSAS.exe`` and all necessary
-libraries and files is created by::
+libraries and files is created by the following command executed in the
+MCSAS folder::
 
-    $ python cxfreeze.py build_exe
+    > python cxfreeze.py build_exe
 
-This command is executed in a MinGW/MSYS environment which provides a shell
-on Windows similar to Linux.
+Requirements
+^^^^^^^^^^^^
+On a fresh installation of Windows 7 the following packages are required:
+
+    - `Python 2.7.9 <https://www.python.org/ftp/python/2.7.9/python-2.7.9.msi>`_
+
+    - `PySide 1.2.1 <https://download.qt.io/official_releases/pyside/PySide-1.2.1.win32-py2.7.exe>`_
+
+    - `NumPy 1.7.1 <http://sourceforge.net/projects/numpy/files/NumPy/1.7.1/numpy-1.7.1-win32-superpack-python2.7.exe>`_
+
+    - `SciPy 0.12.0 <http://sourceforge.net/projects/scipy/files/scipy/0.12.0/scipy-0.12.0-win32-superpack-python2.7.exe>`_
+
+    - `matplotlib 1.4.2 <https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.4.2/windows/matplotlib-1.4.2.win32-py2.7.exe>`_ and its requirements:
+
+        - `Six 1.9.0 <https://pypi.python.org/packages/3.3/s/six/six-1.9.0-py2.py3-none-any.whl>`_
+            - install it on the command line by::
+
+                pip install <path>\six-1.9.0-py2.py3-none-any.whl
+
+        - `dateutil 2.4.0 <https://pypi.python.org/packages/py2.py3/p/python-dateutil/python_dateutil-2.4.0-py2.py3-none-any.whl>`_
+
+        - `pyparsing 2.0.3 <http://sourceforge.net/projects/pyparsing/files/pyparsing/pyparsing-2.0.3/pyparsing-2.0.3.win32-py2.7.exe>`_
+
+    - `cx_Freeze 4.3.4 <https://pypi.python.org/packages/2.7/c/cx_Freeze/cx_Freeze-4.3.4.win32-py2.7.exe>`_
+
+    - `pywin32 219 <http://sourceforge.net/projects/pywin32/files/pywin32/Build%20219/pywin32-219.win32-py2.7.exe>`_
 
 Mac OS X
 --------
@@ -49,8 +75,7 @@ packaging into a disk image by::
 
 Requirements
 ^^^^^^^^^^^^
-The last successful test was accomplished with the following packages on a
-clean installation of OS X 10.8:
+On a fresh installation of OS X 10.8 the following packages are required:
 
     - | Xcode command line tools: for build essentials such as a compiler
       | ( `xcode461_cltools_10_86938245a.dmg <https://developer.apple.com/downloads/download.action?path=Developer_Tools/command_line_tools_os_x_mountain_lion_for_xcode__march_2013/xcode461_cltools_10_86938245a.dmg>`_ )
@@ -62,6 +87,8 @@ clean installation of OS X 10.8:
     - `PySide 1.2.1 / Qt 4.8 <http://pyside.markus-ullmann.de/pyside-1.2.1-qt4.8.5-py27apple-developer-signed.pkg>`_
 
     - `NumPy 1.7.1 <http://downloads.sourceforge.net/project/numpy/NumPy/1.7.1/numpy-1.7.1-py2.7-python.org-macosx10.6.dmg>`_
+
+    - `SciPy 0.12.0 <http://sourceforge.net/projects/scipy/files/scipy/0.12.0/scipy-0.12.0-py2.7-python.org-macosx10.6.dmg>`_
 
     - `matplotlib 1.4.2 <https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.4.2/mac/matplotlib-1.4.2-cp27-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.whl>`_
 
@@ -75,6 +102,20 @@ necessary libraries and files is created by::
 
     $ python cxfreeze.py build_exe
 
+Requirements
+^^^^^^^^^^^^
+On a fresh installation of Ubuntu Linux 14.04 LTS the following packages
+need are required:
+
+    - PySide 1.2.1
+
+    - NumPy 1.7.1
+
+    - SciPy 0.12.0
+
+    - matplotlib 1.4.2
+
+    - cx_Freeze 4.3.4
 
 Internals
 =========
@@ -135,6 +176,10 @@ class Archiver(object):
         return os.path.splitext(self.execName)[0] + ".log" # 7z.log
 
     def archive(self, targetPath):
+        """Creates an archive from the given absolute target directory path.
+        The archive file will have the base name of the last directory of the
+        given path.
+        """
         raise NotImplementedError
 
 class Archiver7z(Archiver):
@@ -175,7 +220,6 @@ class Archiver7z(Archiver):
         return path
 
     def archive(self, targetPath):
-        """Expects an absolute target directory path"""
         if not os.path.isdir(targetPath):
             return None
         fnPackage = targetPath + "." + self._ext
