@@ -133,7 +133,7 @@ if len(sys.argv) > 2 and __name__ == "__main__":
     reload(gui.version)
 
 import re
-import os.path
+import os
 import subprocess
 import hashlib
 import platform
@@ -266,6 +266,7 @@ class ArchiverZip(Archiver):
         return fnPackage
 
 if __name__ == "__main__":
+
     # using zip by default, its preinstalled everywhere
     archiver = None
     # TODO: perhaps switch to pythons builtin zip?
@@ -350,6 +351,10 @@ if __name__ == "__main__":
         # tcl/tk is installed by default
         BUILDOPTIONS["bin_excludes"] = ["Tcl", "Tk"]
         BUILDOPTIONS["excludes"] = ["Tkinter"]
+        os.environ["DYLD_FRAMEWORK_PATH"] = ":".join((
+                "/Library/Frameworks", "/System/Library/Frameworks"))
+        os.environ["DYLD_LIBRARY_PATH"] = ":".join((
+                "/usr/lib", "/usr/local/lib"))
 
     setup(
         name = version.name(),
