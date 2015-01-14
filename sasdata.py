@@ -159,8 +159,13 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def e(self):
-        """Uncertainty or Error of the intensity at q."""
+        """Uncertainty or Error of the intensity at q loaded from file."""
         return self.iUnit.toSi(self.origin[:, 2])
+
+    @property
+    def u(self):
+        """Corrected uncertainty or error of the intensity at q."""
+        return self._uncertainty
 
     @property
     def p(self):
@@ -218,10 +223,6 @@ class SASData(DataSet, DisplayMixin):
 
     def minUncertainty(self):
         return self._emin
-
-    @property
-    def uncertainty(self):
-        return self._uncertainty
 
     def __eq__(self, other):
         return (np.all(self.origin == other.origin)

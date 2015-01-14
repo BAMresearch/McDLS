@@ -532,11 +532,11 @@ class McSAS(AlgorithmBase):
         sci = data.i.max() / it.max() # init. guess for the scaling factor
         bgi = data.i.min()
         sc, conval = self.optimScalingAndBackground(
-                data.i, it/vst, data.e, numpy.array([sci, bgi]), ver = 1)
+                data.i, it/vst, data.u, numpy.array([sci, bgi]), ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         sc, conval = self.optimScalingAndBackground(
-                data.i, it/vst, data.e, sc)
+                data.i, it/vst, data.u, sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -567,7 +567,7 @@ class McSAS(AlgorithmBase):
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt = self.optimScalingAndBackground(
-                                    data.i, itest/vstest, data.e, sc)
+                                    data.i, itest/vstest, data.u, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -612,7 +612,7 @@ class McSAS(AlgorithmBase):
         ifinal = it / sum(vset**2)
         ifinal = self.model.smear(ifinal)
         sc, conval = self.optimScalingAndBackground(
-                            data.i, ifinal, data.e, sc)
+                            data.i, ifinal, data.u, sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -726,7 +726,7 @@ class McSAS(AlgorithmBase):
         data = self.dataPrepared
         q = data.q
         intensity = data.i
-        intError = data.e
+        intError = data.u
 
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):

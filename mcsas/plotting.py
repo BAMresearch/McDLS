@@ -309,7 +309,7 @@ class PlotResults(object):
         qUnitLabel = dataset.qUnit.displayMagnitudeName
         intensity = dataset.iUnit.toDisplay(dataset.i)
         iUnitLabel = dataset.iUnit.displayMagnitudeName
-        intError = dataset.iUnit.toDisplay(dataset.e)
+        intError = dataset.iUnit.toDisplay(dataset.u)
 
         xLim = (q.min() * (1 - self._axisMargin), 
                 q.max() * (1 + self._axisMargin))
