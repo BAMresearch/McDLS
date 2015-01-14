@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# __init__.py
+# utils/__init__.py
 
 import sys
 import numpy as np
