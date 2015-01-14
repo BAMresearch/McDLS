@@ -341,7 +341,10 @@ class RangeList(DataList):
 
     def onRemoval(self, removedHistograms):
         for hist in removedHistograms:
-            hist.param.histograms().remove(hist)
+            try:
+                hist.param.histograms().remove(hist)
+            except AttributeError:
+                continue
 
     def updateHistograms(self):
         self.clear()
