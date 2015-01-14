@@ -16,8 +16,8 @@ Common Package Dependencies:
 
     - `Python 2.7 <https://www.python.org/download/releases/2.7/>`_
     - `Qt 4.8 <http://qt-project.org/doc/qt-4.8/qt4-8-intro.html>`_ + `PySide <http://qt-project.org/wiki/Category:LanguageBindings::PySide::Downloads>`_
-    - | `NumPy and SciPy <http://www.scipy.org/scipylib/download.html>`_
-      | In order to work around freeze failures with newer versions it is
+    - `NumPy and SciPy <http://www.scipy.org/scipylib/download.html>`_
+        In order to work around freeze failures with newer versions it is
         recommended to stick with Numpy 1.7 and SciPy 1.12 which was tested
         successfully.
     - `matplotlib <http://matplotlib.org/downloads.html>`_
@@ -26,6 +26,18 @@ In addition to the dependencies of the MCSAS package listed above the
 `cx_Freeze package <http://cx-freeze.readthedocs.org/en/latest/>`_
 is used for freezing the python source code structure into a standalone
 package.
+
+Working with Source Code Repositories
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In order to download the latest source code repositories of packages such as
+MCSAS or cx_Freeze a client to `Git`_ and `Mercurial`_ is required. There are
+several available, for both Mac OS X and Windows the `SourceTree`_ program
+is recommended.
+
+.. _Git: https://en.wikipedia.org/wiki/Git_%28software%29
+.. _Mercurial: https://en.wikipedia.org/wiki/Mercurial
+.. _SourceTree: http://www.sourcetreeapp.com
 
 Windows
 -------
@@ -50,7 +62,7 @@ On a fresh installation of Windows 7 the following packages are required:
     - `matplotlib 1.4.2 <https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.4.2/windows/matplotlib-1.4.2.win32-py2.7.exe>`_ and its requirements:
 
         - `Six 1.9.0 <https://pypi.python.org/packages/3.3/s/six/six-1.9.0-py2.py3-none-any.whl>`_
-            - install it on the command line by::
+            Install it on the command line by::
 
                 pip install six-1.9.0-py2.py3-none-any.whl
 
@@ -78,8 +90,8 @@ Requirements
 ^^^^^^^^^^^^
 On a fresh installation of OS X 10.8 the following packages are required:
 
-    - | Xcode command line tools: for build essentials such as a compiler
-      | ( `xcode461_cltools_10_86938245a.dmg <https://developer.apple.com/downloads/download.action?path=Developer_Tools/command_line_tools_os_x_mountain_lion_for_xcode__march_2013/xcode461_cltools_10_86938245a.dmg>`_ )
+    - Xcode command line tools: for build essentials such as a compiler
+        ( `xcode461_cltools_10_86938245a.dmg <https://developer.apple.com/downloads/download.action?path=Developer_Tools/command_line_tools_os_x_mountain_lion_for_xcode__march_2013/xcode461_cltools_10_86938245a.dmg>`_ )
 
     - `Python 2.7.9 <https://www.python.org/ftp/python/2.7.9/python-2.7.9-macosx10.6.pkg>`_
 
@@ -92,16 +104,18 @@ On a fresh installation of OS X 10.8 the following packages are required:
     - `SciPy 0.12.0 <http://sourceforge.net/projects/scipy/files/scipy/0.12.0/scipy-0.12.0-py2.7-python.org-macosx10.6.dmg>`_
 
     - `matplotlib 1.4.2 <https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.4.2/mac/matplotlib-1.4.2-cp27-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.whl>`_
-
-            - install it on the command line by::
+        Install it on the command line by::
 
                 $ /usr/local/bin/pip install matplotlib-1.4.2-*.whl
 
     - `a modified cx_Freeze 4.3.4 <https://bitbucket.org/ibressler/cx_freeze>`_
       with local modifications for successful app freezing on OS X
 
-            - Download the source and install it on the command line by::
+        Download the source and install it on the command line by::
 
+                $ hg clone https://bitbucket.org/ibressler/cx_freeze
+                $ cd cx_freeze
+                $ hg co 4.x
                 $ /usr/local/bin/python2 setup.py install
 
 Ubuntu/Linux
