@@ -52,7 +52,7 @@ On a fresh installation of Windows 7 the following packages are required:
         - `Six 1.9.0 <https://pypi.python.org/packages/3.3/s/six/six-1.9.0-py2.py3-none-any.whl>`_
             - install it on the command line by::
 
-                pip install <path>\six-1.9.0-py2.py3-none-any.whl
+                pip install six-1.9.0-py2.py3-none-any.whl
 
         - `dateutil 2.4.0 <https://pypi.python.org/packages/py2.py3/p/python-dateutil/python_dateutil-2.4.0-py2.py3-none-any.whl>`_
 
@@ -64,14 +64,15 @@ On a fresh installation of Windows 7 the following packages are required:
 
 Mac OS X
 --------
-A disk image file (.dmg) consisting of the application bundle is created by::
+After installing the required packages below a disk image file (.dmg)
+consisting of the application bundle is created by::
 
-    $ python cxfreeze.py bdist_dmg
+    $ /usr/local/bin/python2 cxfreeze.py bdist_dmg
 
 Alternatively, for testing purposes the bundle can be created without
 packaging into a disk image by::
 
-    $ python cxfreeze.py bdist_mac
+    $ /usr/local/bin/python2 cxfreeze.py bdist_mac
 
 Requirements
 ^^^^^^^^^^^^
@@ -92,8 +93,16 @@ On a fresh installation of OS X 10.8 the following packages are required:
 
     - `matplotlib 1.4.2 <https://downloads.sourceforge.net/project/matplotlib/matplotlib/matplotlib-1.4.2/mac/matplotlib-1.4.2-cp27-none-macosx_10_6_intel.macosx_10_9_intel.macosx_10_9_x86_64.whl>`_
 
+            - install it on the command line by::
+
+                $ /usr/local/bin/pip install matplotlib-1.4.2-*.whl
+
     - `a modified cx_Freeze 4.3.4 <https://bitbucket.org/ibressler/cx_freeze>`_
       with local modifications for successful app freezing on OS X
+
+            - Download the source and install it on the command line by::
+
+                $ /usr/local/bin/python2 setup.py install
 
 Ubuntu/Linux
 ------------
