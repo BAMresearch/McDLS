@@ -320,6 +320,7 @@ if __name__ == "__main__":
             "mcsas/mcsasparameters.json",
             ("resources/background_files.svg", "resources/background_files.svg"),
             ("resources/background_ranges.svg", "resources/background_ranges.svg"),
+            ("resources/icon/mcsas.ico", "resources/icon/mcsas.ico"),
             "dejavuserif.ttf",
     ]
     if isLinux():
@@ -333,7 +334,11 @@ if __name__ == "__main__":
         ]
     if isWindows():
         INCLUDEFILES += [
-            'Microsoft.VC90.CRT',
+            "Microsoft.VC90.CRT",
+        ]
+    if isMac():
+        INCLUDEFILES += [
+            ("resources/icon/mcsas.icns", "resources/icon/mcsas.icns"),
         ]
 
     BUILDOPTIONS = dict(
@@ -351,7 +356,9 @@ if __name__ == "__main__":
                     "matplotlib.backends.backend_tkagg", "Tkinter", "FileDialog",
                     ],
     #    excludes = ["Tkinter"],
-    #    icon = "res/img/brianpauw.ico",
+        # Icons for Windows using this approach:
+        # https://stackoverflow.com/a/10819673
+        icon = "resources/icon/mcsas.ico",
         path = [os.getcwd()] + sys.path,
         build_exe = TARGETDIR,
         silent = False,
@@ -359,7 +366,11 @@ if __name__ == "__main__":
     )
 
     # OSX bundle building
-    MACOPTIONS = dict(bundle_name = PACKAGENAME)
+    MACOPTIONS = dict(
+        bundle_name = PACKAGENAME,
+        # creating icns for OSX: https://stackoverflow.com/a/20703594
+        iconfile = "resources/icon/mcsas.icns"
+    )
     DMGOPTIONS = dict(volume_label = PACKAGENAME)
     if isMac():
         BUILDOPTIONS.pop("build_exe") # bdist_mac expects plain 'build' directory
@@ -371,6 +382,7 @@ if __name__ == "__main__":
             "scipy.integrate.vode",
             "scipy.integrate.lsoda",
         ]
+        BUILDOPTIONS.pop("icon")
         # tcl/tk is installed by default
         BUILDOPTIONS["bin_excludes"] = ["Tcl", "Tk"]
         BUILDOPTIONS["excludes"] = ["Tkinter"]
@@ -384,7 +396,6 @@ if __name__ == "__main__":
         version = sanitizeVersionNumber(version.number()),
         description = version.name(),
         long_description = ("GUI for Monte-Carlo size distribution analysis"),
-    #    url = "http://sourceforge.net/",
         license = "Creative Commons CC-BY-SA",
         author = u"Brian R. Pauw",
         author_email = "brian@stack.nl",

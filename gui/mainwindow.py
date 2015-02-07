@@ -15,7 +15,7 @@ from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
                    QGroupBox, QComboBox, QApplication, QGridLayout,
                    QTreeWidgetItem, QTreeWidget, QToolBox, QPalette,
-                   QDialog, QDoubleSpinBox, QSpinBox)
+                   QDialog, QDoubleSpinBox, QSpinBox, QIcon)
 from bases.dataset import DataSet, DisplayMixin
 from gui.bases.mainwindow import MainWindow as MainWindowBase
 from gui.bases.logwidget import LogWidget
@@ -26,7 +26,7 @@ from gui.bases.settingswidget import SettingsWidget as SettingsWidgetBase
 from gui.utils.filedialog import getOpenFiles
 from utils.lastpath import LastPath
 from bases.algorithm.parameter import ParameterFloat # instance for test
-from utils import isList, isString, testfor
+from utils import isList, isString, testfor, isWindows, isMac, isLinux
 from utils.units import ScatteringVector, ScatteringIntensity
 from gui.utils import processEventLoop
 from gui.utils.displayexception import DisplayException
@@ -955,6 +955,12 @@ class MainWindow(MainWindowBase):
         centralWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self.setCentralWidget(centralWidget)
         self.onStartupSignal.connect(self.initUI)
+        # set program icon, same for Win+Lin
+        icopath = "resources/icon/mcsas.ico"
+        if isMac():
+            icopath = "resources/icon/mcsas.icns"
+        icopath = QFileInfo(makeAbsolutePath(icopath)).absoluteFilePath()
+        self.setWindowIcon(QIcon(icopath))
 
     def _addToolboxItem(self, widget):
         self.toolbox.addItem(widget, "{n}. {t}"
