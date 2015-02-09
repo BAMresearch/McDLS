@@ -56,12 +56,12 @@ def findCommand(name):
 def prepareIco(iconName):
 
     def resolutions():
-        return 16, 32, 48, 256
+        return reversed((16, 32, 48, 256))
 
     # find all required files
     path = os.getcwd()
     files = getSourceFiles(path, resolutions())
-    pngquant = findCommand("pngquant")
+    convert = findCommand("convert")
     targetDir = createTempDir(path, iconName.lower() + ".ico.dir")
     for r in resolutions():
         src = files[r]
@@ -71,13 +71,17 @@ def prepareIco(iconName):
         files[r] = [src]
         if 256 == r: continue
         # create 8bit copies
-        shutil.copyfile(src, dst)
-        subprocess.call([pngquant, "--ext", "-8.png", "--speed", "1", "8", dst])
-        files[r] += glob.glob(os.path.splitext(dst)[0] + "-8.png")
+        # shutil.copyfile(src, dst)
+        dst = os.path.join(targetDir, basename + "-8.png")
+        subprocess.call([convert, "-colors", "256", "-depth", "8", "+dither",
+            "-define", "png:format=png8", src, dst])
+        files[r].append(dst)
         if 48 == r: continue
         # create 4bit copies
-        subprocess.call([pngquant, "--ext", "-4.png", "--speed", "1", "4", dst])
-        files[r] += glob.glob(os.path.splitext(dst)[0] + "-4.png")
+        src = dst
+        dst = os.path.join(targetDir, basename + "-4.png")
+        subprocess.call([convert, "-colors", "16", "+dither", src, dst])
+        files[r].append(dst)
     return files
 
 def createIco(iconName):
