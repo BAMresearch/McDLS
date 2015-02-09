@@ -128,7 +128,9 @@ necessary libraries and files is created by::
 Requirements
 ^^^^^^^^^^^^
 On a fresh installation of Ubuntu Linux 14.04 LTS the following packages
-need are required:
+are required:
+
+    - ``apt-get install git build-essential python-setuptools python-dev liblapack3-dev libfreetype6-dev tk-dev``
 
     - PySide 1.2.1
 
