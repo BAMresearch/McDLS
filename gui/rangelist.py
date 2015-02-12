@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# gui/mainwindow.py
+# gui/rangelist.py
 
 from __future__ import absolute_import # PEP328
 import logging
