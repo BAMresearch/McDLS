@@ -7,38 +7,23 @@ import re
 import sys
 import logging
 
-from numpy import inf as numpy_inf
 from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
-from QtCore import Qt, QSettings, QRegExp, QFileInfo, QMargins
+from QtCore import Qt, QSettings, QFileInfo
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
-                   QLabel, QCheckBox, QSizePolicy, QSpacerItem, QLayout,
-                   QGroupBox, QComboBox, QApplication, QGridLayout,
-                   QTreeWidgetItem, QTreeWidget, QToolBox, QPalette,
-                   QDialog, QDoubleSpinBox, QSpinBox, QIcon)
-from bases.dataset import DataSet, DisplayMixin
+                   QSizePolicy, QApplication, QToolBox, QIcon)
 from gui.bases.mainwindow import MainWindow as MainWindowBase
 from gui.bases.logwidget import LogWidget
-from gui.bases.datalist import DataList
 from gui.bases.dockwidget import DockWidget
-from gui.bases.mixins.titlehandler import TitleHandler
-from gui.bases.settingswidget import SettingsWidget as SettingsWidgetBase
 from gui.utils.filedialog import getOpenFiles
 from utils.lastpath import LastPath
-from bases.algorithm.parameter import ParameterFloat # instance for test
-from utils import isList, isString, testfor, isWindows, isMac, isLinux
-from utils.units import ScatteringVector, ScatteringIntensity
+from utils import isMac
 from gui.utils import processEventLoop
 from gui.utils.displayexception import DisplayException
-from utils.parameter import (ParameterNumerical, Histogram, FitParameterBase,
-                                FitParameterNumerical)
 from gui.version import version
 from gui.calc import Calculator
 from sasdata import SASData
-from mcsas.mcsas import McSAS
 
-from numpy import inf as numpy_inf
-from QtGui import QDialog, QDoubleSpinBox, QSpinBox, QLineEdit, QDoubleValidator
 from gui.scientrybox import SciEntryBox
 
 INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
@@ -106,36 +91,10 @@ CHANGESTEXT = re.sub(r"([\s\w]*[cC]hanges.*\:)",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
 
-from models.scatteringmodel import ScatteringModel
-from models.sphere import Sphere
-from models.kholodenko import Kholodenko
-from models.gaussianchain import GaussianChain
-from models.lmadensesphere import LMADenseSphere
-from models.cylindersisotropic import CylindersIsotropic
-from models.cylindersradiallyisotropic import CylindersRadiallyIsotropic
-from models.ellipsoidsisotropic import EllipsoidsIsotropic
-from models.ellipsoidalcoreshell import EllipsoidalCoreShell
-from models.sphericalcoreshell import SphericalCoreShell
-from collections import OrderedDict
-
-MODELS = OrderedDict((
-    (Sphere.name(), Sphere),
-    (CylindersIsotropic.name(), CylindersIsotropic),
-    (CylindersRadiallyIsotropic.name(), CylindersRadiallyIsotropic),
-    (EllipsoidsIsotropic.name(), EllipsoidsIsotropic),
-    (EllipsoidalCoreShell.name(), EllipsoidalCoreShell),
-    (SphericalCoreShell.name(), SphericalCoreShell),
-    (GaussianChain.name(), GaussianChain),
-    (LMADenseSphere.name(), LMADenseSphere),
-    (Kholodenko.name(), Kholodenko),
-))
-FIXEDWIDTH = 120
-
 # required for svg graphics support
 from gui.qt import QtSvg, QtXml, pluginDirs
 from gui.rangelist import RangeList
 from gui.settingswidget import SettingsWidget
-from gui.liststyle import setBackgroundStyleSheet                              
 from gui.algorithmwidget import AlgorithmWidget
 from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
@@ -149,6 +108,7 @@ def eventLoop(args):
     mw = MainWindow(args = args)
     mw.show()
     return app.exec_()
+
 
 class ToolBox(QToolBox):
     """QToolBox containing the widgets for user settings.
