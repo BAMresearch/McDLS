@@ -26,6 +26,15 @@ from sasdata import SASData
 
 from gui.scientrybox import SciEntryBox
 
+# required for svg graphics support
+from gui.qt import QtSvg, QtXml, pluginDirs
+from gui.rangelist import RangeList
+from gui.settingswidget import SettingsWidget
+from gui.algorithmwidget import AlgorithmWidget
+from gui.modelwidget import ModelWidget
+from gui.filelist import FileList
+from main import makeAbsolutePath
+
 INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
 
 The convergence criterion can be set by the user. If it is not reached no output is generated, just this log is saved to file. On success, the resulting size distribution and the data fit are stored to files with uncertainties.
@@ -90,15 +99,6 @@ Changes in 0.0.5:
 CHANGESTEXT = re.sub(r"([\s\w]*[cC]hanges.*\:)",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
-
-# required for svg graphics support
-from gui.qt import QtSvg, QtXml, pluginDirs
-from gui.rangelist import RangeList
-from gui.settingswidget import SettingsWidget
-from gui.algorithmwidget import AlgorithmWidget
-from gui.modelwidget import ModelWidget
-from gui.filelist import FileList
-from main import makeAbsolutePath
 
 def eventLoop(args):
     """Starts the UI event loop and get command line parser arguments."""
