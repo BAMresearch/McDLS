@@ -21,30 +21,8 @@ from models.scatteringmodel import ScatteringModel
 
 # required for svg graphics support
 from gui.qt import QtSvg, QtXml, pluginDirs
+from gui.liststyle import setBackgroundStyleSheet
 from main import makeAbsolutePath
-
-def makeAlternatingRowColorsTransparent(widget):
-    palette = widget.palette()
-    color = palette.color(QPalette.AlternateBase)
-    color.setAlphaF(0.4)
-    palette.setColor(QPalette.AlternateBase, color)
-    widget.setPalette(palette)
-
-def setBackgroundStyleSheet(widget, imgpath):
-    assert isinstance(widget, QWidget)
-    makeAlternatingRowColorsTransparent(widget.listWidget)
-    stylesheet = """
-        #listWidget {{
-            background-image:       url({path});
-            background-repeat:      no-repeat;
-            background-position:    center center;
-            background-attachment:  fixed;
-            background-color:       white;
-        }}
-    """
-    # convert path to qt style formatting (separators, ...)
-    imgpath = QFileInfo(makeAbsolutePath(imgpath)).absoluteFilePath()
-    widget.setStyleSheet(stylesheet.format(path = imgpath))
 
 class RangeDialog(QDialog):
     """Creates a modal dialog window to ask the user for a range to be
