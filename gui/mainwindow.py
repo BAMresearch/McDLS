@@ -138,6 +138,7 @@ from gui.settingswidget import SettingsWidget
 from gui.liststyle import setBackgroundStyleSheet                              
 from gui.algorithmwidget import AlgorithmWidget
 from gui.modelwidget import ModelWidget
+from gui.filelist import FileList
 from main import makeAbsolutePath
 
 def eventLoop(args):
@@ -148,30 +149,6 @@ def eventLoop(args):
     mw = MainWindow(args = args)
     mw.show()
     return app.exec_()
-
-class FileList(DataList):
-    sigSphericalSizeRange = Signal((float, float))
-
-    def loadData(self, fileList = None):
-        if fileList is None or type(fileList) is bool:
-            fileList = getOpenFiles(self,
-                # show same unit as in SASData.__init__()
-                u"Load one or more data files with q({qu}) and intensity({iu})"
-                .format(qu = ScatteringVector(u"nm⁻¹").displayMagnitudeName,
-                        iu = ScatteringIntensity(u"(m sr)⁻¹").displayMagnitudeName),
-                LastPath.get(), multiple = True)
-        # populates to data list widget with items based on the return of
-        # processSourceFunc(filename)
-        DataList.loadData(self, sourceList = fileList, showProgress = False,
-                          processSourceFunc = SASData.load)
-
-    def itemDoubleClicked(self, item, column):
-        valueRange = item.data().sphericalSizeEst()
-        self.sigSphericalSizeRange.emit(min(valueRange), max(valueRange))
-
-    def setupUi(self):
-        self.listWidget.setAlternatingRowColors(True)
-        setBackgroundStyleSheet(self, "./resources/background_files.svg")
 
 class ToolBox(QToolBox):
     """QToolBox containing the widgets for user settings.
