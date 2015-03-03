@@ -7,6 +7,8 @@ from gui.utils.appversion import QAppVersion
 version = QAppVersion(
     programName = "McSAS",
     versionNumber = "1.0beta2",
-    organizationName = "NIMS, BAM"
+    organizationName = "NIMS, BAM",
+    defaultSettings = dict(
+        geometry = "AdnQywABAAAAAAIyAAAA+gAABG8AAANMAAACMwAAARIAAARuAAADSwAAAAAAAA==")
 )
 
