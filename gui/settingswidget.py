@@ -168,6 +168,7 @@ class SettingsWidget(SettingsWidgetBase):
             self.sigRangeChanged.emit()
 
     def updateAll(self):
+        """Called in MainWindow on calculation start."""
         for w in self.inputWidgets:
             self.updateParam(w)
 

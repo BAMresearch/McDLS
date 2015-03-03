@@ -204,6 +204,7 @@ class RangeList(DataList):
                 continue
 
     def updateHistograms(self):
+        """Called after UI update by sigModelChanged in MainWindow."""
         self.clear()
         lst = []
         for p in self._calculator.model.activeParams():
@@ -242,7 +243,6 @@ class RangeList(DataList):
         self.listWidget.setItemsExpandable(False)
         self.listWidget.setAlternatingRowColors(True)
         self.action("load").setText("add range") # fix default action name
-# FIXME        self.loadData([(0., numpy_inf)]) # default range
         self.clearSelection()
         self.setHeader(Histogram.displayDataDescr)
         self.setToolTip(

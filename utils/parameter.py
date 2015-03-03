@@ -257,12 +257,14 @@ class Histogram(DataSet, DisplayMixin):
     @property
     def lowerDisplay(self):
         """Lower limit in display units including the unit text."""
-        return "{0:g} ({1})".format(self._param.toDisplay(self.lower), self._param.displayMagnitudeName())
+        return "{0:g} ({1})".format(self._param.toDisplay(self.lower),
+                                    self._param.displayMagnitudeName())
 
     @property
     def upperDisplay(self):
         """Upper limit in display units including the unit text."""
-        return "{0:g} ({1})".format(self._param.toDisplay(self.upper), self._param.displayMagnitudeName())
+        return "{0:g} ({1})".format(self._param.toDisplay(self.upper),
+                                    self._param.displayMagnitudeName())
 
     def updateRange(self):
         """Updates histogram range according to a changed parameter range

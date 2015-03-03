@@ -57,8 +57,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         geometry = self.saveGeometry()
         windowState = self.saveState()
-        #print geometry.toBase64()
-        #print windowState.toBase64()
+        # print >>sys.__stderr__, geometry.toBase64()
+        # print >>sys.__stderr__, windowState.toBase64()
         self._appsettings.setValue("geometry", geometry)
         self._appsettings.setValue("windowState", windowState)
 
