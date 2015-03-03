@@ -176,22 +176,6 @@ class SettingsWidget(SettingsWidgetBase):
         """Sets the statistics widget to use for updating ranges."""
         assert(isinstance(statsWidget, DataList))
         self._statsWidget = statsWidget
-        statsWidget.sigEditingFinished.connect(self._updateStatsRanges)
-
-    def _updateStatsRanges(self, count = None, index = None):
-        """Sets all statistics ranges to all parameters in the associated
-        algorithm. Uses the previously configured statistics widget."""
-        if self._statsWidget is None:
-            return
-        return # FIXME
-        for p in self.algorithm.params():
-            try:
-                # works for active FitParameters only
-                p.histogram().resetRanges()
-            except:
-                continue
-            for r in self._statsWidget.data():
-                p.histogram().addRange(r.lower, r.upper)
 
     @staticmethod
     def _makeLabel(name):
