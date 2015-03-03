@@ -266,10 +266,16 @@ class Histogram(DataSet, DisplayMixin):
         return "{0:g} ({1})".format(self._param.toDisplay(self.upper),
                                     self._param.displayMagnitudeName())
 
-    def updateRange(self):
-        """Updates histogram range according to a changed parameter range
-        to keep it valid."""
-        self.xrange = self.xrange # call getter & setter again
+    def updateRange(self, force = False):
+        """Restricts histogram range according to changed parameter range
+        if needed. Checks histogram range against parameter limits.
+        The force option decides if the range is adjusted to the underlying
+        parameters active range."""
+        if force:
+            try:
+                self.xrange = self.param.activeRange()
+            except: pass # ignored on failure
+        self.xrange = self.xrange # call getter & setter again to verify limits
 
     @classproperty
     @classmethod
@@ -541,10 +547,13 @@ class Histograms(list):
             return
         list.append(self, value)
 
-    def updateRanges(self):
+    def updateRanges(self, force = False):
+        """Updates ranges of all histograms. The force option decides if each
+        histogram range is adjusted to the underlying parameters active range.
+        """
         # work directly on the histograms, no copy
         for i in range(len(self)):
-            self[i].updateRange()
+            self[i].updateRange(force)
 
     def calc(self, *args):
         # work directly on the histograms, no copy
@@ -657,6 +666,9 @@ class FitParameterBase(ParameterBase):
         newRange = selforcls.clip(newRange)
         # sets range for active fitting parameter limits
         selforcls._activeRange = (min(newRange), max(newRange))
+        try:
+            selforcls.histograms().updateRanges()
+        except: pass # ignored on failure
 
     @mixedmethod
     def activeRange(selforcls):

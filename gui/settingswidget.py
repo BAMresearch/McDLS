@@ -8,7 +8,7 @@ from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QPushButton,
-                   QLabel, QLayout)
+                   QLabel, QLayout, QMessageBox)
 from gui.bases.datalist import DataList
 from gui.bases.settingswidget import SettingsWidget as SettingsWidgetBase
 from bases.algorithm.parameter import ParameterFloat # instance for test
@@ -20,10 +20,34 @@ from gui.scientrybox import SciEntryBox
 
 FIXEDWIDTH = 120
 
+def isNotNone(lst):
+    if not isList(lst):
+        return False
+    return all((a is not None for a in lst))
+
+def askForAutoUpdateRanges(parentWidget, userHists):
+    mb = QMessageBox(parentWidget)
+    text = ["There {0} user defined analysis range{1} for this parameter:"]
+    if len(userHists) == 1:
+        text[0] = text[0].format("is a", "")
+    else:
+        text[0] = text[0].format("are", "s")
+    for h in userHists:
+        text.append("    " + str(h))
+    text.append("Update it automatically?")
+    mb.setText("\n".join(text))
+    mb.setWindowTitle("Update analysis range?")
+    okBtn = mb.addButton("Update", QMessageBox.AcceptRole)
+    cnlBtn = mb.addButton("Ignore", QMessageBox.RejectRole)
+    mb.setDefaultButton(okBtn)
+    mb.setEscapeButton(cnlBtn)
+    return mb.exec_() == QMessageBox.AcceptRole
+
 class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
     _appSettings = None
     sigRangeChanged = Signal()
+    _autoUpdateHistograms = True # Remembers last user question
 
     def __init__(self, parent, calculator = None):
         SettingsWidgetBase.__init__(self, parent)
@@ -106,15 +130,37 @@ class SettingsWidget(SettingsWidgetBase):
             p = None
         return p
 
+    def updateParamRange(self, param, newRange):
+        if not isNotNone(newRange): # any is None
+            return None
+        displayRange = None
+        try:
+            param.setDisplayActiveRange(newRange)
+            displayRange = param.displayActiveRange() # get updated values
+        except:
+            param.setActiveRange(newRange)
+            displayRange = param.activeRange()
+        # check configured analysis ranges
+        userHists = [h for h in param.histograms()
+                        if h.xrange != param.activeRange()]
+        # update histograms automatically?
+        if self._statsWidget.userInput:
+            self._autoUpdateHistograms = askForAutoUpdateRanges(self, userHists)
+            self._statsWidget.userInput = False
+        if self._autoUpdateHistograms:
+            param.histograms().updateRanges(force = True)
+
+        return displayRange
+
     def updateParam(self, widget):
         """Write UI settings back to the algorithm."""
-        def isNotNone(*args):
-            return all((a is not None for a in args))
         p = self._paramFromWidget(widget)
         if p is None:
             logging.error("updateParam({}) could not find associated parameter!"
                           .format(widget.objectName()))
             return
+        # disable signals during ui updates
+        self.sigValueChanged.disconnect(self.updateParam)
         # persistent name due to changes to the class instead of instance
         key = p.name()
         # get the parent of the updated widget and other input for this param
@@ -126,18 +172,10 @@ class SettingsWidget(SettingsWidgetBase):
         minValue = self.get(key+"min")
         maxValue = self.get(key+"max")
         # update value range for numerical parameters
-        if isinstance(p, FitParameterBase):
-            if isinstance(p, ParameterFloat):
-                if isNotNone(minValue, maxValue):
-                    p.setDisplayActiveRange((minValue, maxValue))
-                clippedVals = p.displayActiveRange() # get updated values
-            else:
-                if isNotNone(minValue, maxValue):
-                    p.setActiveRange((minValue, maxValue))
-                clippedVals = p.activeRange()
-            # somehow move clippedVals back to widgets, does not update
-            minWidget.setValue(min(clippedVals)) 
-            maxWidget.setValue(max(clippedVals))
+        newRange = self.updateParamRange(p, (minValue, maxValue))
+        if isNotNone(newRange):
+            minWidget.setValue(min(newRange))
+            maxWidget.setValue(max(newRange))
         # update the value input widget itself
         newValue = self.get(key)
         if newValue is not None:
@@ -163,7 +201,9 @@ class SettingsWidget(SettingsWidgetBase):
                 minWidget.hide()
                 maxWidget.hide()
             except: pass
-        if isNotNone(minValue, maxValue):
+        # enable signals again after ui updates
+        self.sigValueChanged.connect(self.updateParam)
+        if isNotNone(newRange):
             # the range was updated
             self.sigRangeChanged.emit()
 

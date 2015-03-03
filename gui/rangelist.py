@@ -189,6 +189,8 @@ class RangeDialog(QDialog):
 
 class RangeList(DataList):
     _calculator = None
+    # remember if there was user input recently
+    userInput = False
 
     def __init__(self, calculator = None, **kwargs):
         DataList.__init__(self, **kwargs)
@@ -233,6 +235,8 @@ class RangeList(DataList):
             return
         # add it to the actual histogram list of the parameter
         newHist.param.histograms().append(newHist) # hmm, funny here
+        # on user input, stop automatic range updates next time and ask instead
+        self.userInput = True
         # update the GUI based on that
         self.updateHistograms()
 
