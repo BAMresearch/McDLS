@@ -9,7 +9,7 @@
     "numReps" : {
         "displayName" : "number of repetitions",
         "description" : "Number of independent McSAS results to compute, from which averages and uncertainties are estimated",
-        "default" : 100,
+        "default" : 10,
         "valueRange" : [1,1e6],
         "isActive" : false 
     },
