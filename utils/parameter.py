@@ -177,6 +177,7 @@ class Histogram(DataSet, DisplayMixin):
     """
     _param      = None # the FitParameter this histogram belongs to
     _binCount   = None # list of bin counts
+    _autoFollow = True # follows model parameter setting or not. 
     _xscale     = None # list of scalings
     _yweight    = None # list of weightings
     _xrange     = None # list of tuples/pairs
@@ -213,6 +214,17 @@ class Histogram(DataSet, DisplayMixin):
                 ValueError,
                 "Histogram bin count has to be an integer larger 0!")
         self._binCount = max(0, int(binCount))
+
+    @property
+    def autoFollow(self):
+        return self._autoFollow
+
+    @autoFollow.setter
+    def autoFollow(self, value):
+        try:
+            self._autoFollow = bool(value)
+        except:
+            raise
 
     @property
     def xscale(self):
@@ -282,9 +294,10 @@ class Histogram(DataSet, DisplayMixin):
     def displayDataDescr(cls):
         """Descriptive text of fields for UI display."""
         return (
-                "parameter",
-                "lower",
-                "upper",
+                "Parameter",
+                "Auto range",
+                "Lower",
+                "Upper",
                 "Number of bins",
                 "X-axis scaling",
                 "Y-axis weighting"
@@ -296,6 +309,7 @@ class Histogram(DataSet, DisplayMixin):
         """Properties used for UI display."""
         return (
                 "paramName",
+                "autoFollow",
                 "lowerDisplay",
                 "upperDisplay",
                 "binCount",
