@@ -27,18 +27,18 @@ def isNotNone(lst):
 
 def askForAutoUpdateRanges(parentWidget, userHists):
     mb = QMessageBox(parentWidget)
-    text = ["There {0} user defined analysis range{1} for this parameter:"]
+    text = ["{0}ser defined analysis range{1} appear to be set for this parameter:"]
     if len(userHists) == 1:
-        text[0] = text[0].format("is a", "")
+        text[0] = text[0].format("A u", "")
     else:
-        text[0] = text[0].format("are", "s")
+        text[0] = text[0].format("U", "s")
     for h in userHists:
         text.append("    " + str(h))
-    text.append("Update it automatically?")
+    text.append("Please confirm you want to switch from automatic to manual range setting")
     mb.setText("\n".join(text))
-    mb.setWindowTitle("Update analysis range?")
-    okBtn = mb.addButton("Update", QMessageBox.AcceptRole)
-    cnlBtn = mb.addButton("Ignore", QMessageBox.RejectRole)
+    mb.setWindowTitle("Automatic or manual analysis range?")
+    okBtn = mb.addButton("Automatic", QMessageBox.AcceptRole)
+    cnlBtn = mb.addButton("Manual", QMessageBox.RejectRole)
     mb.setDefaultButton(okBtn)
     mb.setEscapeButton(cnlBtn)
     return mb.exec_() == QMessageBox.AcceptRole
