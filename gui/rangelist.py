@@ -255,9 +255,9 @@ class RangeList(DataList):
         # self.addMenuEntry(name = "edit", text = "Edit selected", 
         #                   menuStates = "hasSelection",
         #                   callbacks = self.editEntry)
-        self.addMenuEntry(name = "recalc", text = "recalc selected",
-                          menuStates = "hasSelection",
-                          callbacks = self.recalc)
+        # self.addMenuEntry(name = "recalc", text = "recalc selected",
+        #                   menuStates = "hasSelection",
+        #                   callbacks = self.recalc)
 
     def editEntry(self):
         return
