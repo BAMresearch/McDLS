@@ -113,7 +113,7 @@ class Calculator(object):
     def isStopped(self):
         return self._algo.stop
 
-    def __call__(self, dataset = None, recalc = False):
+    def __call__(self, dataset):
         """ the *recalc* boolean skips the optimisation algorithm and moves
         directly on to the histogramming. If this was a run that was completed
         successfully before, re-histogramming should be available """
@@ -121,11 +121,6 @@ class Calculator(object):
             logging.warning("No model set!")
             return
         # start log file writing
-        if (dataset is None) and recalc:
-            # everything should be filled in already
-            self.histogram()
-            return
-
         testfor(isinstance(dataset, DataSet), StandardError,
                 "{cls} requires a DataSet!".format(cls = type(self)))
         self._outFn = OutputFilename(dataset)

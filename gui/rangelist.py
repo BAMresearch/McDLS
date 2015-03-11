@@ -266,7 +266,7 @@ class RangeList(DataList):
     def recalc(self):
         return
         # this is not the _calculator instance I was looking for. 
-        self._calculator(recalc = True)
+        # self._calculator(recalc = True)
         # does not work yet! missing arguments for Hist.calc()
         DataList.updateData(self, selectedOnly = True, showProgress = False,
                 updateFunc = Histogram.calc,
