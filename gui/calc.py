@@ -132,16 +132,11 @@ class Calculator(object):
         except:
             pass
 
-        # obsolete? 2014-11-28:
-        # bounds = dataset.sphericalSizeEst()
-        # logging.info("The following parameters are used for 'Analyze_1D':")
-        # logging.info("bounds: [{0:.4f}; {1:.4f}]"
-        #              .format(bounds[0], bounds[1]))
-        mcargs = dict(doPlot = False)
+        mcargs = dict()
         self._writeSettings(mcargs, dataset)
         if self.nolog: # refers to the widgethandler
             log.removeHandler(widgetHandler)
-        self._algo.calc(SASData = dataset, **mcargs)
+        self._algo.calc(SASData = dataset)
         if self.nolog:
             log.addHandler(widgetHandler)
 
