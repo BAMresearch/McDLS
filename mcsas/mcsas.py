@@ -181,10 +181,10 @@ class McSAS(AlgorithmBase):
         # initialize
         self.result = [] # TODO
         self.stop = False # TODO, move this into some simple result structure
-        # set data values
-        self.setData(kwargs)
-        # set supplied kwargs and passing on
-        self.setParameter(kwargs)
+        # # set data values
+        # self.setData(kwargs)
+        # # set supplied kwargs and passing on
+        # self.setParameter(kwargs)
         # apply q and psi limits and populate self.FitData
         if self.dataOriginal is not None:
             self.dataOriginal.qMin = self.qMin()
@@ -225,42 +225,6 @@ class McSAS(AlgorithmBase):
 
         if self.doPlot():
             self.plot(**kwargs)
-
-    def setData(self, kwargs):
-        """Sets the supplied data in the proper location. Optional argument
-        *Dataset* can be set to ``fit`` or ``original`` to define which
-        Dataset is set. Default is ``original``.
-        """
-        isOriginal = True
-        try:
-            kind = kwargs['Dataset'].lower()
-            if kind not in ('fit', 'original'):
-                raise ValueError
-            if kind == 'fit':
-                isOriginal = False
-        except:
-            pass
-        # expecting flat arrays, TODO: check this earlier
-        dataset = kwargs.pop("SASData", None)
-        if dataset is None:
-            data = tuple((kwargs.pop(n, None) for n in ('Q', 'I', 'IError', 'Psi')))
-            if data[0] is None:
-                raise ValueError("No q values provided!")
-            if data[1] is None:
-                raise ValueError("No intensity values provided!")
-            if data[2] is None:
-                # Discussion moved to Bitbucket issue #7
-                logging.warning("No intensity uncertainties provided!")
-
-            # make single array: one row per intensity and its associated values
-            # selection of intensity is shorter this way: dataset[validIndices]
-            # enforce a certain shape here (removed ReshapeFitdata)
-            data = numpy.vstack([d for d in data if d is not None]).T
-            dataset = SASData("SAS data provided", data)
-        if isOriginal:
-            self.dataOriginal = dataset
-        else:
-            self.dataPrepared = dataset
 
     def setParameter(self, kwargs):
         """Sets the supplied Parameters given in keyword-value pairs for known

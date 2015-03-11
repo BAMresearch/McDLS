@@ -136,7 +136,9 @@ class Calculator(object):
         self._writeSettings(mcargs, dataset)
         if self.nolog: # refers to the widgethandler
             log.removeHandler(widgetHandler)
-        self._algo.calc(SASData = dataset)
+        #set data in the algorithm
+        self._algo.dataPrepared = dataset
+        self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)
 
