@@ -113,7 +113,10 @@ class Calculator(object):
     def isStopped(self):
         return self._algo.stop
 
-    def __call__(self, dataset):
+    def __call__(self, dataset, recalc = False):
+        """ the *recalc* boolean skips the optimisation algorithm and moves
+        directly on to the histogramming. If this was a run that was completed
+        successfully before, re-histogramming is then available """
         if self.model is None:
             logging.warning("No model set!")
             return
@@ -137,7 +140,8 @@ class Calculator(object):
             log.removeHandler(widgetHandler)
         #set data in the algorithm
         self._algo.dataPrepared = dataset
-        self._algo.calc()
+        if not recalc:
+            self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)
 
