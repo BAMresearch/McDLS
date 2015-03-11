@@ -43,12 +43,13 @@ class SASData(DataSet, DisplayMixin):
     _uncertainty = None
     _filename = None
     _qUnit = None # will be instance of SASUnit, defines units
+    _pUnit = None # will be instance of SASUnit, defines units
     _iUnit = None # will be instance of SASUnit, defines units
     _rUnit = None # defines units for r used in sizeest
     _qClipRange = [-np.inf, np.inf] # Q clip range for this dataset
-    _psiClipRange = [-np.inf, np.inf] # psi clip range for this dataset
-    _maskZeroI = False # mask zero intensity values (updated by mcsasparam)
-    _maskNegI = False # mask negative intensity values (updated by mcsasparam)
+    _pClipRange = [-np.inf, np.inf] # psi clip range for this dataset
+    _maskZeroInt = False # mask zero intensity values (updated by mcsasparam)
+    _maskNegativeInt = False # mask negative intensity values (updated by mcsasparam)
 
     @classproperty
     @classmethod
@@ -63,20 +64,20 @@ class SASData(DataSet, DisplayMixin):
                 "qLimsString", "sphericalSizeEstText")
 
     @property
-    def maskZeroI(self):
-        return bool(self._maskZeroI)
+    def maskZeroInt(self):
+        return bool(self._maskZeroInt)
 
-    @maskZeroI.setter
-    def maskZeroI(self, value):
-        self._maskZeroI = bool(value)
+    @maskZeroInt.setter
+    def maskZeroInt(self, value):
+        self._maskZeroInt = bool(value)
 
     @property
-    def maskNegI(self):
-        return bool(self._maskNegI)
+    def maskNegativeInt(self):
+        return bool(self._maskNegativeInt)
 
-    @maskNegI.setter
-    def maskNegI(self, value):
-        self._maskNegI = bool(value)
+    @maskNegativeInt.setter
+    def maskNegativeInt(self, value):
+        self._maskNegativeInt = bool(value)
 
     @property
     def count(self):
@@ -101,10 +102,6 @@ class SASData(DataSet, DisplayMixin):
     @property
     def qClipRange(self):
         return self._qClipRange
-
-    @property
-    def psiClipRange(self):
-        return self._psiClipRange
 
     @property
     def qMin(self):
@@ -133,30 +130,34 @@ class SASData(DataSet, DisplayMixin):
                 qMagnitudeName = self.qUnit.displayMagnitudeName)
 
     @property
-    def psiMin(self):
-        #returns minimum psi from data or psiClipRange, whichever is larger
-        return np.maximum(self.psiClipRange[0], self.psi.min())
-
-    @psiMin.setter
-    def psiMin(self, newParam):
-        #value in cliprange will not exceed available psi.
-        self.psiClipRange[0] = np.maximum(newParam, self.psi.min())
+    def pClipRange(self):
+        return self._pClipRange
 
     @property
-    def psiMax(self):
-        return np.minimum(self.psiClipRange[1], self.psi.max())
+    def pMin(self):
+        #returns minimum psi from data or psiClipRange, whichever is larger
+        return np.maximum(self.pClipRange[0], self.p.min())
 
-    @psiMax.setter
+    @pMin.setter
+    def pMin(self, newParam):
+        #value in cliprange will not exceed available psi.
+        self.pClipRange[0] = np.maximum(newParam, self.p.min())
+
+    @property
+    def pMax(self):
+        return np.minimum(self.pClipRange[1], self.p.max())
+
+    @pMax.setter
     def psiMax(self, newParam):
         #value in cliprange will not exceed available q.
-        self.psiClipRange[1] = np.minimum(newParam, self.psi.max())
+        self.pClipRange[1] = np.minimum(newParam, self.p.max())
 
     @property
-    def psiLimsString(self):
+    def pLimsString(self):
         return u"{0:.3g} ≤ psi ({psiMagnitudeName}) ≤ {1:.3g}".format(
-                self.psiUnit.toDisplay(self.psiMin),
-                self.psiUnit.toDisplay(self.psiMax),
-                psiMagnitudeName = self.psiUnit.displayMagnitudeName)
+                self.pUnit.toDisplay(self.pMin),
+                self.pUnit.toDisplay(self.pMax),
+                pMagnitudeName = self.pUnit.displayMagnitudeName)
 
     @property
     def dataContent(self):
@@ -302,11 +303,12 @@ class SASData(DataSet, DisplayMixin):
         clipped.setOrigin(self.origin[self.clipMask(*args, **kwargs), :])
         return clipped
 
-    def clipMask(self, qBounds = None, psiBounds = None,
-                       maskNegativeInt = False, maskZeroInt = False):
-        """If q and/or psi limits are supplied in self.Parameters,
-        clips the Dataset to within the supplied limits. Copies data to
-        :py:attr:`self.FitData` if no limits are set.
+    def clipMask(self):
+        #, qBounds = None, psiBounds = None,
+        #               maskNegativeInt = False, maskZeroIntnt = False):
+        """
+        If q and/or psi limits are supplied in the dataset,
+        clips the Dataset to within the set limits. 
         """
         # init indices: index array is more flexible than boolean masks
         validIndices = np.where(np.isfinite(self.q))[0]
@@ -314,18 +316,18 @@ class SASData(DataSet, DisplayMixin):
             validIndices = validIndices[mask]
 
         # Optional masking of negative intensity
-        if maskZeroInt:
+        if self.maskZeroInt:
             # FIXME: compare with machine precision (EPS)?
             cutIndices(validIndices,self.i[validIndices] == 0.0)
-        if maskNegativeInt:
+        if self.maskNegativeInt:
             cutIndices(validIndices,self.i[validIndices] > 0.0)
-        if isList(qBounds):
-            # excluding the lower q limit may prevent q = 0 from appearing
-            cutIndices(validIndices,self.q[validIndices] > min(qBounds))
-            cutIndices(validIndices,self.q[validIndices] <= max(qBounds))
-        if isList(psiBounds) and self.is2d:
-            cutIndices(validIndices,self.p[validIndices] > min(psiBounds))
-            cutIndices(validIndices,self.p[validIndices] <= max(psiBounds))
+        # clip to q bounds
+        cutIndices(validIndices,self.q[validIndices] >= self.qMin)
+        cutIndices(validIndices,self.q[validIndices] <= self.qMax)
+        # clip to psi bounds
+        if self.is2d:
+            cutIndices(validIndices,self.p[validIndices] > self.pMin)
+            cutIndices(validIndices,self.p[validIndices] <= self.pMax)
 
         return validIndices
 

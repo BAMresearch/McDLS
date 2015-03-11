@@ -71,6 +71,13 @@
         "default" : false,
         "isActive" : false 
     },
+    "eMin" : {
+        "displayName" : "minimum uncertainty estimate",
+        "valueRange" : [0.00,1.0],
+        "description" : "Minimum possible uncertainty estimate as fraction of intensity",
+        "default" : 0.01,
+        "isActive" : false 
+    },
     "qMin" : {
         "displayName" : "Lower Q-limit",
         "valueRange" : [0.00,Infinity],

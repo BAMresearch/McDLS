@@ -187,6 +187,15 @@ class McSAS(AlgorithmBase):
         self.setParameter(kwargs)
         # apply q and psi limits and populate self.FitData
         if self.dataOriginal is not None:
+            self.dataPrepared = self.dataOriginal.copy()
+            self.dataPrepared.qMin = self.qMin()
+            self.dataPrepared.qMax = self.qMax()
+            self.dataPrepared.pMin = self.pMin()
+            self.dataPrepared.pMax = self.pMax()
+            self.dataPrepared.eMin = self.eMin()
+            self.dataPrepared.maskZeroInt = self.maskZeroInt()
+            self.dataPrepared.maskNegativeInt = self.maskNegativeInt()
+
             self.dataPrepared = self.dataOriginal.clip(
                               [self.qMin(), self.qMax()],
                               [self.psiMin(), self.psiMax()],
