@@ -190,17 +190,13 @@ class McSAS(AlgorithmBase):
             self.dataPrepared = self.dataOriginal.copy()
             self.dataPrepared.qMin = self.qMin()
             self.dataPrepared.qMax = self.qMax()
-            self.dataPrepared.pMin = self.pMin()
-            self.dataPrepared.pMax = self.pMax()
+            self.dataPrepared.pMin = self.psiMin()
+            self.dataPrepared.pMax = self.psiMax()
             self.dataPrepared.eMin = self.eMin()
             self.dataPrepared.maskZeroInt = self.maskZeroInt()
             self.dataPrepared.maskNegativeInt = self.maskNegativeInt()
-
-            self.dataPrepared = self.dataOriginal.clip(
-                              [self.qMin(), self.qMax()],
-                              [self.psiMin(), self.psiMax()],
-                              self.maskNegativeInt(),
-                              self.maskZeroInt())
+            #apply limits
+            self.dataPrepared = self.dataPrepared.clip()
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance

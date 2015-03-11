@@ -136,21 +136,33 @@ class SASData(DataSet, DisplayMixin):
     @property
     def pMin(self):
         #returns minimum psi from data or psiClipRange, whichever is larger
-        return np.maximum(self.pClipRange[0], self.p.min())
+        if self.is2d:
+            return np.maximum(self.pClipRange[0], self.p.min())
+        else:
+            return self.pClipRange[0]
 
     @pMin.setter
     def pMin(self, newParam):
         #value in cliprange will not exceed available psi.
-        self.pClipRange[0] = np.maximum(newParam, self.p.min())
+        if self.is2d:
+            self._pClipRange[0] = np.maximum(newParam, self.p.min())
+        else:
+            self._pClipRange[0] = newParam
 
     @property
     def pMax(self):
-        return np.minimum(self.pClipRange[1], self.p.max())
+        if self.is2d:
+            return np.minimum(self.pClipRange[1], self.p.max())
+        else:
+            return self.pClipRange[1]
 
     @pMax.setter
-    def psiMax(self, newParam):
-        #value in cliprange will not exceed available q.
-        self.pClipRange[1] = np.minimum(newParam, self.p.max())
+    def pMax(self, newParam):
+        #value in cliprange will not exceed available psi.
+        if self.is2d:
+            self._pClipRange[1] = np.minimum(newParam, self.p.max())
+        else:
+            self._pClipRange[1] = newParam
 
     @property
     def pLimsString(self):
@@ -297,15 +309,16 @@ class SASData(DataSet, DisplayMixin):
     def sphericalSizeEst(self):
         return self._sizeEst
 
-    def clip(self, *args, **kwargs):
+    def clip(self):
         """Returns the clipped dataset."""
         clipped = self.copy()
-        clipped.setOrigin(self.origin[self.clipMask(*args, **kwargs), :])
+        clipped._prepareUncertainty() # in case eMin was adjusted
+        # apply limits
+        clipped.setOrigin(clipped.origin[self.clipMask(), :])
+
         return clipped
 
     def clipMask(self):
-        #, qBounds = None, psiBounds = None,
-        #               maskNegativeInt = False, maskZeroIntnt = False):
         """
         If q and/or psi limits are supplied in the dataset,
         clips the Dataset to within the set limits. 
