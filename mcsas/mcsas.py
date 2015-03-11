@@ -187,16 +187,15 @@ class McSAS(AlgorithmBase):
         self.setParameter(kwargs)
         # apply q and psi limits and populate self.FitData
         if self.dataOriginal is not None:
-            self.dataPrepared = self.dataOriginal.copy()
-            self.dataPrepared.qMin = self.qMin()
-            self.dataPrepared.qMax = self.qMax()
-            self.dataPrepared.pMin = self.psiMin()
-            self.dataPrepared.pMax = self.psiMax()
-            self.dataPrepared.eMin = self.eMin()
-            self.dataPrepared.maskZeroInt = self.maskZeroInt()
-            self.dataPrepared.maskNegativeInt = self.maskNegativeInt()
+            self.dataOriginal.qMin = self.qMin()
+            self.dataOriginal.qMax = self.qMax()
+            self.dataOriginal.pMin = self.psiMin()
+            self.dataOriginal.pMax = self.psiMax()
+            self.dataOriginal.eMin = self.eMin()
+            self.dataOriginal.maskZeroInt = self.maskZeroInt()
+            self.dataOriginal.maskNegativeInt = self.maskNegativeInt()
             #apply limits
-            self.dataPrepared = self.dataPrepared.clip()
+            self.dataPrepared = self.dataOriginal.clip()
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
