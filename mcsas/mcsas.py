@@ -10,16 +10,13 @@ from numpy import (inf, array, reshape, shape, pi, diff, zeros,
 from scipy import optimize
 from itertools import izip
 import time # Timekeeping and timing of objects
-import sys # For printing of slightly more advanced messages to stdout
 import logging
 logging.basicConfig(level = logging.INFO)
 
-from utils import isList, isFrozen, isString
+from utils import isList 
 from bases.dataset import DataSet
-from bases.algorithm import (AlgorithmBase,
-                             RandomUniform, RandomExponential)
-from utils.parameter import ParameterBase, Histogram, isActiveParam
-from utils.propertynames import PropertyNames
+from bases.algorithm import AlgorithmBase
+from utils.parameter import isActiveParam
 from utils.tests import isMac
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
