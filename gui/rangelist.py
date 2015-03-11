@@ -255,7 +255,7 @@ class RangeList(DataList):
         # self.addMenuEntry(name = "edit", text = "Edit selected", 
         #                   menuStates = "hasSelection",
         #                   callbacks = self.editEntry)
-        # self.addMenuEntry(name = "recalc", text = "recalc selected",
+        # self.addMenuEntry(name = "recalc", text = "recalc histograms",
         #                   menuStates = "hasSelection",
         #                   callbacks = self.recalc)
 
@@ -265,6 +265,8 @@ class RangeList(DataList):
     
     def recalc(self):
         return
+        # this is not the _calculator instance I was looking for. 
+        self._calculator(recalc = True)
         # does not work yet! missing arguments for Hist.calc()
         DataList.updateData(self, selectedOnly = True, showProgress = False,
                 updateFunc = Histogram.calc,
