@@ -71,20 +71,6 @@
         "default" : false,
         "isActive" : false 
     },
-    "qMagnitude" : {
-        "displayName" : "input Q scale (m^-1)",
-        "valueRange" : [0,Infinity],
-        "description" : "Order of magnitude of input units of Q to m^-1. \n for input in nm^-1, set this to 1e9, for input in A^-1, set this to 1e10.",
-        "default" : 1e9,
-        "isActive" : false 
-    },
-    "iMagnitude" : {
-        "displayName" : "input I scale ((m sr)^-1)",
-        "valueRange" : [0,Infinity],
-        "description" : "Order of magnitude of input units of I to (m sr)^-1. \n for input in (cm sr)^-1, set this to 1e2, for input in (m sr)^-1 set this to 1.",
-        "default" : 1.0,
-        "isActive" : false 
-    },
     "qMin" : {
         "displayName" : "Lower Q-limit",
         "valueRange" : [0.00,Infinity],
