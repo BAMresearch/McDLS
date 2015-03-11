@@ -132,8 +132,7 @@ class Calculator(object):
         except:
             pass
 
-        mcargs = dict()
-        self._writeSettings(mcargs, dataset)
+        self._writeSettings(dict(), dataset)
         if self.nolog: # refers to the widgethandler
             log.removeHandler(widgetHandler)
         #set data in the algorithm

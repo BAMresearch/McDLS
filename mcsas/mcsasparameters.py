@@ -50,7 +50,6 @@ class McSASParameters(PropertyNames):
             functionality in the McSAS.data molule. Setting this will ignore 
             datapoints with intensity values < 0
         - *maskZeroInt*: similar to above, but for intensity values = 0
-        - *doPlot*: sets whether to automatically plot or not
 
     Most of them should be moved to McSAS as dynamic parameters of type
     *Parameter* which allows them to be configurable in the GUI.

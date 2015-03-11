@@ -65,12 +65,6 @@
         "default" : false,
         "isActive" : false 
     },
-    "doPlot" : {
-        "displayName" : "Automatically plot result",
-        "description" : "Automatically plots the result upon success",
-        "default" : false,
-        "isActive" : false 
-    },
     "eMin" : {
         "displayName" : "minimum uncertainty estimate",
         "valueRange" : [0.00,1.0],

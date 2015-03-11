@@ -223,33 +223,6 @@ class McSAS(AlgorithmBase):
             # TODO: test 2D mode
             self.gen2DIntensity()
 
-        if self.doPlot():
-            self.plot(**kwargs)
-
-    def setParameter(self, kwargs):
-        """Sets the supplied Parameters given in keyword-value pairs for known
-        setting keywords (unknown key-value pairs are skipped).
-        If a supplied parameter is one of the function names, it is stored in
-        the self.Functions dict.
-        """
-        for key in kwargs.keys():
-            found = False
-            param = getattr(self, key, None)
-            if isinstance(param, ParameterBase):
-                param.setValue(kwargs[key])
-                found = True
-            for cls in McSASParameters, ScatteringModel:
-                if key in cls.propNames():
-                    value = kwargs[key]
-                    setattr(cls, key, value)
-                    found = True
-                    break
-            if found:
-                del kwargs[key]
-            else:
-                logging.warning("Unknown McSAS parameter specified: '{0}'"
-                                .format(key))
-
     ######################################################################
     ##################### Pre-optimisation Functions #####################
     ######################################################################
