@@ -33,7 +33,7 @@ from bases.datafile import PDHFile, AsciiFile
 from bases.dataset import DataSet, DisplayMixin
 from utils import isList, classproperty
 from gui.utils import processEventLoop
-from utils.units import Length, ScatteringVector, ScatteringIntensity
+from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
 
 class SASData(DataSet, DisplayMixin):
     """Represents one set of data from a unique source (a file, for example).
@@ -45,7 +45,10 @@ class SASData(DataSet, DisplayMixin):
     _qUnit = None # will be instance of SASUnit, defines units
     _iUnit = None # will be instance of SASUnit, defines units
     _rUnit = None # defines units for r used in sizeest
-    _qClipRange = [-np.inf, np.inf] # manually set Q clip range for this dataset
+    _qClipRange = [-np.inf, np.inf] # Q clip range for this dataset
+    _psiClipRange = [-np.inf, np.inf] # psi clip range for this dataset
+    _maskZeroI = False # mask zero intensity values (updated by mcsasparam)
+    _maskNegI = False # mask negative intensity values (updated by mcsasparam)
 
     @classproperty
     @classmethod
@@ -70,8 +73,22 @@ class SASData(DataSet, DisplayMixin):
                 rUnitName = self.rUnit.displayMagnitudeName)
 
     @property
+    def eMin(self):
+        return self._eMin
+
+    @eMin.setter
+    def eMin(self, value):
+        value = float(value) 
+        assert((value > 0.) and (value < 1.))
+        self._eMin = value
+
+    @property
     def qClipRange(self):
         return self._qClipRange
+
+    @property
+    def psiClipRange(self):
+        return self._psiClipRange
 
     @property
     def qMin(self):
@@ -98,6 +115,32 @@ class SASData(DataSet, DisplayMixin):
                 self.qUnit.toDisplay(self.qMin),
                 self.qUnit.toDisplay(self.qMax),
                 qMagnitudeName = self.qUnit.displayMagnitudeName)
+
+    @property
+    def psiMin(self):
+        #returns minimum psi from data or psiClipRange, whichever is larger
+        return np.maximum(self.psiClipRange[0], self.psi.min())
+
+    @psiMin.setter
+    def psiMin(self, newParam):
+        #value in cliprange will not exceed available psi.
+        self.psiClipRange[0] = np.maximum(newParam, self.psi.min())
+
+    @property
+    def psiMax(self):
+        return np.minimum(self.psiClipRange[1], self.psi.max())
+
+    @psiMax.setter
+    def psiMax(self, newParam):
+        #value in cliprange will not exceed available q.
+        self.psiClipRange[1] = np.minimum(newParam, self.psi.max())
+
+    @property
+    def psiLimsString(self):
+        return u"{0:.3g} ≤ psi ({psiMagnitudeName}) ≤ {1:.3g}".format(
+                self.psiUnit.toDisplay(self.psiMin),
+                self.psiUnit.toDisplay(self.psiMax),
+                psiMagnitudeName = self.psiUnit.displayMagnitudeName)
 
     @property
     def dataContent(self):
@@ -189,6 +232,10 @@ class SASData(DataSet, DisplayMixin):
         return self._qUnit
 
     @property
+    def pUnit(self):
+        return self._pUnit
+
+    @property
     def iUnit(self):
         return self._iUnit
 
@@ -199,6 +246,7 @@ class SASData(DataSet, DisplayMixin):
     def __init__(self, *args):
         #set unit definitions for display and internal units
         self._qUnit = ScatteringVector(u"nm⁻¹")
+        self._pUnit = Angle(u"˚")
         self._iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self._rUnit = Length(u"nm")
 
