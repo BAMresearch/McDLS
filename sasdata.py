@@ -39,7 +39,7 @@ class SASData(DataSet, DisplayMixin):
     """Represents one set of data from a unique source (a file, for example).
     """
     _sizeEst = None
-    _emin = 0.01 # minimum possible error (1%)
+    _eMin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
     _qUnit = None # will be instance of SASUnit, defines units
@@ -61,6 +61,22 @@ class SASData(DataSet, DisplayMixin):
     def displayData(cls):
         return ("title", "count", "dataContent", 
                 "qLimsString", "sphericalSizeEstText")
+
+    @property
+    def maskZeroI(self):
+        return bool(self._maskZeroI)
+
+    @maskZeroI.setter
+    def maskZeroI(self, value):
+        self._maskZeroI = bool(value)
+
+    @property
+    def maskNegI(self):
+        return bool(self._maskNegI)
+
+    @maskNegI.setter
+    def maskNegI(self, value):
+        self._maskNegI = bool(value)
 
     @property
     def count(self):
@@ -256,8 +272,8 @@ class SASData(DataSet, DisplayMixin):
         self._prepareUncertainty()
 
     def _prepareUncertainty(self):
-        self._uncertainty = self.minUncertainty() * self.i
-        minUncertaintyPercent = self.minUncertainty() * 100.
+        self._uncertainty = self.eMin * self.i
+        minUncertaintyPercent = self.eMin * 100.
         if not self.hasError:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
@@ -268,9 +284,6 @@ class SASData(DataSet, DisplayMixin):
                                 "for {} datapoints.".format(
                                 minUncertaintyPercent, count))
             self._uncertainty = np.maximum(self._uncertainty, self.e)
-
-    def minUncertainty(self):
-        return self._emin
 
     def __eq__(self, other):
         return (np.all(self.origin == other.origin)
@@ -286,8 +299,7 @@ class SASData(DataSet, DisplayMixin):
     def clip(self, *args, **kwargs):
         """Returns the clipped dataset."""
         clipped = self.copy()
-        clipped.setOrigin(self.origin[
-                self.clipMask(*args, **kwargs)])
+        clipped.setOrigin(self.origin[self.clipMask(*args, **kwargs), :])
         return clipped
 
     def clipMask(self, qBounds = None, psiBounds = None,
