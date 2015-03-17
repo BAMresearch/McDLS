@@ -146,16 +146,18 @@ class ModelWidget(SettingsWidget):
         # get parameter display order of magnitude: 
         param = None
         for p in self.algorithm.params():
-            if p.name() == key: # "is" does not work with unicode strings
+            if key in p.name().lower():
                 param = p
                 break
         if param is None:
             logging.debug("No 'radius'-named parameter found, "
                           "not setting spherical size range!")
-            return # nothing to do
+            return False # nothing to do
         keymin, keymax = key+"min", key+"max"
         if self.get(keymin) is not None and self.get(keymax) is not None:
             self.set(keymin, param.toDisplay(minVal))
             self.set(keymax, param.toDisplay(maxVal))
+            return True
+        return False
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

@@ -197,8 +197,8 @@ class MainWindow(MainWindowBase):
         return self.modelWidget
 
     def _onSphericalSizeRange(self, *args):
-        self.toolbox.setCurrentWidget(self.modelWidget)
-        self.modelWidget.setSphericalSizeRange(*args)
+        if self.modelWidget.setSphericalSizeRange(*args):
+            self.toolbox.setCurrentWidget(self.modelWidget)
 
     def _setupStatsWidget(self):
         """Set up property widget with settings."""
