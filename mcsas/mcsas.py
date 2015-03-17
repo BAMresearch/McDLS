@@ -10,6 +10,7 @@ from numpy import (inf, array, reshape, shape, pi, diff, zeros,
 from scipy import optimize
 from itertools import izip
 import time # Timekeeping and timing of objects
+import copy
 import logging
 logging.basicConfig(level = logging.INFO)
 
@@ -799,6 +800,9 @@ class McSAS(AlgorithmBase):
         histograms = [parHist for histograms in
                 (p.histograms() for p in self.model.activeParams())
                     for parHist in histograms]
+        # modify copies only below,
+        # otherwise internal object structure gets inconsistent
+        histograms = [copy.copy(h) for h in histograms]
         # remove circular references first for pickling
         for i in range(len(histograms)):
             newParam = histograms[i].param.copy()
