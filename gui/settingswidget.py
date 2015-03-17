@@ -28,6 +28,8 @@ def isNotNone(lst):
 def askForAutoUpdateRanges(parentWidget, userHists):
     mb = QMessageBox(parentWidget)
     text = ["{0}ser defined analysis range{1} appear to be set for this parameter:"]
+    if not len(userHists):
+        return True # auto update
     if len(userHists) == 1:
         text[0] = text[0].format("A u", "")
     else:
