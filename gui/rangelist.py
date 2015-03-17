@@ -8,7 +8,8 @@ from numpy import inf as numpy_inf
 from gui.qt import QtCore, QtGui
 from QtCore import Qt, QFileInfo, QMargins
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
-                   QLabel, QComboBox, QPalette, QDialog, QSpinBox)
+                   QLabel, QComboBox, QPalette, QDialog, QSpinBox,
+                   QCheckBox)
 from gui.bases.datalist import DataList
 from utils import isList, testfor
 from utils.parameter import (ParameterNumerical, Histogram)
@@ -46,8 +47,9 @@ class RangeDialog(QDialog):
     def _createEntries(self):
         entryWidget = QWidget(self)
         entryLayout = QHBoxLayout(entryWidget)
-        inputWidgets = (self._createParamBox(), self._createLower(),
-                        self._createUpper(), self._createBins(),
+        inputWidgets = (self._createParamBox(), self._createAutoRange(),
+                        self._createLower(), self._createUpper(),
+                        self._createBins(),
                         self._createXScale(), self._createYWeight())
         self._labels = dict()
         # assumes same ordering of entryWidgets above and Histogram.displayData
@@ -68,6 +70,12 @@ class RangeDialog(QDialog):
         self.pbox.setCurrentIndex(0)
         self.lentry.selectAll() # select the first input by default
         return entryWidget
+
+    def _createAutoRange(self):
+        autoRange = QCheckBox(self)
+        autoRange.setCheckState(Qt.Checked)
+        self.autoRange = autoRange
+        return autoRange
 
     def _createLower(self):
         # add input for lower limit
@@ -148,9 +156,9 @@ class RangeDialog(QDialog):
         for col, text in zip(Histogram.displayData, Histogram.displayDataDescr):
             if "lower" in col or "upper" in col:
                 text = u"{t} ({u})".format(t = text, u = p.displayMagnitudeName())
-            elif "axis" in text:
+            elif any([(l in text) for l in ("axis", "bins", "range")]):
                 # break long descriptions to keep them short
-                text = text.replace(" ", "\n")
+                text = text.replace(" ", "\n", 1)
             self._labels[col].setText(text)
 
     def _createButtons(self):
@@ -182,10 +190,11 @@ class RangeDialog(QDialog):
         except AttributeError:
             pass
 
-        output = Histogram(p, lval, uval,
+        hist = Histogram(p, lval, uval,
                 self.bentry.value(), self.sentry.currentText(),
                 self.wentry.currentText())
-        return output
+        hist.autoFollow = self.autoRange.isChecked()
+        return hist
 
 class RangeList(DataList):
     _calculator = None
@@ -197,6 +206,14 @@ class RangeList(DataList):
         assert isinstance(calculator, Calculator)
         self._calculator = calculator
         self.sigRemovedData.connect(self.onRemoval)
+
+    def itemUpdate(self, item, column):
+        pass
+#        import sys
+#        print >>sys.__stderr__, "itemUpdate", item, column, Histogram.displayData
+        # find index of autoFollow member
+#        for propName in Histogram.displayData if "autoFollow" in propName 
+        # conitune only if index matches column index
 
     def onRemoval(self, removedHistograms):
         for hist in removedHistograms:
