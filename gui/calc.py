@@ -150,7 +150,7 @@ class Calculator(object):
             for i, p in enumerate(self.model.activeParams()):
                 self._writeDistrib(p)
                 self._writeStatistics(i, p)
-            # plotting last so calcStats is already executed.
+            # plotting last so stats were already calculated
             if res is not None:
                 self._writeFit(res)
                 self._writeContribs(res)

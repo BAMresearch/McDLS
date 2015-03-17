@@ -386,19 +386,6 @@ class Histogram(DataSet, DisplayMixin):
     def moments(self):
         return self._moments
 
-    def addRange(self, lower, upper):
-        """Adds the provided range and returns its index.
-        The index may be different from the last if the range exists."""
-        newRange = (min(lower, upper), max(lower, upper))
-        try:
-            return self.ranges.index(newRange)
-        except ValueError:
-            self._ranges.append(newRange)
-        return len(self._ranges) - 1
-
-    def resetRanges(self):
-        self._ranges = []
-
     def _binMask(self, bini, parValues):
         # indexing which contributions fall into the radius bin
         return (  (parValues >= self.xLowerEdge[bini])
@@ -464,36 +451,6 @@ class Histogram(DataSet, DisplayMixin):
             return np.zeros_like(bins)
         cdf /= cdf.max() # normalized to max == 1
         return cdf
-
-    def calcStats(self, paramIndex, algo):
-        """Calculates distribution statistics for all available weighting
-        options over all ranges previously set."""
-        self._stats = [] # statistics for all ranges
-        for valueRange in self.ranges:
-            allWeighting = [] # for all weighting options of a range
-            for weighting in self.weighting():
-                if weighting == 'vol':
-                    fraction = algo.result[paramIndex]['volumeFraction']
-                elif weighting == 'num':
-                    fraction = algo.result[paramIndex]['numberFraction']
-                logging.info("Calculating {weighting} weighted distribution "
-                             "statistics of {param} within {range} ..."
-                             .format(weighting = weighting.upper(),
-                                     param = self.param.name(),
-                                     range = valueRange))
-                allWeighting.append(RangeStats(paramIndex, valueRange,
-                                                fraction, algo))
-            self._stats.append(allWeighting)
-        return self._stats
-
-    @property
-    def stats(self):
-        return self._stats
-
-    def iterStats(self):
-        for valueRange, rangeStats in zip(self.ranges, self.stats):
-            for weighting, weightingStats in zip(self.weighting(), rangeStats):
-                yield valueRange, weighting, weightingStats
 
     def __str__(self):
         out = ["hist"]
