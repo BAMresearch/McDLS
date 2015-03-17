@@ -133,7 +133,9 @@ class SettingsWidget(SettingsWidgetBase):
         return p
 
     def updateParamRange(self, param, newRange):
-        if not isNotNone(newRange): # any is None
+        if (not isNotNone(newRange) or
+            not isinstance(param, FitParameterBase) or
+            not param.isActive()):
             return None
         displayRange = None
         try:
