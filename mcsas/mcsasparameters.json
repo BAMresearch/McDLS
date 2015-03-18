@@ -3,7 +3,7 @@
         "displayName" : "number of contributions",
         "description" : "Total number of contributions making up a scattering pattern",
         "valueRange" : [1,1e6],
-        "default" : 200,
+        "default" : 300,
         "isActive" : false 
     },
     "numReps" : {
