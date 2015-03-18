@@ -16,6 +16,7 @@ from gui.liststyle import setBackgroundStyleSheet
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))
+    # sigShannonChannels = Signal(int) # sets warning level of "nbins"-field
 
     def loadData(self, fileList = None):
         if fileList is None or type(fileList) is bool:
@@ -33,6 +34,7 @@ class FileList(DataList):
     def itemDoubleClicked(self, item, column):
         valueRange = item.data().sphericalSizeEst()
         self.sigSphericalSizeRange.emit(min(valueRange), max(valueRange))
+        # self.sigShannonChannels.emit(item.data().shannonChannelEst()
 
     def setupUi(self):
         self.listWidget.setAlternatingRowColors(True)

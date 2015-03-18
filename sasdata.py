@@ -39,6 +39,7 @@ class SASData(DataSet, DisplayMixin):
     """Represents one set of data from a unique source (a file, for example).
     """
     _sizeEst = None
+    _shannonChannelEst = None
     _eMin = 0.01 # minimum possible error (1%)
     _uncertainty = None
     _filename = None
@@ -54,14 +55,14 @@ class SASData(DataSet, DisplayMixin):
     @classproperty
     @classmethod
     def displayDataDescr(cls):
-        return ("filename", "data points", "data content", 
-                "Q limits", "est. sphere size")
+        return ("Filename ", "Data points ", "Data content ", 
+                "Q limits ", "Est. sphere size ", "Recommended number of bins ")
 
     @classproperty
     @classmethod
     def displayData(cls):
         return ("title", "count", "dataContent", 
-                "qLimsString", "sphericalSizeEstText")
+                "qLimsString", "sphericalSizeEstText", "shannonChannelEstText")
 
     @property
     def maskZeroInt(self):
@@ -85,9 +86,13 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def sphericalSizeEstText(self):
-        return u"{0:.3g} ≤ R ({rUnitName}) ≤ {1:.3g}".format(
+        return u"{0:.3g} ≤ R ({rUnitName}) ≤ {1:.3g} ".format(
                 *self.rUnit.toDisplay(self.sphericalSizeEst()),
                 rUnitName = self.rUnit.displayMagnitudeName)
+
+    @property
+    def shannonChannelEstText(self):
+        return u"≤ {0:2d} bins ".format(self.shannonChannelEst())
 
     @property
     def eMin(self):
@@ -282,6 +287,7 @@ class SASData(DataSet, DisplayMixin):
         DataSet.__init__(self, *args)
         self._sizeEst = np.pi / np.array([self.q.max(),
                                           abs(self.q.min()) ])
+        self._shannonChannelEst = self.q.max() / self.q.min()
         self._prepareUncertainty()
 
     def _prepareUncertainty(self):
@@ -308,6 +314,9 @@ class SASData(DataSet, DisplayMixin):
 
     def sphericalSizeEst(self):
         return self._sizeEst
+
+    def shannonChannelEst(self):
+        return int(self._shannonChannelEst)
 
     def clip(self):
         """Returns the clipped dataset."""
