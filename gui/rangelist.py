@@ -73,9 +73,16 @@ class RangeDialog(QDialog):
 
     def _createAutoRange(self):
         autoRange = QCheckBox(self)
-        autoRange.setCheckState(Qt.Checked)
+        autoRange.stateChanged.connect(self._onAutoRangeChange)
         self.autoRange = autoRange
         return autoRange
+
+    def _onAutoRangeChange(self, isChecked):
+        isChecked = (isChecked == Qt.Checked) # no tristate
+        enableLimits = not isChecked
+        self.lentry.setEnabled(enableLimits)
+        self.uentry.setEnabled(enableLimits)
+        self._setLimits()
 
     def _createLower(self):
         # add input for lower limit
@@ -133,25 +140,38 @@ class RangeDialog(QDialog):
         self.wentry = wentry
         return wentry
 
-    def _selectParam(self, index):
-        """Gets the index within the selection box."""
+    def _getParam(self, index):
         pname = self.pbox.itemData(index)
         p = getattr(self._model, pname)
         # perhaps, use testfor() for that:
         assert p is not None, "Could not find parameter from selection box" 
-        llim, ulim = p.valueRange()
+        return p
+
+    def _setLimits(self):
+        p = self._getParam(self.pbox.currentIndex())
         lval, uval = p.activeRange()
         try:
             # account for units conversion
-            llim, ulim = p.toDisplay(llim), p.toDisplay(ulim)
             lval, uval = p.toDisplay(lval), p.toDisplay(uval)
         except AttributeError:
-            raise
+            # raise # will break here, use it for debugging
+            pass
+        self.lentry.setValue(lval)
+        self.uentry.setValue(uval)
+
+    def _selectParam(self, index):
+        """Gets the index within the selection box."""
+        p = self._getParam(index)
+        llim, ulim = p.valueRange()
+        try:
+            # account for units conversion
+            llim, ulim = p.toDisplay(llim), p.toDisplay(ulim)
+        except AttributeError:
+            # raise # will break here, use it for debugging
             pass
         self.lentry.setRange(llim, ulim)
         self.uentry.setRange(llim, ulim)
-        self.lentry.setValue(lval)
-        self.uentry.setValue(uval)
+        self.autoRange.setCheckState(Qt.Checked) # sets limits too
         # set labels
         for col, text in zip(Histogram.displayData, Histogram.displayDataDescr):
             if "lower" in col or "upper" in col:
@@ -198,8 +218,6 @@ class RangeDialog(QDialog):
 
 class RangeList(DataList):
     _calculator = None
-    # remember if there was user input recently
-    userInput = False
 
     def __init__(self, calculator = None, **kwargs):
         DataList.__init__(self, **kwargs)
@@ -208,12 +226,15 @@ class RangeList(DataList):
         self.sigRemovedData.connect(self.onRemoval)
 
     def itemUpdate(self, item, column):
-        pass
-#        import sys
-#        print >>sys.__stderr__, "itemUpdate", item, column, Histogram.displayData
-        # find index of autoFollow member
-#        for propName in Histogram.displayData if "autoFollow" in propName 
-        # conitune only if index matches column index
+        # handle autoFollow only, i.e. auto range update changes only
+        if column != Histogram.displayData.index("autoFollow"):
+            return
+        # update histogram based on auto range update on/off
+        hist = item.data()
+        hist.autoFollow = (item.checkState(column) == Qt.Checked)
+        if hist.autoFollow:
+            hist.updateRange()
+            item.update()
 
     def onRemoval(self, removedHistograms):
         for hist in removedHistograms:
@@ -252,8 +273,6 @@ class RangeList(DataList):
             return
         # add it to the actual histogram list of the parameter
         newHist.param.histograms().append(newHist) # hmm, funny here
-        # on user input, stop automatic range updates next time and ask instead
-        self.userInput = True
         # update the GUI based on that
         self.updateHistograms()
 

@@ -8,7 +8,7 @@ from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QPushButton,
-                   QLabel, QLayout, QMessageBox)
+                   QLabel, QLayout)
 from gui.bases.datalist import DataList
 from gui.bases.settingswidget import SettingsWidget as SettingsWidgetBase
 from bases.algorithm.parameter import ParameterFloat # instance for test
@@ -25,31 +25,10 @@ def isNotNone(lst):
         return False
     return all((a is not None for a in lst))
 
-def askForAutoUpdateRanges(parentWidget, userHists):
-    mb = QMessageBox(parentWidget)
-    text = ["{0}ser defined analysis range{1} appear to be set for this parameter:"]
-    if not len(userHists):
-        return True # auto update
-    if len(userHists) == 1:
-        text[0] = text[0].format("A u", "")
-    else:
-        text[0] = text[0].format("U", "s")
-    for h in userHists:
-        text.append("    " + str(h))
-    text.append("Please confirm you want to switch from automatic to manual range setting")
-    mb.setText("\n".join(text))
-    mb.setWindowTitle("Automatic or manual analysis range?")
-    okBtn = mb.addButton("Automatic", QMessageBox.AcceptRole)
-    cnlBtn = mb.addButton("Manual", QMessageBox.RejectRole)
-    mb.setDefaultButton(okBtn)
-    mb.setEscapeButton(cnlBtn)
-    return mb.exec_() == QMessageBox.AcceptRole
-
 class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
     _appSettings = None
     sigRangeChanged = Signal()
-    _autoUpdateHistograms = True # Remembers last user question
 
     def __init__(self, parent, calculator = None):
         SettingsWidgetBase.__init__(self, parent)
@@ -144,16 +123,7 @@ class SettingsWidget(SettingsWidgetBase):
         except:
             param.setActiveRange(newRange)
             displayRange = param.activeRange()
-        # check configured analysis ranges
-        userHists = [h for h in param.histograms()
-                        if h.xrange != param.activeRange()]
-        # update histograms automatically?
-        if self._statsWidget.userInput:
-            self._autoUpdateHistograms = askForAutoUpdateRanges(self, userHists)
-            self._statsWidget.userInput = False
-        if self._autoUpdateHistograms:
-            param.histograms().updateRanges(force = True)
-
+        param.histograms().updateRanges()
         return displayRange
 
     def updateParam(self, widget):

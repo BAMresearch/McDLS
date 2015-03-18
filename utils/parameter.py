@@ -278,12 +278,10 @@ class Histogram(DataSet, DisplayMixin):
         return "{0:g} ({1})".format(self._param.toDisplay(self.upper),
                                     self._param.displayMagnitudeName())
 
-    def updateRange(self, force = False):
+    def updateRange(self):
         """Restricts histogram range according to changed parameter range
-        if needed. Checks histogram range against parameter limits.
-        The force option decides if the range is adjusted to the underlying
-        parameters active range."""
-        if force:
+        if needed. Checks histogram range against parameter limits."""
+        if self.autoFollow:
             try:
                 self.xrange = self.param.activeRange()
             except: pass # ignored on failure
@@ -518,13 +516,11 @@ class Histograms(list):
             return
         list.append(self, value)
 
-    def updateRanges(self, force = False):
-        """Updates ranges of all histograms. The force option decides if each
-        histogram range is adjusted to the underlying parameters active range.
-        """
+    def updateRanges(self):
+        """Updates ranges of all histograms."""
         # work directly on the histograms, no copy
         for i in range(len(self)):
-            self[i].updateRange(force)
+            self[i].updateRange()
 
     def calc(self, *args):
         # work directly on the histograms, no copy
