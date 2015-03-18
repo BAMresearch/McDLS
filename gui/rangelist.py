@@ -224,6 +224,11 @@ class RangeList(DataList):
         assert isinstance(calculator, Calculator)
         self._calculator = calculator
         self.sigRemovedData.connect(self.onRemoval)
+        self.listWidget.mouseDoubleClickEvent = self.mouseDoubleClickEvent
+
+    def mouseDoubleClickEvent(self, event):
+        """Shows RangeDialog on double click."""
+        self.loadData()
 
     def itemUpdate(self, item, column):
         # handle autoFollow only, i.e. auto range update changes only
