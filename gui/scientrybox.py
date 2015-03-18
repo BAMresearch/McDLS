@@ -61,33 +61,44 @@ class SciEntryBox(QLineEdit):
         setattr(self, "maximum", val.top)
         setattr(self, "setDecimals", val.setDecimals)
         setattr(self, "decimals", val.decimals)
-        # according to https://docs.python.org/2/library/string.html#formatspec
-        self.fmt = "{0:." + str(self.decimals() - 3) + "g}"
 
-    def _updateToolTip(self):
+    @property
+    def fmt(self):
+        return self.numberFormat(self.decimals())
+
+    @staticmethod
+    def numberFormat(decimals = None):
+        if decimals is None:
+            return "{0:g}"
+        # according to https://docs.python.org/2/library/string.html#formatspec
+        return "{0:." + str(decimals - 3) + "g}"
+
+    @classmethod
+    def updateToolTip(cls, widget, decimals = None):
         text = []
         try:
-            parentText = self.parent().toolTip()
+            parentText = widget.parent().toolTip()
             if len(parentText):
                 text.append(parentText)
         except:
             pass
-        text.append(self.toolTipFmt.format(
-                lo = self.fmt.format(self.minimum()),
-                hi = self.fmt.format(self.maximum())))
-        self.setToolTip("\n".join(text))
+        fmt = cls.numberFormat(decimals)
+        text.append(("<span>" + cls.toolTipFmt + "</span>").format(
+                lo = fmt.format(widget.minimum()),
+                hi = fmt.format(widget.maximum())))
+        widget.setToolTip("<br />\n".join(text))
 
     def setMinimum(self, value):
         """Work around issues regarding round-off errors by the 'g' format type
         when comparing numbers from user input with calculation results."""
         self.validator().setBottom(float(self.fmt.format(value)))
-        self._updateToolTip()
+        self.updateToolTip(self, self.decimals())
 
     def setMaximum(self, value):
         """Work around issues regarding round-off errors by the 'g' format type
         when comparing numbers from user input with calculation results."""
         self.validator().setTop(float(self.fmt.format(value)))
-        self._updateToolTip()
+        self.updateToolTip(self, self.decimals())
 
     def indicateCorrectness(self, isValid):
         if not isValid:

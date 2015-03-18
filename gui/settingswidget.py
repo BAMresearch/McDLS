@@ -222,6 +222,14 @@ class SettingsWidget(SettingsWidgetBase):
                 widget.setMinimum(min(minmax))
                 widget.setMaximum(max(minmax))
             widget.setValue(value)
+        # update tooltip with help text about valid input values
+        decimals = getattr(widget, "decimals", None)
+        if decimals is not None:
+            decimals = decimals()
+        try:
+            SciEntryBox.updateToolTip(widget, decimals)
+        except:
+            pass # for non-float input widgets
         self.connectInputWidgets(widget)
         return widget
 
@@ -247,8 +255,10 @@ class SettingsWidget(SettingsWidgetBase):
 
         widget.setLayout(layout)
         if isString(param.__doc__):
+            # word wrapping by rich text: https://stackoverflow.com/a/4796057
+            txt = "<span>{0}</span>".format(param.__doc__)
             # add description as tooltip if available for parameter
-            widget.setToolTip(param.__doc__)
+            widget.setToolTip(txt)
 
         # create scalar value input widget with min/max limits
         minmaxValue, widgets = None, []
