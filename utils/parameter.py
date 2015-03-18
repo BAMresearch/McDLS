@@ -235,7 +235,7 @@ class Histogram(DataSet, DisplayMixin):
         """Sets it to the first available option by default."""
         self._xscale = str(kind).strip() # remove whitespace eventually
         if self._xscale not in self.xscaling():
-            self._xscale = self.xscaling(0)
+            self._xscale = self.xscaling(1)
 
     @property
     def yweight(self):
