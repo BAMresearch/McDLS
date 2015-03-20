@@ -162,7 +162,6 @@ class McSAS(AlgorithmBase):
 
     # user provided data to work with
     dataOriginal = None
-    dataPrepared = None
     model = None
     result = None
 
@@ -192,8 +191,6 @@ class McSAS(AlgorithmBase):
             self.dataOriginal.eMin = self.eMin()
             self.dataOriginal.maskZeroInt = self.maskZeroInt()
             self.dataOriginal.maskNegativeInt = self.maskNegativeInt()
-            #apply limits
-            self.dataPrepared = self.dataOriginal.clip()
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
@@ -216,7 +213,7 @@ class McSAS(AlgorithmBase):
             return
         self.histogram()
 
-        if self.dataPrepared.is2d:
+        if self.dataOriginal.is2d:
             # 2D mode, regenerate intensity
             # TODO: test 2D mode
             self.gen2DIntensity()
@@ -316,7 +313,7 @@ class McSAS(AlgorithmBase):
         (*numReps*) of times. If convergence is not achieved, it will try 
         again for a maximum of *maxRetries* attempts.
         """
-        data = self.dataPrepared
+        data = self.dataOriginal
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
@@ -415,7 +412,7 @@ class McSAS(AlgorithmBase):
             in the right place
 
         """
-        data = self.dataPrepared
+        data = self.dataOriginal
         prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, self.model.activeParamCount()))
         compensationExponent = self.compensationExponent()
@@ -662,7 +659,7 @@ class McSAS(AlgorithmBase):
 
         # data, store it in result too, enables to postprocess later
         # store the model instance too
-        data = self.dataPrepared
+        data = self.dataOriginal
         q = data.q
         intensity = data.i
         intError = data.u
@@ -749,8 +746,7 @@ class McSAS(AlgorithmBase):
         numContribs, dummy, numReps = contribs.shape
 
         # load original Dataset
-        data = self.dataOriginal
-        q = data.q
+        q = data.q(clipData = False)
         # we need to recalculate the result in two dimensions
         kansas = shape(q) # we will return to this shape
         q = q.flatten()
@@ -772,10 +768,7 @@ class McSAS(AlgorithmBase):
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
-        validIndices = data.clipMask([self.qMin(), self.qMax()],
-                                     [self.psiMin(), self.psiMax()],
-                                     self.maskNegativeInt(),
-                                     self.maskZeroInt())
+        validIndices = data.validIndices
         intAvg = intAvg[validIndices]
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)
@@ -812,7 +805,7 @@ class McSAS(AlgorithmBase):
         modelData = dict(activeParamCount = self.model.activeParamCount(),
                          histograms = histograms
                          )
-        plotArgs = [self.result, self.dataPrepared, axisMargin,
+        plotArgs = [self.result, self.dataOriginal, axisMargin,
                     parameterIdx, outputFilename, modelData]
         if isMac():
             plotArgs.append(False) # logToFile, for multithreaded plotting below only

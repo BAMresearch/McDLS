@@ -139,7 +139,7 @@ class Calculator(object):
         if self.nolog: # refers to the widgethandler
             log.removeHandler(widgetHandler)
         #set data in the algorithm
-        self._algo.dataPrepared = dataset
+        self._algo.dataOriginal = dataset
         self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)
