@@ -142,9 +142,6 @@ class McSAS(AlgorithmBase):
     
     :py:attr:`self.Dataset`
         Where Q, Psi, I and IError is stored, original Dataset.
-    :py:attr:`self.FitData`
-        May be populated with a subset of the aforementioned Dataset, limited
-        to q-limits or psi limits and to positive I values alone.
     :py:attr:`self.Parameters`
         Where the fitting and binning settings are stored.
     :py:attr:`self.Result`
@@ -178,19 +175,17 @@ class McSAS(AlgorithmBase):
         # initialize
         self.result = [] # TODO
         self.stop = False # TODO, move this into some simple result structure
-        # # set data values
-        # self.setData(kwargs)
-        # # set supplied kwargs and passing on
-        # self.setParameter(kwargs)
-        # apply q and psi limits and populate self.FitData
-        if self.dataOriginal is not None:
-            self.dataOriginal.qMin = self.qMin()
-            self.dataOriginal.qMax = self.qMax()
-            self.dataOriginal.pMin = self.psiMin()
-            self.dataOriginal.pMax = self.psiMax()
-            self.dataOriginal.eMin = self.eMin()
-            self.dataOriginal.maskZeroInt = self.maskZeroInt()
-            self.dataOriginal.maskNegativeInt = self.maskNegativeInt()
+
+        assert(self.dataOriginal is not None)
+        #setting limits in the data. TODO: put in the GUI code.
+        self.dataOriginal.qMin = self.qMin()
+        self.dataOriginal.qMax = self.qMax()
+        self.dataOriginal.pMin = self.psiMin()
+        self.dataOriginal.pMax = self.psiMax()
+        self.dataOriginal.eMin = self.eMin()
+        self.dataOriginal.maskZeroInt = self.maskZeroInt()
+        self.dataOriginal.maskNegativeInt = self.maskNegativeInt()
+
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
             McSASParameters.model = Sphere() # create instance
@@ -213,10 +208,11 @@ class McSAS(AlgorithmBase):
             return
         self.histogram()
 
-        if self.dataOriginal.is2d:
-            # 2D mode, regenerate intensity
-            # TODO: test 2D mode
-            self.gen2DIntensity()
+        ## Fix 2D mode
+        # if self.dataOriginal.is2d:
+        #     # 2D mode, regenerate intensity
+        #     # TODO: test 2D mode
+        #     self.gen2DIntensity()
 
     ######################################################################
     ##################### Pre-optimisation Functions #####################
@@ -302,7 +298,6 @@ class McSAS(AlgorithmBase):
     def _passthrough(self,In):
         """A passthrough mechanism returning the input unchanged"""
         return In
-
 
     ######################################################################
     ####################### optimisation Functions #######################
