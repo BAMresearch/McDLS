@@ -31,21 +31,12 @@ class McSAS(AlgorithmBase):
     r"""
     Main class containing all functions required to do Monte Carlo fitting.
 
-    **Required input Parameters:**
+    **Required:**
 
-        - *Q*: 1D or 2D array of q-values
-        - *I*: corresponding intensity values of the same shape
-        - *IError*: corresponding intensity uncertainties of the same shape
+        - *dataOriginal*: The dataset to fit. 
+                   Hasa to be an instance of :py:class:SASData
         - *model*: The scattering model object to assume.
                    It has to be an instance of :py:class:`ScatteringModel`.
-
-    **Optional input Parameters:**
-
-        - *Psi*: 2D array
-            Detector angle values, only required for 2D pattern fitting.
-        - *compensationExponent*: float, default: :math:`1.5 \over 3`
-            Parameter used to compensate the :math:`volume^2` scaling of each
-            sphere contribution to the simulated I(q).
 
         For more settings, see mcsas/mcsasparameters.json
 
@@ -138,23 +129,6 @@ class McSAS(AlgorithmBase):
             statistically significant. Used to display minimum required level
             in histogram.
 
-    **Internal Variables**
-    
-    :py:attr:`self.Dataset`
-        Where Q, Psi, I and IError is stored, original Dataset.
-    :py:attr:`self.Parameters`
-        Where the fitting and binning settings are stored.
-    :py:attr:`self.Result`
-        Where all the analysis Results are stored. I do not think this needs
-        separation after all into Results of analysis and Results of
-        interpretation. However, this is a list of dicts, one per variable
-        (as the method, especially for 2D analysis, can deal with more than
-        one random values. analysis Results are stored along with the
-        histogrammed Results of the first variable with index [0]:
-    :py:attr:`self.Functions`
-        Where the used functions are defined, this is where shape changes,
-        smearing, and various forms of integrations are placed.
-
     """
 
     # user provided data to work with
@@ -236,7 +210,7 @@ class McSAS(AlgorithmBase):
                  factor and background
         :arg ver: *(optional)* Can be set to 1 for old version, more robust
                   but slow, default 2 for new version,
-                  10x faster than version 1
+                  10x faster than version 1, requires decent starting values
         :arg outputIntensity: *(optional)* Return the scaled intensity as
                               third output argument, default: False
         :arg background: *(optional)* Enables a flat background contribution,
