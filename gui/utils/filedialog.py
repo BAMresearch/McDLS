@@ -8,7 +8,7 @@ File dialogs and convenience functions.
 
 from __future__ import absolute_import # PEP328
 import os
-from gui.qt import QtGui, QTLIB
+from gui.qt import QtGui
 from QtGui import QFileDialog, QDialog
 from utils import isList
 
@@ -48,10 +48,8 @@ def getOpenFiles(parent, labeltext, path,
                  filefilter = None, multiple = True):
     kwargs = {'options': QFileDialog.ReadOnly,
               'caption': labeltext,
-              'directory': path,
+              'dir': path, # why does pyside have different kwarg keys?
               'filter': makeFilter(filefilter)}
-    if 'pyside' in QTLIB.lower():
-        kwargs['dir'] = path # why does pyside have different kwarg keys?
     if multiple:
         res = QFileDialog.getOpenFileNames(parent, **kwargs)
         if isList(res) and isList(res[0]):
