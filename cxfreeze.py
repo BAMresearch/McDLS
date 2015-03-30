@@ -329,11 +329,12 @@ if __name__ == "__main__":
         INCLUDEFILES += [
             "/usr/lib/liblapack.so.3",
             "/usr/lib/libblas.so.3",
-            "/usr/lib/x86_64-linux-gnu/libgfortran.so.3",
-            "/usr/lib/x86_64-linux-gnu/libquadmath.so.0",
-            "/usr/lib/x86_64-linux-gnu/libpyside-python2.7.so.1.2",
-            "/usr/lib/x86_64-linux-gnu/libshiboken-python2.7.so.1.2",
         ]
+        for lib in ("libgfortran.so.3", "libquadmath.so.0",
+            "libpyside-python2.7.so.1.2", "libshiboken-python2.7.so.1.2",
+            "libQtGui.so.4", "libQtCore.so.4", "libQtSvg.so.4", "libQtXml.so.4",
+            "libaudio.so.2"):
+            INCLUDEFILES.append(os.path.join("/usr/lib/x86_64-linux-gnu", lib))
     if isWindows():
         INCLUDEFILES += [
             "Microsoft.VC90.CRT",
