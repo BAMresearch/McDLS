@@ -342,6 +342,7 @@ if __name__ == "__main__":
     if isMac():
         INCLUDEFILES += [
             ("resources/icon/mcsas.icns", "resources/icon/mcsas.icns"),
+            "/usr/lib/system/libdnsinfo.dylib"
         ]
 
     BUILDOPTIONS = dict(
@@ -387,7 +388,7 @@ if __name__ == "__main__":
         ]
         BUILDOPTIONS.pop("icon")
         # tcl/tk is installed by default
-        BUILDOPTIONS["bin_excludes"] = ["Tcl", "Tk"]
+        BUILDOPTIONS["bin_excludes"] = ["Tcl", "Tk", "libgcc_s.1.dylib"]
         BUILDOPTIONS["excludes"] = ["Tkinter"]
         os.environ["DYLD_FRAMEWORK_PATH"] = ":".join((
                 "/Library/Frameworks", "/System/Library/Frameworks"))
