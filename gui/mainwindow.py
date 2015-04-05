@@ -35,16 +35,49 @@ from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
 from main import makeAbsolutePath
 
-INFOTEXT = """One or more selected files are read in and passed to Brian Pauws Monte-Carlo size distribution analysis program for 1D SAXS data.
+INFOTEXT = """McSAS: Software for the retrieval of model parameter distributions from scattering patterns.
 
-The convergence criterion can be set by the user. If it is not reached no output is generated, just this log is saved to file. On success, the resulting size distribution and the data fit are stored to files with uncertainties.
+Output files of a Monte Carlo run are stored in a directory named after the input file followed with a timestamp to avoid overwriting existing results.
 
-Output files start with the base name of the input file. They have the current date+time appended to avoid overwriting existing results.
+Literature:
+-----------
+This suite and method are detailed in:
+- Bressler, I. et al, J. Appl. Cryst, submitted (ArXiv:1412.1900)
+- Pauw B. R. et al., J. Appl. Cryst. 46: 365-371. 
+  DOI: 10.1107/S0021889813001295
+
+What to do in case of unsuccessful fits:
+----------------------------------------
+If convergence is not reached no output is generated, and only this log is 
+stored in a file. On success, the resulting size distribution and data 
+fit are stored to files with uncertainties.
+
+If convergence is not reached, the following can be attempted:
+
+1) Adjust the convergence criterion to a larger value. 
+   The convergence criterion can be adjusted by the user, to support data 
+   whose uncertainties are too large or too small. 
+2) Verify that the parameter range of the model is appropriate. Very wide 
+   ranges may prevent the correct solution from appearing within the limited
+   number of iterations attempted by the program.
+3) Start with a simple model. The unidirectional degeneracy of scattering 
+   behaviour means that most scattering patterns can be fit using spheres. 
+   Start with spheres, and move to more complex shapes afterwards. 
+   Furthermore, when choosing complex models, ensure that there is evidence
+   for the necessity of these complex models from alternative techniques. 
+   For example, only choose "rods" when there is evidence for rods in your 
+   sample (e.g. from TEM images). If a model fits your scattering pattern, 
+   it does not mean it is *the* model. 
 
 [ For more information, please see http://www.mcsas.net ]"""
 
 CHANGESTEXT = (u"""
-Latest changes:
+Changes in v1.0:
+- Compiled versions available for Linux, Mac OS X and Windows.
+- Histogram ranges automatically follow parameter ranges (can be disabled)
+- Shannon channel estimate shown in the file dialog
+- Tooltips shown when hovering over an input window
+- All output stored in directories
 - Number input boxes now allow scientific notation input
 - Stability improvements and code cleanup
 - Improved plotting routine
