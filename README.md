@@ -26,8 +26,8 @@ Several form factors have been included in the package, including:
 - Densely packed spheres (LMA-PY structure factor). 
 
 ### Current status ###
-The package is currently in beta state, no major issues remain with this version and it should run on a Python 2.7 installation (also works on Enthough Canopy Python).
-We are currently working on making standalone packages available for Windows, Linux and Mac OS X (a Windows binary is already available in the downloads section). 
+The package is currently in v1.0 stable state, no major issues remain with this version and it should run on a Python 2.7 installation (also works on Enthough Canopy Python).
+Standalone packages are available for Windows, Linux and Mac OS X, make sure to get the latest release. 
 The most up-to-date branch is the "restructuring"-branch, and runs on Windows, Linux and Mac OS X. 
 A quick start guide and example data is included in the "doc"-directory that comes with the distribution. 
 
