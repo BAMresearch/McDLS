@@ -2,10 +2,10 @@
 Welcome to McSAS: a tool for analysis of SAS patterns. 
 This tool can extract form-free size distributions from small-angle scattering data using the Monte-Carlo method described in:
 
-Brian R. Pauw, Jan Skov Pedersen, Samuel Tardif, Masaki Takata, and Bo B. Iversen. *“Improvements and Considerations for Size Distribution Retrieval from Small-angle Scattering Data by Monte Carlo Methods.”* Journal of Applied Crystallography 46, no. 2 (February 14, 2013    ). [doi:10.1107/S0021889813001295](http://dx.doi.org/10.1107/S0021889813001295).
+Brian R. Pauw, Jan Skov Pedersen, Samuel Tardif, Masaki Takata, and Bo B. Iversen. *“Improvements and Considerations for Size Distribution Retrieval from Small-angle Scattering Data by Monte Carlo Methods.”* Journal of Applied Crystallography 46, no. 2 (February 14, 2013    ). [DOI:10.1107/S0021889813001295](http://dx.doi.org/10.1107/S0021889813001295).
 
 The GUI and latest improvements are described in:
-Ingo Breßler, Brian R. Pauw, Andreas Thünemann, *"McSAS: A package for extracting quantitative form-free distributions"*. Submitted to J. Appl. Cryst., manuscript available on arXiv:1412.1900(http://arxiv.org/abs/1412.1900).
+I. Breßler, B. R. Pauw, A. F. Thünemann, *"McSAS: A package for extracting quantitative form-free distributions"*. Journal of Applied Crystallography 48: 962-969, [DOI: 10.1107/S1600576715007347](http://dx.doi.org/10.1107/S1600576715007347)
 
 ### Features ###
 
