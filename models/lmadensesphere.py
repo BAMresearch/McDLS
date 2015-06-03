@@ -40,7 +40,7 @@ class LMADenseSphere(ScatteringModel):
                     displayValues = {-1.: "auto"}),
             Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
-                    valueRange = (0., SLD(u'Å⁻²').toSi(1e-5))),
+                    valueRange = (0., SLD(u'Å⁻²').toSi(1e-2))),
             )
 
     def __init__(self):
