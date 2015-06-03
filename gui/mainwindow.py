@@ -73,6 +73,10 @@ If convergence is not reached, the following can be attempted:
 [ For more information, please see http://www.mcsas.net ]"""
 
 CHANGESTEXT = (u"""
+Changes in v1.0.1:
+- Updated SLD range limits for models: lmadensesphere and ellipsoids
+- Updated information on related literature
+
 Changes in v1.0:
 - Compiled versions available for Linux, Mac OS X and Windows.
 - Histogram ranges automatically follow parameter ranges (can be disabled)
