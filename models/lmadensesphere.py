@@ -22,25 +22,34 @@ class LMADenseSphere(ScatteringModel):
 
     shortName = "LMADenseSphere"
     parameters = (
-            FitParameter("radius", Length(u"nm").toSi(1.), unit = Length(u"nm"),
+            FitParameter("radius", 
+                    Length(u"nm").toSi(1.), 
+                    unit = Length(u"nm"),
                     displayName = "Sphere radius",
-                    valueRange = (Length(u"nm").toSi(0.1), Length(u"nm").toSi(1e10)),
+                    valueRange = (0., np.inf),
                     generator = RandomUniform,
                     decimals = 1),
-            FitParameter("volFrac", Fraction(u"%").toSi(10), unit = Fraction(u"%"),
+            FitParameter("volFrac", 
+                    Fraction(u"%").toSi(10), 
+                    unit = Fraction(u"%"),
                     displayName = "Volume fraction of spheres",
-                    valueRange = (Fraction(u"%").toSi(0.), Fraction(u"%").toSi(100.)),
+                    valueRange = (Fraction(u"%").toSi(0.001), 
+                        Fraction(u"%").toSi(100.)),
                     generator = RandomUniform,
                     decimals = 1),
-            FitParameter("mf", -1., # auto
+            Parameter("mf", 
+                    -1., # auto
                     displayName = "standoff multiplier (-1 = auto)",
-                    valueRange = (-1., 400.),
-                    generator = RandomUniform,
+                    valueRange = (-1., 1.e6),
+                    unit = NoUnit(u''),
                     decimals = 1,
                     displayValues = {-1.: "auto"}),
-            Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
+            Parameter("sld", 
+                    SLD(u'Å⁻²').toSi(1e-6), 
+                    unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
-                    valueRange = (0., SLD(u'Å⁻²').toSi(1e-2))),
+                    valueRange = (0., np.inf),
+                    decimals = 1)
             )
 
     def __init__(self):
