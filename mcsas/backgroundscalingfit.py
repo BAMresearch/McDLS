@@ -5,6 +5,12 @@
 from __future__ import absolute_import # PEP328
 
 from scipy import optimize
+import numpy
+import warnings
+warnings.simplefilter("ignore")
+from lmfit import Parameter as lmfit_Parameter
+from lmfit import minimize as lmfit_minimize
+import sys
 
 class BackgroundScalingFit(object):
     """
@@ -76,17 +82,49 @@ class BackgroundScalingFit(object):
 # error is associated to measured data, should be given next to it
 # TODO: constraints!
 
-    def fitLinear(self, dataMeas, dataErr, dataCalc, sc):
+    def fitLM(self, dataMeas, dataErr, dataCalc, sc):
         func = self.chiNoBg
         if self.findBackground:
             func = self.chi
         sc, success = optimize.leastsq(func, sc, args = (dataMeas, dataErr, dataCalc), full_output = False)
         return sc
 
-    def fitSquared(self, dataMeas, dataErr, dataCalc, sc):
-        func = lambda sc: self.chiSqr(dataMeas, dataErr, self.dataScaled(dataCalc, sc))
-        sc = optimize.fmin(func, sc, full_output = False, disp = 0)
+    def fitSimplex(self, dataMeas, dataErr, dataCalc, sc):
+        def residual(xsc):
+            return self.chiSqr(dataMeas, dataErr, self.dataScaled(dataCalc, xsc))
+        sc = optimize.fmin(residual, sc, full_output = False, disp = 0)
         return sc
+
+    @staticmethod
+    def params2sc(params):
+        return numpy.array([params['scaling'].value,
+                            params['background'].value])
+
+    def fitLMConstrained(self, dataMeas, dataErr, dataCalc, sc):
+
+        def residual(params, dMeas, dErr, dCalc):
+            return self.chi(self.params2sc(params), dMeas, dErr, dCalc)
+
+        # provide parameter as tuple improves performance in lmfit
+        # (avoids costly deepcopy of Parameters)
+        scaling = lmfit_Parameter('scaling', value = sc[0], min = 0.0, max = 1e4)
+        background = lmfit_Parameter('background', value = sc[1], min = 0.0, max = 0.2)
+        if not self.findBackground:
+            background.set(value = 0.0, vary = False)
+
+        out = lmfit_minimize(residual, (scaling, background),
+                             args = (dataMeas, dataErr, dataCalc))
+        return self.params2sc(out.params)
+
+    # slower compared to the lmfit implementation, 2x for SAXS data
+    def fitBFGSConstrained(self, dataMeas, dataErr, dataCalc, sc):
+        def residual(xsc, dMeas, dErr, dCalc):
+            return self.chiSqr(dMeas, dErr, self.dataScaled(dCalc, xsc))
+        out = optimize.fmin_l_bfgs_b(residual, sc,
+                                     args = (dataMeas, dataErr, dataCalc),
+                                     bounds = [(0.0, 1e4), (0.0, 0.2)],
+                                     approx_grad = True, disp = 0)
+        return out[0]
 
     def calc(self, dataMeas, dataErr, dataCalc, sc, vol = None, ver = 2):
         dataMeas = dataMeas.flatten()
@@ -96,15 +134,18 @@ class BackgroundScalingFit(object):
         if vol is not None: # and model is SaxsModel
             dataCalc /= vol
 
-        # different data fit approaches: speed vs. stability (?)
-        if ver == 2:
-            sc = self.fitLinear(dataMeas, dataErr, dataCalc, sc)
+        if True:
+            # different data fit approaches: speed vs. stability (?)
+            if ver == 2:
+                sc = self.fitLM(dataMeas, dataErr, dataCalc, sc)
+            else:
+                sc = self.fitSimplex(dataMeas, dataErr, dataCalc, sc)
         else:
-            sc = self.fitSquared(dataMeas, dataErr, dataCalc, sc)
+            #sc = self.fitLMConstrained(dataMeas, dataErr, dataCalc, sc)
+            sc = self.fitBFGSConstrained(dataMeas, dataErr, dataCalc, sc)
 
         if not self.findBackground:
             sc[1] = 0.0
-
         # calculate convergence value
         conval = self.chiSqr(dataMeas, dataErr, self.dataScaled(dataCalc, sc))
         return sc, conval
