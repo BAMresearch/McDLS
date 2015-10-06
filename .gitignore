@@ -2,3 +2,4 @@
 *.swp
 doc/build
 .hg*
+lmfit*
