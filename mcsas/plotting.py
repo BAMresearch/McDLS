@@ -41,7 +41,7 @@ class PlotResults(object):
     """
 
     def __init__(self, allRes, dataset, 
-                 axisMargin = 0.3, parameterIdx = None,
+                 axisMargin = 0.3,
                  outputFilename = None,
                  modelData = None, logToFile = False):
 
@@ -61,7 +61,6 @@ class PlotResults(object):
         self._result = allRes[0]
         self._dataset = dataset
         self._axisMargin = axisMargin
-        self._parameterIdx = parameterIdx
         try:
             self._figureTitle = outputFilename.basename
         except AttributeError:

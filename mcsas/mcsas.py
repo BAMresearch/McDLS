@@ -742,8 +742,8 @@ class McSAS(AlgorithmBase):
         # shape back to imageform
         self.result[0]['intensity2d'] = reshape(intAvg, kansas)
 
-    def plot(self, axisMargin = 0.3, parameterIdx = None,
-             outputFilename = None):
+    def plot(self, axisMargin = 0.3,
+             outputFilename = None, autoClose = False):
         """Expects outputFilename to be of type gui.calc.OutputFilename."""
         # the interactive plot figure usually blocks the app until it is closed
         # -> no batch processing possible
@@ -758,6 +758,7 @@ class McSAS(AlgorithmBase):
         # reminder: histograms contain Parameter references too
         # http://bytes.com/topic/python/answers/37656-assertionerror-pickles-memoize-function#post141263
         # https://stackoverflow.com/questions/23706736/assertion-error-madness-with-qt-and-pickle
+        # "autoClose" closes figure after saving for runs of many files. 
         # get histograms to pass them to plotting
         histograms = [parHist for histograms in
                 (p.histograms() for p in self.model.activeParams())
@@ -775,7 +776,7 @@ class McSAS(AlgorithmBase):
                          histograms = histograms
                          )
         plotArgs = [self.result, self.dataOriginal, axisMargin,
-                    parameterIdx, outputFilename, modelData]
+                    outputFilename, modelData]
         if isMac():
             plotArgs.append(False) # logToFile, for multithreaded plotting below only
             PlotResults(*plotArgs)
