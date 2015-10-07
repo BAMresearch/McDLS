@@ -23,7 +23,7 @@
     "compensationExponent" : {
         "displayName" : "weighting compensation",
         "valueRange" : [0.01,1.0],
-	    "default" : 0.66666667,
+	    "default" : 0.6666666,
         "description" : "Compensates the weighting of contributions, default volume-weighted.",
         "isActive" : false 
     },
@@ -62,6 +62,12 @@
     "maskZeroInt" : {
         "displayName" : "Masks intensity values of 0",
         "description" : "Renders intensity values that are zero invalid for fitting",
+        "default" : false,
+        "isActive" : false 
+    },
+    "autoClose" : {
+        "displayName" : "Automatically close result windows",
+        "description" : "Prevents cluttering the screen with many windows if series are fited",
         "default" : false,
         "isActive" : false 
     },

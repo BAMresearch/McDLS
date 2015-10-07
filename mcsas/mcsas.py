@@ -776,7 +776,7 @@ class McSAS(AlgorithmBase):
                          histograms = histograms
                          )
         plotArgs = [self.result, self.dataOriginal, axisMargin,
-                    outputFilename, modelData]
+                    outputFilename, modelData, autoClose]
         if isMac():
             plotArgs.append(False) # logToFile, for multithreaded plotting below only
             PlotResults(*plotArgs)

@@ -30,7 +30,9 @@ class AlgorithmWidget(SettingsWidget):
         #for i, p in enumerate(("qUnits", "iUnits", "convergenceCriterion", 
         for i, p in enumerate(( "convergenceCriterion", 
                     "numReps", 
-                    "numContribs", "findBackground")):
+                    "numContribs", 
+                    "findBackground",
+                    "autoClose")):
             p = getattr(self.algorithm, p, None)
             if p is None: continue
             container = self.makeSetting(entries, p)

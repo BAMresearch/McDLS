@@ -43,7 +43,7 @@ class PlotResults(object):
     def __init__(self, allRes, dataset, 
                  axisMargin = 0.3,
                  outputFilename = None,
-                 modelData = None, logToFile = False):
+                 modelData = None, autoClose = False, logToFile = False ):
 
         # set up multiprocessing compatible logging
         # redirect to file if requested, a workaround for the moment
@@ -163,6 +163,8 @@ class PlotResults(object):
         # unresponsive/hangs on Ubuntu or the whole program crashes on windows
         # 'python stopped working'
         show()
+        if autoClose:
+            close(self._fig)
 
     def plotGrid(self, figh):
         #make axis active:
