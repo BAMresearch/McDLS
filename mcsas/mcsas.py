@@ -297,6 +297,7 @@ class McSAS(AlgorithmBase):
             self.model.activeParamCount(), 
             self.numReps()))
         numIter = zeros(numReps)
+        scalings = zeros(numReps)
         backgrounds = zeros(numReps)
         times = zeros(numReps)
         contribIntensity = zeros([1, len(data.q), numReps])
@@ -339,6 +340,7 @@ class McSAS(AlgorithmBase):
             # in minutes:
             # keep track of how many iterations were needed to reach converg.
             numIter[nr] = details.get('numIterations', 0)
+            scalings[nr] = details.get('scaling', 1.0) 
             backgrounds[nr] = details.get('background', 0) 
             elapsedTime = (time.time() - elapsedStart)
             times[nr] = elapsedTime 
@@ -361,6 +363,7 @@ class McSAS(AlgorithmBase):
             fitIntensityStd = contribIntensity.std(axis = 2),
             fitQ = data.q,
             # background details:
+            scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
             times = times,
             # average number of iterations for all repetitions
