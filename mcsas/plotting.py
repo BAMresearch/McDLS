@@ -69,9 +69,14 @@ class PlotResults(object):
         self._modelData = modelData
         self._times = self._result['times']
         try:
+            # replacable by "self._BG = self._result.get('background', (0., 0.))"?
             self._BG = self._result['background']
         except:
             self._BG = (0., 0.)
+        try:
+            self._SC = self._result['scaling']
+        except:
+            self._SC = (1., 0.)
 
         # set plot font
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
@@ -202,6 +207,8 @@ class PlotResults(object):
             self._modelData['activeParamCount'], self._nR)
         oString += '\n Background level: {0:3.3g} $\pm$ {1:3.3g}'.format(
                 self._BG[0], self._BG[1])
+        oString += '\n ( Scaling factor: {0:3.3g} $\pm$ {1:3.3g} )'.format(
+                self._SC[0], self._SC[1])
         oString += '\n Timing: {0:d} repetitions of {1:3.3g} $\pm$ {2:3.3g} seconds'.format(
                 np.size(self._times), self._times.mean(), self._times.std(ddof = 1))
 
