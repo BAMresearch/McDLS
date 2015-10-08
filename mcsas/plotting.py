@@ -163,7 +163,7 @@ class PlotResults(object):
         # unresponsive/hangs on Ubuntu or the whole program crashes on windows
         # 'python stopped working'
         show()
-        if autoClose:
+        if autoClose():
             close(self._fig)
 
     def plotGrid(self, figh):
