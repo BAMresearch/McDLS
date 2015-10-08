@@ -27,12 +27,19 @@ class AlgorithmWidget(SettingsWidget):
         entries = []
         # create inputs for a subset of calculator parameters
         # allowed parameters could be configurable from file too
-        #for i, p in enumerate(("qUnits", "iUnits", "convergenceCriterion", 
         for i, p in enumerate(( "convergenceCriterion", 
                     "numReps", 
-                    "numContribs", 
-                    "findBackground",
                     "autoClose")):
+            p = getattr(self.algorithm, p, None)
+            if p is None: continue
+            container = self.makeSetting(entries, p)
+            self._widgets.append(container)
+
+        # advanced settings?    
+        for i, p in enumerate(( "numContribs", 
+                    "compensationExponent",
+                    "findBackground"
+                    )):
             p = getattr(self.algorithm, p, None)
             if p is None: continue
             container = self.makeSetting(entries, p)
