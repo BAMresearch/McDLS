@@ -2,9 +2,11 @@
 # bases/datafile/asciifile.py
 
 from numpy import array as np_array
+from numpy import ndarray as np_ndarray
 from bases.datafile import DataFile
 from utils.error import FileError
 from utils import isString
+from utils.classproperty import classproperty
 
 class AsciiFile(DataFile):
     """A generic ascii data file."""
@@ -12,11 +14,12 @@ class AsciiFile(DataFile):
     separator = " "
     newline="\n"
 
-    @staticmethod
-    def sanitizeData(data):
-        data = DataFile.sanitizeData(data)
-        assert data.ndim >= 2 # check for at least 2 dimensions
-        return data
+    @classproperty
+    @classmethod
+    def extensions(cls):
+        return ("dat", )
+
+    # helpers for writing
 
     @classmethod
     def formatValue(cls, value):
@@ -67,8 +70,9 @@ class AsciiFile(DataFile):
         tuple of strings to be joined"""
         cls._write(filename, 'a', cls._formatHeader(header))
 
-    @classmethod
-    def readRow(cls, fields, dataType = float, **kwargs):
+    # helpers for reading
+
+    def readTuple(self, fields, dataType = float, **kwargs):
         """Converts each field to the requested datatype.
            Raises an error if it is incompatible,
            the line is skipped in that case."""
@@ -78,35 +82,52 @@ class AsciiFile(DataFile):
         except:
             raise ValueError
 
-    @classmethod
-    def readFile(cls, filename, dataType = float):
-        fileData = []
-        with open(filename, 'rU') as fd:
-            linenr = 0
-            for line in fd:
-                linenr += 1
-                # strip trailing white space, replace decimal operators 
-                # eventually, split data fields
-                # we read floating point numbers only
-                fields = (line.strip()
-                              .replace(",",".")
-                              .replace(";"," ")
-                              .split())
-                record = None
-                try:
-                    # may raise exception
-                    record = cls.readRow(fields, filename = filename,
-                                         lineNumber = linenr,
-                                         dataType = dataType)
-                except ValueError:
-                    continue
-                if record is None or len(record) <= 0:
-                    continue
-                fileData.append(record)
+    def readFile(self, **kwargs):
+        asciiLines = None
+        with open(self.filename, 'rU') as fd:
+            asciiLines = fd.readlines()
+        self.parseLines(asciiLines, **kwargs)
 
-        dataCount = len(fileData)
-        if dataCount <= 0:
-            raise FileError("No data columns found!", filename)
-        return np_array(fileData, dataType)
+    def parseLines(self, asciiLines, **kwargs):
+        """Parses lines of an ASCII file in order to extract a single array
+        of numbers. Reimplement this in subclasses for different behaviour.
+        """
+        self.setRawArray(self.readArray(asciiLines, **kwargs))
+
+    def setRawArray(self, rawArray):
+        """Sets a numpy.array of raw file data as instance attribute."""
+        assert isinstance(rawArray, np_ndarray)
+        assert rawArray.ndim >= 2 # check for at least 2 dimensions
+        self.rawArray = rawArray
+
+    def readArray(self, asciiLines, dataType = float,
+                  startLine = 0, endLine = None, **kwargs):
+        """Reads a numpy.array from a specified segment (startLine, endLine)
+        of a line buffer specified by asciiLines."""
+        recordList = []
+        for linenr, line in enumerate(asciiLines[startLine:endLine]):
+            linenr += startLine
+            # strip trailing white space, replace decimal operators 
+            # eventually, split data fields
+            # we read floating point numbers only
+            fields = (line.strip()
+                          .replace(",",".")
+                          .replace(";"," ")
+                          .split())
+            record = None
+            try:
+                # may raise exception
+                record = self.readTuple(fields, lineNumber = linenr,
+                                        dataType = dataType)
+            except ValueError:
+                continue
+            if record is None or len(record) <= 0:
+                continue
+            recordList.append(record)
+
+        recordCount = len(recordList)
+        if recordCount <= 0:
+            raise FileError("No data columns found!", self.filename)
+        return np_array(recordList, dataType)
 
 # vim: set ts=4 sts=4 sw=4 tw=0: 

@@ -6,7 +6,11 @@ from utils.classproperty import classproperty
 from bases.datafile import AsciiFile
 
 class PDHFile(AsciiFile):
-    extensions = ("pdh", )
+
+    @classproperty
+    @classmethod
+    def extensions(cls):
+        return ("pdh", )
 
     @classmethod
     def formatData(cls, data, description = None):
@@ -15,12 +19,8 @@ class PDHFile(AsciiFile):
         asciiData = "{0}\n{1}".format(hdr, asciiData)
         return asciiData
 
-    @classmethod
-    def readRow(cls, fields, lineNumber = None, **kwargs):
-        if len(fields) < 2 or (isInteger(lineNumber) and
-                               lineNumber <= PDHHeader.maxLines):
-            return
-        return AsciiFile.readRow(fields, **kwargs)
+    def parseLines(self, asciiLines, **kwargs):
+        self.setRawArray(self.readArray(asciiLines, startLine = PDHHeader.maxLines, **kwargs))
 
 class PDHHeader(object):
     _entries = { # entry names and their header position (line, column)
