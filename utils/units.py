@@ -188,8 +188,6 @@ class Angle(Unit):
     }
     _siMagnitudeName = u"rad"
 
-# TODO: allow unit conversion other than by multiply,
-# addition or equations instead (temperature: K -> °C & F)
 class Temperature(Unit):
     _magnitudeMap = {
         u"K":  1.0,
