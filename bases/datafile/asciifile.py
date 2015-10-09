@@ -92,7 +92,8 @@ class AsciiFile(DataFile):
         """Parses lines of an ASCII file in order to extract a single array
         of numbers. Reimplement this in subclasses for different behaviour.
         """
-        self.setRawArray(self.readArray(asciiLines, **kwargs))
+        lastLine, rawArray = self.readArray(asciiLines, **kwargs)
+        self.setRawArray(rawArray)
 
     def setRawArray(self, rawArray):
         """Sets a numpy.array of raw file data as instance attribute."""
@@ -103,7 +104,11 @@ class AsciiFile(DataFile):
     def readArray(self, asciiLines, dataType = float,
                   startLine = 0, endLine = None, **kwargs):
         """Reads a numpy.array from a specified segment (startLine, endLine)
-        of a line buffer specified by asciiLines."""
+        of a line buffer specified by asciiLines. Stops at lines incompatible
+        to previous lines read due to different number of fields or
+        incompatible data type. Returns the last line successfully parsed and
+        the populated numpy.array.
+        """
         recordList = []
         for linenr, line in enumerate(asciiLines[startLine:endLine]):
             linenr += startLine
@@ -119,15 +124,23 @@ class AsciiFile(DataFile):
                 # may raise exception
                 record = self.readTuple(fields, lineNumber = linenr,
                                         dataType = dataType)
+                if not len(record): # ignore empty tuples
+                    record = None
             except ValueError:
-                continue
-            if record is None or len(record) <= 0:
-                continue
+                pass # ignore it for now, record == None
+            if record is None: # on parse failure of current line
+                if not len(recordList):
+                    continue # if still no compatible data found
+                else:
+                    break # data listing ends here
+            elif len(recordList) and len(recordList[-1]) != len(record):
+                break # do not append records of different size
             recordList.append(record)
 
+        endLine = linenr # last line read
         recordCount = len(recordList)
         if recordCount <= 0:
             raise FileError("No data columns found!", self.filename)
-        return np_array(recordList, dataType)
+        return endLine, np_array(recordList, dataType)
 
 # vim: set ts=4 sts=4 sw=4 tw=0: 

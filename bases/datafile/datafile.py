@@ -39,7 +39,6 @@ class DataFile(object):
     """
     __metaclass__ = ABCMeta
     _filename = None
-    _data = None
 
     @abstractproperty
     @classproperty
