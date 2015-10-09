@@ -2,10 +2,11 @@
 # bases/datafile/datafile.py
 
 import os.path
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from numpy import ndarray as np_ndarray
 from utils.error import FileError
 from utils.lastpath import LastPath
+from utils.classproperty import classproperty
 
 class DataFile(object):
     """
@@ -39,9 +40,15 @@ class DataFile(object):
     __metaclass__ = ABCMeta
     _filename = None
     _data = None
-    """Extensions of this file type. Starts with default extension.
-       Use it to construct a proper file name."""
-    extensions = ()
+
+    @abstractproperty
+    @classproperty
+    @classmethod
+    def extensions(self):
+        """Extensions of this file type. No extension by default.
+           Use it to construct a proper file name. Reimplement in subclasses.
+           """
+        raise NotImplementedError
 
     @property
     def filename(self):
@@ -67,38 +74,17 @@ class DataFile(object):
         """The plain name of the file with path and extension stripped."""
         return os.path.basename(os.path.splitext(self.filename)[0])
 
-    @property
-    def data(self):
-        """Numpy array of raw file data."""
-        return self._data
+    def __init__(self, filename, **kwargs):
+        self.filename = filename
+        self.readFile(**kwargs)
 
-    @data.setter
-    def data(self, data):
-        """Expects a numpy array."""
-        self._data = self.sanitizeData(data)
-
-    @staticmethod
-    def sanitizeData(data):
-        assert isinstance(data, np_ndarray)
-        return data
-
-    @property
-    def hasData(self):
-        return isinstance(self._data, np_ndarray)
-
-    def __init__(self, filenameOrArray, **kwargs):
-        try:
-            self.data = filenameOrArray
-        except StandardError, e:
-            self.filename = filenameOrArray
-            self.data = self.readFile(self.filename, **kwargs)
-
-    @classmethod
     @abstractmethod
-    def readFile(cls, filename, **kwargs):
-        """Gets a proper file name and returns a numpy array.
-        Reimplement this."""
+    def readFile(self, **kwargs):
+        """Gets a proper file name and returns file data.
+        May modify the instance. To be reimplemented."""
         raise NotImplementedError
+
+    # helpers for writing
 
     @classmethod
     def sanitizeWriteFilename(cls, filename):
