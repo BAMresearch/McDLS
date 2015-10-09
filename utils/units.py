@@ -142,6 +142,10 @@ class Unit(object):
         # else:
         return value / self.magnitudeConversion
 
+    @classmethod
+    def name(cls):
+        return cls.__name__
+
 class Length(Unit):
     _magnitudeMap = {
         u"Å" : 1e-10,
@@ -183,6 +187,25 @@ class Angle(Unit):
         u"rad":   1.0,
     }
     _siMagnitudeName = u"rad"
+
+# TODO: allow unit conversion other than by multiply,
+# addition or equations instead (temperature: K -> °C & F)
+class Temperature(Unit):
+    _magnitudeMap = {
+        u"K":  1.0,
+    }
+    _siMagnitudeName = u"K"
+
+K = Temperature(u"K")
+
+class Viscosity(Unit):
+    _magnitudeMap = {
+        u"mPa·s":  1e3,
+        u"Pa·s":   1.0, # kg/(s·m)
+    }
+    _siMagnitudeName = u"Pa·s"
+
+VIS = Viscosity(u"mPa·s")
 
 class SLD(Unit):
     _magnitudeMap = {
