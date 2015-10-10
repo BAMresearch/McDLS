@@ -29,7 +29,7 @@ from __future__ import absolute_import # PEP328
 import os # Miscellaneous operating system interfaces
 import logging
 import numpy as np # For arrays
-from bases.datafile import PDHFile, AsciiFile
+from bases.datafile import PDHFile, AsciiFile, CGSFile
 from bases.dataset import DataSet, DisplayMixin
 from utils import isList, classproperty
 from gui.utils import processEventLoop
@@ -62,12 +62,19 @@ class SASData(DataSet, DisplayMixin):
 
         logging.info("Loading '{0}' ...".format(filename))
 
-        if str(filename[-4:]).lower() == '.pdh':
+        path, ext = os.path.splitext(filename)
+        ext = ext[1:].lower()
+        import sys
+        print >>sys.__stderr__, "path, ext:", path, ext
+        if ext in PDHFile.extensions:
             sasFile = PDHFile(filename)
+        elif ext in CGSFile.extensions:
+            sasFile = CGSFile(filename)
         else:
             sasFile = AsciiFile(filename) # works for CSV too
 
-        sasData = cls(sasFile.name, sasFile.data)
+        print >>sys.__stderr__, "in array", sasFile.rawArray
+        sasData = cls(sasFile.name, sasFile.rawArray)
         sasData.setFilename(sasFile.filename)
         return sasData
 
