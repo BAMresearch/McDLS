@@ -62,7 +62,9 @@ class SASData(DataSet, DisplayMixin):
 
         logging.info("Loading '{0}' ...".format(filename))
 
-        if str(filename[-4:]).lower() == '.pdh':
+        path, ext = os.path.splitext(filename)
+        ext = ext[1:].lower()
+        if ext in PDHFile.extensions[0][1]:
             sasFile = PDHFile(filename)
         else:
             sasFile = AsciiFile(filename) # works for CSV too

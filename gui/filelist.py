@@ -7,6 +7,7 @@ import logging
 from gui.utils.signal import Signal
 from gui.bases.datalist import DataList
 from gui.utils.filedialog import getOpenFiles
+from bases.datafile import getFileFilter
 from utils.lastpath import LastPath
 from utils.units import ScatteringVector, ScatteringIntensity
 from sasdata import SASData
@@ -25,7 +26,9 @@ class FileList(DataList):
                 u"Load one or more data files with q({qu}) and intensity({iu})"
                 .format(qu = ScatteringVector(u"nm⁻¹").displayMagnitudeName,
                         iu = ScatteringIntensity(u"(m sr)⁻¹").displayMagnitudeName),
-                LastPath.get(), multiple = True)
+                LastPath.get(), multiple = True,
+                filefilter = getFileFilter()
+            )
         # populates to data list widget with items based on the return of
         # processSourceFunc(filename)
         DataList.loadData(self, sourceList = fileList, showProgress = False,

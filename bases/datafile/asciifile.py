@@ -17,7 +17,8 @@ class AsciiFile(DataFile):
     @classproperty
     @classmethod
     def extensions(cls):
-        return ("dat", )
+        return (("All files", "*"),
+                ("ASCII single-array", "dat"),)
 
     # helpers for writing
 
