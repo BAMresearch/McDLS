@@ -10,7 +10,7 @@ class PDHFile(AsciiFile):
     @classproperty
     @classmethod
     def extensions(cls):
-        return ("pdh", )
+        return (("PDH Saxsquant", "pdh"),)
 
     @classmethod
     def formatData(cls, data, description = None):

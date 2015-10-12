@@ -43,7 +43,7 @@ class DataFile(object):
     @abstractproperty
     @classproperty
     @classmethod
-    def extensions(self):
+    def extensions(cls):
         """Extensions of this file type. No extension by default.
            Use it to construct a proper file name. Reimplement in subclasses.
            """
@@ -89,7 +89,7 @@ class DataFile(object):
     def sanitizeWriteFilename(cls, filename):
         """Checks and sets the file name to write to."""
         if len(cls.extensions) > 0:
-            ex = cls.extensions[0]
+            dummy, ex = cls.extensions[0]
             if filename[-len(ex):] != ex:
                 filename = "{0}.{1}".format(filename, ex)
         filename = os.path.abspath(unicode(filename))

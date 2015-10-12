@@ -66,9 +66,9 @@ class SASData(DataSet, DisplayMixin):
         ext = ext[1:].lower()
         import sys
         print >>sys.__stderr__, "path, ext:", path, ext
-        if ext in PDHFile.extensions:
+        if ext in PDHFile.extensions[0][1]:
             sasFile = PDHFile(filename)
-        elif ext in CGSFile.extensions:
+        elif ext in CGSFile.extensions[0][1]:
             sasFile = CGSFile(filename)
         else:
             sasFile = AsciiFile(filename) # works for CSV too
