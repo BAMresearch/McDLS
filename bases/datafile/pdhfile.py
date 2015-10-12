@@ -20,7 +20,8 @@ class PDHFile(AsciiFile):
         return asciiData
 
     def parseLines(self, asciiLines, **kwargs):
-        self.setRawArray(self.readArray(asciiLines, startLine = PDHHeader.maxLines, **kwargs))
+        lastLine, rawArray = self.readArray(asciiLines, startLine = PDHHeader.maxLines, **kwargs)
+        self.setRawArray(rawArray)
 
 class PDHHeader(object):
     _entries = { # entry names and their header position (line, column)

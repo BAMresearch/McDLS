@@ -138,7 +138,7 @@ class AsciiFile(DataFile):
                 break # do not append records of different size
             recordList.append(record)
 
-        endLine = linenr # last line read
+        endLine = linenr - 1 # could not read last line
         recordCount = len(recordList)
         if recordCount <= 0:
             raise FileError("No data columns found!", self.filename)
