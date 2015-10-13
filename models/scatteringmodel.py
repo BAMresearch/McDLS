@@ -10,7 +10,7 @@ from utils import isList, isNumber, mixedmethod, testfor
 from bases.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
 from utils.parameter import isActiveParam
-from sasdata import SASData
+from dataobj import SASData
 
 class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta

@@ -22,7 +22,7 @@ from gui.utils import processEventLoop
 from gui.utils.displayexception import DisplayException
 from gui.version import version
 from gui.calc import Calculator
-from sasdata import SASData
+from dataobj import SASData
 
 from gui.scientrybox import SciEntryBox
 

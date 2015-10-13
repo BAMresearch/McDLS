@@ -10,7 +10,7 @@ from gui.utils.filedialog import getOpenFiles
 from datafile import getFileFilter
 from utils.lastpath import LastPath
 from utils.units import ScatteringVector, ScatteringIntensity
-from sasdata import SASData
+from datafile import loaddatafile
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
@@ -31,8 +31,10 @@ class FileList(DataList):
             )
         # populates to data list widget with items based on the return of
         # processSourceFunc(filename)
+        def loaddataobj(fn):
+            return loaddatafile(fn).getDataObj()
         DataList.loadData(self, sourceList = fileList, showProgress = False,
-                          processSourceFunc = SASData.load)
+                          processSourceFunc = loaddataobj)
 
     def itemDoubleClicked(self, item, column):
         valueRange = item.data().sphericalSizeEst()

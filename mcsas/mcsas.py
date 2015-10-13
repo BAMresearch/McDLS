@@ -26,7 +26,7 @@ from mcsas.backgroundscalingfit import BackgroundScalingFit
 
 from . import PlotResults
 from . import McSASParameters
-from sasdata import SASData
+from dataobj import SASData
 
 class McSAS(AlgorithmBase):
     r"""
