@@ -13,7 +13,7 @@ import pickle
 
 from gui.qt import QtCore
 from QtCore import QUrl
-from bases.dataset import DataSet, DisplayMixin
+from bases.dataset import DataSet
 from utils import isList, isString, testfor
 from utils.lastpath import LastPath
 from datafile import PDHFile, AsciiFile

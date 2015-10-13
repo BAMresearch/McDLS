@@ -12,7 +12,8 @@ class HierarchicalMixin(object):
     _children = None
     _parent = None
 
-    def __init__(self, parent = None):
+    def __init__(self, parent = None, **kwargs):
+        super(HierarchicalMixin, self).__init__(**kwargs)
         self._children = []
         self.setParent(parent)
 

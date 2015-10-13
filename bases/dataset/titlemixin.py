@@ -6,7 +6,8 @@ from utils import isString
 class TitleMixin(object):
     _title = None
 
-    def __init__(self, title):
+    def __init__(self, title = None, **kwargs):
+        super(TitleMixin, self).__init__(**kwargs)
         self.title = title
 
     @property
