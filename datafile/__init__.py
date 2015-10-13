@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
 # bases/datafile/__init__.py
 
-# exports
+__all__ = ["DataFile", "AsciiFile", "ArrayFile", "PDHFile", "PDHHeader",
+           "CGSFile", "getFileFilter", "loadfile"]
+
+import logging
+import os.path
+
 from datafile import DataFile
+from arrayfile import ArrayFile
 from asciifile import AsciiFile
 from pdhfile import PDHFile, PDHHeader
 
-# implementation
-from utils import isLinux
+from utils import isLinux, isString
 
 def getFileFilter():
+    """Returns the file filter text of all available data file formats which
+    can be used with a file selection dialog UI."""
     extFmt = "(*.{1})"
     if isLinux():
         # the extension in parentheses is not shown on linux, add it here
         extFmt = "*.{1} (*.{1})"
     filefilter = []
-    for cls in AsciiFile, PDHFile, CGSFile:
+    for cls in ArrayFile, PDHFile, CGSFile:
         for descr, ext in cls.extensions:
             filefilter.append(("{0} " + extFmt).format(descr, ext))
     import sys
