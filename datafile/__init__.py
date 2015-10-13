@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# bases/datafile/__init__.py
+# datafile/__init__.py
 
 __all__ = ["DataFile", "AsciiFile", "ArrayFile", "PDHFile", "PDHHeader",
            "getFileFilter", "loadfile"]
@@ -25,11 +25,9 @@ def getFileFilter():
     for cls in ArrayFile, PDHFile:
         for descr, ext in cls.fileFilter:
             filefilter.append(("{0} " + extFmt).format(descr, ext))
-    import sys
-    print >>sys.__stderr__, "filefilter", filefilter
     return filefilter
 
-def loadfile(filename):
+def loaddatafile(filename):
     """Creates a DataFile instance from the given file name by selecting
     the appropriate specialised file object based on the file name extension
     or parts of the file contents."""

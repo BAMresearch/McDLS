@@ -6,6 +6,7 @@ from numpy import array as np_array
 from numpy import ndarray as np_ndarray
 from datafile.asciifile import AsciiFile
 from utils.classproperty import classproperty
+from dataobj.sasdata import SASData
 
 class ArrayFile(AsciiFile):
     """A data file containing a single array of data, mostly."""
@@ -36,5 +37,10 @@ class ArrayFile(AsciiFile):
         """
         lastLine, rawArray = self.readArray(asciiLines, **kwargs)
         self.rawArray = rawArray
+
+    def getDataObj(self):
+        sasData = SASData(title = self.name, rawArray = self.rawArray)
+        sasData.setFilename(self.filename)
+        return sasData
 
 # vim: set ts=4 sts=4 sw=4 tw=0: 

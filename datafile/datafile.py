@@ -78,15 +78,23 @@ class DataFile(object):
         """The plain name of the file with path and extension stripped."""
         return os.path.basename(os.path.splitext(self.filename)[0])
 
-    def __init__(self, filename, **kwargs):
-        self.filename = filename
-        self.readFile(**kwargs)
+    # helpers for reading
 
     @abstractmethod
     def readFile(self, **kwargs):
         """Gets a proper file name and returns file data.
         May modify the instance. To be reimplemented."""
         raise NotImplementedError
+
+    @abstractmethod
+    def getDataObj(self):
+        """Creates and returns the appropriate DataObj instance for this file
+        type."""
+        raise NotImplementedError
+
+    def __init__(self, filename, **kwargs):
+        self.filename = filename
+        self.readFile(**kwargs)
 
     # helpers for writing
 
