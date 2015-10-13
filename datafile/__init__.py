@@ -2,7 +2,7 @@
 # bases/datafile/__init__.py
 
 __all__ = ["DataFile", "AsciiFile", "ArrayFile", "PDHFile", "PDHHeader",
-           "CGSFile", "getFileFilter", "loadfile"]
+           "getFileFilter", "loadfile"]
 
 import logging
 import os.path
@@ -22,11 +22,29 @@ def getFileFilter():
         # the extension in parentheses is not shown on linux, add it here
         extFmt = "*.{1} (*.{1})"
     filefilter = []
-    for cls in ArrayFile, PDHFile, CGSFile:
+    for cls in ArrayFile, PDHFile:
         for descr, ext in cls.fileFilter:
             filefilter.append(("{0} " + extFmt).format(descr, ext))
     import sys
     print >>sys.__stderr__, "filefilter", filefilter
     return filefilter
+
+def loadfile(filename):
+    """Creates a DataFile instance from the given file name by selecting
+    the appropriate specialised file object based on the file name extension
+    or parts of the file contents."""
+
+    if not isString(filename) or not os.path.isfile(filename):
+        logging.warning("File '{0}' does not exist!".format(filename))
+        return
+    logging.info("Loading '{0}' ...".format(filename))
+    path, ext = os.path.splitext(filename)
+    ext = ext[1:].lower()
+    datafile = None
+    if ext in PDHFile.extensions:
+        datafile = PDHFile(filename)
+    else:
+        datafile = ArrayFile(filename) # works for CSV too
+    return datafile
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
