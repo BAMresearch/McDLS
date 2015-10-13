@@ -2,15 +2,15 @@
 # datafile/asciifile.py
 
 from __future__ import absolute_import # PEP328
+from abc import ABCMeta, abstractmethod
 from numpy import array as np_array
-from numpy import ndarray as np_ndarray
 from datafile import DataFile
 from utils.error import FileError
 from utils import isString
-from utils.classproperty import classproperty
 
 class AsciiFile(DataFile):
     """A generic ascii data file."""
+    __metaclass__ = ABCMeta
     valueFormat = "{0: 14.6E}" # format of data values for ascii export
     separator = " "
     newline="\n"
@@ -90,23 +90,17 @@ class AsciiFile(DataFile):
             asciiLines = fd.readlines()
         self.parseLines(asciiLines, **kwargs)
 
+    @abstractmethod
     def parseLines(self, asciiLines, **kwargs):
         """Parses lines of an ASCII file in order to extract a single array
         of numbers. Reimplement this in subclasses for different behaviour.
         """
-        lastLine, rawArray = self.readArray(asciiLines, **kwargs)
-        self.setRawArray(rawArray)
-
-    def setRawArray(self, rawArray):
-        """Sets a numpy.array of raw file data as instance attribute."""
-        assert isinstance(rawArray, np_ndarray)
-        assert rawArray.ndim >= 2 # check for at least 2 dimensions
-        self.rawArray = rawArray
+        raise NotImplementedError
 
     def readArray(self, asciiLines, dataType = float,
                   startLine = 0, endLine = None, **kwargs):
         """Reads a numpy.array from a specified segment (startLine, endLine)
-        of a line buffer specified by asciiLines. Stops at lines incompatible
+        of a line buffer given by asciiLines. Stops at lines incompatible
         to previous lines read due to different number of fields or
         incompatible data type. Returns the last line successfully parsed and
         the populated numpy.array.
