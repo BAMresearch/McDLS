@@ -11,7 +11,7 @@ from time import time as timestamp
 from gui.utils.signal import Signal
 from utils.error import EmptySelection
 from gui.utils.displayexception import DisplayException
-from bases.dataset import DataSet, HierachicalDataSet, DisplayMixin
+from bases.dataset import DataSet, HierarchicalDataSet, DisplayMixin
 from utils import isList, isMap, isString
 from utils.lastpath import LastPath
 from gui.utils.translate import tr
@@ -83,7 +83,7 @@ class DataItem(QTreeWidgetItem):
         for item in self.takeChildren(): # remove all children
             item.remove()
             del item
-        if isinstance(data, HierachicalDataSet):
+        if isinstance(data, HierarchicalDataSet):
             for child in data:
                 self.addChild(DataItem(child))
 
