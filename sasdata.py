@@ -22,7 +22,7 @@ from __future__ import absolute_import # PEP328
 import os # Miscellaneous operating system interfaces
 import logging
 import numpy as np # For arrays
-from datafile import PDHFile, AsciiFile, CGSFile
+from datafile import loadfile
 from utils import isList, classproperty
 from gui.utils import processEventLoop
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
@@ -59,6 +59,9 @@ class ScatteringData(DataSet, DisplayMixin):
     def __neq__(self, other):
         return not self.__eq__(other)
 
+def loaddatafile(filename):
+    datafile = loadfile(filename)
+
 class SASData(ScatteringData):
     """Represents one set of data from a unique source (a file, for example).
     """
@@ -79,25 +82,9 @@ class SASData(ScatteringData):
     @classmethod
     def load(cls, filename):
         """Factory method for creating SASData objects from file."""
-        if not os.path.isfile(filename):
-            logging.warning("File '{0}' does not exist!".format(filename))
-            return
-
-        logging.info("Loading '{0}' ...".format(filename))
-
-        path, ext = os.path.splitext(filename)
-        ext = ext[1:].lower()
-        import sys
-        print >>sys.__stderr__, "path, ext:", path, ext
-        if ext in PDHFile.extensions:
-            sasFile = PDHFile(filename)
-        elif ext in CGSFile.extensions:
-            sasFile = CGSFile(filename)
-        else:
-            sasFile = AsciiFile(filename) # works for CSV too
-
-        sasData = cls(title = sasFile.name, rawArray = sasFile.rawArray)
-        sasData.setFilename(sasFile.filename)
+        sasfile = loadfile(filename)
+        sasData = cls(title = sasfile.name, rawArray = sasfile.rawArray)
+        sasData.setFilename(sasfile.filename)
         return sasData
 
     # intensity
