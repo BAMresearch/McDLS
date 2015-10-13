@@ -29,7 +29,7 @@ from __future__ import absolute_import # PEP328
 import os # Miscellaneous operating system interfaces
 import logging
 import numpy as np # For arrays
-from bases.datafile import PDHFile, AsciiFile
+from datafile import PDHFile, AsciiFile
 from bases.dataset import DataSet, DisplayMixin
 from utils import isList, classproperty
 from gui.utils import processEventLoop

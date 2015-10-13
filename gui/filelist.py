@@ -7,7 +7,7 @@ import logging
 from gui.utils.signal import Signal
 from gui.bases.datalist import DataList
 from gui.utils.filedialog import getOpenFiles
-from bases.datafile import getFileFilter
+from datafile import getFileFilter
 from utils.lastpath import LastPath
 from utils.units import ScatteringVector, ScatteringIntensity
 from sasdata import SASData

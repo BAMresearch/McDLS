@@ -16,7 +16,7 @@ from QtCore import QUrl
 from bases.dataset import DataSet, DisplayMixin
 from utils import isList, isString, testfor
 from utils.lastpath import LastPath
-from bases.datafile import PDHFile, AsciiFile
+from datafile import PDHFile, AsciiFile
 from gui.utils.displayexception import DisplayException
 import log
 from mcsas.mcsas import McSAS

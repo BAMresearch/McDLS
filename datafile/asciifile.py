@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# bases/datafile/asciifile.py
+# datafile/asciifile.py
 
+from __future__ import absolute_import # PEP328
 from numpy import array as np_array
 from numpy import ndarray as np_ndarray
-from bases.datafile import DataFile
+from datafile import DataFile
 from utils.error import FileError
 from utils import isString
 from utils.classproperty import classproperty
