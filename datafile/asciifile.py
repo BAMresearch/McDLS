@@ -15,12 +15,6 @@ class AsciiFile(DataFile):
     separator = " "
     newline="\n"
 
-    @classproperty
-    @classmethod
-    def extensions(cls):
-        return (("All files", "*"),
-                ("ASCII single-array", "dat"),)
-
     # helpers for writing
 
     @classmethod

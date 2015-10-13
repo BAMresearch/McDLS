@@ -23,7 +23,7 @@ def getFileFilter():
         extFmt = "*.{1} (*.{1})"
     filefilter = []
     for cls in ArrayFile, PDHFile, CGSFile:
-        for descr, ext in cls.extensions:
+        for descr, ext in cls.fileFilter:
             filefilter.append(("{0} " + extFmt).format(descr, ext))
     import sys
     print >>sys.__stderr__, "filefilter", filefilter
