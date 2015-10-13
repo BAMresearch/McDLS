@@ -4,9 +4,9 @@
 from __future__ import absolute_import # PEP328
 from utils import isList, isInteger, isString
 from utils.classproperty import classproperty
-from datafile import AsciiFile
+from datafile import ArrayFile
 
-class PDHFile(AsciiFile):
+class PDHFile(ArrayFile):
 
     @classproperty
     @classmethod
@@ -16,7 +16,7 @@ class PDHFile(AsciiFile):
     @classmethod
     def formatData(cls, data, description = None):
         hdr = PDHHeader(data.shape[0], description)
-        asciiData = AsciiFile.formatData(data)
+        asciiData = super(PDHFile, self).formatData(data)
         asciiData = "{0}\n{1}".format(hdr, asciiData)
         return asciiData
 
