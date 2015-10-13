@@ -10,18 +10,11 @@ Some examples and tests.
 >>> testtitle = "some title"
 >>> from sasdata import SASData
 
-Testing copy()
+Testing
 >>> first = SASData(testtitle, testdata)
 >>> first.title == testtitle
 True
->>> numpy.all(first.origin == testdata)
-True
->>> second = first.copy()
->>> second.title == testtitle
-True
->>> numpy.all(second.origin == testdata)
-True
->>> first == second
+>>> numpy.all(first.rawArray == testdata)
 True
 """
 
@@ -34,14 +27,47 @@ from utils import isList, classproperty
 from gui.utils import processEventLoop
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
 
-class SASData(DataSet, DisplayMixin):
+# related to the class below
+from abc import ABCMeta, abstractproperty
+from bases.dataset import DataSet, DisplayMixin
+class ScatteringData(DataSet, DisplayMixin):
+    """General container for data loaded from file. It offers specialised
+    methods to derive information from the provided data.
+    """
+    __metaclass__ = ABCMeta
+    _filename = None
+
+    @property
+    def filename(self):
+        return self._filename
+
+    def setFilename(self, fn):
+        """Stores the absolute path to this data file.
+        Should be reviewed when data sets can be created from several files."""
+        if fn is None or not os.path.isfile(fn):
+            return
+        self._filename = os.path.abspath(fn)
+
+    def __init__(self, **kwargs):
+        import sys
+        print >>sys.__stderr__, "ScatteringData.__init__", self.__class__.__name__
+        super(ScatteringData, self).__init__(**kwargs)
+
+    def __eq__(self, other):
+        return (np.all(self.rawArray == other.rawArray)
+                and self.title == other.title
+                and self.filename == other.filename)
+
+    def __neq__(self, other):
+        return not self.__eq__(other)
+
+class SASData(ScatteringData):
     """Represents one set of data from a unique source (a file, for example).
     """
     _sizeEst = None
     _shannonChannelEst = None
     _eMin = 0.01 # minimum possible error (1%)
     _uncertainty = None
-    _filename = None
     _qUnit = None # will be instance of SASUnit, defines units
     _pUnit = None # will be instance of SASUnit, defines units
     _iUnit = None # will be instance of SASUnit, defines units
@@ -75,22 +101,6 @@ class SASData(DataSet, DisplayMixin):
         sasData = cls(title = sasFile.name, rawArray = sasFile.rawArray)
         sasData.setFilename(sasFile.filename)
         return sasData
-
-    @property
-    def filename(self):
-        return self._filename
-
-    def setFilename(self, fn):
-        """Stores the absolute path to this data file.
-        Should be reviewed when data sets can be created from several files."""
-        if fn is None or not os.path.isfile(fn):
-            return
-        self._filename = os.path.abspath(fn)
-
-    def copy(self):
-        cpy = SASData(self.title, self.origin)
-        cpy.setFilename(self.filename)
-        return cpy
 
     # intensity
 
@@ -423,14 +433,6 @@ class SASData(DataSet, DisplayMixin):
 
         #store:
         self._validIndices = validIndices
-
-    def __eq__(self, other):
-        return (np.all(self.origin == other.origin)
-                and self.title == other.title
-                and self.filename == other.filename)
-
-    def __neq__(self, other):
-        return not self.__eq__(other)
 
 if __name__ == "__main__":
     import doctest
