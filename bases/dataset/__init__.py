@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # bases/dataset/__init__.py
 
-from dataset import DataSet, HierachicalDataSet, ResultMixin, DisplayMixin
+from dataset import DataSet, HierarchicalDataSet, ResultMixin, DisplayMixin
 from titlemixin import TitleMixin
-from originmixin import OriginMixin
+from rawarraymixin import RawArrayMixin
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
