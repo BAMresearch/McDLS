@@ -9,7 +9,8 @@ from collections import OrderedDict
 from utils import isList
 #from utils.classproperty import classproperty
 from datafile import AsciiFile
-from utils.classproperty import classproperty
+from utils import classproperty
+from dataobj import DLSData
 
 import sys
 
@@ -260,6 +261,11 @@ class CGSFile(AsciiFile):
 
     def parseMonitorDiode(self, text, *args):
         self.setNumberValue("monitorDiode", text)
+
+    def getDataObj(self):
+        dlsData = DLSData(title = self.name)
+        dlsData.setFilename(self.filename)
+        return dlsData
 
 CGSFile.setPropertyGetters()
 
