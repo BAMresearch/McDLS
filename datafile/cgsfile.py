@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-# bases/datafile/pdhfile.py
+# datafile/pdhfile.py
 
+from __future__ import absolute_import # PEP328
 import logging
 import datetime
 import re
 from collections import OrderedDict
 from utils import isList
 #from utils.classproperty import classproperty
-from bases.datafile import AsciiFile
+from datafile import AsciiFile
 from utils.classproperty import classproperty
 
 import sys

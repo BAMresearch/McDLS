@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-# bases/datafile/pdhfile.py
+# datafile/pdhfile.py
 
+from __future__ import absolute_import # PEP328
 from utils import isList, isInteger, isString
 from utils.classproperty import classproperty
-from bases.datafile import AsciiFile
+from datafile import AsciiFile
 
 class PDHFile(AsciiFile):
 

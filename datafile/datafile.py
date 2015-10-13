@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# bases/datafile/datafile.py
+# datafile/datafile.py
 
 import os.path
 from abc import ABCMeta, abstractmethod, abstractproperty
