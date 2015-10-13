@@ -30,7 +30,6 @@ import os # Miscellaneous operating system interfaces
 import logging
 import numpy as np # For arrays
 from datafile import PDHFile, AsciiFile, CGSFile
-from bases.dataset import DataSet, DisplayMixin
 from utils import isList, classproperty
 from gui.utils import processEventLoop
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
@@ -73,8 +72,7 @@ class SASData(DataSet, DisplayMixin):
         else:
             sasFile = AsciiFile(filename) # works for CSV too
 
-        print >>sys.__stderr__, "in array", sasFile.rawArray
-        sasData = cls(sasFile.name, sasFile.rawArray)
+        sasData = cls(title = sasFile.name, rawArray = sasFile.rawArray)
         sasData.setFilename(sasFile.filename)
         return sasData
 
@@ -103,7 +101,7 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def iOrigin(self):
-        return self.iUnit.toSi(self.origin[:, 1])
+        return self.iUnit.toSi(self.rawArray[:, 1])
 
     @property
     def iUnit(self):
@@ -118,7 +116,7 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def qOrigin(self):
-        return self.qUnit.toSi(self.origin[:, 0])
+        return self.qUnit.toSi(self.rawArray[:, 0])
 
     @property
     def qUnit(self):
@@ -177,7 +175,7 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def eOrigin(self):
-        return self.iUnit.toSi(self.origin[:, 2])
+        return self.iUnit.toSi(self.rawArray[:, 2])
 
     @property
     def eMin(self):
@@ -208,7 +206,7 @@ class SASData(DataSet, DisplayMixin):
     @property
     def p(self):
         """Psi-Vector."""
-        return self.origin[:, 3] 
+        return self.rawArray[:, 3]
 
     @property
     def pUnit(self):
@@ -216,7 +214,7 @@ class SASData(DataSet, DisplayMixin):
 
     @property
     def pMin(self):
-        #returns minimum psi from data or psiClipRange, whichever is larger
+        """Returns minimum psi from data or psiClipRange, whichever is larger."""
         if self.is2d:
             return np.maximum(self.pClipRange[0], 
                     self.pOrigin.min())
@@ -225,7 +223,7 @@ class SASData(DataSet, DisplayMixin):
 
     @pMin.setter
     def pMin(self, newParam):
-        #value in cliprange will not exceed available psi.
+        """Value in cliprange will not exceed available psi."""
         if self.is2d:
             self._pClipRange[0] = np.maximum(newParam, 
                     self.pOrigin.min())
@@ -243,7 +241,7 @@ class SASData(DataSet, DisplayMixin):
 
     @pMax.setter
     def pMax(self, newParam):
-        #value in cliprange will not exceed available psi.
+        """Value in cliprange will not exceed available psi."""
         if self.is2d:
             self._pClipRange[1] = np.minimum(newParam, 
                     self.pOrigin.max())
@@ -289,13 +287,13 @@ class SASData(DataSet, DisplayMixin):
     def is2d(self):
         """Returns true if this dataset contains two-dimensional data with
         psi information available."""
-        return self.origin.shape[1] > 3 # psi column is present
+        return self.rawArray.shape[1] > 3 # psi column is present
 
     @property
     def hasError(self):
         """Returns True if this data set has an error bar for its
         intensities."""
-        return self.origin.shape[1] > 2
+        return self.rawArray.shape[1] > 2
 
     # general info texts for the UI
 
@@ -365,14 +363,14 @@ class SASData(DataSet, DisplayMixin):
         self._maskNegativeInt = bool(value)
         self._prepareValidIndices()
 
-    def __init__(self, *args):
+    def __init__(self, **kwargs):
+        super(SASData, self).__init__(**kwargs)
         #set unit definitions for display and internal units
         self._iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self._qUnit = ScatteringVector(u"nm⁻¹")
         self._pUnit = Angle(u"˚")
         self._rUnit = Length(u"nm")
 
-        DataSet.__init__(self, *args)
         self._prepareValidIndices()
         self._sizeEst = np.pi / np.array([self.q.max(),
                                           abs(self.q.min()) ])

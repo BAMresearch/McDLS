@@ -496,7 +496,7 @@ class Histogram(DataSet, DisplayMixin):
         """Creates an histogram with default bin count, will be updated later."""
         logging.debug('Hist init: {} [{}, {}]'
                 .format(param.name(), lower, upper))
-        DataSet.__init__(self, "({0}, {1})".format(lower, upper), None)
+        super(Histogram, self).__init__(title = "({0}, {1})".format(lower, upper))
         # add it to the parameter here
         self.param = param # parameter we belong to is mandatory
         self.binCount = binCount # bin count is mandatory
