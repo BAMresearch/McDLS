@@ -82,7 +82,7 @@ class CGSFile(AsciiFile):
 
     @classproperty
     @classmethod
-    def extensions(cls):
+    def fileFilter(cls):
         return (("DLS ALV Data", "asc"),)
 
     @classmethod

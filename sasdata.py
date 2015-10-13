@@ -49,8 +49,6 @@ class ScatteringData(DataSet, DisplayMixin):
         self._filename = os.path.abspath(fn)
 
     def __init__(self, **kwargs):
-        import sys
-        print >>sys.__stderr__, "ScatteringData.__init__", self.__class__.__name__
         super(ScatteringData, self).__init__(**kwargs)
 
     def __eq__(self, other):
@@ -91,9 +89,9 @@ class SASData(ScatteringData):
         ext = ext[1:].lower()
         import sys
         print >>sys.__stderr__, "path, ext:", path, ext
-        if ext in PDHFile.extensions[0][1]:
+        if ext in PDHFile.extensions:
             sasFile = PDHFile(filename)
-        elif ext in CGSFile.extensions[0][1]:
+        elif ext in CGSFile.extensions:
             sasFile = CGSFile(filename)
         else:
             sasFile = AsciiFile(filename) # works for CSV too

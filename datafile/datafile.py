@@ -43,11 +43,16 @@ class DataFile(object):
     @abstractproperty
     @classproperty
     @classmethod
-    def extensions(cls):
+    def fileFilter(cls):
         """Extensions of this file type. No extension by default.
            Use it to construct a proper file name. Reimplement in subclasses.
            """
         raise NotImplementedError
+
+    @classproperty
+    @classmethod
+    def extensions(cls):
+        return (e for t, e in cls.fileFilter)
 
     @property
     def filename(self):

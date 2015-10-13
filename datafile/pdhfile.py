@@ -10,7 +10,7 @@ class PDHFile(AsciiFile):
 
     @classproperty
     @classmethod
-    def extensions(cls):
+    def fileFilter(cls):
         return (("PDH Saxsquant", "pdh"),)
 
     @classmethod
