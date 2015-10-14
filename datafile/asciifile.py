@@ -2,6 +2,7 @@
 # datafile/asciifile.py
 
 from __future__ import absolute_import # PEP328
+import codecs
 from abc import ABCMeta, abstractmethod
 from numpy import array as np_array
 from datafile import DataFile
@@ -80,8 +81,12 @@ class AsciiFile(DataFile):
 
     def readFile(self, **kwargs):
         asciiLines = None
-        with open(self.filename, 'rU') as fd:
-            asciiLines = fd.readlines()
+        try:
+            with codecs.open(self.filename, 'r', encoding = 'utf8') as fd:
+                asciiLines = fd.readlines()
+        except UnicodeDecodeError:
+            with codecs.open(self.filename, 'r', encoding = 'latin1') as fd:
+                asciiLines = fd.readlines()
         self.parseLines(asciiLines, **kwargs)
 
     @abstractmethod
