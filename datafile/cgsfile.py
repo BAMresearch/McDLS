@@ -108,7 +108,7 @@ class CGSFile(AsciiFile):
         while i < len(asciiLines) - 1:
             i += 1
             line = asciiLines[i].strip()
-            print >>sys.__stderr__, "line", i, line
+#            print >>sys.__stderr__, "line", i, line
             if not len(line):
                 continue
             if line.strip('"') in self.knownProperties:
@@ -118,26 +118,26 @@ class CGSFile(AsciiFile):
                 setattr(self, "_"+key, rawArray)
                 continue
             key, value = self.splitKeyValue(line)
-            print >>sys.__stderr__, "k: '{}', v: '{}'".format(key, value)
+#            print >>sys.__stderr__, u"k: '{}', v: '{}'".format(key, value)
             key, idx, unit = self.processKey(key)
-            print >>sys.__stderr__, "processKey out", key, idx, unit
+#            print >>sys.__stderr__, "processKey out", key, idx, unit
             if key is None:
                 continue # attribute not supported
             parseFunc = getattr(self, "parse" + key[0].upper() + key[1:], None)
-            print >>sys.__stderr__, "parseFunc", parseFunc
+#            print >>sys.__stderr__, "parseFunc", parseFunc
             if parseFunc is None:
                 continue
             parseFunc(value, text2num(idx, dtype = int))
             self.setUnit(key, unit)
-            print >>sys.__stderr__, "  --> p: '{}'".format(getattr(self, key, None))
+#            print >>sys.__stderr__, "  --> p: '{}'".format(getattr(self, key, None))
 
         for dataName, memName in self.knownProperties.iteritems():
             if memName is None or not len(memName): memName = dataName
             value = getattr(self, memName)
-            print >>sys.__stderr__, "{} ({}): \t{}".format(memName, type(value), value)
-            try:
-                print >>sys.__stderr__, value.shape
-            except: pass
+#            print >>sys.__stderr__, "{} ({}): \t{}".format(memName, type(value), value)
+#            try:
+#                print >>sys.__stderr__, value.shape
+#            except: pass
 
     def splitKeyValue(self, line):
         if not len(line):
@@ -155,14 +155,14 @@ class CGSFile(AsciiFile):
         return key, value
 
     def processKey(self, inKey):
-        print >>sys.__stderr__, "processKey  in", inKey
+#        print >>sys.__stderr__, "processKey  in", inKey
         outKey = self.knownProperties.get(inKey, None)
         if outKey is not None:
             return outKey, None, None
         result = self._keyPattern.match(inKey)
         if result is None or len(result.groups()) < 5:
             return None, None, None
-        print >>sys.__stderr__, "match:", result.groups()
+#        print >>sys.__stderr__, "match:", result.groups()
         inKey = result.group("key").strip()
         outKey = self.knownProperties.get(inKey, None)
         if outKey is None or not len(outKey):
