@@ -318,7 +318,7 @@ class SASData(DataObj):
         #set unit definitions for display and internal units
         self._iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self._qUnit = ScatteringVector(u"nm⁻¹")
-        self._pUnit = Angle(u"˚")
+        self._pUnit = Angle(u"°")
         self._rUnit = Length(u"nm")
 
         self._prepareValidIndices()

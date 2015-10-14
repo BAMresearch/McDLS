@@ -31,7 +31,7 @@ class CylindersIsotropic(ScatteringModel):
                     displayName = "Aspect ratio of the Cylinder",
                     generator = RandomExponential,
                     valueRange = (1e-3, 1e3)),
-            FitParameter("psiAngle", 0.1, unit = Angle(u'˚'),
+            FitParameter("psiAngle", 0.1, unit = Angle(u'°'),
                     displayName = "Internal Parameter, not user adjustable",
                     generator = RandomUniform,
                     valueRange = (0.01, 2 * pi + 0.01)),

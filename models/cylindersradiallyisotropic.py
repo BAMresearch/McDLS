@@ -27,7 +27,7 @@ class CylindersRadiallyIsotropic(ScatteringModel):
                     generator = RandomUniform,
                     valueRange = (0.1, numpy.inf),
                     activeRange = (1.0, 20.)), # preset
-            FitParameter("psiAngle", 0.17, unit = Angle(u'˚'),
+            FitParameter("psiAngle", 0.17, unit = Angle(u'°'),
                     displayName = "in-plane cylinder rotation",
                     generator = RandomUniform,
                     valueRange = (0.01, 2 * pi + 0.01)),

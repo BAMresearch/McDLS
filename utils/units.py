@@ -63,7 +63,7 @@ class Unit(object):
         try:
             return cls.magnitudeMapping[name]
         except KeyError:
-            logging.warning('no matching magnitude to name {} found'
+            logging.warning(u"no matching magnitude to name {} found"
                     .format(name))
 
     @classproperty
@@ -181,7 +181,7 @@ class Volume(Unit):
 
 class Angle(Unit):
     _magnitudeMap = {
-        u"˚"  : 180.0/pi,
+        u"°"  : 180.0/pi, # unicode U+00B0
         u"'"  :   3.0/pi,
         u'"'  :   0.05/pi,
         u"rad":   1.0,
