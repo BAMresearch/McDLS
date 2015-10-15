@@ -61,6 +61,9 @@ def isNumber(obj):
 def isInteger(obj):
     return (isinstance(obj, int) or isinstance(obj, long))
 
+def isFunction(obj):
+    return isinstance(obj, collections.Callable)
+
 # environment tests
 
 def isLinux():
