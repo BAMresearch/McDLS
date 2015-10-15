@@ -5,9 +5,10 @@ from __future__ import absolute_import # PEP328
 import logging
 import datetime
 import re
+from numpy import array as np_array
 from collections import OrderedDict
 from utils import isList
-#from utils.classproperty import classproperty
+from utils.units import Angle, Temperature, Viscosity, Length
 from datafile import AsciiFile
 from utils import classproperty
 from dataobj import DLSData
@@ -44,7 +45,7 @@ class CGSFile(AsciiFile):
                     ("Viscosity", "viscosity"),
                     ("Refractive Index", "refractiveIndex"),
                     ("Wavelength", "wavelength"),
-                    ("Angle", "angle"),
+                    ("Angle", "angles"),
                     ("Duration", "duration"),
                     ("Runs", "runs"),
                     ("Mode", "mode"),
@@ -123,9 +124,11 @@ class CGSFile(AsciiFile):
 #            print >>sys.__stderr__, "processKey out", key, idx, unit
             if key is None:
                 continue # attribute not supported
-            parseFunc = getattr(self, "parse" + key[0].upper() + key[1:], None)
+            funcName = "parse" + key[0].upper() + key[1:]
+            parseFunc = getattr(self, funcName, None)
 #            print >>sys.__stderr__, "parseFunc", parseFunc
             if parseFunc is None:
+                logging.warning("Parse function '{}' not found!".format(funcName))
                 continue
             parseFunc(value, text2num(idx, dtype = int))
             self.setUnit(key, unit)
@@ -235,8 +238,8 @@ class CGSFile(AsciiFile):
     def parseWavelength(self, text, *args):
         self.setNumberValue("wavelength", text)
 
-    def parseAngle(self, text, *args):
-        self.setListValue("angle", text2num(text), *args)
+    def parseAngles(self, text, *args):
+        self.setListValue("angles", text2num(text), *args)
 
     def parseDuration(self, text, *args):
         self.setNumberValue("duration", text)
@@ -265,6 +268,24 @@ class CGSFile(AsciiFile):
     def getDataObj(self):
         dlsData = DLSData(title = self.name)
         dlsData.setFilename(self.filename)
+        dlsData.setSampleName(self.sampleName)
+        dlsData.setSampleDescription(
+                " ".join([s for s in self.sampleMemo if len(s)]))
+        dlsData.setTemperature(Temperature(self.units['temperature'])
+                    .toSi(self.temperature))
+        dlsData.setViscosity(Viscosity(self.units['viscosity'])
+                    .toSi(self.viscosity))
+        dlsData.setRefractiveIndex(self.refractiveIndex) # dimensionless
+        dlsData.setWaveLength(Length(self.units['wavelength'])
+                .toSi(self.wavelength))
+        # scattering angles
+        unit = self.units['angles']
+        angles = np_array(self.angles)
+        dlsData.setAngles(Angle(unit).toSi(angles))
+        # correlation array
+        dlsData.setCorrelation(self.correlation)
+
+        print >>sys.__stderr__, unicode(dlsData)
         return dlsData
 
 CGSFile.setPropertyGetters()
