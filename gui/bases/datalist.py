@@ -366,9 +366,10 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.selectionChanged()
 
     def add(self, data):
+        if self.isEmpty():
+            self.setHeader(data.displayDataDescr)
 #        print "ADD1", self.topLevelItems()
-        # WTF? w/o it returns QTreeWidgetItem instead of DataItem below!
-        DataItem(data)
+        DataItem(data) # WTF? w/o it returns QTreeWidgetItem instead of DataItem below!
         self.listWidget.addTopLevelItem(DataItem(data))
 #        print "ADD2", self.topLevelItems()
         item = self.listWidget.topLevelItem(len(self)-1)

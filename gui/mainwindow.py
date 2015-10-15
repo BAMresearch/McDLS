@@ -215,7 +215,6 @@ class MainWindow(MainWindowBase):
         # set up file widget
         fileWidget = FileList(self, title = "Data Files",
                               withBtn = False, nestedItems = False)
-        fileWidget.setHeader(SASData.displayDataDescr)
         fileWidget.setToolTip(
                 "Right-click to add datafiles.\n" +
                 "Double click to use the estimated size for the model.")
