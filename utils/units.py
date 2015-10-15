@@ -198,8 +198,10 @@ K = Temperature(u"K")
 
 class Viscosity(Unit):
     _magnitudeMap = {
-        u"mPa·s":  1e3,
-        u"Pa·s":   1.0, # kg/(s·m)
+        u"mPa·s": 1e-3,
+        u"cp":    1e-3,
+        u"cP":    1e-3,
+        u"Pa·s":  1.0, # kg/(s·m)
     }
     _siMagnitudeName = u"Pa·s"
 
