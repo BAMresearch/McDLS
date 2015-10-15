@@ -32,6 +32,9 @@ class DataObj(DataSet, DisplayMixin):
             return
         self._filename = os.path.abspath(fn)
 
+    def accumulate(self, others):
+        return None
+
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)
 

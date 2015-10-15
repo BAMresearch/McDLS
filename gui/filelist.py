@@ -33,8 +33,29 @@ class FileList(DataList):
         # processSourceFunc(filename)
         def loaddataobj(fn):
             return loaddatafile(fn).getDataObj()
+        newIndex = len(self) # index of the next data set added
         DataList.loadData(self, sourceList = fileList, showProgress = False,
                           processSourceFunc = loaddataobj)
+        self.triggerAccumulation(newIndex)
+
+    def triggerAccumulation(self, newIndex):
+        """Starts accumulation of related data sets among the currently loaded
+        ones. Finally, removes such source data sets and adds the new combined
+        one. newIndex is the index of the first newly loaded entries."""
+        # allow accumulation of items based on the last item loaded
+        lastIndex, lastData = self.currentSelection()
+        avg = lastData.accumulate(self.data())
+        # remove the single data sets which where just loaded
+        for i in range(newIndex, lastIndex + 1):
+            self.setCurrentIndex(i)
+            self.removeSelected()
+        # add the new combined data set (again)
+        self.add(avg)
+        # TODO: alternatively, add a new hierarchical DataSet object containing
+        # the source files as children which aren't processed further
+        # FileList needs to be reconfigured towards a tree structure; while
+        # being just a construtor switch the general appereance and behaviour
+        # might change
 
     def itemDoubleClicked(self, item, column):
         valueRange = item.data().sphericalSizeEst()

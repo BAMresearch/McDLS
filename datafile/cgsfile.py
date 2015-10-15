@@ -276,7 +276,7 @@ class CGSFile(AsciiFile):
         dlsData.setViscosity(Viscosity(self.units['viscosity'])
                     .toSi(self.viscosity))
         dlsData.setRefractiveIndex(self.refractiveIndex) # dimensionless
-        dlsData.setWaveLength(Length(self.units['wavelength'])
+        dlsData.setWavelength(Length(self.units['wavelength'])
                 .toSi(self.wavelength))
         # scattering angles
         unit = self.units['angles']
