@@ -21,22 +21,22 @@ class DLSTest(ScatteringModel):
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
                     decimals = 1), 
-                  Parameter("temp", K.toSi(300.), unit = K,
-                    displayName = K.name(),
-                    valueRange = (0., numpy.inf),
-                    decimals = 3),
-                  Parameter("vis", VIS.toSi(1.), unit = VIS,
-                    displayName = VIS.name(),
-                    valueRange = (0., numpy.inf),
-                    decimals = 3),
-                  Parameter("refIdx", 1., unit = NoUnit,
-                    displayName = "Refractive Index",
-                    valueRange = (0., numpy.inf),
-                    decimals = 3),
-                  Parameter("wavelength", NM.toSi(600.), unit = NM,
-                    displayName = "Wavelength",
-                    valueRange = (0., numpy.inf),
-                    decimals = 1),
+#                  Parameter("temp", K.toSi(300.), unit = K,
+#                    displayName = K.name(),
+#                    valueRange = (0., numpy.inf),
+#                    decimals = 3),
+#                  Parameter("vis", VIS.toSi(1.), unit = VIS,
+#                    displayName = VIS.name(),
+#                    valueRange = (0., numpy.inf),
+#                    decimals = 3),
+#                  Parameter("refIdx", 1., unit = NoUnit,
+#                    displayName = "Refractive Index",
+#                    valueRange = (0., numpy.inf),
+#                    decimals = 3),
+#                  Parameter("wavelength", NM.toSi(600.), unit = NM,
+#                    displayName = "Wavelength",
+#                    valueRange = (0., numpy.inf),
+#                    decimals = 1),
                   )
 
     def __init__(self):
@@ -48,11 +48,12 @@ class DLSTest(ScatteringModel):
         return v
 
     def formfactor(self, dataset):
-        q = 4. * pi * self.refIdx() * sin(theta * .5) / self.wavelength()
-        gamma = - q * q * self.temp() * KB / (6. * pi * self.vis() * self.radius())
-        return exp(dataset.q * gamma * .5)
+#        q = 4. * pi * self.refIdx() * sin(theta * .5) / self.wavelength()
+#        gamma = - 0.5 * q * q * self.temp() * KB / (6. * pi * self.vis() * self.radius())
+#        return exp(dataset.tau * gamma / self.radius())
+        return exp(dataset.tauGamma / self.radius())
 
-Sphere.factory()
+DLSTest.factory()
 
 def test():
     pass
