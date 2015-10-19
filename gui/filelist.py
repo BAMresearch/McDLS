@@ -44,6 +44,8 @@ class FileList(DataList):
         one. newIndex is the index of the first newly loaded entries."""
         # allow accumulation of items based on the last item loaded
         lastIndex, lastData = self.currentSelection()
+        if lastData is None:
+            return
         avg = lastData.accumulate(self.data())
         if avg is None:
             return
