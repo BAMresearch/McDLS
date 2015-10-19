@@ -142,16 +142,21 @@ class Unit(object):
         # else:
         return value / self.magnitudeConversion
 
+
 class Temperature(Unit):
     """ test case for special conversions. Done by redefining toSI and toDisplay. 
     Implemnted units are given in list in _magnitudeMap (normally dict) """
-    _magnitudeMap = [u"˚F", u"F", u"˚C", u"C", u"K"] # implemented units
+    _magnitudeMap = [u"˚F", u"F", u"˚C", u"C", u"K", u"˚R", u"R", u"˚De", u"De"] # implemented units
     _siMagnitudeName = u"K"
     def toSi(self, value):
         if self.displayMagnitudeName in {u"˚F", u"F"}:
-            return (value - 32.) * 5./9 + 273.15 
+            return (value + 459.67) * 5./9 
         elif self.displayMagnitudeName in {u"˚C", u"C"}:
             return value + 237.15
+        elif self.displayMagnitudeName in {u"˚R", u"R"}: # Rankine
+            return value * 5./9
+        elif self.displayMagnitudeName in {u"˚De", u"De"}: # Delisie
+            return 373.15 - value * 2./3 
         elif self.displayMagnitudeName == u"K":
             return value
         else:
@@ -159,13 +164,29 @@ class Temperature(Unit):
 
     def toDisplay(self, value):
         if self.displayMagnitudeName in {u"˚F", u"F"}:
-            return (value - 273.15) * (9./5) + 32. 
+            return value * 9./5 - 459.67 
         elif self.displayMagnitudeName in {u"˚C", u"C"}:
             return value - 273.15 
+        elif self.displayMagnitudeName in {u"˚R", u"R"}: # Rankine
+            return value * 9./5
+        elif self.displayMagnitudeName in {u"˚De", u"De"}: # Delisie
+            return (373.15 - value) * 3./2 
         elif self.displayMagnitudeName == u"K":
             return value
         else:
             return NotImplementedError
+
+class DynamicViscosity(Unit):
+    _siMagnitudeName = u"N s m⁻²"
+    _magnitudeMap = {
+        u"Pa s"        : 1.,
+        u"kg m⁻¹ s⁻¹"  : 1.,
+        u"poise"       : 1e-1,
+        u"centiPoise"  : 1e-3,
+        u"dyne s cm⁻²" : 1e-1,
+        u"g cm⁻¹ s⁻¹"  : 1e-1,
+        u"sl ft⁻¹ s⁻¹" : 47.880, # slug per foot second
+    }
 
 class Length(Unit):
     _siMagnitudeName = u"m"
