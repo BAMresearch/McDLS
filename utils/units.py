@@ -181,10 +181,10 @@ class Volume(Unit):
 
 class Angle(Unit):
     _magnitudeMap = {
-        u"°"  : pi/180.0, # unicode U+00B0
-        u"'"  : pi/  3.0,
-        u'"'  : pi/  0.05,
-        u"rad": pi/  1.0,
+        u"°"  : pi / 180.0, # unicode U+00B0
+        u"'"  : pi /   3.0,
+        u'"'  : pi /   0.05,
+        u"rad":        1.0,
     }
     _siMagnitudeName = u"rad"
 
