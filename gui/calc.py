@@ -21,6 +21,7 @@ from gui.utils.displayexception import DisplayException
 import log
 from mcsas.mcsas import McSAS
 from utils.parameter import Histogram, Moments, isActiveParam
+from dataobj import SASData
 
 class OutputFilename(object):
     """Generates output filenames with a common time stamp and logs
@@ -229,8 +230,9 @@ class Calculator(object):
             config.set(sectionName, p.name(), p.value())
         config.set(sectionName, "model", self.model.name())
         # We don't have to do anything with these yet, but storing them for now:
-        config.set(sectionName, "Q limits", 
-                np.array([np.min(dataset.q),np.max(dataset.q)]) )
+        if isinstance(dataset, SASData): # useful with SAS data only
+            config.set(sectionName, "Q limits", 
+                    np.array([np.min(dataset.q),np.max(dataset.q)]))
 
         sectionName = "Model Settings"
         config.add_section(sectionName)
