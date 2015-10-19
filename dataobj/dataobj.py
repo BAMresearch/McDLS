@@ -10,7 +10,7 @@ import os # Miscellaneous operating system interfaces
 from numpy import all as np_all
 
 # related to the class below
-from abc import ABCMeta
+from abc import ABCMeta, abstractproperty
 from bases.dataset import DataSet, DisplayMixin
 
 # formerly known as 'ScatteringData', better? also for the module?
@@ -31,6 +31,14 @@ class DataObj(DataSet, DisplayMixin):
         if fn is None or not os.path.isfile(fn):
             return
         self._filename = os.path.abspath(fn)
+
+    @abstractproperty
+    def count(self):
+        raise NotImplementedError
+
+    @property
+    def is2d(self):
+        return False
 
     def accumulate(self, others):
         return None
