@@ -6,7 +6,7 @@ import numpy
 from scipy.special import j1 as bessel_j1
 from scipy.integrate import quad
 from utils.parameter import FitParameter
-from scatteringmodel import ScatteringModel
+from scatteringmodel import SASModel
 from bases.algorithm import RandomUniform, RandomExponential
 from utils.units import Length
 
@@ -43,7 +43,7 @@ def calcPcs(u):
     return res
 vectorizedPcs = numpy.vectorize(calcPcs)
 
-class Kholodenko(ScatteringModel):
+class Kholodenko(SASModel):
     r"""Form factor of a worm-like structure after [Kholodenko93]_
 
     .. [Kholodenko93] `A. L. Kholodenko. Analytical calculation of the

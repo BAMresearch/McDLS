@@ -4,12 +4,12 @@
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import ScatteringModel
+from scatteringmodel import SASModel
 from utils.units import Length, Angle
 
 # parameters must not be inf
 
-class CylindersIsotropic(ScatteringModel):
+class CylindersIsotropic(SASModel):
     r"""Form factor of cylinders
     which are radially isotropic (so not spherically isotropic!)
     !!!completed but not verified!!!

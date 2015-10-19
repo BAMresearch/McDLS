@@ -4,11 +4,11 @@
 import numpy
 from utils import mixedmethod
 from utils.parameter import FitParameter, Parameter
-from models import ScatteringModel
+from models import SASModel
 from bases.algorithm import RandomUniform, RandomExponential
 from utils.units import Length, SLD, NoUnit
 
-class GaussianChain(ScatteringModel):
+class GaussianChain(SASModel):
     r"""Form factor of flexible polymer chains which are not selfavoiding
     and obey Gaussian statistics after [Debye47]_
 
