@@ -45,6 +45,8 @@ class FileList(DataList):
         # allow accumulation of items based on the last item loaded
         lastIndex, lastData = self.currentSelection()
         avg = lastData.accumulate(self.data())
+        if avg is None:
+            return
         # remove the single data sets which where just loaded
         for i in range(newIndex, lastIndex + 1):
             self.setCurrentIndex(i)

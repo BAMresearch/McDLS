@@ -53,6 +53,15 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         assert i.size == dataset.q.size
         return i
 
+    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+        v = self.vol(compensationExponent = compensationExponent,
+                     useSLD = useSLD)
+        # calculate their form factors
+        ff = self.ff(data)
+        # a set of intensities
+        it = ff**2 * v**2
+        return it, v
+
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
         Parameter.generator. Allows for different random number distributions.

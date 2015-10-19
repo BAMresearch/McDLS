@@ -809,21 +809,21 @@ class McSAS(AlgorithmBase):
         # remember parameter values
         params = self.model.activeParams()
         oldValues = [p() for p in params]
-        it = 0
+        cumIt = 0 # cumulated intensities
         vset = zeros(rset.shape[0])
         # call the model for each parameter value explicitly
         # otherwise the model gets complex for multiple params incl. fitting
         for i in numpy.arange(rset.shape[0]):
             for p, v in izip(params, rset[i]):
                 p.setValue(v)
-            vset[i] = self.model.vol(compensationExponent, useSLD = useSLD)
-            # calculate their form factors
-            ffset = self.model.ff(data)
+            it, vset[i] = self.model.calcIntensity(data,
+                    compensationExponent = compensationExponent,
+                    useSLD = useSLD)
             # a set of intensities
-            it += ffset**2 * vset[i]**2
+            cumIt += it
         # restore previous parameter values
         for p, v in izip(params, oldValues):
             p.setValue(v)
-        return it.flatten(), vset
+        return cumIt.flatten(), vset
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
