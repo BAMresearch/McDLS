@@ -138,8 +138,8 @@ class DLSData(DataObj):
             return
         q2 = self._scatteringVector * self._scatteringVector
         # 0.5 ensures the necessary sqrt() within the model
-        self._gammaR = ( - 0.5 * q2 * self.temperature[0] * KB
-                        / (6. * pi * self.viscosity[0]) )
+        self._gammaR = ( (- q2 * self.temperature[0] * KB)
+                         / (6. * pi * self.viscosity[0]) )
         self.calcTauGamma()
 
     def calcTauGamma(self):
@@ -152,7 +152,9 @@ class DLSData(DataObj):
     @staticmethod
     def _flatten(a):
         """Returns a flat array, column-wise concatenated and each second
-        column reversed."""
+        column reversed. This way the data stays continuous and the plotting
+        goes back and forth through the domain of definition as often as there
+        are angles."""
         o = a.copy()
         o[:,1::2] = o[::-1,1::2]
         return o.ravel(order = 'F')
