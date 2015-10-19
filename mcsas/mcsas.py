@@ -441,8 +441,8 @@ class McSAS(AlgorithmBase):
         scIn = sc
 #        sc, conval = self.optimScalingAndBackground(
 #                data.i, it/vst, data.u, scIn, ver = 1)
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
-        sc, conval = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst, ver = 1)
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(), self.model)
+        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst, ver = 1)
 #        def psc(sc): return "[{0};{1}]".format(sc[0], sc[1])
 #        print "bgScalingFit: {sc}{sc2}, {c}|{c2}".format(sc = psc(sc), sc2 = psc(sc2), c = conval, c2 = conval2)
         # reoptimize with V2, there might be a slight discrepancy in the
@@ -450,7 +450,7 @@ class McSAS(AlgorithmBase):
         scIn = sc
 #        sc, conval = self.optimScalingAndBackground(
 #                data.i, it/vst, data.u, scIn)
-        sc, conval = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst)
+        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst)
 #        print "bgScalingFit: {sc}{sc3}, {c}|{c3}".format(sc = psc(sc), sc3 = psc(sc3), c = conval, c3 = conval3)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
@@ -483,7 +483,7 @@ class McSAS(AlgorithmBase):
             # using version two here for a >10 times speed improvement
 #            sct, convalt = self.optimScalingAndBackground(
 #                                    data.i, itest/vstest, data.u, sc)
-            sct, convalt = bgScalingFit.calc(data.i, data.u, itest, sc, vol = vstest)
+            sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, itest, sc, vol = vstest)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -529,8 +529,8 @@ class McSAS(AlgorithmBase):
 #        sc, conval = self.optimScalingAndBackground(
 #                            data.i, ifinal/sum(vset**2), data.u, sc)
         # if model is SAXSModel:
-        ifinal /= sum(vset**2)
-        sc, conval = bgScalingFit.calc(data.i, data.u, ifinal, sc)
+#        ifinal /= sum(vset**2)
+        sc, conval, ifinal = bgScalingFit.calc(data.i, data.u, ifinal, sc, vol = sum(vset**2))
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -649,7 +649,7 @@ class McSAS(AlgorithmBase):
         q = data.q
         intensity = data.i
         intError = data.u
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(), self.model)
 
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
@@ -679,7 +679,7 @@ class McSAS(AlgorithmBase):
             # optimize scaling and background for this repetition
 #            sc, conval = self.optimScalingAndBackground(
 #                    intensity, it, intError, (sci, bgi))
-            sc, conval = bgScalingFit.calc(intensity, intError, it, (sci, bgi))
+            sc, conval, dummy = bgScalingFit.calc(intensity, intError, it, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
             # volumeFraction[:, ri] = (
@@ -814,7 +814,7 @@ class McSAS(AlgorithmBase):
         # remember parameter values
         params = self.model.activeParams()
         oldValues = [p() for p in params]
-        cumIt = 0 # cumulated intensities
+        cumInt = zeros(data.i.shape) # cumulated intensities
         vset = zeros(rset.shape[0])
         # call the model for each parameter value explicitly
         # otherwise the model gets complex for multiple params incl. fitting
@@ -825,10 +825,10 @@ class McSAS(AlgorithmBase):
                     compensationExponent = compensationExponent,
                     useSLD = useSLD)
             # a set of intensities
-            cumIt += it
+            cumInt += it
         # restore previous parameter values
         for p, v in izip(params, oldValues):
             p.setValue(v)
-        return cumIt.flatten(), vset
+        return cumInt.flatten(), vset
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
