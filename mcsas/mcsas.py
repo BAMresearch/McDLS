@@ -300,7 +300,7 @@ class McSAS(AlgorithmBase):
         scalings = zeros(numReps)
         backgrounds = zeros(numReps)
         times = zeros(numReps)
-        contribIntensity = zeros([1, len(data.q), numReps])
+        contribIntensity = zeros([1, data.count, numReps])
 
         priorsflag = False
         # This is the loop that repeats the MC optimization numReps times,
@@ -325,7 +325,7 @@ class McSAS(AlgorithmBase):
                                 numContribs, minConvergence,
                                 outputIntensity = True, outputDetails = True,
                                 nRun = nr)
-                if not all(numpy.array(contributions.shape, dtype = bool)):
+                if any(array(contributions.shape) == 0):
                     break # nothing active, nothing to fit
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
@@ -354,8 +354,6 @@ class McSAS(AlgorithmBase):
                     "  total time remaining {4} minutes"
                     .format(nr+1, numReps, tottime, avetime, remtime))
 
-
-        
         # store in output dict
         self.result.append(dict(
             contribs = contributions, # Rrep
@@ -393,14 +391,13 @@ class McSAS(AlgorithmBase):
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
         
-        q = data.q 
         # generate initial set of spheres
         if size(prior) == 0:
             if self.startFromMinimum():
                 for idx, param in enumerate(self.model.activeParams()):
                     mb = min(param.activeRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
-                        mb = pi / (q.max())
+                        mb = pi / (data.q.max())
                     rset[:, idx] = numpy.ones(numContribs) * mb * .5
             else:
                 rset = self.model.generateParameters(numContribs)
