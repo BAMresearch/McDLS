@@ -12,6 +12,7 @@ import matplotlib
 from utils import isList, isString, isMac
 import log
 from main import makeAbsolutePath
+from dataobj import DLSData
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
@@ -121,9 +122,12 @@ class PlotResults(object):
                 # 1D data
                 qAxis = self._ah[rangei * 2 * (self._nHists + 1) 
                     + self._nHists + 1]
-                fitQ = np.sort(self._result['fitQ'])
-                fitIntensity = self._result['fitIntensityMean'][0, 
-                        np.argsort(self._result['fitQ'])]
+                fitQ = self._result['fitQ']
+                fitIntensity = self._result['fitIntensityMean'][0,:]
+                if not isinstance(dataset, DLSData):
+                    fitQ = np.sort(self._result['fitQ'])
+                    fitIntensity = self._result['fitIntensityMean'][0, 
+                            np.argsort(self._result['fitQ'])]
                 self.plot1D(self._dataset,
                         fitQ, fitIntensity, qAxis)
 
