@@ -283,9 +283,8 @@ class CGSFile(AsciiFile):
         angles = np_array(self.angles)
         dlsData.setAngles(Angle(unit).toSi(angles))
         # correlation array
-        dlsData.setCorrelation(self.correlation)
-
-        print >>sys.__stderr__, unicode(dlsData)
+        dlsData.setTau(self.correlation[:, 0])
+        dlsData.setCorrelation(self.correlation[:, 1:])
         return dlsData
 
 CGSFile.setPropertyGetters()
