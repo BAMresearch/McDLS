@@ -6,10 +6,10 @@ from numpy import pi, sin, cos
 import logging
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import ScatteringModel
+from scatteringmodel import SASModel
 from utils.units import Length, Fraction, NoUnit, SLD
 
-class LMADenseSphere(ScatteringModel):
+class LMADenseSphere(SASModel):
     """Form factor of a sphere convoluted with a structure factor,
     equations 15-17 from Pedersen, J. Appl. Cryst. 27 (1994), 595--608. 
     Correct eqn given in Kinning and Thomas, Macromolecules 17 (1984) 1712.

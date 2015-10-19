@@ -12,11 +12,11 @@ value used for the integration is the mass-weighted centre.
 import numpy, scipy, scipy.special, scipy.stats
 from numpy import pi, zeros, sin, cos, linspace, diff, sinc
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import ScatteringModel
+from scatteringmodel import SASModel
 
 # parameters must not be inf
 
-class CylindersRadiallyIsotropicTilted(ScatteringModel):
+class CylindersRadiallyIsotropicTilted(SASModel):
     r"""Form factor of cylinders *UNFINISHED*
     which are radially isotropic (so not spherically isotropic!)
     """

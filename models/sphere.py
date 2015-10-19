@@ -5,10 +5,10 @@ import numpy
 from numpy import pi, sin, cos
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import ScatteringModel
+from scatteringmodel import SASModel
 from utils.units import Length, NM, SLD
 
-class Sphere(ScatteringModel):
+class Sphere(SASModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
     parameters = (FitParameter("radius",

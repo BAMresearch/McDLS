@@ -53,14 +53,11 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         assert i.size == dataset.q.size
         return i
 
+    @abstractmethod
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
-        v = self.vol(compensationExponent = compensationExponent,
-                     useSLD = useSLD)
-        # calculate their form factors
-        ff = self.ff(data)
-        # a set of intensities
-        it = ff**2 * v**2
-        return it, v
+        """Calculates the model intensity which is compared to the data
+        finally."""
+        raise NotImplemented
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
@@ -188,5 +185,29 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
                             delta.reshape(-1, 1)))[max(0, dmax-4):dmax+5]
                         )
                 )
+
+class SASModel(ScatteringModel):
+    __metaclass__ = ABCMeta
+
+    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+        v = self.vol(compensationExponent = compensationExponent,
+                     useSLD = useSLD)
+        # calculate their form factors
+        ff = self.ff(data)
+        # a set of intensities
+        it = ff**2 * v**2
+        return it, v
+
+class DLSModel(ScatteringModel):
+    __metaclass__ = ABCMeta
+
+    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+        v = self.vol(compensationExponent = compensationExponent,
+                     useSLD = useSLD)
+        # calculate their form factors
+        ff = self.ff(data)
+        # a set of intensities
+        it = v**2 * ff
+        return it, v
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

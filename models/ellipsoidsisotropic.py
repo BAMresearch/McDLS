@@ -6,12 +6,12 @@ import numpy as np
 from numpy import pi, sin, cos, sqrt
 from utils.parameter import FitParameter, Parameter
 from bases.algorithm import RandomUniform, RandomExponential
-from scatteringmodel import ScatteringModel
+from scatteringmodel import SASModel
 from utils.units import Length, NoUnit, SLD
 
 # parameters must not be inf
 
-class EllipsoidsIsotropic(ScatteringModel):
+class EllipsoidsIsotropic(SASModel):
     r"""Form factor for a spheroidal structure with semi-axes a = b, c.
     c can be set to be an aspect ratio with respect to a
     tested with Ellipsoid II from SASfit 20140626

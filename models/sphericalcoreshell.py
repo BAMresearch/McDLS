@@ -4,11 +4,11 @@
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import ScatteringModel
+from scatteringmodel import SASModel
 from bases.algorithm import RandomExponential, RandomUniform
 from utils.units import Length, SLD
 
-class SphericalCoreShell(ScatteringModel):
+class SphericalCoreShell(SASModel):
     r"""Form factor for a spherical core shell structure
     as defined in the SASfit manual (par. 3.1.4, Spherical Shell III).
     One modification is the ability to specify SLD for core, shell and
