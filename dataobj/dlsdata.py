@@ -75,7 +75,7 @@ class DLSData(DataObj):
         self._correlation = rawArray
 
     def setCorrelationError(self, rawArray):
-        print >>sys.__stderr__, "setCorrelationError", rawArray
+#        print >>sys.__stderr__, "setCorrelationError", rawArray
         assert self.isValidInput(rawArray), "Invalid data from file!"
         assert rawArray.shape[1] == self.numAngles, \
             "Correlation stddev: #columns differs from #scattering angles"
@@ -156,8 +156,8 @@ class DLSData(DataObj):
         goes back and forth through the domain of definition as often as there
         are angles."""
         o = a.copy()
-        o[:,1::2] = o[::-1,1::2]
-        return o.ravel(order = 'F')
+        o[:,1::2] = o[::-1,1::2] # reverses the odd columns, see numpy.flipud()
+        return o.ravel(order = 'F') # column-wise concat, Fortran style
 
     @property
     def q(self):
@@ -207,7 +207,12 @@ class DLSData(DataObj):
         self.setCorrelationError(stacked.std(-1))
         assert len(self.q) == len(self.i) and len(self.q) == len(self.u), \
             "Dimensions of flattened data arrays do not match!"
-        print >>sys.__stderr__, unicode(self)
+#        print >>sys.__stderr__, unicode(self)
+#        print >>sys.__stderr__, "TAU * GAMMA", self.tauGammaMat.shape
+#        print >>sys.__stderr__, self.tauGammaMat[::4,0]
+#        print >>sys.__stderr__, self.tauGammaMat[::4,3]
+#        print >>sys.__stderr__, self.tauGammaMat[::4,6]
+#        sys.exit()
         return self
 
     def __init__(self, **kwargs):

@@ -2,14 +2,11 @@
 # models/dlstest.py
 
 import numpy
-from numpy import pi, sin, cos, exp, sqrt
+from numpy import pi, exp, sqrt
 from bases.algorithm import RandomUniform
-from utils.parameter import FitParameter, Parameter
+from utils.parameter import FitParameter
 from scatteringmodel import DLSModel
-from utils.units import Length, NM, K, VIS, NoUnit
-
-# Boltzmann constant in m²·kg·s⁻²·K⁻¹
-KB = 1.38064852 * 1e23
+from utils.units import NM
 
 class DLSTest(DLSModel):
     """Test Form factor for DLS"""
@@ -47,10 +44,7 @@ class DLSTest(DLSModel):
         return sqrt((pi*4./3.) * self.radius()**3.)
 
     def formfactor(self, dataset):
-#        q = 4. * pi * self.refIdx() * sin(theta * .5) / self.wavelength()
-#        gamma = - 0.5 * q * q * self.temp() * KB / (6. * pi * self.vis() * self.radius())
-#        return exp(dataset.tau * gamma / self.radius())
-        return (exp(dataset.tauGamma / self.radius()))
+        return (exp( dataset.tauGamma / self.radius() ))
 
 DLSTest.factory()
 

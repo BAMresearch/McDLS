@@ -205,7 +205,19 @@ class Viscosity(Unit):
     }
     _siMagnitudeName = u"Pa·s"
 
-VIS = Viscosity(u"mPa·s")
+Vis = Viscosity(u"mPa·s")
+
+class Time(Unit):
+    _magnitudeMap = {
+        u"ns": 1e-9,
+        u"µs": 1e-6,
+        u"ms": 1e-3,
+        u"s":  1.0,
+    }
+    _siMagnitudeName = u"s"
+
+MSec = Time(u"ms")
+Sec = Time(u"ns")
 
 class SLD(Unit):
     _magnitudeMap = {

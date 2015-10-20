@@ -8,7 +8,7 @@ import re
 from numpy import array as np_array
 from collections import OrderedDict
 from utils import isList
-from utils.units import Angle, Temperature, Viscosity, Length
+from utils.units import Angle, Temperature, Viscosity, Length, MSec
 from datafile import AsciiFile
 from utils import classproperty
 from dataobj import DLSData
@@ -31,7 +31,6 @@ def _makeProperty(varName):
 class CGSFile(AsciiFile):
     """Parsing *ALV-7004 CGS-8F Data, Single Run Data*
     Read-only at the moment."""
-    # FIXME? unordered?
     # a set of attributes found in the data file:
     # pairs of the name in the file for lookup and the associated member name
     # if both are the same (besides of case) only one name is required
@@ -67,6 +66,7 @@ class CGSFile(AsciiFile):
                              "([\(\[]?(?P<idx>[0-9])[\)\]]?)?"  # index
                              "(\s*\[(?P<unit>[^0-9\[\]]+)\])?"  # unit
                              )
+    _tauUnit = MSec # default for known file signatures
 
     @classproperty
     @classmethod
@@ -283,7 +283,7 @@ class CGSFile(AsciiFile):
         angles = np_array(self.angles)
         dlsData.setAngles(Angle(unit).toSi(angles))
         # correlation array
-        dlsData.setTau(self.correlation[:, 0])
+        dlsData.setTau(self._tauUnit.toSi(self.correlation[:, 0]))
         dlsData.setCorrelation(self.correlation[:, 1:])
         return dlsData
 
