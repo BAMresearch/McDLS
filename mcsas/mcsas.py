@@ -190,91 +190,6 @@ class McSAS(AlgorithmBase):
         #     self.gen2DIntensity()
 
     ######################################################################
-    ##################### Pre-optimisation Functions #####################
-    ######################################################################
-
-    def optimScalingAndBackground(self, intObs, intCalc, intError, sc, ver = 2):
-        """
-        Optimizes the scaling and background factor to match *intCalc* closest
-        to intObs. 
-        Returns an array with scaling factors. Input initial guess *sc* has 
-        to be a two-element array with the scaling and background.
-
-        **Input arguments:**
-
-        :arg intObs: An array of *measured*, respectively *observed*
-                     intensities
-        :arg intCalc: An array of intensities which should be scaled to match
-                      *intObs*
-        :arg intError: An array of uncertainties to match *intObs*
-        :arg sc: A 2-element array of initial guesses for scaling
-                 factor and background
-        :arg ver: *(optional)* Can be set to 1 for old version, more robust
-                  but slow, default 2 for new version,
-                  10x faster than version 1, requires decent starting values
-        :arg outputIntensity: *(optional)* Return the scaled intensity as
-                              third output argument, default: False
-        :arg background: *(optional)* Enables a flat background contribution,
-                         default: True
-
-        :returns: (*sc*, *conval*): A tuple of an array containing the
-                  intensity scaling factor and background and the reduced
-                  chi-squared value.
-        """
-        def csqr(sc, intObs, intCalc, intError):
-            """Least-squares intError for use with scipy.optimize.leastsq"""
-            return (intObs - sc[0]*intCalc - sc[1]) / intError
-        
-        def csqr_nobg(sc, intObs, intCalc, intError):
-            """Least-squares intError for use with scipy.optimize.leastsq,
-            without background """
-            return (intObs - sc[0]*intCalc) / intError
-
-        def csqr_v1(intObs, intCalc, intError):
-            """Least-squares for data with known intError,
-            size of parameter-space not taken into account."""
-            return sum(((intObs - intCalc)/intError)**2) / size(intObs)
-
-        intObs = intObs.flatten()
-        intCalc = intCalc.flatten()
-        intError = intError.flatten()
-        # we need an McSAS instance anyway to call this method
-        background = self.findBackground.value()
-        if ver == 2:
-            # uses scipy.optimize.leastsqr
-            if background:
-                sc, dummySuccess = optimize.leastsq(
-                        csqr, sc, args = (intObs, intCalc, intError),
-                        full_output = False)
-                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
-            else:
-                sc, dummySuccess = optimize.leastsq(
-                        csqr_nobg, sc, args = (intObs, intCalc, intError),
-                        full_output = False)
-                sc[1] = 0.0
-                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
-        else:
-            # using scipy.optimize.fmin
-            # Background can be set to False to just find the scaling factor.
-            if background:
-                sc = optimize.fmin(
-                    lambda sc: csqr_v1(intObs, sc[0]*intCalc + sc[1], intError),
-                    sc, full_output = False, disp = 0)
-                conval = csqr_v1(intObs, sc[0]*intCalc + sc[1], intError)
-            else:
-                sc = optimize.fmin(
-                    lambda sc: csqr_v1(intObs, sc[0]*intCalc, intError),
-                    sc, full_output = False, disp = 0)
-                sc[1] = 0.0
-                conval = csqr_v1(intObs, sc[0]*intCalc, intError)
-
-        return sc, conval
-
-    def _passthrough(self,In):
-        """A passthrough mechanism returning the input unchanged"""
-        return In
-
-    ######################################################################
     ####################### optimisation Functions #######################
     ######################################################################
 
@@ -439,19 +354,12 @@ class McSAS(AlgorithmBase):
         bgi = data.i.min()
         sc = numpy.array([sci, bgi])
         scIn = sc
-#        sc, conval = self.optimScalingAndBackground(
-#                data.i, it/vst, data.u, scIn, ver = 1)
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
         sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst, ver = 1)
-#        def psc(sc): return "[{0};{1}]".format(sc[0], sc[1])
-#        print "bgScalingFit: {sc}{sc2}, {c}|{c2}".format(sc = psc(sc), sc2 = psc(sc2), c = conval, c2 = conval2)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         scIn = sc
-#        sc, conval = self.optimScalingAndBackground(
-#                data.i, it/vst, data.u, scIn)
         sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst)
-#        print "bgScalingFit: {sc}{sc3}, {c}|{c3}".format(sc = psc(sc), sc3 = psc(sc3), c = conval, c3 = conval3)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -481,8 +389,6 @@ class McSAS(AlgorithmBase):
             vstest = (sqrt(vst) - vset[ri])**2 + vtt**2
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-#            sct, convalt = self.optimScalingAndBackground(
-#                                    data.i, itest/vstest, data.u, sc)
             sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, itest, sc, vol = vstest)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
@@ -526,10 +432,6 @@ class McSAS(AlgorithmBase):
             'elapsed': elapsed})
 
         ifinal = self.model.smear(it)
-#        sc, conval = self.optimScalingAndBackground(
-#                            data.i, ifinal/sum(vset**2), data.u, sc)
-        # if model is SAXSModel:
-#        ifinal /= sum(vset**2)
         sc, conval, ifinal = bgScalingFit.calc(data.i, data.u, ifinal, sc, vol = sum(vset**2))
         details.update({'scaling': sc[0], 'background': sc[1]})
 
@@ -673,8 +575,6 @@ class McSAS(AlgorithmBase):
             sci = intensity.max() / it.max()
             bgi = intensity.min()
             # optimize scaling and background for this repetition
-#            sc, conval = self.optimScalingAndBackground(
-#                    intensity, it, intError, (sci, bgi))
             sc, conval, dummy = bgScalingFit.calc(intensity, intError, it, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # a set of volume fractions
