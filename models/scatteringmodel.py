@@ -55,8 +55,11 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 
     @abstractmethod
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
-        """Calculates the model intensity which is compared to the data
-        finally."""
+        """Calculates the model intensity which is later compared to the data.
+        Returns a tuple containing an array of the calculated intensities for
+        the grid provided with the data and the volume of a single particle
+        based on the model parameters.
+        """
         raise NotImplemented
 
     def generateParameters(self, count = 1):

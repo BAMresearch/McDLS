@@ -713,14 +713,15 @@ class McSAS(AlgorithmBase):
         *rset* number columns equals the number of active parameters."""
         # remember parameter values
         params = self.model.activeParams()
-        oldValues = [p() for p in params]
+        oldValues = [p() for p in params] # this sucks. But we dont want to loose the user provided value
         cumInt = zeros(data.i.shape) # cumulated intensities
         vset = zeros(rset.shape[0])
         # call the model for each parameter value explicitly
         # otherwise the model gets complex for multiple params incl. fitting
-        for i in numpy.arange(rset.shape[0]):
-            for p, v in izip(params, rset[i]):
+        for i in numpy.arange(rset.shape[0]): # for each contribution
+            for p, v in izip(params, rset[i]): # for each fit param within
                 p.setValue(v)
+            # result squared or not is model type dependent
             it, vset[i] = self.model.calcIntensity(data,
                     compensationExponent = compensationExponent,
                     useSLD = useSLD)
