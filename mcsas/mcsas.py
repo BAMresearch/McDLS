@@ -441,7 +441,7 @@ class McSAS(AlgorithmBase):
         scIn = sc
 #        sc, conval = self.optimScalingAndBackground(
 #                data.i, it/vst, data.u, scIn, ver = 1)
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value(), self.model)
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
         sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst, ver = 1)
 #        def psc(sc): return "[{0};{1}]".format(sc[0], sc[1])
 #        print "bgScalingFit: {sc}{sc2}, {c}|{c2}".format(sc = psc(sc), sc2 = psc(sc2), c = conval, c2 = conval2)
@@ -645,7 +645,7 @@ class McSAS(AlgorithmBase):
         q = data.q
         intensity = data.i
         intError = data.u
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value(), self.model)
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
 
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):

@@ -10,8 +10,6 @@ import warnings
 warnings.simplefilter("ignore")
 from lmfit import Parameter as lmfit_Parameter
 from lmfit import minimize as lmfit_minimize
-import sys
-from models import SASModel, DLSModel
 
 class BackgroundScalingFit(object):
     """
@@ -43,11 +41,9 @@ class BackgroundScalingFit(object):
               chi-squared value.
     """
     findBackground = None # True: find optimal background as well
-    _model = None
 
-    def __init__(self, findBackground, model):
+    def __init__(self, findBackground):
         self.findBackground = findBackground
-        self._model = model
 
     @staticmethod
     def chi(sc, dataMeas, dataErr, dataCalc):
@@ -135,13 +131,7 @@ class BackgroundScalingFit(object):
         dataCalc = dataCalc.flatten()
 
         if vol is not None:
-            if isinstance(self._model, SASModel):
-#                print >>sys.__stderr__, "SASvol", vol
-                dataCalc /= vol
-            elif isinstance(self._model, DLSModel):
-#                print >>sys.__stderr__, "DLSvol", vol
-#                dataCalc = (dataCalc / vol)**2
-                dataCalc /= vol
+            dataCalc /= vol
 
         if True:
             # different data fit approaches: speed vs. stability (?)
