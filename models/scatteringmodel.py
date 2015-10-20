@@ -5,7 +5,8 @@ import os.path
 import logging
 import inspect
 from abc import ABCMeta, abstractmethod
-import numpy
+from itertools import izip
+from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor
 from bases.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
@@ -62,11 +63,37 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         """
         raise NotImplemented
 
+    def calc(self, data, pset, compensationExponent = None, useSLD = False):
+        """Calculates the total intensity and scatterer volume contributions
+        using the current model.
+        *pset* number columns equals the number of active parameters.
+        """
+        # remember parameter values
+        params = self.activeParams()
+        oldValues = [p() for p in params] # this sucks. But we dont want to loose the user provided value
+        cumInt = zeros(data.i.shape) # cumulated intensities
+        vset = zeros(pset.shape[0])
+        # call the model for each parameter set explicitly
+        # otherwise the model gets complex for multiple params incl. fitting
+        for i in arange(pset.shape[0]): # for each contribution
+            for p, v in izip(params, pset[i]): # for each fit param within
+                p.setValue(v)
+            # result squared or not is model type dependent
+            it, vset[i] = self.calcIntensity(data,
+                    compensationExponent = compensationExponent,
+                    useSLD = useSLD)
+            # a set of intensities
+            cumInt += it
+        # restore previous parameter values
+        for p, v in izip(params, oldValues):
+            p.setValue(v)
+        return cumInt.flatten(), vset
+
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
         Parameter.generator. Allows for different random number distributions.
         """
-        lst = numpy.zeros((count, self.activeParamCount()))
+        lst = zeros((count, self.activeParamCount()))
         for idx, param in enumerate(self.activeParams()):
             # generate numbers in different range for each parameter
             #only for active parameters, otherwise it may try to generate
@@ -173,7 +200,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
                      * model.ff(dataset, None))**2.
         # computing the relative error to reference data
         delta = abs((dataset.i - intensity) / dataset.i)
-        dmax = numpy.argmax(delta)
+        dmax = argmax(delta)
         testfor(delta.mean() < relerr, AssertionError,
                 "Could not verify {model} intensity against\n'{fn}',"
                 "\nmean(delta): {mean} >= relErr: {relerr}"
@@ -181,7 +208,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
                 "\n{data}"
                 .format(model = cls.name(), fn = filename,
                         mean = delta.mean(), relerr = relerr,
-                        dmax = dmax, data = numpy.hstack((
+                        dmax = dmax, data = hstack((
                             dataset.q.reshape(-1, 1),
                             dataset.i.reshape(-1, 1),
                             intensity.reshape(-1, 1),
