@@ -8,7 +8,6 @@ from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,
                   isnan, newaxis)
 from scipy import optimize
-from itertools import izip
 import time # Timekeeping and timing of objects
 import copy
 import logging
@@ -343,7 +342,7 @@ class McSAS(AlgorithmBase):
             logging.info("size now: {}".format(rset.shape))
 
         # NOTE: put prior into each Parameter, initially
-        it, vset = self.calcModel(data, rset, compensationExponent)
+        it, vset = self.model.calc(data, rset, compensationExponent)
         vst = sum(vset**2) # total volume squared
 
         # Optimize the intensities and calculate convergence criterium
@@ -375,10 +374,10 @@ class McSAS(AlgorithmBase):
                not self.stop):
             rt = self.model.generateParameters()
             # calculate contribution intensity:
-            itt, vtt = self.calcModel(data, rt, compensationExponent)
+            itt, vtt = self.model.calc(data, rt, compensationExponent)
             # Calculate new total intensity, subtract old intensity, add new:
             itest = None
-            io, dummy = self.calcModel(data, rset[ri].reshape((1, -1)), 
+            io, dummy = self.model.calc(data, rset[ri].reshape((1, -1)), 
                     compensationExponent)
             itest = (it.flatten() - io + itt) # is this numerically stable?
             # is numerically stable (so far). Can calculate final uncertainty
@@ -557,7 +556,7 @@ class McSAS(AlgorithmBase):
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
-            it, vset = self.calcModel(data, rset, self.compensationExponent())
+            it, vset = self.model.calc(data, rset, self.compensationExponent())
             vst = sum(vset**2) # total compensated volume squared 
             it = self.model.smear(it)
             
@@ -571,8 +570,8 @@ class McSAS(AlgorithmBase):
             # compensated volume for each sphere in
             # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
             # Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
-            # dummy, vpa = self.calcModel(data, rset, compensationExponent = 1.0)
-            dummy, vpa = self.calcModel(data, rset, 
+            # dummy, vpa = self.model.calc(data, rset, compensationExponent = 1.0)
+            dummy, vpa = self.model.calc(data, rset, 
                     compensationExponent = 1.0, useSLD = True)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
@@ -600,7 +599,7 @@ class McSAS(AlgorithmBase):
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
                 # again, partial intensities for this size only required
-                ir, dummy = self.calcModel(data, rset[c].reshape((1, -1)), 
+                ir, dummy = self.model.calc(data, rset[c].reshape((1, -1)), 
                         self.compensationExponent())
                 # determine where this maximum observability is
                 # of contribution c (index)
@@ -648,7 +647,7 @@ class McSAS(AlgorithmBase):
             logging.info('regenerating set {} of {}'.format(ri, numReps-1))
             rset = contribs[:, :, ri]
             # calculate their form factors
-            it, vset = self.calcModel(data, rset, compensationExponent)
+            it, vset = self.model.calc(data, rset, compensationExponent)
             vst = sum(vset**2) # total volume squared
             # Optimize the intensities and calculate convergence criterium
             it = self.model.smear(it)
@@ -704,32 +703,5 @@ class McSAS(AlgorithmBase):
             plotArgs.append(True) # logToFile
             proc = Process(target = PlotResults, args = plotArgs)
             proc.start()
-
-    # move this to ScatteringModel eventually?
-    # which additional output might by useful/required?
-    def calcModel(self, data, rset, compensationExponent = None, useSLD = False):
-        """Calculates the total intensity and scatterer volume contributions
-        using the current model.
-        *rset* number columns equals the number of active parameters."""
-        # remember parameter values
-        params = self.model.activeParams()
-        oldValues = [p() for p in params] # this sucks. But we dont want to loose the user provided value
-        cumInt = zeros(data.i.shape) # cumulated intensities
-        vset = zeros(rset.shape[0])
-        # call the model for each parameter value explicitly
-        # otherwise the model gets complex for multiple params incl. fitting
-        for i in numpy.arange(rset.shape[0]): # for each contribution
-            for p, v in izip(params, rset[i]): # for each fit param within
-                p.setValue(v)
-            # result squared or not is model type dependent
-            it, vset[i] = self.model.calcIntensity(data,
-                    compensationExponent = compensationExponent,
-                    useSLD = useSLD)
-            # a set of intensities
-            cumInt += it
-        # restore previous parameter values
-        for p, v in izip(params, oldValues):
-            p.setValue(v)
-        return cumInt.flatten(), vset
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
