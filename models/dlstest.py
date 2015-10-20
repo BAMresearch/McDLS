@@ -18,22 +18,6 @@ class DLSTest(DLSModel):
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
                     decimals = 1), 
-#                  Parameter("temp", K.toSi(300.), unit = K,
-#                    displayName = K.name(),
-#                    valueRange = (0., numpy.inf),
-#                    decimals = 3),
-#                  Parameter("vis", VIS.toSi(1.), unit = VIS,
-#                    displayName = VIS.name(),
-#                    valueRange = (0., numpy.inf),
-#                    decimals = 3),
-#                  Parameter("refIdx", 1., unit = NoUnit,
-#                    displayName = "Refractive Index",
-#                    valueRange = (0., numpy.inf),
-#                    decimals = 3),
-#                  Parameter("wavelength", NM.toSi(600.), unit = NM,
-#                    displayName = "Wavelength",
-#                    valueRange = (0., numpy.inf),
-#                    decimals = 1),
                   )
 
     def __init__(self):
