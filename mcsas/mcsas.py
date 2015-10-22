@@ -352,12 +352,12 @@ class McSAS(AlgorithmBase):
         scIn = sc
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
         sc, conval, dummy = bgScalingFit.calc(data.i, data.u, 
-                it, scIn, vol = sum(vset**2), ver = 1)
+                it / sum(vset**2), scIn, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         scIn = sc
-        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, 
-                vol = sum(vset**2))
+        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it / sum(vset**2), 
+                scIn)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -385,8 +385,8 @@ class McSAS(AlgorithmBase):
             vtest = vset.sum() - vset[ri] + vtt
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-            sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, itest, 
-                    sc, vol = vtest**2)
+            sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, 
+                    itest / vtest**2, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -429,7 +429,8 @@ class McSAS(AlgorithmBase):
             'elapsed': elapsed})
 
         ifinal = self.model.smear(it)
-        sc, conval, ifinal = bgScalingFit.calc(data.i, data.u, ifinal, sc, vol = sum(vset**2))
+        sc, conval, ifinal = bgScalingFit.calc(data.i, data.u, 
+                ifinal / sum(vset**2), sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -564,9 +565,7 @@ class McSAS(AlgorithmBase):
             # optimize scaling and background for this repetition
             sc, conval, dummy = bgScalingFit.calc(intensity, intError, it, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
-            volumeFraction[:, ri] = (
-                    sc[0] * vset**2/(vpa)
-                    ).flatten()
+            volumeFraction[:, ri] = (sc[0] * vset**2/(vpa)).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])

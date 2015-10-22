@@ -80,13 +80,10 @@ class BackgroundScalingFit(object):
         sc = optimize.fmin(residual, sc, full_output = False, disp = 0)
         return sc
 
-    def calc(self, dataMeas, dataErr, dataCalc, sc, vol = None, ver = 2):
+    def calc(self, dataMeas, dataErr, dataCalc, sc, ver = 2):
         dataMeas = dataMeas.flatten()
         dataErr  = dataErr.flatten()
         dataCalc = dataCalc.flatten()
-
-        if vol is not None:
-            dataCalc /= vol
 
         # different data fit approaches: speed vs. stability (?)
         if ver == 2:
