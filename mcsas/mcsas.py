@@ -343,22 +343,21 @@ class McSAS(AlgorithmBase):
 
         # NOTE: put prior into each Parameter, initially
         it, vset = self.model.calc(data, rset, compensationExponent)
-        vst = sum(vset**2) # total volume squared
 
         # Optimize the intensities and calculate convergence criterium
-        # SMEAR function goes here
-        it = self.model.smear(it)
         # generate initial guess for scaling factor and background
         sci = data.i.max() / it.max() # init. guess for the scaling factor
         bgi = data.i.min()
         sc = numpy.array([sci, bgi])
         scIn = sc
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
-        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst, ver = 1)
+        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, 
+                it, scIn, vol = sum(vset**2), ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         scIn = sc
-        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, vol = vst)
+        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, scIn, 
+                vol = sum(vset**2))
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -383,17 +382,16 @@ class McSAS(AlgorithmBase):
             # is numerically stable (so far). Can calculate final uncertainty
             # based on number of valid "moves" and sys.float_info.epsilon
 
-            # SMEAR function goes here
-            itest = self.model.smear(itest)
-            vstest = (sqrt(vst) - vset[ri])**2 + vtt**2
+            vtest = vset.sum() - vset[ri] + vtt
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-            sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, itest, sc, vol = vstest)
+            sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, itest, 
+                    sc, vol = vtest**2)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
-                it, vset[ri], vst = itest, vtt, vstest
+                it, vset[ri] = itest, vtt
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
@@ -557,7 +555,6 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
             it, vset = self.model.calc(data, rset, self.compensationExponent())
-            vst = sum(vset**2) # total compensated volume squared 
             it = self.model.smear(it)
             
             # Now for each sphere, calculate its volume fraction
@@ -648,9 +645,7 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, :, ri]
             # calculate their form factors
             it, vset = self.model.calc(data, rset, compensationExponent)
-            vst = sum(vset**2) # total volume squared
             # Optimize the intensities and calculate convergence criterium
-            it = self.model.smear(it)
             intAvg = intAvg + it*scalingFactors[0, ri] + scalingFactors[1, ri]
         # print "Initial conval V1", Conval1
         intAvg /= numReps
