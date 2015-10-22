@@ -352,11 +352,13 @@ class McSAS(AlgorithmBase):
         scIn = sc
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
         sc, conval, dummy = bgScalingFit.calc(data.i, data.u, 
-                it / sum(vset**2), scIn, ver = 1)
+                it, scIn, ver = 1)
+                # it / sum(vset**2), scIn, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         scIn = sc
-        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it / sum(vset**2), 
+        # sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it / sum(vset**2), 
+        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it, 
                 scIn)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
@@ -382,11 +384,12 @@ class McSAS(AlgorithmBase):
             # is numerically stable (so far). Can calculate final uncertainty
             # based on number of valid "moves" and sys.float_info.epsilon
 
-            vtest = vset.sum() - vset[ri] + vtt
+            # vtest = vset.sum() - vset[ri] + vtt
             # optimize intensity and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, 
-                    itest / vtest**2, sc)
+                    itest, sc)
+                    # itest / vtest**2, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -430,7 +433,8 @@ class McSAS(AlgorithmBase):
 
         ifinal = self.model.smear(it)
         sc, conval, ifinal = bgScalingFit.calc(data.i, data.u, 
-                ifinal / sum(vset**2), sc)
+                ifinal, sc)
+                # ifinal / sum(vset**2), sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
