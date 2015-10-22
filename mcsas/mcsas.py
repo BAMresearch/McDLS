@@ -406,7 +406,7 @@ class McSAS(AlgorithmBase):
                 # would have its own thread and will not be blocked by calc
                 processEventLoop()
                 lastUpdate = time.time()
-            # move to next sphere in list, loop if last sphere
+            # move to next contribution in list, loop if last contribution
             ri = (ri + 1) % numContribs
             numIter += 1 # add one to the iteration number
 
@@ -557,17 +557,8 @@ class McSAS(AlgorithmBase):
             it, vset = self.model.calc(data, rset, self.compensationExponent())
             it = self.model.smear(it)
             
-            # Now for each sphere, calculate its volume fraction
-            # (p_c compensated):
-            # compensated volume for each sphere in
-            # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
-            # Vsa = VOLfunc(Rset, PowerCompensationFactor)
-            vsa = vset # vset did not change here
-            # And the real particle volume:
-            # compensated volume for each sphere in
-            # the set Vsa = 4./3*pi*Rset**(3*PowerCompensationFactor)
-            # Vpa = VOLfunc(Rset, PowerCompensationFactor = 1.)
-            # dummy, vpa = self.model.calc(data, rset, compensationExponent = 1.0)
+            # Now for each sphere, its volume fraction (compensated): is vset
+            # And the real particle volume vpa:
             dummy, vpa = self.model.calc(data, rset, 
                     compensationExponent = 1.0, useSLD = True)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
@@ -577,12 +568,8 @@ class McSAS(AlgorithmBase):
             # optimize scaling and background for this repetition
             sc, conval, dummy = bgScalingFit.calc(intensity, intError, it, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
-            # a set of volume fractions
-            # volumeFraction[:, ri] = (
-            #         sc[0] * vsa**2/(vpa * self.deltaRhoSquared())
-            #         ).flatten()
             volumeFraction[:, ri] = (
-                    sc[0] * vsa**2/(vpa)
+                    sc[0] * vset**2/(vpa)
                     ).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/vpa.flatten()
