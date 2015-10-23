@@ -219,7 +219,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
-    def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.] nSmearSteps = 25):
+    def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.], nSmearSteps = 25):
 
         def squareSlit(q, shapeParam, n):
 
@@ -272,9 +272,10 @@ class SASModel(ScatteringModel):
 
         return locs, dU, weightFunc
 
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+    def calcIntensity(self, data, compensationExponent = None, 
+            useSLD = False, smear = False):
         v = self.vol(compensationExponent = compensationExponent,
-                     useSLD = useSLD, smear = False)
+                     useSLD = useSLD)
 
         if smear:
             locs, dU, weightFunc = prepSmear(data, slitShape = "square", 
