@@ -24,9 +24,17 @@ class slitSmearedSphere(SASModel):
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
                     decimals = 1), 
-                  Parameter("slitWidth", ScatteringVector(u'nm⁻¹').toSi(-1.), 
+                  Parameter("slitWidthTrapzTop", 
+                    ScatteringVector(u'nm⁻¹').toSi(-1.), 
                     unit = ScatteringVector(u'nm⁻¹'),
-                    displayName = "slit width in Q [-1 is no smearing]",
+                    displayName = "slit width Trapz top in Q [-1 is no smearing]",
+                    valueRange = (-1., numpy.inf),
+                    displayValues = {-1.e-9: "no smearing"},
+                    decimals = 1), 
+                  Parameter("slitWidthTrapzBottom", 
+                    ScatteringVector(u'nm⁻¹').toSi(-1.), 
+                    unit = ScatteringVector(u'nm⁻¹'),
+                    displayName = "slit width Trapz bottom in Q [-1 is no smearing]",
                     valueRange = (-1., numpy.inf),
                     displayValues = {-1.e-9: "no smearing"},
                     decimals = 1), 
@@ -57,7 +65,14 @@ class slitSmearedSphere(SASModel):
             result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
             return result
 
-        def smear(q, fhandle, fparams = None, slitWidth = None, nIntSteps = 50):
+        def trapzPDF(x, xt, xb):
+            y = 1. - (x - xt) / (xb - xt)
+            y = np.clip(y, 0., 1.)
+            y[x < xt] = 1.
+            Area = (xt + xb)
+            return y / Area
+        
+        def smear(q, fhandle, fparams = None, slitWidthTrapzTop = None, slitWidthTrapzBottom = None, nIntSteps = 50):
             """ clean smearing program for obtaining slit-smeared scattering patterns. 
             usage: 
             *q*: A one-dimensional scattering vector
@@ -67,27 +82,36 @@ class slitSmearedSphere(SASModel):
             """
             assert isinstance(q, numpy.ndarray)
             assert (q.ndim == 1)
+            assert (slitWidthTrapzTop > 0.)
+            if slitWidthTrapzBottom < slitWidthTrapzTop:
+                slitWidthTrapzBottom = slitWidthTrapzTop
+
             # nIntSteps = q.size
-            if slitWidth > q.max(): #TODO: use clip function
-                slitWidth = q.max()
+            if slitWidthTrapzBottom > q.max(): #TODO: use clip function
+                slitWidthTrapzBottom = q.max()
+            if slitWidthTrapzTop > q.max(): #TODO: use clip function
+                slitWidthTrapzTop = q.max()
             dU = np.logspace(np.log10(q.min() / 10.), 
-                    np.log10(slitWidth / 2.), num = nIntSteps) 
+                    np.log10(slitWidthTrapzBottom / 2.), num = nIntSteps) 
             dU = np.concatenate(([0,], dU)) [np.newaxis, :] 
             # assuming a square weighting function. 
-            weightFunc = np.ones((dU.size,)) / slitWidth
+            # weightFunc = np.ones((dU.size,)) / slitWidth
+            # now trapezoidal, int of function is 0.5.:
+            weightFunc = trapzPDF(dU, slitWidthTrapzTop, slitWidthTrapzBottom)
             # calculate the intensities at sqrt(q**2 + dU **2)
             locs = np.sqrt((q[:,np.newaxis] + 0 * dU)**2 + (0 * q[:, np.newaxis] + dU)**2)
             if fparams is None:
                 fVal = fhandle(locs) * (0 * q[:, np.newaxis] + weightFunc)
             else:
                 fVal = fhandle(locs, **fparams) * (0 * q[:, np.newaxis] + weightFunc)
-            sI = 2 * np.trapz(fVal, x = dU, axis = 1) # * 2.
+            sI = np.sqrt(2 * np.trapz(fVal**2, x = dU, axis = 1)) # * 2.
             return sI
 
-        if self.slitWidth() > 0.:
+        if self.slitWidthTrapzTop() > 0.:
             return smear(dataset.q, baseCalc, 
                     fparams = {"radius": self.radius()}, 
-                    slitWidth = self.slitWidth(), 
+                    slitWidthTrapzTop = self.slitWidthTrapzTop(), 
+                    slitWidthTrapzBottom = self.slitWidthTrapzBottom(), 
                     nIntSteps = self.smearingSteps())
         else:
             return baseCalc(dataset.q, self.radius())
