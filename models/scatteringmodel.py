@@ -13,6 +13,7 @@ from bases.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
 from utils.parameter import isActiveParam
 from dataobj import SASData
+import time
 
 class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
@@ -52,7 +53,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         # calling user provided custom model
         i = self.formfactor(dataset)
         # there has to be one intensity value for each q-vector
-        assert i.size == dataset.q.size
+        # assert i.size == dataset.q.size
         return i
 
     @abstractmethod
@@ -275,20 +276,21 @@ class SASModel(ScatteringModel):
         return locs, dU, weightFunc
 
     def calcIntensity(self, data, compensationExponent = None, 
-            useSLD = False, smear = False):
+            useSLD = False, smear = True):
         v = self.vol(compensationExponent = compensationExponent,
                      useSLD = useSLD)
 
         if smear:
+            a = time.time()
             locs, dU, weightFunc = self.prepSmear(data, slitShape = "square", 
                     shapeParam = [2.5e+9] )
+            # print('beginning: {}'.format(time.time() - a))
             kansas = locs.shape
-            tempArray = np.ones((locs.size, 3))
-            tempArray[:,0] = locs.reshape((locs.size))
-            newData = SASData(title = 'extra q-vectors for smearing calculation', 
-                    rawArray = tempArray)
-            ff = self.ff(newData).reshape(kansas)
+            # locs = locs.reshape((locs.size))
+            # print('middle: {}'.format(time.time() - a))
+            ff = self.ff(locs)# .reshape(kansas)
             it = 2 * np.trapz(ff**2 * v**2 * (0 * ff + weightFunc), x = dU, axis = 1) 
+            # print('end: {}'.format(time.time() - a))
         else:
             # calculate their form factors
             ff = self.ff(data)
