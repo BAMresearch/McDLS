@@ -219,6 +219,63 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
+    def slitSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.] nSmearSteps = 25):
+
+        def squareSlit(q, shapeParam, n):
+
+            slitWidth = shapeParam[0]
+            # prepare integration steps dU:
+            dU = np.logspace(np.log10(q.min() / 10.),
+                    np.log10(slitWidth / 2.), num = n - 1)
+            dU = np.concatenate(([0,], dU)) [np.newaxis, :]
+            return dU, np.ones((dU.size,)) / slitWidth
+
+        def trapzSlit(q, shapeParam, n):
+            """ defines integration over trapezoidal slit. Top of trapezoid 
+            has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
+            xt, xb = shapeParam[0], shapeParam[1]
+
+            # ensure things are what they are supposed to be
+            assert (xt > 0.)
+            if xb < xt:
+                xb = xt # should use square profile in this case.
+
+            # prepare integration steps dU:
+            dU = np.logspace(np.log10(q.min() / 10.),
+                    np.log10(xb / 2.), num = n)
+            dU = np.concatenate(([0,], dU)) [np.newaxis, :]
+
+            if xb == xt: 
+                y = 1. - (dU * 0.)
+            else:
+                y = 1. - (dU - xt) / (xb - xt)
+
+            y = np.clip(y, 0., 1.)
+            y[dU < xt] = 1.
+            Area = (xt + 0.5 * (xb - xt))
+            return dU, y / Area
+        
+        # now we do the actual smearing
+        assert isinstance(data.q, numpy.ndarray)
+        assert (data.q.ndim == 1)
+
+        # define smearing profile
+        if slitShape == "trapezoid":
+            slitFcn = trapzSlit
+        else:
+            slitFcn = squareSlit
+        dU, weightFunc = slitFcn(data.q, shapeParam, nSmearSteps)
+
+        # calculate the intensities at sqrt(q**2 + dU **2)
+        locs = np.sqrt((q[:,np.newaxis] + 0 * dU)**2 + (0 * q[:, np.newaxis] + dU)**2)
+        if fparams is None:
+            fVal = fhandle(locs) * (0 * q[:, np.newaxis] + 2 * weightFunc)
+        else:
+            fVal = fhandle(locs, **fparams) * (0 * q[:, np.newaxis] + 2 * weightFunc)
+        sI = np.sqrt(np.trapz(fVal**2, x = dU, axis = 1)) # * 2.
+        return sI
+
+
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
         v = self.vol(compensationExponent = compensationExponent,
                      useSLD = useSLD)
@@ -227,6 +284,18 @@ class SASModel(ScatteringModel):
         # a set of intensities
         it = ff**2 * v**2
         return it, v
+
+        # # this section should go in calcIntensity
+        # if self.slitWidthTrapzTop() > 0.:
+        #     # smearing
+        #     return smear(dataset.q, baseCalc, 
+        #             fparams = {"radius": self.radius()}, 
+        #             slitWidthTrapzTop = self.slitWidthTrapzTop(), 
+        #             slitWidthTrapzBottom = self.slitWidthTrapzBottom(), 
+        #             nIntSteps = self.smearingSteps())
+        # else:
+        #     # no smearing
+        #     return baseCalc(dataset.q, self.radius())
 
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
@@ -241,3 +310,13 @@ class DLSModel(ScatteringModel):
         return it, v
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
+
+        def smear(q, fhandle, fparams = None, slitWidthTrapzTop = None, slitWidthTrapzBottom = None, nIntSteps = 50):
+            """ clean smearing program for obtaining slit-smeared scattering patterns. 
+            usage: 
+            *q*: A one-dimensional scattering vector
+            *fhandle*: A function handle to a scattering pattern calculator. Must accept q
+            *fparams*: A dictionary of keyword-parameter sets passed on to the calculator
+            *slitwidth*: The width of the slit in units of q
+            """
+        
