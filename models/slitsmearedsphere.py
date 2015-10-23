@@ -27,14 +27,14 @@ class slitSmearedSphere(SASModel):
                   Parameter("slitWidthTrapzTop", 
                     ScatteringVector(u'nm⁻¹').toSi(-1.), 
                     unit = ScatteringVector(u'nm⁻¹'),
-                    displayName = "slit width Trapz top in Q [-1 is no smearing]",
+                    displayName = "Trapezoidal slit top width in Q [-1 is no smearing]",
                     valueRange = (-1., numpy.inf),
                     displayValues = {-1.e-9: "no smearing"},
                     decimals = 1), 
                   Parameter("slitWidthTrapzBottom", 
                     ScatteringVector(u'nm⁻¹').toSi(-1.), 
                     unit = ScatteringVector(u'nm⁻¹'),
-                    displayName = "slit width Trapz bottom in Q [-1 is no smearing]",
+                    displayName = "Trapezoidal slit bottom width in Q [-1 is no smearing]",
                     valueRange = (-1., numpy.inf),
                     displayValues = {-1.e-9: "no smearing"},
                     decimals = 1), 
@@ -66,10 +66,13 @@ class slitSmearedSphere(SASModel):
             return result
 
         def trapzPDF(x, xt, xb):
-            y = 1. - (x - xt) / (xb - xt)
+            if xb == xt: 
+                y = 1. - (x * 0.)
+            else:
+                y = 1. - (x - xt) / (xb - xt)
             y = np.clip(y, 0., 1.)
             y[x < xt] = 1.
-            Area = (xt + xb)
+            Area = (xt + 0.5 * (xb - xt))
             return y / Area
         
         def smear(q, fhandle, fparams = None, slitWidthTrapzTop = None, slitWidthTrapzBottom = None, nIntSteps = 50):
@@ -87,24 +90,25 @@ class slitSmearedSphere(SASModel):
                 slitWidthTrapzBottom = slitWidthTrapzTop
 
             # nIntSteps = q.size
-            if slitWidthTrapzBottom > q.max(): #TODO: use clip function
-                slitWidthTrapzBottom = q.max()
-            if slitWidthTrapzTop > q.max(): #TODO: use clip function
-                slitWidthTrapzTop = q.max()
+            if slitWidthTrapzBottom > (2 * q.max()): #TODO: use clip function
+                slitWidthTrapzBottom = (2 * q.max())
+            if slitWidthTrapzTop > (2 * q.max()): #TODO: use clip function
+                slitWidthTrapzTop = (2 * q.max())
             dU = np.logspace(np.log10(q.min() / 10.), 
                     np.log10(slitWidthTrapzBottom / 2.), num = nIntSteps) 
             dU = np.concatenate(([0,], dU)) [np.newaxis, :] 
             # assuming a square weighting function. 
             # weightFunc = np.ones((dU.size,)) / slitWidth
             # now trapezoidal, int of function is 0.5.:
-            weightFunc = trapzPDF(dU, slitWidthTrapzTop, slitWidthTrapzBottom)
+            weightFunc = trapzPDF(dU, slitWidthTrapzTop / 2., 
+                    slitWidthTrapzBottom / 2.)
             # calculate the intensities at sqrt(q**2 + dU **2)
             locs = np.sqrt((q[:,np.newaxis] + 0 * dU)**2 + (0 * q[:, np.newaxis] + dU)**2)
             if fparams is None:
-                fVal = fhandle(locs) * (0 * q[:, np.newaxis] + weightFunc)
+                fVal = fhandle(locs) * (0 * q[:, np.newaxis] + 2 * weightFunc)
             else:
-                fVal = fhandle(locs, **fparams) * (0 * q[:, np.newaxis] + weightFunc)
-            sI = np.sqrt(2 * np.trapz(fVal**2, x = dU, axis = 1)) # * 2.
+                fVal = fhandle(locs, **fparams) * (0 * q[:, np.newaxis] + 2 * weightFunc)
+            sI = np.sqrt(np.trapz(fVal**2, x = dU, axis = 1)) # * 2.
             return sI
 
         if self.slitWidthTrapzTop() > 0.:
