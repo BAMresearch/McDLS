@@ -4,6 +4,7 @@
 import os.path
 import logging
 import inspect
+import numpy as np
 from abc import ABCMeta, abstractmethod
 from itertools import izip
 from numpy import arange, zeros, argmax, hstack
@@ -256,7 +257,7 @@ class SASModel(ScatteringModel):
             return dU, y / Area
         
         # now we do the actual smearing
-        assert isinstance(data.q, numpy.ndarray)
+        assert isinstance(data.q, np.ndarray)
         assert (data.q.ndim == 1)
 
         # define smearing profile
@@ -268,7 +269,8 @@ class SASModel(ScatteringModel):
         dU, weightFunc = slitFcn(data.q, shapeParam, nSmearSteps)
 
         # calculate the intensities at sqrt(q**2 + dU **2)
-        locs = np.sqrt((q[:,np.newaxis] + 0 * dU)**2 + (0 * q[:, np.newaxis] + dU)**2)
+        locs = np.sqrt((data.q[:,np.newaxis] + 0 * dU)**2 
+                + (0 * data.q[:, np.newaxis] + dU)**2)
 
         return locs, dU, weightFunc
 
@@ -278,9 +280,14 @@ class SASModel(ScatteringModel):
                      useSLD = useSLD)
 
         if smear:
-            locs, dU, weightFunc = prepSmear(data, slitShape = "square", 
-                    shapeParam = [2.5e-9] )
-            ff = self.ff(data, q = locs)
+            locs, dU, weightFunc = self.prepSmear(data, slitShape = "square", 
+                    shapeParam = [2.5e+9] )
+            kansas = locs.shape
+            tempArray = np.ones((locs.size, 3))
+            tempArray[:,0] = locs.reshape((locs.size))
+            newData = SASData(title = 'extra q-vectors for smearing calculation', 
+                    rawArray = tempArray)
+            ff = self.ff(newData).reshape(kansas)
             it = 2 * np.trapz(ff**2 * v**2 * (0 * ff + weightFunc), x = dU, axis = 1) 
         else:
             # calculate their form factors
