@@ -219,7 +219,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
-    def slitSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.] nSmearSteps = 25):
+    def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.] nSmearSteps = 25):
 
         def squareSlit(q, shapeParam, n):
 
@@ -264,38 +264,30 @@ class SASModel(ScatteringModel):
             slitFcn = trapzSlit
         else:
             slitFcn = squareSlit
+
         dU, weightFunc = slitFcn(data.q, shapeParam, nSmearSteps)
 
         # calculate the intensities at sqrt(q**2 + dU **2)
         locs = np.sqrt((q[:,np.newaxis] + 0 * dU)**2 + (0 * q[:, np.newaxis] + dU)**2)
-        if fparams is None:
-            fVal = fhandle(locs) * (0 * q[:, np.newaxis] + 2 * weightFunc)
-        else:
-            fVal = fhandle(locs, **fparams) * (0 * q[:, np.newaxis] + 2 * weightFunc)
-        sI = np.sqrt(np.trapz(fVal**2, x = dU, axis = 1)) # * 2.
-        return sI
 
+        return locs, dU, weightFunc
 
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
         v = self.vol(compensationExponent = compensationExponent,
-                     useSLD = useSLD)
-        # calculate their form factors
-        ff = self.ff(data)
-        # a set of intensities
-        it = ff**2 * v**2
-        return it, v
+                     useSLD = useSLD, smear = False)
 
-        # # this section should go in calcIntensity
-        # if self.slitWidthTrapzTop() > 0.:
-        #     # smearing
-        #     return smear(dataset.q, baseCalc, 
-        #             fparams = {"radius": self.radius()}, 
-        #             slitWidthTrapzTop = self.slitWidthTrapzTop(), 
-        #             slitWidthTrapzBottom = self.slitWidthTrapzBottom(), 
-        #             nIntSteps = self.smearingSteps())
-        # else:
-        #     # no smearing
-        #     return baseCalc(dataset.q, self.radius())
+        if smear:
+            locs, dU, weightFunc = prepSmear(data, slitShape = "square", 
+                    shapeParam = [2.5e-9] )
+            ff = self.ff(data, q = locs)
+            it = 2 * np.trapz(ff**2 * v**2 * (0 * ff + weightFunc), x = dU, axis = 1) 
+        else:
+            # calculate their form factors
+            ff = self.ff(data)
+            # a set of intensities
+            it = ff**2 * v**2
+
+        return it, v
 
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
