@@ -286,9 +286,9 @@ class SASModel(ScatteringModel):
                     shapeParam = [2.5e+9] )
             # print('beginning: {}'.format(time.time() - a))
             kansas = locs.shape
-            # locs = locs.reshape((locs.size))
+            locs = locs.reshape((locs.size))
             # print('middle: {}'.format(time.time() - a))
-            ff = self.ff(locs)# .reshape(kansas)
+            ff = self.ff(locs).reshape(kansas)
             it = 2 * np.trapz(ff**2 * v**2 * (0 * ff + weightFunc), x = dU, axis = 1) 
             # print('end: {}'.format(time.time() - a))
         else:
