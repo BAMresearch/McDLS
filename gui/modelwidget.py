@@ -15,6 +15,7 @@ from gui.scientrybox import SciEntryBox
 
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
+from models.slitsmearedsphere import slitSmearedSphere
 from models.kholodenko import Kholodenko
 from models.gaussianchain import GaussianChain
 from models.lmadensesphere import LMADenseSphere
@@ -29,6 +30,7 @@ from models.dlstest import DLSTest
 MODELS = OrderedDict((
     (DLSTest.name(), DLSTest),
     (Sphere.name(), Sphere),
+    (slitSmearedSphere.name(), slitSmearedSphere),
     (CylindersIsotropic.name(), CylindersIsotropic),
     (CylindersRadiallyIsotropic.name(), CylindersRadiallyIsotropic),
     (EllipsoidsIsotropic.name(), EllipsoidsIsotropic),
