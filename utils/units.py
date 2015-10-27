@@ -142,11 +142,60 @@ class Unit(object):
         # else:
         return value / self.magnitudeConversion
 
+<<<<<<< HEAD
     @classmethod
     def name(cls):
         return cls.__name__
+=======
+
+class Temperature(Unit):
+    """ test case for special conversions. Done by redefining toSI and toDisplay. 
+    Implemnted units are given in list in _magnitudeMap (normally dict) """
+    _magnitudeMap = [u"˚F", u"F", u"˚C", u"C", u"K", u"˚R", u"R", u"˚De", u"De"] # implemented units
+    _siMagnitudeName = u"K"
+    def toSi(self, value):
+        if self.displayMagnitudeName in {u"˚F", u"F"}:
+            return (value + 459.67) * 5./9 
+        elif self.displayMagnitudeName in {u"˚C", u"C"}:
+            return value + 237.15
+        elif self.displayMagnitudeName in {u"˚R", u"R"}: # Rankine
+            return value * 5./9
+        elif self.displayMagnitudeName in {u"˚De", u"De"}: # Delisie
+            return 373.15 - value * 2./3 
+        elif self.displayMagnitudeName == u"K":
+            return value
+        else:
+            return NotImplementedError
+
+    def toDisplay(self, value):
+        if self.displayMagnitudeName in {u"˚F", u"F"}:
+            return value * 9./5 - 459.67 
+        elif self.displayMagnitudeName in {u"˚C", u"C"}:
+            return value - 273.15 
+        elif self.displayMagnitudeName in {u"˚R", u"R"}: # Rankine
+            return value * 9./5
+        elif self.displayMagnitudeName in {u"˚De", u"De"}: # Delisie
+            return (373.15 - value) * 3./2 
+        elif self.displayMagnitudeName == u"K":
+            return value
+        else:
+            return NotImplementedError
+
+class DynamicViscosity(Unit):
+    _siMagnitudeName = u"N s m⁻²"
+    _magnitudeMap = {
+        u"Pa s"        : 1.,
+        u"kg m⁻¹ s⁻¹"  : 1.,
+        u"poise"       : 1e-1,
+        u"centiPoise"  : 1e-3,
+        u"dyne s cm⁻²" : 1e-1,
+        u"g cm⁻¹ s⁻¹"  : 1e-1,
+        u"sl ft⁻¹ s⁻¹" : 47.880, # slug per foot second
+    }
+>>>>>>> 2d0f1a68e1a9ae1edc42dafbd0732cd4a774f740
 
 class Length(Unit):
+    _siMagnitudeName = u"m"
     _magnitudeMap = {
         u"Å" : 1e-10,
         u"nm": 1e-9,
@@ -155,11 +204,11 @@ class Length(Unit):
         u"cm": 1e-2,
         u"m" : 1e0
     }
-    _siMagnitudeName = u"m"
 
 NM = Length(u"nm")
 
 class Area(Unit):
+    _siMagnitudeName = u"m²"
     _magnitudeMap = {
         u"Å²" : 1e-20,
         u"nm²": 1e-18,
@@ -167,9 +216,9 @@ class Area(Unit):
         u"mm²": 1e-6,
         u"m²" : 1e0,
     }
-    _siMagnitudeName = u"m²"
 
 class Volume(Unit):
+    _siMagnitudeName = u"m³"
     _magnitudeMap = {
         u"Å³" : 1e-30,
         u"nm³": 1e-27,
@@ -177,16 +226,15 @@ class Volume(Unit):
         u"mm³": 1e-9,
         u"m³" : 1e0,
     }
-    _siMagnitudeName = u"m³"
 
 class Angle(Unit):
+    _siMagnitudeName = u"rad"
     _magnitudeMap = {
         u"°"  : pi / 180.0, # unicode U+00B0
         u"'"  : pi /   3.0,
         u'"'  : pi /   0.05,
         u"rad":        1.0,
     }
-    _siMagnitudeName = u"rad"
 
 class Temperature(Unit):
     _magnitudeMap = {
@@ -220,6 +268,7 @@ MSec = Time(u"ms")
 Sec = Time(u"ns")
 
 class SLD(Unit):
+    _siMagnitudeName = u"m⁻²"
     _magnitudeMap = {
         u"Å⁻²" : 1e20,
         u"nm⁻²": 1e18,
@@ -228,9 +277,9 @@ class SLD(Unit):
         u"cm⁻²": 1e4,
         u"m⁻²" : 1e0,
     }
-    _siMagnitudeName = u"m⁻²"
 
 class ScatteringVector(Unit):
+    _siMagnitudeName = u"m⁻¹"
     _magnitudeMap = {
         u"Å⁻¹" : 1e10,
         u"nm⁻¹": 1e9,
@@ -239,29 +288,28 @@ class ScatteringVector(Unit):
         u"cm⁻¹": 1e2,
         u"m⁻¹" : 1e0,
     }
-    _siMagnitudeName = u"m⁻¹"
 
 class ScatteringIntensity(Unit):
+    _siMagnitudeName = u"(m sr)⁻¹"
     _magnitudeMap = {
         u"(cm sr)⁻¹": 1e2,
         u"(m sr)⁻¹" : 1e0,
     }
-    _siMagnitudeName = u"(m sr)⁻¹"
 
 class Fraction(Unit):
+    _siMagnitudeName = u"-"
     _magnitudeMap = {
         u"%": 1e-2,
         u"-": 1e0,
         u"" : 1e0,
     }
-    _siMagnitudeName = u"-"
 
 class NoUnit(Unit):
+    _siMagnitudeName = u"-"
     _magnitudeMap = {
         u"" : 1e0,
         u"-": 1e0,
     }
-    _siMagnitudeName = u"-"
 
 if __name__ == "__main__":
     import doctest
