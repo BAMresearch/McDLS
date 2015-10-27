@@ -198,6 +198,7 @@ class McSAS(AlgorithmBase):
         again for a maximum of *maxRetries* attempts.
         """
         data = self.dataOriginal
+        logging.debug('Q clip range: {}, sum validi: {}'.format(data._qClipRange, data._validIndices.shape))
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior

@@ -29,6 +29,8 @@ class AlgorithmWidget(SettingsWidget):
         # allowed parameters could be configurable from file too
         for p in ( "convergenceCriterion", 
                     "numReps", 
+                    "qMin", 
+                    "qMax",
                     "autoClose"):
             p = getattr(self.algorithm, p, None)
             if p is None: continue

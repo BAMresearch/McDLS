@@ -347,31 +347,25 @@ class SASData(DataObj):
         prepares a clipmask for the full dataset
         """
         # init indices: index array is more flexible than boolean masks
-        validIndices = np.where(np.isfinite(self.qOrigin))[0]
-        def cutIndices(validIndices, mask):
-            validIndices = validIndices[mask]
+        bArr = np.isfinite(self.qOrigin)
 
         # Optional masking of negative intensity
         if self.maskZeroInt:
             # FIXME: compare with machine precision (EPS)?
-            cutIndices(validIndices,
-                    self.iOrigin[validIndices] == 0.0)
+            bArr &= (self.iOrigin != 0.0)
         if self.maskNegativeInt:
-            cutIndices(validIndices,
-                    self.iOrigin[validIndices] > 0.0)
+            bArr &= (self.iOrigin > 0.0)
+
         # clip to q bounds
-        cutIndices(validIndices,
-                self.qOrigin[validIndices] >= self.qMin)
-        cutIndices(validIndices,
-                self.qOrigin[validIndices] <= self.qMax)
+        bArr &= (self.qOrigin >= self.qMin)
+        bArr &= (self.qOrigin <= self.qMax)
         # clip to psi bounds
         if self.is2d:
-            cutIndices(validIndices,
-                    self.pOrigin[validIndices] > self.pMin)
-            cutIndices(validIndices,
-                    self.pOrigin[validIndices] <= self.pMax)
+            bArr &= (self.pOrigin > self.pMin)
+            bArr &= (self.pOrigin <= self.pMax)
 
         #store:
+        validIndices = np.argwhere(bArr)[:,0]
         self._validIndices = validIndices
 
 if __name__ == "__main__":
