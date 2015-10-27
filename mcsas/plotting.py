@@ -317,16 +317,18 @@ class PlotResults(object):
 
     def plot1D(self, dataset, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
+        qOrigin = dataset.qUnit.toDisplay(dataset.qOrigin)
         q = dataset.qUnit.toDisplay(dataset.q)
         qUnitLabel = dataset.qUnit.displayMagnitudeName
+        iOrigin = dataset.iUnit.toDisplay(dataset.iOrigin)
         intensity = dataset.iUnit.toDisplay(dataset.i)
         iUnitLabel = dataset.iUnit.displayMagnitudeName
         intError = dataset.iUnit.toDisplay(dataset.u)
 
-        xLim = (q.min() * (1 - self._axisMargin), 
-                q.max() * (1 + self._axisMargin))
-        yLim = (intensity[intensity != 0].min() * (1 - self._axisMargin), 
-                intensity.max() * (1 + self._axisMargin))
+        xLim = (qOrigin.min() * (1 - self._axisMargin), 
+                qOrigin.max() * (1 + self._axisMargin))
+        yLim = (iOrigin[iOrigin != 0].min() * (1 - self._axisMargin), 
+                iOrigin.max() * (1 + self._axisMargin))
         qAxDict = self._AxDict.copy()
         qAxDict.update({
                 'xlim' : xLim,
@@ -340,6 +342,9 @@ class PlotResults(object):
         axes(qAxis)
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
+        # first plot full range:
+        plot(qOrigin, iOrigin, 'k.', zorder = 1, ms = 5, 
+                label = 'Measured intensity', lw = 2) 
         errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
                  label = 'Measured intensity', lw = 2,
