@@ -148,7 +148,8 @@ class SASData(DataObj):
     @property
     def u(self):
         """Corrected uncertainty or error of the intensity at q."""
-        return self.uOrigin.copy()[self.validIndices]
+        # self._uncertainty is defined with self.validindices applied
+        return self.uOrigin.copy()
 
     @property
     def uOrigin(self):
@@ -370,9 +371,8 @@ class SASData(DataObj):
             bArr &= (self.pOrigin > self.pMin)
             bArr &= (self.pOrigin <= self.pMax)
 
-        #store:
-        validIndices = np.argwhere(bArr)[:,0]
-        self._validIndices = validIndices
+        # store
+        self._validIndices = np.argwhere(bArr)[:,0]
 
 if __name__ == "__main__":
     import doctest

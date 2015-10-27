@@ -232,7 +232,7 @@ class Calculator(object):
         # We don't have to do anything with these yet, but storing them for now:
         if isinstance(dataset, SASData): # useful with SAS data only
             config.set(sectionName, "Q limits", 
-                    np.array([np.min(dataset.q),np.max(dataset.q)]))
+                    np.array([dataset.q.min(), dataset.q.max()]))
 
         sectionName = "Model Settings"
         config.add_section(sectionName)
