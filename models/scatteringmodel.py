@@ -265,8 +265,7 @@ class SASModel(ScatteringModel):
         dU, weightFunc = slitFcn(data.q, shapeParam, nSmearSteps)
 
         # calculate the intensities at sqrt(q**2 + dU **2)
-        locs = np.sqrt((data.q[:,np.newaxis] + 0 * dU)**2 
-                + (0 * data.q[:, np.newaxis] + dU)**2)
+        locs = np.sqrt(np.add.outer(data.q **2, dU[0,:]**2)) 
 
         return locs, dU, weightFunc
 
