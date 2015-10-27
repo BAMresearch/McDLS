@@ -81,8 +81,9 @@ class SASData(DataObj):
     @qMin.setter
     def qMin(self, newParam):
         """Value in cliprange will not exceed available q."""
-        self._qClipRange[0] = np.maximum(newParam, 
-                self.qOrigin.min())
+        self._qClipRange[0] = np.maximum(
+                # FIXME: remove self.qUnit.toSi once algo params get units!
+                self.qUnit.toSi(newParam), self.qOrigin.min())
         self._prepareValidIndices()
 
     @property
@@ -93,8 +94,9 @@ class SASData(DataObj):
     @qMax.setter
     def qMax(self, newParam):
         """Value in cliprange will not exceed available q."""
-        self._qClipRange[1] = np.minimum(newParam, 
-                self.qOrigin.max())
+        self._qClipRange[1] = np.minimum(
+                # FIXME: remove self.qUnit.toSi once algo params get units!
+                self.qUnit.toSi(newParam), self.qOrigin.max())
         self._prepareValidIndices()
 
     @property
@@ -103,6 +105,7 @@ class SASData(DataObj):
 
     @qClipRange.setter
     def qClipRange(self, newParam):
+        """Expects a range in self.qUnits, not SI units!"""
         if not (np.size(newParam) == 2):
             logging.error('qClipRange must be supplied with two-element vector')
         else:
@@ -175,10 +178,11 @@ class SASData(DataObj):
     def pMin(self, newParam):
         """Value in cliprange will not exceed available psi."""
         if self.is2d:
-            self._pClipRange[0] = np.maximum(newParam, 
-                    self.pOrigin.min())
+            self._pClipRange[0] = np.maximum(
+                # FIXME: remove self.pUnit.toSi once algo params get units!
+                self.pUnit.toSi(newParam), self.pOrigin.min())
         else:
-            self._pClipRange[0] = newParam
+            self._pClipRange[0] = self.pUnit.toSi(newParam)
         self._prepareValidIndices()
 
     @property
@@ -193,10 +197,11 @@ class SASData(DataObj):
     def pMax(self, newParam):
         """Value in cliprange will not exceed available psi."""
         if self.is2d:
-            self._pClipRange[1] = np.minimum(newParam, 
-                    self.pOrigin.max())
+            self._pClipRange[1] = np.minimum(
+                # FIXME: remove self.pUnit.toSi once algo params get units!
+                self.pUnit.toSi(newParam), self.pOrigin.max())
         else:
-            self._pClipRange[1] = newParam
+            self._pClipRange[1] = self.pUnit.toSi(newParam)
         self._prepareValidIndices()
 
     @property
@@ -205,6 +210,7 @@ class SASData(DataObj):
 
     @pClipRange.setter
     def pClipRange(self, newParam):
+        """Expects a range in self.pUnits, not SI units!"""
         if not (np.size(newParam) == 2):
             logging.error('pClipRange must be supplied with two-element vector')
         else:
