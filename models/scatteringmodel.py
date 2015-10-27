@@ -281,16 +281,12 @@ class SASModel(ScatteringModel):
                      useSLD = useSLD)
 
         if smear:
-            a = time.time()
             locs, dU, weightFunc = self.prepSmear(data, slitShape = "square", 
                     shapeParam = [2.5e+9] )
-            # print('beginning: {}'.format(time.time() - a))
             kansas = locs.shape
             locs = locs.reshape((locs.size))
-            # print('middle: {}'.format(time.time() - a))
             ff = self.ff(locs).reshape(kansas)
             it = 2 * np.trapz(ff**2 * v**2 * (0 * ff + weightFunc), x = dU, axis = 1) 
-            # print('end: {}'.format(time.time() - a))
         else:
             # calculate their form factors
             ff = self.ff(data)
