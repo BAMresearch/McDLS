@@ -275,8 +275,8 @@ class SASModel(ScatteringModel):
                      useSLD = useSLD)
 
         if smear:
-            locs, dU, weightFunc = self.prepSmear(data, slitShape = "square", 
-                    shapeParam = [2.5e+9] )
+            locs, dU, weightFunc = self.prepSmear(data, slitShape = "trapezoid", 
+                    shapeParam = [2.e+9, 3e+9] )
             kansas = locs.shape
             locs = locs.reshape((locs.size))
             ff = self.ff(locs).reshape(kansas)
