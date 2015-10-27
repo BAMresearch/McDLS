@@ -39,7 +39,7 @@ class Sphere(SASModel):
         return self.volume() * self.sld()**2
 
     def formfactor(self, dataset):
-        if isinstance(numpy.ndarray, SASData):
+        if isinstance(dataset, SASData):
             q = dataset.q
         else:
             q = dataset
