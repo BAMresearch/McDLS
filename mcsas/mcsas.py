@@ -431,7 +431,7 @@ class McSAS(AlgorithmBase):
             'numMoves': numMoves,
             'elapsed': elapsed})
 
-        ifinal = self.model.smear(it)
+        ifinal = it
         sc, conval, ifinal = bgScalingFit.calc(data.i, data.u, 
                 ifinal, sc)
                 # ifinal / sum(vset**2), sc)
@@ -556,7 +556,6 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
             it, vset = self.model.calc(data, rset, self.compensationExponent())
-            it = self.model.smear(it)
             
             # Now for each sphere, its volume fraction (compensated): is vset
             # And the real particle volume vpa:

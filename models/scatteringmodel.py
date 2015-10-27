@@ -19,11 +19,6 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
     # compensationExponent = 1./2 # default, overridden with that from JSON dict
 
-    # it doesn't belong to the model?
-    # should be instrumentation geometry ...
-    def smear(self, arg):
-        return arg
-
     @abstractmethod
     def volume(self):
         """Calculates the volume of this model, taking compensationExponent
