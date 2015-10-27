@@ -142,11 +142,9 @@ class Unit(object):
         # else:
         return value / self.magnitudeConversion
 
-<<<<<<< HEAD
     @classmethod
     def name(cls):
         return cls.__name__
-=======
 
 class Temperature(Unit):
     """ test case for special conversions. Done by redefining toSI and toDisplay. 
@@ -181,6 +179,8 @@ class Temperature(Unit):
         else:
             return NotImplementedError
 
+K = Temperature(u"K")
+
 class DynamicViscosity(Unit):
     _siMagnitudeName = u"N s m⁻²"
     _magnitudeMap = {
@@ -192,7 +192,6 @@ class DynamicViscosity(Unit):
         u"g cm⁻¹ s⁻¹"  : 1e-1,
         u"sl ft⁻¹ s⁻¹" : 47.880, # slug per foot second
     }
->>>>>>> 2d0f1a68e1a9ae1edc42dafbd0732cd4a774f740
 
 class Length(Unit):
     _siMagnitudeName = u"m"
@@ -235,14 +234,6 @@ class Angle(Unit):
         u'"'  : pi /   0.05,
         u"rad":        1.0,
     }
-
-class Temperature(Unit):
-    _magnitudeMap = {
-        u"K":  1.0,
-    }
-    _siMagnitudeName = u"K"
-
-K = Temperature(u"K")
 
 class Viscosity(Unit):
     _magnitudeMap = {
