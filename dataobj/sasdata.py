@@ -82,8 +82,7 @@ class SASData(DataObj):
     def qMin(self, newParam):
         """Value in cliprange will not exceed available q."""
         self._qClipRange[0] = np.maximum(
-                # FIXME: remove self.qUnit.toSi once algo params get units!
-                self.qUnit.toSi(newParam), self.qOrigin.min())
+                newParam, self.qOrigin.min())
         self._prepareValidIndices()
 
     @property
@@ -95,8 +94,7 @@ class SASData(DataObj):
     def qMax(self, newParam):
         """Value in cliprange will not exceed available q."""
         self._qClipRange[1] = np.minimum(
-                # FIXME: remove self.qUnit.toSi once algo params get units!
-                self.qUnit.toSi(newParam), self.qOrigin.max())
+               newParam, self.qOrigin.max())
         self._prepareValidIndices()
 
     @property
@@ -180,8 +178,7 @@ class SASData(DataObj):
         """Value in cliprange will not exceed available psi."""
         if self.is2d:
             self._pClipRange[0] = np.maximum(
-                # FIXME: remove self.pUnit.toSi once algo params get units!
-                self.pUnit.toSi(newParam), self.pOrigin.min())
+                newParam, self.pOrigin.min())
         else:
             self._pClipRange[0] = self.pUnit.toSi(newParam)
         self._prepareValidIndices()
@@ -199,8 +196,7 @@ class SASData(DataObj):
         """Value in cliprange will not exceed available psi."""
         if self.is2d:
             self._pClipRange[1] = np.minimum(
-                # FIXME: remove self.pUnit.toSi once algo params get units!
-                self.pUnit.toSi(newParam), self.pOrigin.max())
+                newParam, self.pOrigin.max())
         else:
             self._pClipRange[1] = self.pUnit.toSi(newParam)
         self._prepareValidIndices()

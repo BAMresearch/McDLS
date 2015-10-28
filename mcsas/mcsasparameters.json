@@ -4,6 +4,8 @@
         "description" : "Total number of contributions making up a scattering pattern",
         "valueRange" : [1,1e6],
         "default" : 300,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "numReps" : {
@@ -11,6 +13,8 @@
         "description" : "Number of independent McSAS results to compute, from which averages and uncertainties are estimated",
         "default" : 10,
         "valueRange" : [1,1e6],
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "maxIterations" : {
@@ -18,6 +22,8 @@
         "valueRange" : [1,1e100],
 	    "default" : 1e5,
         "description" : "Maximum number of iterations allowed before failing.",
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "compensationExponent" : {
@@ -25,6 +31,8 @@
         "valueRange" : [0.01,1.0],
 	    "default" : 0.6666666,
         "description" : "Compensates the weighting of contributions, default volume-weighted (2/3).",
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "convergenceCriterion" : {
@@ -32,18 +40,24 @@
         "valueRange" : [0,Infinity],
         "description" : "Reduced Chi-squared value to reach for optimisation success.",
         "default" : 1.00,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "findBackground" : {
         "displayName" : "find background level?",
         "description" : "Adds a constant background level to the model fitting.",
         "default" : true,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "startFromMinimum" : {
         "displayName" : "depreciated",
         "description" : "Sets the initial guess to minimal values rather than a uniform dist.",
         "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "maxRetries" : {
@@ -51,24 +65,32 @@
         "valueRange" : [1,100],
 	    "default" : 5,
         "description" : "When the MC method cannot reach convergence, it will try again this number of times.",
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "maskNegativeInt" : {
         "displayName" : "Masks negative intensity values",
         "description" : "Renders negative intensity values invalid for fitting",
         "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "maskZeroInt" : {
         "displayName" : "Masks intensity values of 0",
         "description" : "Renders intensity values that are zero invalid for fitting",
         "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "autoClose" : {
         "displayName" : "Automatically close result windows",
         "description" : "Prevents cluttering the screen with many windows if series are fited",
         "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "eMin" : {
@@ -76,6 +98,8 @@
         "valueRange" : [0.00,1.0],
         "description" : "Minimum possible uncertainty estimate as fraction of intensity",
         "default" : 0.01,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
         "isActive" : false 
     },
     "qMin" : {
@@ -83,6 +107,8 @@
         "valueRange" : [0.00,Infinity],
         "description" : "Lower bound of the Q-limits in between which the MC fit should be applied.",
         "default" : 0.00,
+        "unitClass" : "ScatteringVector",
+        "displayUnit" : "nm⁻¹",
         "isActive" : false 
     },
     "qMax" : {
@@ -90,6 +116,8 @@
         "valueRange" : [0,Infinity],
         "description" : "Upper bound of the Q-limits in between which the MC fit should be applied.",
         "default" : Infinity,
+        "unitClass" : "ScatteringVector",
+        "displayUnit" : "nm⁻¹",
         "isActive" : false 
     },
     "psiMin" : {
@@ -97,6 +125,8 @@
         "valueRange" : [0,Infinity],
         "description" : "Lower bound of the Psi-limits in between which the MC fit should be applied (2D only)",
         "default" : 0,
+        "unitClass" : "Angle",
+        "displayUnit" : "°",
         "isActive" : false 
     },
     "psiMax" : {
@@ -104,6 +134,8 @@
         "valueRange" : [0,Infinity],
         "description" : "Upper bound of the Psi-limits in between which the MC fit should be applied (2D only)",
         "default" : Infinity,
+        "unitClass" : "Angle",
+        "displayUnit" : "°",
         "isActive" : false 
     }
 
