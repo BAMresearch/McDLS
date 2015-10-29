@@ -15,7 +15,7 @@ class DataWidget(SettingsWidget):
 
     def __init__(self, *args, **kwargs):
         SettingsWidget.__init__(self, *args, **kwargs)
-        self.title = TitleHandler.setup(self, "Data settings")
+        self.title = TitleHandler.setup(self, "Data Settings")
         # create a new layout
         layout = QGridLayout(self)
         layout.setObjectName("dataLayout")

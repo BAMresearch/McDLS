@@ -123,7 +123,7 @@ class Moments(object):
         # now we can calculate the intensity contribution by the subset of
         # spheres highlighted by the range:
         numContribs, numParams, numReps = contribs.shape
-        data = algo.dataOriginal
+        data = algo.data
         # loop over each repetition
         partialIntensities = np.zeros((numReps, data.q.shape[0]))
         # Intensity scaling factors for matching to the experimental

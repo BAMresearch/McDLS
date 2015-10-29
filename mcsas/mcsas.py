@@ -33,8 +33,8 @@ class McSAS(AlgorithmBase):
 
     **Required:**
 
-        - *dataOriginal*: The dataset to fit. 
-                   Hasa to be an instance of :py:class:SASData
+        - *data*: The dataset to fit. 
+                   Has to be an instance of :py:class:SASData
         - *model*: The scattering model object to assume.
                    It has to be an instance of :py:class:`ScatteringModel`.
 
@@ -132,7 +132,7 @@ class McSAS(AlgorithmBase):
     """
 
     # user provided data to work with
-    dataOriginal = None
+    data = None
     model = None
     result = None
 
@@ -150,15 +150,18 @@ class McSAS(AlgorithmBase):
         self.result = [] # TODO
         self.stop = False # TODO, move this into some simple result structure
 
-        assert(self.dataOriginal is not None)
-        #setting limits in the data. TODO: put in the GUI code.
-        self.dataOriginal.qMin = self.qMin()
-        self.dataOriginal.qMax = self.qMax()
-        self.dataOriginal.pMin = self.psiMin()
-        self.dataOriginal.pMax = self.psiMax()
-        self.dataOriginal.eMin = self.eMin()
-        self.dataOriginal.maskZeroInt = self.maskZeroInt()
-        self.dataOriginal.maskNegativeInt = self.maskNegativeInt()
+        assert(self.data is not None)
+        #setting limits and smearing parameters in the data. TODO: put in the GUI code.
+        self.data.qMin = self.qMin()
+        self.data.qMax = self.qMax()
+        self.data.doSmear = self.doSmear()
+        self.data.slitUmbra = self.slitUmbra()
+        self.data.slitPenumbra = self.slitPenumbra()
+        self.data.pMin = self.psiMin()
+        self.data.pMax = self.psiMax()
+        self.data.eMin = self.eMin()
+        self.data.maskZeroInt = self.maskZeroInt()
+        self.data.maskNegativeInt = self.maskNegativeInt()
 
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
@@ -183,7 +186,7 @@ class McSAS(AlgorithmBase):
         self.histogram()
 
         ## Fix 2D mode
-        # if self.dataOriginal.is2d:
+        # if self.data.is2d:
         #     # 2D mode, regenerate intensity
         #     # TODO: test 2D mode
         #     self.gen2DIntensity()
@@ -197,7 +200,7 @@ class McSAS(AlgorithmBase):
         (*numReps*) of times. If convergence is not achieved, it will try 
         again for a maximum of *maxRetries* attempts.
         """
-        data = self.dataOriginal
+        data = self.data
         logging.debug('Q clip range: {}, sum validi: {}'.format(data._qClipRange, data._validIndices.shape))
         # get settings
         priors = McSASParameters.priors
@@ -298,7 +301,7 @@ class McSAS(AlgorithmBase):
             in the right place
 
         """
-        data = self.dataOriginal
+        data = self.data
         prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, self.model.activeParamCount()))
         compensationExponent = self.compensationExponent()
@@ -550,7 +553,7 @@ class McSAS(AlgorithmBase):
 
         # data, store it in result too, enables to postprocess later
         # store the model instance too
-        data = self.dataOriginal
+        data = self.data
         q = data.q
         intensity = data.i
         intError = data.u
@@ -678,7 +681,7 @@ class McSAS(AlgorithmBase):
         modelData = dict(activeParamCount = self.model.activeParamCount(),
                          histograms = histograms
                          )
-        plotArgs = [self.result, self.dataOriginal, axisMargin,
+        plotArgs = [self.result, self.data, axisMargin,
                     outputFilename, modelData, autoClose]
         if isMac():
             plotArgs.append(False) # logToFile, for multithreaded plotting below only
