@@ -232,7 +232,7 @@ class SASModel(ScatteringModel):
             xt, xb = shapeParam[0], shapeParam[1]
 
             # ensure things are what they are supposed to be
-            assert (xt > 0.)
+            assert (xt >= 0.)
             if xb < xt:
                 xb = xt # should use square profile in this case.
 
@@ -269,13 +269,13 @@ class SASModel(ScatteringModel):
         return locs, dU, weightFunc
 
     def calcIntensity(self, data, compensationExponent = None, 
-            useSLD = False, smear = True):
+            useSLD = False):
         v = self.vol(compensationExponent = compensationExponent,
                      useSLD = useSLD)
 
-        if smear:
+        if data.doSmear:
             locs, dU, weightFunc = self.prepSmear(data, slitShape = "trapezoid", 
-                    shapeParam = [2.e+9, 3e+9] )
+                    shapeParam = [data.slitUmbra, data.slitPenumbra] )
             kansas = locs.shape
             locs = locs.reshape((locs.size))
             ff = self.ff(locs).reshape(kansas)
