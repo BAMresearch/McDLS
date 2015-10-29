@@ -324,6 +324,7 @@ class PlotResults(object):
         intensity = dataset.iUnit.toDisplay(dataset.i)
         iUnitLabel = dataset.iUnit.displayMagnitudeName
         intError = dataset.iUnit.toDisplay(dataset.u)
+        uOrigin = dataset.iUnit.toDisplay(dataset.uOrigin)
 
         xLim = (qOrigin.min() * (1 - self._axisMargin), 
                 qOrigin.max() * (1 + self._axisMargin))
@@ -343,9 +344,10 @@ class PlotResults(object):
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
         # first plot full range:
-        plot(qOrigin, iOrigin, 'k.', zorder = 1, ms = 5, 
-                label = 'Measured intensity', lw = 2) 
-        errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
+        # plot(qOrigin, iOrigin, 'k.', zorder = 1, ms = 5, 
+        #         label = 'Measured intensity', lw = 2) 
+        # errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
+        errorbar(qOrigin, iOrigin, uOrigin, zorder = 2, fmt = 'k.',
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
                  label = 'Measured intensity', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')

@@ -146,8 +146,8 @@ class SASData(DataObj):
     @property
     def u(self):
         """Corrected uncertainty or error of the intensity at q."""
-        # self._uncertainty is defined with self.validindices applied
-        return self.uOrigin.copy()
+        # it should be following the schema of Q and I...
+        return self.uOrigin.copy()[self.validIndices]
 
     @property
     def uOrigin(self):
@@ -331,18 +331,21 @@ class SASData(DataObj):
         self._prepareUncertainty()
 
     def _prepareUncertainty(self):
-        self._uncertainty = self.eMin * self.i
+        self._uncertainty = self.eMin * self.iOrigin
         minUncertaintyPercent = self.eMin * 100.
         if not self.hasError:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
         else:
-            count = sum(self._uncertainty > self.e)
+            count = sum(self._uncertainty > self.eOrigin)
             if count > 0:
                 logging.warning("Minimum uncertainty ({}% of intensity) set "
                                 "for {} datapoints.".format(
                                 minUncertaintyPercent, count))
-            self._uncertainty = np.maximum(self._uncertainty, self.e)
+            self._uncertainty = np.maximum(self._uncertainty, self.eOrigin)
+        # reset invalid uncertainties to np.inf
+        invInd = (True - np.isfinite(self._uncertainty))
+        self._uncertainty[invInd] = np.inf
 
     def _prepareValidIndices(self):
         """
