@@ -333,4 +333,30 @@ class SettingsWidget(SettingsWidgetBase):
         """Removes all widgets from the layout of the given widget."""
         SettingsWidget.clearLayout(widget.layout(), QWidget())
 
+    def resizeEvent(self, resizeEvent):
+        """Creates a new layout with appropriate row/column count."""
+        # basically, reacts to the size change by spawning scroll bar
+        scrollArea = self.parent().parent()
+        targetWidth = resizeEvent.size().width()
+        def getNumCols():
+            width = 0
+            for i, w in enumerate(self._widgets):
+                width += w.sizeHint().width()
+                if width > targetWidth:
+                    return i
+            return len(self._widgets)
+
+        layout = self.layout()
+        numCols = max(1, getNumCols())
+        if layout.count() <= 0 or layout.columnCount() != numCols:
+            self.clearLayout(layout)
+        else:
+            return
+        # add them again with new column count
+        for i, w in enumerate(self._widgets):
+            layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
+        # add empty spacer at the bottom
+        layout.addWidget(QWidget(), layout.rowCount(), 0)
+        layout.setRowStretch(layout.rowCount() - 1, 1)
+
 # vim: set ts=4 sts=4 sw=4 tw=0:

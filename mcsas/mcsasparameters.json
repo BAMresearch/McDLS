@@ -102,6 +102,32 @@
         "displayUnit" : "-",
         "isActive" : false 
     },
+    "doSmear" : {
+        "displayName" : "Apply slit smearing",
+        "description" : "Applies slit smearing for slit-collimated instruments",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false 
+    },
+    "slitUmbra" : {
+        "displayName" : "Umbral size of trapezoidal slit",
+        "valueRange" : [0.00, Infinity],
+        "description" : "Assuming a trapezoidal beam profile, full width (in Q) of the umbra",
+        "default" : 0.00,
+        "unitClass" : "ScatteringVector",
+        "displayUnit" : "nm⁻¹",
+        "isActive" : false 
+    },
+    "slitPenumbra" : {
+        "displayName" : "Penumbral size of trapezoidal slit",
+        "valueRange" : [0.00, Infinity],
+        "description" : "Assuming a trapezoidal beam profile, full width (in Q) of the penumbra",
+        "default" : 0.00,
+        "unitClass" : "ScatteringVector",
+        "displayUnit" : "nm⁻¹",
+        "isActive" : false 
+    },
     "qMin" : {
         "displayName" : "Lower Q-limit",
         "valueRange" : [0.00,Infinity],

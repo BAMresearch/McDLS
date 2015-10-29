@@ -30,6 +30,7 @@ from gui.scientrybox import SciEntryBox
 from gui.qt import QtSvg, QtXml, pluginDirs
 from gui.rangelist import RangeList
 from gui.settingswidget import SettingsWidget
+from gui.datawidget import DataWidget
 from gui.algorithmwidget import AlgorithmWidget
 from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
@@ -157,6 +158,8 @@ class ToolBox(QToolBox):
         child = self.currentWidget()
         if isinstance(child, AlgorithmWidget):
             child.resizeEvent(event)
+        if isinstance(child, DataWidget):
+            child.resizeEvent(event)
 
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
@@ -182,6 +185,7 @@ class MainWindow(MainWindowBase):
         # file widget at the top
         self.toolbox = ToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
+        self._addToolboxItem(self._setupDataWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
         self._addToolboxItem(self._setupStatsWidget())
@@ -220,6 +224,11 @@ class MainWindow(MainWindowBase):
                 "Double click to use the estimated size for the model.")
         self.fileWidget = fileWidget
         return fileWidget
+
+    def _setupDataWidget(self):
+        """Set up property widget with settings."""
+        self.dataWidget = DataWidget(self, self.calculator)
+        return self.dataWidget
 
     def _setupAlgoWidget(self):
         """Set up property widget with settings."""
