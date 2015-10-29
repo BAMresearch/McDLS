@@ -214,72 +214,17 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
-    def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.], nSmearSteps = 25):
-
-        def squareSlit(q, shapeParam, n):
-            """ Testing purposes only, since trapezoid encompasses square slit """
-
-            slitWidth = shapeParam[0]
-            # prepare integration steps dU:
-            dU = np.logspace(np.log10(q.min() / 10.),
-                    np.log10(slitWidth / 2.), num = n - 1)
-            dU = np.concatenate(([0,], dU)) [np.newaxis, :]
-            return dU, np.ones((dU.size,)) / slitWidth
-
-        def trapzSlit(q, shapeParam, n):
-            """ defines integration over trapezoidal slit. Top of trapezoid 
-            has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
-            xt, xb = shapeParam[0], shapeParam[1]
-
-            # ensure things are what they are supposed to be
-            assert (xt >= 0.)
-            if xb < xt:
-                xb = xt # should use square profile in this case.
-
-            # prepare integration steps dU:
-            dU = np.logspace(np.log10(q.min() / 10.),
-                    np.log10(xb / 2.), num = n)
-            dU = np.concatenate(([0,], dU)) [np.newaxis, :]
-
-            if xb == xt: 
-                y = 1. - (dU * 0.)
-            else:
-                y = 1. - (dU - xt) / (xb - xt)
-
-            y = np.clip(y, 0., 1.)
-            y[dU < xt] = 1.
-            Area = (xt + 0.5 * (xb - xt))
-            return dU, y / Area
-        
-        # now we do the actual smearing
-        assert isinstance(data.q, np.ndarray)
-        assert (data.q.ndim == 1)
-
-        # define smearing profile
-        if slitShape == "trapezoid":
-            slitFcn = trapzSlit
-        else:
-            slitFcn = squareSlit
-
-        dU, weightFunc = slitFcn(data.q, shapeParam, nSmearSteps)
-
-        # calculate the intensities at sqrt(q**2 + dU **2)
-        locs = np.sqrt(np.add.outer(data.q **2, dU[0,:]**2)) 
-
-        return locs, dU, weightFunc
-
     def calcIntensity(self, data, compensationExponent = None, 
             useSLD = False):
         v = self.vol(compensationExponent = compensationExponent,
                      useSLD = useSLD)
 
         if data.doSmear:
-            locs, dU, weightFunc = self.prepSmear(data, slitShape = "trapezoid", 
-                    shapeParam = [data.slitUmbra, data.slitPenumbra] )
-            kansas = locs.shape
-            locs = locs.reshape((locs.size))
+            kansas = data.locs.shape
+            locs = data.locs.reshape((data.locs.size))
             ff = self.ff(locs).reshape(kansas)
-            it = 2 * np.trapz(ff**2 * v**2 * (0 * ff + weightFunc), x = dU, axis = 1) 
+            it = 2 * np.trapz(ff**2 * v**2 * 
+                    (0 * ff + data.weightFunc), x = data.dU, axis = 1) 
         else:
             # calculate their form factors
             ff = self.ff(data)
