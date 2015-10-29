@@ -92,9 +92,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         """
         lst = zeros((count, self.activeParamCount()))
         for idx, param in enumerate(self.activeParams()):
-            # generate numbers in different range for each parameter
-            #only for active parameters, otherwise it may try to generate
-            #random values for a boolean-type parameter.
+            # generate numbers in different range for each active parameter
             if isActiveParam(param):
                 lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
@@ -219,6 +217,7 @@ class SASModel(ScatteringModel):
     def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.], nSmearSteps = 25):
 
         def squareSlit(q, shapeParam, n):
+            """ Testing purposes only, since trapezoid encompasses square slit """
 
             slitWidth = shapeParam[0]
             # prepare integration steps dU:
@@ -302,13 +301,3 @@ class DLSModel(ScatteringModel):
         return it, v
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
-
-        def smear(q, fhandle, fparams = None, slitWidthTrapzTop = None, slitWidthTrapzBottom = None, nIntSteps = 50):
-            """ clean smearing program for obtaining slit-smeared scattering patterns. 
-            usage: 
-            *q*: A one-dimensional scattering vector
-            *fhandle*: A function handle to a scattering pattern calculator. Must accept q
-            *fparams*: A dictionary of keyword-parameter sets passed on to the calculator
-            *slitwidth*: The width of the slit in units of q
-            """
-        

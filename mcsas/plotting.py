@@ -318,12 +318,9 @@ class PlotResults(object):
     def plot1D(self, dataset, fitQ, fitIntensity, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
         qOrigin = dataset.qUnit.toDisplay(dataset.qOrigin)
-        q = dataset.qUnit.toDisplay(dataset.q)
         qUnitLabel = dataset.qUnit.displayMagnitudeName
         iOrigin = dataset.iUnit.toDisplay(dataset.iOrigin)
-        intensity = dataset.iUnit.toDisplay(dataset.i)
         iUnitLabel = dataset.iUnit.displayMagnitudeName
-        intError = dataset.iUnit.toDisplay(dataset.u)
         uOrigin = dataset.iUnit.toDisplay(dataset.uOrigin)
 
         xLim = (qOrigin.min() * (1 - self._axisMargin), 
