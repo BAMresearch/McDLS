@@ -343,19 +343,17 @@ class PlotResults(object):
         axes(qAxis)
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
-        # first plot full range:
-        # plot(qOrigin, iOrigin, 'k.', zorder = 1, ms = 5, 
-        #         label = 'Measured intensity', lw = 2) 
-        # errorbar(q, intensity, intError, zorder = 2, fmt = 'k.',
+        # plot original data
         errorbar(qOrigin, iOrigin, uOrigin, zorder = 2, fmt = 'k.',
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
                  label = 'Measured intensity', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         self.plotGrid(qAxis)
+        # plot fit data
         plot(dataset.qUnit.toDisplay(fitQ),
              dataset.iUnit.toDisplay(fitIntensity), 'r-',
                 lw = 3, label = 'MC Fit intensity', zorder = 4)
-        try:
+        try: # try to plot the background level
             plot(dataset.qUnit.toDisplay(fitQ),
                  dataset.iUnit.toDisplay(self._BG[0] + 0*fitQ),
                  'g-', linewidth = 3,
