@@ -109,10 +109,8 @@ class ModelWidget(SettingsWidget):
         layout = self.modelWidget.layout()
         self.removeWidgets(self.modelWidget)
         # create new parameter widget based on current selection
-        entries = [self.modelBox]
         for p in self.algorithm.params():
-            widget = self.makeSetting(entries, p,
-                                      activeBtns = True)
+            widget = self.makeSetting(p, activeBtns = True)
             layout.addWidget(widget)
         layout.addStretch()
         # restore user settings for this model
