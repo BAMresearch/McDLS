@@ -68,6 +68,15 @@ class SettingsWidget(SettingsWidgetBase):
             except: pass
             for w in self.findChildren(QWidget, query):
                 yield w
+        for w in self.uiWidgets:
+            yield w
+
+    @property
+    def uiWidgets(self):
+        """May return a list of input widgets compatible but not associated to
+        a parameter, e.g. for UI configuration. To be overridden in subclasses.
+        """
+        return ()
 
     @property
     def keys(self):
@@ -199,7 +208,7 @@ class SettingsWidget(SettingsWidgetBase):
         return lbl
 
     def _makeEntry(self, name, dtype, value, minmax = None,
-                   widgetType = None, parent = None):
+                   widgetType = None, parent = None, **kwargs):
 
         testfor(name not in self.keys, KeyError,
             "Input widget '{w}' exists already in '{s}'"
@@ -211,7 +220,7 @@ class SettingsWidget(SettingsWidgetBase):
                 widgetType = self.getInputWidget(dtype)
         if parent is None:
             parent = self
-        widget = widgetType(parent)
+        widget = widgetType(parent, **kwargs)
         widget.setObjectName(name)
         if dtype is bool:
             widget.setCheckable(True)
