@@ -8,7 +8,7 @@ import re
 from numpy import array as np_array
 from collections import OrderedDict
 from utils import isList
-from utils.units import Angle, Temperature, Viscosity, Length, MSec
+from utils.units import Angle, Temperature, DynamicViscosity, Length, MSec
 from datafile import AsciiFile
 from utils import classproperty
 from dataobj import DLSData
@@ -273,7 +273,7 @@ class CGSFile(AsciiFile):
                 " ".join([s for s in self.sampleMemo if len(s)]))
         dlsData.setTemperature(Temperature(self.units['temperature'])
                     .toSi(self.temperature))
-        dlsData.setViscosity(Viscosity(self.units['viscosity'])
+        dlsData.setViscosity(DynamicViscosity(self.units['viscosity'])
                     .toSi(self.viscosity))
         dlsData.setRefractiveIndex(self.refractiveIndex) # dimensionless
         dlsData.setWavelength(Length(self.units['wavelength'])

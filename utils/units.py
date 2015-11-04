@@ -206,7 +206,7 @@ class DynamicViscosity(Unit):
         u"kg m⁻¹ s⁻¹"  : 1.,
         u"mPa s"       : 1e-3,
         u"centiPoise"  : 1e-3,
-        u"cp"          : 1e-3,
+        u"cp"          : 1e-3, # symbol read from DLS data file
         u"cP"          : 1e-3,
         u"poise"       : 1e-1,
         u"dyne s cm⁻²" : 1e-1,
