@@ -323,8 +323,8 @@ class McSAS(AlgorithmBase):
                                 numContribs, minConvergence,
                                 outputIntensity = True, outputDetails = True,
                                 nRun = nr)
-                if len(contributions) <= 1:
-                    break # nothing to fit
+                if not all(numpy.array(contributions.shape, dtype = bool)):
+                    break # nothing active, nothing to fit
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
                     return
@@ -607,6 +607,10 @@ class McSAS(AlgorithmBase):
             return
         if contribs is None:
             contribs = self.result[0]['contribs']
+        if not all(numpy.array(contribs.shape, dtype = bool)):
+            # testing for any active parameters (contribs[1])
+            logging.info("Nothing to histogram, giving up.")
+            return
         numContribs, dummy, numReps = contribs.shape
 
         # volume fraction for each contribution
