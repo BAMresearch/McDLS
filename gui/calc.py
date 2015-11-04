@@ -155,7 +155,7 @@ class Calculator(object):
             if res is not None:
                 self._writeFit(res)
                 self._writeContribs(res)
-                self._algo.plot(outputFilename = self._outFn)
+                self._algo.plot(outputFilename = self._outFn, autoClose = self._algo.autoClose)
         else:
             logging.info("No results available!")
 

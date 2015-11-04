@@ -4,7 +4,7 @@
 from __future__ import absolute_import # PEP328
 from gui.qt import QtCore, QtGui
 from QtGui import (QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox,
-                   QAbstractButton, QAbstractSpinBox, QLineEdit)
+                   QAbstractButton, QAbstractSpinBox, QGroupBox)
 from QtCore import QSignalMapper, QObject
 from gui.utils.signal import Signal
 from utils import isList, isString
@@ -106,7 +106,8 @@ class SettingsWidget(QWidget):
             return any([isinstance(widget, widgetType)
                         for widgetType in QAbstractButton,
                                           QAbstractSpinBox,
-                                          QLineEdit
+                                          QLineEdit,
+                                          QGroupBox
                         ])
         if not isInputWidget(widget):
             return
