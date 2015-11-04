@@ -154,25 +154,25 @@ class Temperature(Unit):
     # implemented units using dict, to stay consistent with base clase
     # no factors defined, different calculation, see below
     _magnitudeMap = {
-        u"˚F" : None,
+        u"°F" : None,
         u"F"  : None,
-        u"˚C" : None,
+        u"°C" : None,
         u"C"  : None,
         u"K"  : None,
-        u"˚R" : None,
+        u"°R" : None,
         u"R"  : None,
-        u"˚De": None,
+        u"°De": None,
         u"De" : None
     }
 
     def toSi(self, value):
-        if self.displayMagnitudeName in {u"˚F", u"F"}:
+        if self.displayMagnitudeName in {u"°F", u"F"}:
             return (value + 459.67) * 5./9 
-        elif self.displayMagnitudeName in {u"˚C", u"C"}:
+        elif self.displayMagnitudeName in {u"°C", u"C"}:
             return value + 237.15
-        elif self.displayMagnitudeName in {u"˚R", u"R"}: # Rankine
+        elif self.displayMagnitudeName in {u"°R", u"R"}: # Rankine
             return value * 5./9
-        elif self.displayMagnitudeName in {u"˚De", u"De"}: # Delisie
+        elif self.displayMagnitudeName in {u"°De", u"De"}: # Delisie
             return 373.15 - value * 2./3 
         elif self.displayMagnitudeName == u"K":
             return value
@@ -180,13 +180,13 @@ class Temperature(Unit):
             return NotImplementedError
 
     def toDisplay(self, value):
-        if self.displayMagnitudeName in {u"˚F", u"F"}:
+        if self.displayMagnitudeName in {u"°F", u"F"}:
             return value * 9./5 - 459.67 
-        elif self.displayMagnitudeName in {u"˚C", u"C"}:
+        elif self.displayMagnitudeName in {u"°C", u"C"}:
             return value - 273.15 
-        elif self.displayMagnitudeName in {u"˚R", u"R"}: # Rankine
+        elif self.displayMagnitudeName in {u"°R", u"R"}: # Rankine
             return value * 9./5
-        elif self.displayMagnitudeName in {u"˚De", u"De"}: # Delisie
+        elif self.displayMagnitudeName in {u"°De", u"De"}: # Delisie
             return (373.15 - value) * 3./2 
         elif self.displayMagnitudeName == u"K":
             return value
@@ -214,7 +214,7 @@ class DynamicViscosity(Unit):
         u"sl ft⁻¹ s⁻¹" : 47.880, # slug per foot second
     }
 
-Vis = Viscosity(u"mPa s")
+Vis = DynamicViscosity(u"mPa s")
 
 class Time(Unit):
     _magnitudeMap = {

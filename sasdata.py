@@ -337,7 +337,7 @@ class SASData(DataSet, DisplayMixin):
     def __init__(self, *args):
         #set unit definitions for display and internal units
         self._qUnit = ScatteringVector(u"nm⁻¹")
-        self._pUnit = Angle(u"˚")
+        self._pUnit = Angle(u"°")
         self._iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self._rUnit = Length(u"nm")
 
