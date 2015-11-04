@@ -63,7 +63,7 @@ class Unit(object):
         try:
             return cls.magnitudeMapping[name]
         except KeyError:
-            logging.warning('no matching magnitude to name {} found'
+            logging.warning(u"no matching magnitude to name {} found"
                     .format(name))
 
     @classproperty
@@ -142,6 +142,9 @@ class Unit(object):
         # else:
         return value / self.magnitudeConversion
 
+    @classmethod
+    def name(cls):
+        return cls.__name__
 
 class Temperature(Unit):
     """ test case for special conversions. Done by redefining toSI and toDisplay. 
@@ -181,12 +184,29 @@ class DynamicViscosity(Unit):
     _magnitudeMap = {
         u"Pa s"        : 1.,
         u"kg m⁻¹ s⁻¹"  : 1.,
-        u"poise"       : 1e-1,
+        u"mPa s"       : 1e-3,
         u"centiPoise"  : 1e-3,
+        u"cp"          : 1e-3,
+        u"cP"          : 1e-3,
+        u"poise"       : 1e-1,
         u"dyne s cm⁻²" : 1e-1,
         u"g cm⁻¹ s⁻¹"  : 1e-1,
         u"sl ft⁻¹ s⁻¹" : 47.880, # slug per foot second
     }
+
+Vis = Viscosity(u"mPa s")
+
+class Time(Unit):
+    _magnitudeMap = {
+        u"ns": 1e-9,
+        u"µs": 1e-6,
+        u"ms": 1e-3,
+        u"s":  1.0,
+    }
+    _siMagnitudeName = u"s"
+
+MSec = Time(u"ms")
+Sec = Time(u"ns")
 
 class Length(Unit):
     _siMagnitudeName = u"m"
@@ -224,10 +244,10 @@ class Volume(Unit):
 class Angle(Unit):
     _siMagnitudeName = u"rad"
     _magnitudeMap = {
-        u"˚"  : 180.0/pi,
-        u"'"  :   3.0/pi,
-        u'"'  :   0.05/pi,
-        u"rad":   1.0,
+        u"°"  : pi / 180.0, # unicode U+00B0
+        u"'"  : pi /   3.0,
+        u'"'  : pi /   0.05,
+        u"rad":        1.0,
     }
 
 class SLD(Unit):
