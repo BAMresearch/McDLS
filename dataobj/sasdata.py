@@ -156,7 +156,6 @@ class SASData(DataObj):
     @property
     def u(self):
         """Corrected uncertainty or error of the intensity at q."""
-        # it should be following the schema of Q and I...
         return self.uOrigin.copy()[self.validIndices]
 
     @property
@@ -217,7 +216,6 @@ class SASData(DataObj):
 
     @pClipRange.setter
     def pClipRange(self, newParam):
-        """Expects a range in self.pUnits, not SI units!"""
         if not (np.size(newParam) == 2):
             logging.error('pClipRange must be supplied with two-element vector')
         else:

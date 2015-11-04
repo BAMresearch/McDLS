@@ -2,7 +2,7 @@
 # datafile/__init__.py
 
 __all__ = ["DataFile", "AsciiFile", "ArrayFile", "PDHFile", "PDHHeader",
-           "CGSFile", "getFileFilter", "loaddatafile"]
+           "getFileFilter", "loadfile"]
 
 import logging
 import os.path
@@ -11,7 +11,6 @@ from datafile import DataFile
 from arrayfile import ArrayFile
 from asciifile import AsciiFile
 from pdhfile import PDHFile, PDHHeader
-from cgsfile import CGSFile
 
 from utils import isLinux, isString
 
@@ -23,7 +22,7 @@ def getFileFilter():
         # the extension in parentheses is not shown on linux, add it here
         extFmt = "*.{1} (*.{1})"
     filefilter = []
-    for cls in ArrayFile, PDHFile, CGSFile:
+    for cls in ArrayFile, PDHFile:
         for descr, ext in cls.fileFilter:
             filefilter.append(("{0} " + extFmt).format(descr, ext))
     return filefilter
@@ -42,8 +41,6 @@ def loaddatafile(filename):
     datafile = None
     if ext in PDHFile.extensions:
         datafile = PDHFile(filename)
-    elif ext in CGSFile.extensions:
-        datafile = CGSFile(filename)
     else:
         datafile = ArrayFile(filename) # works for CSV too
     return datafile

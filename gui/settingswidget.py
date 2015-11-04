@@ -68,6 +68,15 @@ class SettingsWidget(SettingsWidgetBase):
             except: pass
             for w in self.findChildren(QWidget, query):
                 yield w
+        for w in self.uiWidgets:
+            yield w
+
+    @property
+    def uiWidgets(self):
+        """May return a list of input widgets compatible but not associated to
+        a parameter, e.g. for UI configuration. To be overridden in subclasses.
+        """
+        return ()
 
     @property
     def keys(self):
@@ -199,7 +208,7 @@ class SettingsWidget(SettingsWidgetBase):
         return lbl
 
     def _makeEntry(self, name, dtype, value, minmax = None,
-                   widgetType = None, parent = None):
+                   widgetType = None, parent = None, **kwargs):
 
         testfor(name not in self.keys, KeyError,
             "Input widget '{w}' exists already in '{s}'"
@@ -211,7 +220,7 @@ class SettingsWidget(SettingsWidgetBase):
                 widgetType = self.getInputWidget(dtype)
         if parent is None:
             parent = self
-        widget = widgetType(parent)
+        widget = widgetType(parent, **kwargs)
         widget.setObjectName(name)
         if dtype is bool:
             widget.setCheckable(True)
@@ -233,8 +242,10 @@ class SettingsWidget(SettingsWidgetBase):
         self.connectInputWidgets(widget)
         return widget
 
-    def makeSetting(self, entries, param, activeBtns = False):
-        """entries: Extended list of input widgets, for taborder elsewhere."""
+    def makeSetting(self, param, activeBtns = False):
+        """Creates an input widget for the provided Parameter and configures
+        it appropriately.
+        """
         if param is None:
             return None
         widget = QWidget(self)
@@ -304,7 +315,6 @@ class SettingsWidget(SettingsWidgetBase):
         # add input widgets to the layout
         for w in widgets:
             layout.addWidget(w)
-            entries.append(w)
             # store the parameter name
             w.parameterName = param.name()
         # configure UI accordingly (hide/show widgets)

@@ -3,11 +3,10 @@
 
 from __future__ import absolute_import # PEP328
 
-__all__ = ["DataObj", "SASData", "DLSData"]
+__all__ = ["DataObj", "SASData"]
 
 from dataobj.dataobj import DataObj
 from dataobj.sasdata import SASData
-from dataobj.dlsdata import DLSData
 
 if __name__ == "__main__":
     import doctest
