@@ -148,9 +148,23 @@ class Unit(object):
 
 class Temperature(Unit):
     """ test case for special conversions. Done by redefining toSI and toDisplay. 
-    Implemnted units are given in list in _magnitudeMap (normally dict) """
-    _magnitudeMap = [u"˚F", u"F", u"˚C", u"C", u"K", u"˚R", u"R", u"˚De", u"De"] # implemented units
+    Implemented units are given in _magnitudeMap.
+    """
     _siMagnitudeName = u"K"
+    # implemented units using dict, to stay consistent with base clase
+    # no factors defined, different calculation, see below
+    _magnitudeMap = {
+        u"˚F" : None,
+        u"F"  : None,
+        u"˚C" : None,
+        u"C"  : None,
+        u"K"  : None,
+        u"˚R" : None,
+        u"R"  : None,
+        u"˚De": None,
+        u"De" : None
+    }
+
     def toSi(self, value):
         if self.displayMagnitudeName in {u"˚F", u"F"}:
             return (value + 459.67) * 5./9 
@@ -178,6 +192,12 @@ class Temperature(Unit):
             return value
         else:
             return NotImplementedError
+
+    @property
+    def magnitudeConversion(self):
+        return None
+
+K = Temperature(u"K")
 
 class DynamicViscosity(Unit):
     _siMagnitudeName = u"N s m⁻²"
