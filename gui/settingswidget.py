@@ -361,4 +361,13 @@ class SettingsWidget(SettingsWidgetBase):
         """Removes all widgets from the layout of the given widget."""
         SettingsWidget.clearLayout(widget.layout(), QWidget())
 
+    def resizeEvent(self, resizeEvent):
+        """Resizes widget based on available width."""
+        # basically, reacts to the size change by spawned scroll bar
+        targetWidth = resizeEvent.size().width()
+        self.resizeWidgets(targetWidth)
+
+    def resizeWidgets(self, targetWidth):
+        pass
+
 # vim: set ts=4 sts=4 sw=4 tw=0:

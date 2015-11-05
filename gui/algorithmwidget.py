@@ -88,10 +88,8 @@ class AlgorithmWidget(SettingsWidget):
             if p is None: continue
             yield self.makeSetting(p)
 
-    def resizeEvent(self, resizeEvent):
+    def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
-        # basically, reacts to the size change by spawning scroll bar
-        targetWidth = resizeEvent.size().width()
         self.defaults.rearrangeWidgets(targetWidth)
         self.advanced.rearrangeWidgets(targetWidth)
         # add empty spacer at the bottom
