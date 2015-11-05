@@ -13,7 +13,6 @@ from bases.algorithm import AlgorithmBase
 from utils.propertynames import PropertyNames
 from utils.parameter import isActiveParam
 from dataobj import SASData
-import time
 
 class ScatteringModel(AlgorithmBase, PropertyNames):
     __metaclass__ = ABCMeta
@@ -231,18 +230,6 @@ class SASModel(ScatteringModel):
             # a set of intensities
             it = ff**2 * v**2
 
-        return it, v
-
-class DLSModel(ScatteringModel):
-    __metaclass__ = ABCMeta
-
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
-        v = self.vol(compensationExponent = compensationExponent,
-                     useSLD = useSLD)
-        # calculate their form factors
-        ff = self.ff(data)
-        # a set of intensities
-        it = v**2 * ff
         return it, v
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

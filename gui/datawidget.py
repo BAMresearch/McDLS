@@ -22,7 +22,6 @@ class DataWidget(SettingsWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self._widgets = [] # containers for all inputs of one param
-        entries = []
         # create inputs for a subset of calculator parameters
         # allowed parameters could be configurable from file too
         for p in ( "qMin", 
@@ -32,7 +31,7 @@ class DataWidget(SettingsWidget):
                     "slitPenumbra"):
             p = getattr(self.algorithm, p, None)
             if p is None: continue
-            container = self.makeSetting(entries, p)
+            container = self.makeSetting(p)
             self._widgets.append(container)
 
     @property

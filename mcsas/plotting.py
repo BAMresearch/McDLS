@@ -12,7 +12,7 @@ import matplotlib
 from utils import isList, isString, isMac
 import log
 from main import makeAbsolutePath
-from dataobj import DLSData
+from dataobj import SASData
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
@@ -123,7 +123,7 @@ class PlotResults(object):
                     + self._nHists + 1]
                 fitQ = self._result['fitQ']
                 fitIntensity = self._result['fitIntensityMean'][0,:]
-                if not isinstance(dataset, DLSData):
+                if isinstance(dataset, SASData):
                     fitQ = np.sort(self._result['fitQ'])
                     fitIntensity = self._result['fitIntensityMean'][0, 
                             np.argsort(self._result['fitQ'])]
