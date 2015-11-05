@@ -9,7 +9,7 @@ from QtCore import Qt
 from QtGui import (QWidget, QGridLayout)
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
-from gui.settingswidget import SettingsWidget
+from gui.settingswidget import SettingsWidget, rearrangeWidgets
 
 class DataWidget(SettingsWidget):
 
@@ -37,5 +37,11 @@ class DataWidget(SettingsWidget):
     @property
     def algorithm(self):
         return self.calculator.algo
+
+    def resizeEvent(self, resizeEvent):
+        """Creates a new layout with appropriate row/column count."""
+        # basically, reacts to the size change by spawning scroll bar
+        targetWidth = resizeEvent.size().width()
+        rearrangeWidgets(self.layout(), self._widgets, targetWidth)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

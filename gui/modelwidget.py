@@ -40,7 +40,6 @@ MODELS = OrderedDict((
 ))
 FIXEDWIDTH = 120
 
-# required for svg graphics support
 from gui.settingswidget import SettingsWidget
 
 class ModelWidget(SettingsWidget):
