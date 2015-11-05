@@ -10,11 +10,10 @@ from itertools import izip
 from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor
 from bases.algorithm import AlgorithmBase
-from utils.propertynames import PropertyNames
 from utils.parameter import isActiveParam
 from dataobj import SASData
 
-class ScatteringModel(AlgorithmBase, PropertyNames):
+class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta
     # compensationExponent = 1./2 # default, overridden with that from JSON dict
 
