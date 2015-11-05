@@ -73,6 +73,14 @@ class SettingsWidget(SettingsWidgetBase):
         for this settings."""
         raise NotImplementedError
 
+    # create inputs for a subset of algorithm parameters
+    # allowed parameters could be configurable from file too
+    def makeWidgets(self, *args):
+        for p in args:
+            p = getattr(self.algorithm, p, None)
+            if p is None: continue
+            yield self.makeSetting(p)
+
     @property
     def inputWidgets(self):
         """Returns all existing input names (for store/restore)."""

@@ -70,23 +70,15 @@ class AlgorithmWidget(SettingsWidget):
         hlayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(hlayout)
 
-        self.defaults = DefaultSettings(self, widgets = tuple(self._widgets(
+        self.defaults = DefaultSettings(self, widgets = tuple(self.makeWidgets(
             "convergenceCriterion", "numReps", "autoClose")))
         # creating an ui entry with settings persistence via store/restore
         self.advanced = self._makeEntry("showAdvanced", bool, False,
-            widgetType = AdvancedSettings, widgets = tuple(self._widgets(
+            widgetType = AdvancedSettings, widgets = tuple(self.makeWidgets(
                 "numContribs", "compensationExponent", "findBackground")))
         hlayout.addWidget(self.defaults)
         hlayout.addWidget(self.advanced)
         self.sigValueChanged.connect(self.advanced.updateWidgets)
-
-    # create inputs for a subset of calculator parameters
-    # allowed parameters could be configurable from file too
-    def _widgets(self, *args):
-        for p in args:
-            p = getattr(self.algorithm, p, None)
-            if p is None: continue
-            yield self.makeSetting(p)
 
     def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
