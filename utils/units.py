@@ -85,6 +85,11 @@ class Unit(object):
         return self.magnitude(self.displayMagnitudeName)
 
     @property
+    def availableMagnitudeNames(self):
+        # for use in GUI unit selection
+        return self.magnitudeMapping.keys()
+
+    @property
     # defined for instances only, given at init() time
     def displayMagnitudeName(self):
         return self._displayMagnitudeName
@@ -148,8 +153,16 @@ class Unit(object):
 
 class Temperature(Unit):
     """ test case for special conversions. Done by redefining toSI and toDisplay. 
-    Implemnted units are given in list in _magnitudeMap (normally dict) """
-    _magnitudeMap = [u"˚F", u"F", u"˚C", u"C", u"K", u"˚R", u"R", u"˚De", u"De"] # implemented units
+    Implmented units are given in list in _magnitudeMap (normally dict) """
+    _magnitudeMap = {u"˚F": None, 
+            u"F": None, 
+            u"˚C": None, 
+            u"C": None, 
+            u"K": None,
+            u"˚R": None, 
+            u"R": None, 
+            u"˚De": None, 
+            u"De": None} # implemented units
     _siMagnitudeName = u"K"
     def toSi(self, value):
         if self.displayMagnitudeName in {u"˚F", u"F"}:
