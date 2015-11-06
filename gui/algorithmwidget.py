@@ -75,7 +75,7 @@ class AlgorithmWidget(SettingsWidget):
         # creating an ui entry with settings persistence via store/restore
         self.advanced = self._makeEntry("showAdvanced", bool, False,
             widgetType = AdvancedSettings, widgets = tuple(self.makeWidgets(
-                "numContribs", "compensationExponent", "findBackground")))
+                "numContribs", "compensationExponent", "findBackground", "maxIterations")))
         hlayout.addWidget(self.defaults)
         hlayout.addWidget(self.advanced)
         self.sigValueChanged.connect(self.advanced.updateWidgets)
