@@ -47,8 +47,9 @@ class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
     _appSettings = None
     sigRangeChanged = Signal()
+    sigBackendUpdated = Signal(tuple)
 
-    def __init__(self, parent, calculator = None):
+    def __init__(self, parent, calculator, *args, **kwargs):
         SettingsWidgetBase.__init__(self, parent)
         self.sigValueChanged.connect(self.updateParam)
         assert isinstance(calculator, Calculator)
@@ -212,6 +213,7 @@ class SettingsWidget(SettingsWidgetBase):
             except: pass
         # enable signals again after ui updates
         self.sigValueChanged.connect(self.updateParam)
+        self.sigBackendUpdated.emit((p,))
         if isNotNone(newRange):
             # the range was updated
             self.sigRangeChanged.emit()

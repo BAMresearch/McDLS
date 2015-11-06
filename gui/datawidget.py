@@ -6,42 +6,80 @@ import logging
 
 from gui.qt import QtCore, QtGui
 from QtCore import Qt
-from QtGui import (QWidget, QGridLayout)
+from QtGui import (QWidget, QGridLayout, QVBoxLayout)
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
 from gui.settingswidget import SettingsWidget, rearrangeWidgets
+from dataobj import DataConfig
 
-class DataWidget(SettingsWidget):
+import sys
 
-    def __init__(self, *args, **kwargs):
-        SettingsWidget.__init__(self, *args, **kwargs)
-        self.title = TitleHandler.setup(self, "Data Settings")
-        # create a new layout
-        layout = QGridLayout(self)
-        layout.setObjectName("dataLayout")
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(layout)
-        self._widgets = [] # containers for all inputs of one param
-        # create inputs for a subset of calculator parameters
-        # allowed parameters could be configurable from file too
-        for p in ( "qMin", 
-                    "qMax", 
-                    "doSmear", 
-                    "slitUmbra",
-                    "slitPenumbra"):
-            p = getattr(self.algorithm, p, None)
-            if p is None: continue
-            container = self.makeSetting(p)
-            self._widgets.append(container)
+class SmearingWidget(SettingsWidget):
+    _smearingConfig = None
 
     @property
     def algorithm(self):
-        return self.calculator.algo
+        return self._smearingConfig
 
-    def resizeEvent(self, resizeEvent):
+    def __init__(self, *args, **kwargs):
+        super(SmearingWidget, self).__init__(*args, **kwargs)
+        self.title = TitleHandler.setup(self, "Smearing Settings")
+        self._smearingConfig = kwargs.pop("smearingConfig", None)
+        layout = QGridLayout(self)
+        layout.setObjectName("configLayout")
+        layout.setContentsMargins(0, 0, 0, 0)
+        self._widgets = tuple(self.makeWidgets("umbra", "penumbra"))
+#        self.sigBackendUpdated.connect(self.onUpdate)
+
+    def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
-        # basically, reacts to the size change by spawning scroll bar
-        targetWidth = resizeEvent.size().width()
         rearrangeWidgets(self.layout(), self._widgets, targetWidth)
+
+    def onUpdate(self):
+        print >>sys.__stderr__, "onUpdate", self
+
+class DataWidget(SettingsWidget):
+    _dataConfig = None
+
+    @property
+    def algorithm(self):
+        return self._dataConfig
+
+    def __init__(self, *args, **kwargs):
+        super(DataWidget, self).__init__(*args, **kwargs)
+        self.title = TitleHandler.setup(self, "Data Settings")
+        # basic row oriented layout
+        hlayout = QVBoxLayout(self)
+        hlayout.setObjectName("baseLayout")
+        hlayout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(hlayout)
+
+        self._dataConfig = DataConfig()
+        # create a new layout
+        configWidget = QWidget()
+        layout = QGridLayout(configWidget)
+        layout.setObjectName("configLayout")
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.configLayout = layout
+        self._widgets = tuple(self.makeWidgets("qLow", "qHigh"))
+        self.sigBackendUpdated.connect(self.onUpdate)
+        hlayout.addWidget(configWidget)
+
+        kwargs["smearingConfig"] = self._dataConfig.smearing
+        self.smearingWidget = SmearingWidget(*args, **kwargs)
+        hlayout.addWidget(self.smearingWidget)
+
+    def resizeWidgets(self, targetWidth):
+        """Creates a new layout with appropriate row/column count."""
+        rearrangeWidgets(self.configLayout, self._widgets, targetWidth)
+
+    def onUpdate(self, paramTuple):
+        print >>sys.__stderr__, "onUpdate", param.name()
+        print >>sys.__stderr__, unicode(self._dataConfig)
+        return
+        self._dataConfig.updateConstraints()
+        self.set("qLow", self._dataConfig.qLow())
+        self.set("qHigh", self._dataConfig.qHigh())
+        self.smearingWidget.onUpdate()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
