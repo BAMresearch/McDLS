@@ -61,7 +61,7 @@ def isNumber(obj):
 def isInteger(obj):
     return (isinstance(obj, int) or isinstance(obj, long))
 
-def isFunction(obj):
+def isCallable(obj):
     return isinstance(obj, collections.Callable)
 
 # environment tests

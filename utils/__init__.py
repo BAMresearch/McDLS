@@ -4,7 +4,7 @@
 import sys
 import numpy as np
 from tests import (isList, isString, isNonEmptyString, isMap, isSet,
-                         isNumber, isInteger, isFunction)
+                         isNumber, isInteger, isCallable)
 from tests import isLinux, isMac, isWindows, isFrozen
 from tests import testfor, assertName
 from mixedmethod import mixedmethod
