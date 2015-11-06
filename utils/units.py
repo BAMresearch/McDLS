@@ -202,7 +202,6 @@ class Temperature(Unit):
     def magnitudeConversion(self):
         return None
 
-K = Temperature(u"K")
 
 class DynamicViscosity(Unit):
     _siMagnitudeName = u"N s m⁻²"
@@ -219,7 +218,6 @@ class DynamicViscosity(Unit):
         u"sl ft⁻¹ s⁻¹" : 47.880, # slug per foot second
     }
 
-Vis = DynamicViscosity(u"mPa s")
 
 class Time(Unit):
     _magnitudeMap = {
@@ -229,9 +227,6 @@ class Time(Unit):
         u"s":  1.0,
     }
     _siMagnitudeName = u"s"
-
-MSec = Time(u"ms")
-Sec = Time(u"ns")
 
 class Length(Unit):
     _siMagnitudeName = u"m"
@@ -244,7 +239,6 @@ class Length(Unit):
         u"m" : 1e0
     }
 
-NM = Length(u"nm")
 
 class Area(Unit):
     _siMagnitudeName = u"m²"
@@ -318,6 +312,13 @@ class NoUnit(Unit):
         u"" : 1e0,
         u"-": 1e0,
     }
+
+# Unit shortcuts:
+K = Temperature(u"K")
+Vis = DynamicViscosity(u"mPa s")
+MSec = Time(u"ms")
+Sec = Time(u"ns")
+NM = Length(u"nm")
 
 if __name__ == "__main__":
     import doctest
