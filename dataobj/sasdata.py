@@ -41,7 +41,7 @@ class SASData(DataObj):
     _config = None
 
     # for smearing:
-    doSmear = False # smear the data
+    _doSmear = False # smear the data
     _slitUmbra = None # top width of the trapezoidal beam length profile
     _slitPenumbra = None # top width of the trapezoidal beam length profile
     slitShape = "trapezoid" # default
@@ -229,6 +229,16 @@ class SASData(DataObj):
 
     # for smearing, define beam profile (one direction only for now)
     @property
+    def doSmear(self):
+        return self._doSmear
+    
+    @doSmear.setter
+    def doSmear(self, value):
+        self._doSmear = value
+        if value and ((self.slitPenumbra > 0.) or (self.slitUmbra > 0.)):
+            self._prepSmear()
+
+    @property
     def slitUmbra(self):
         return self._slitUmbra
 
@@ -239,7 +249,8 @@ class SASData(DataObj):
                newParam, self.qOrigin.max())
         # value in Penumbra must not be smaller than Umbra
         self._slitPenumbra = np.maximum(self._slitUmbra, self._slitPenumbra)
-        self._prepSmear()
+        if self.doSmear:
+            self._prepSmear()
 
     @property
     def slitPenumbra(self):
@@ -253,7 +264,8 @@ class SASData(DataObj):
                newParam, self.qOrigin.max())
         self._slitPenumbra = np.maximum(
                newParam, self._slitUmbra)
-        self._prepSmear()
+        if self.doSmear:
+            self._prepSmear()
 
     # general information on this data set
 
