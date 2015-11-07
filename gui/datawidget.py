@@ -29,14 +29,16 @@ class SmearingWidget(SettingsWidget):
         layout.setObjectName("configLayout")
         layout.setContentsMargins(0, 0, 0, 0)
         self._widgets = tuple(self.makeWidgets("umbra", "penumbra"))
-#        self.sigBackendUpdated.connect(self.onUpdate)
 
     def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
         rearrangeWidgets(self.layout(), self._widgets, targetWidth)
 
-    def onUpdate(self):
-        print >>sys.__stderr__, "onUpdate", self
+    def onUpdate(self, paramTuple):
+        param = paramTuple[0]
+        print >>sys.__stderr__, "onUpdate", param.name()
+        print >>sys.__stderr__, unicode(self._smearingConfig)
+        self.updateUi()
 
 class DataWidget(SettingsWidget):
     _dataConfig = None
@@ -73,13 +75,8 @@ class DataWidget(SettingsWidget):
         """Creates a new layout with appropriate row/column count."""
         rearrangeWidgets(self.configLayout, self._widgets, targetWidth)
 
-    def onUpdate(self, paramTuple):
-        print >>sys.__stderr__, "onUpdate", param.name()
+    def onUpdate(self):
         print >>sys.__stderr__, unicode(self._dataConfig)
-        return
-        self._dataConfig.updateConstraints()
-        self.set("qLow", self._dataConfig.qLow())
-        self.set("qHigh", self._dataConfig.qHigh())
-        self.smearingWidget.onUpdate()
+        self.smearingWidget.updateUi()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
