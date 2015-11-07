@@ -61,7 +61,7 @@ from utils.mixedmethod import mixedmethod
 from utils.classproperty import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
 from utils.units import NoUnit
-from utils import clip
+from utils import clip, isCallable
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
     # works with vectors of multiple bounds too
@@ -169,7 +169,8 @@ class ParameterBase(object):
         # sets the ordered names of attributes
         dictionary["_attributeNames"] = names
 
-    setAttributes.__func__(None, locals(), "name", "value", "displayName")
+    setAttributes.__func__(None, locals(), "name", "value", "displayName",
+                           "onValueUpdate") # user provided callback function
 
     @classmethod
     def attributeNames(cls):
@@ -261,6 +262,8 @@ class ParameterBase(object):
         testfor(newValue is not None,
                 DefaultValueError, "Default value is mandatory!")
         selforcls._value = newValue
+        if isCallable(selforcls.onValueUpdate()):
+            selforcls.onValueUpdate()()
 
     @mixedmethod
     def setDisplayName(selforcls, newName):
@@ -365,8 +368,10 @@ class ParameterNumerical(ParameterBase):
 
     @mixedmethod
     def setValue(selforcls, newValue, clip = False):
+        if newValue is None:
+            return # ignore
         testfor(isNumber(newValue), DefaultValueError,
-                "A value has to be numerical!")
+                "A value has to be numerical! ({})".format(newValue))
         if clip:
             # clip to min/max values:
             newValue = selforcls.clip(newValue)
@@ -389,7 +394,7 @@ class ParameterNumerical(ParameterBase):
         maxVal = min(maxVal,  1e200) # as good as inf?...
         selforcls._valueRange = minVal, maxVal
         # apply limits to value:
-        selforcls._value = selforcls.clip()
+        selforcls.setValue(selforcls.clip())
 
     @mixedmethod
     def setSuffix(selforcls, newSuffix):
