@@ -23,7 +23,7 @@ import logging
 import numpy as np # For arrays
 from utils import classproperty
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
-from dataobj import DataObj, DataConfig
+from dataobj import DataObj, SASConfig
 
 class SASData(DataObj):
     """Represents one set of data from a unique source (a file, for example).
@@ -369,7 +369,7 @@ class SASData(DataObj):
     def __init__(self, **kwargs):
         super(SASData, self).__init__(**kwargs)
         #set unit definitions for display and internal units
-        self._config = DataConfig()
+        self._config = SASConfig()
         import sys
         print >>sys.__stderr__, self.__class__.__name__
         print >>sys.__stderr__, unicode(self.config)

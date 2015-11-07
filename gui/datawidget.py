@@ -10,7 +10,7 @@ from QtGui import (QWidget, QGridLayout, QVBoxLayout)
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
 from gui.settingswidget import SettingsWidget, rearrangeWidgets
-from dataobj import DataConfig
+from dataobj import SASConfig
 
 import sys
 
@@ -54,7 +54,7 @@ class DataWidget(SettingsWidget):
         hlayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(hlayout)
 
-        self._dataConfig = DataConfig()
+        self._dataConfig = SASConfig()
         # create a new layout
         configWidget = QWidget()
         layout = QGridLayout(configWidget)
