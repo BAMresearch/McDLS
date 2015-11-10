@@ -224,12 +224,14 @@ class ParameterBase(object):
         attr.pop("cls")
         return (_unpickleParameter, (attr,))
 
-    @classmethod
-    def copy(cls):
-        attr = cls.attributes()
+    @mixedmethod
+    def copy(selforcls):
+        attr = selforcls.attributes()
         other = attr.pop("cls") # remove duplicate first argument of factory()
-        if not issubclass(other, cls):
-            other = cls
+        if isinstance(selforcls, object):
+            selforcls = type(selforcls)
+        if not issubclass(other, selforcls):
+            other = selforcls
         return other.factory(**attr)()
 
     @classmethod
