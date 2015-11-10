@@ -13,6 +13,8 @@ from numpy import all as np_all
 from abc import ABCMeta, abstractproperty, abstractmethod
 from bases.dataset import DataSet, DisplayMixin
 
+import sys
+
 # formerly known as 'ScatteringData', better? also for the module?
 class DataObj(DataSet, DisplayMixin):
     """General container for data loaded from file. It offers specialised
@@ -58,7 +60,9 @@ class DataObj(DataSet, DisplayMixin):
             return True
         if self.config == config:
             return False
+        # print >>sys.__stderr__, "old", id(self._config), unicode(self._config)
         self._config = config.copy()
+        # print >>sys.__stderr__, "cpy", id(self._config), unicode(self._config)
         return True
 
     def __init__(self, **kwargs):

@@ -378,6 +378,7 @@ class SASData(DataObj):
         if not super(SASData, self).setConfig(config):
             return # no update, nothing todo
         # prepare
+        self.locs = self.config.prepareSmearing(self.q)
 
     def _prepareSizeEst(self):
         self._sizeEst = np.pi / np.array([self.q.max(),
