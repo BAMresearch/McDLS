@@ -56,7 +56,7 @@ from inspect import getmembers
 import numpy as np
 import sys
 import logging
-from utils import isString, isNumber, isList, isMap, testfor, assertName
+from utils import isString, isNumber, isList, isMap, isSet, testfor, assertName
 from utils.mixedmethod import mixedmethod
 from utils.classproperty import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
@@ -186,7 +186,7 @@ class ParameterBase(object):
         return mergedAttrNames
 
     @mixedmethod
-    def attributes(selforcls):
+    def attributes(selforcls, exclude = None):
         """Returns a dictionary with <key, value> pairs of all attributes and
         their values in this type or instance.
         Helps to avoid having explicit long argument lists"""
@@ -198,7 +198,11 @@ class ParameterBase(object):
         base = base.__mro__[1]
         # store the direct base class for duplication later
         res = dict(cls = base, description = selforcls.__doc__)
-        for name in selforcls.attributeNames():
+        attr = selforcls.attributeNames()
+        # filter a given list of attribute names
+        if isList(exclude) or isSet(exclude):
+            attr = [a for a in attr if a not in exclude]
+        for name in attr:
             # if this throws an exception, there is a bug
             res[name] = getattr(selforcls, name)()
         return res
@@ -302,7 +306,9 @@ class ParameterBase(object):
         if self.dtype != other.dtype:
             return False
         try:
-            return self.attributes() == other.attributes()
+            # avoid reference loops for objects of bound methods
+            return (self.attributes(exclude = ("onValueUpdate",))
+                    == other.attributes(exclude = ("onValueUpdate",)))
         except:
             return False
 
