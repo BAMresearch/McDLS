@@ -364,13 +364,20 @@ class SASData(DataObj):
     def __init__(self, **kwargs):
         super(SASData, self).__init__(**kwargs)
         #set unit definitions for display and internal units
-        self._config = SASConfig()
         self._rUnit = Length(u"nm")
+        # init config as early as possible to get properties ready which
+        # depend on it (qlow/qhigh?)
+        self.setConfig(SASConfig())
 
         self._prepareValidIndices()
         self._prepareSizeEst()
         self._shannonChannelEst = self.q.max() / self.q.min()
         self._prepareUncertainty()
+
+    def setConfig(self, config):
+        if not super(SASData, self).setConfig(config):
+            return # no update, nothing todo
+        # prepare
 
     def _prepareSizeEst(self):
         self._sizeEst = np.pi / np.array([self.q.max(),

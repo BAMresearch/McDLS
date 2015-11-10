@@ -49,9 +49,17 @@ class DataObj(DataSet, DisplayMixin):
         return self._config
 
     def setConfig(self, config = None):
+        """Set the extended configuration for this data and returns true if
+        the configuration was different and an update was necessary."""
+        if config is None:
+            return False
+        if self.config is None:
+            self._config = config
+            return True
         if self.config == config:
-            return
+            return False
         self._config = config.copy()
+        return True
 
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)
