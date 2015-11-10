@@ -34,9 +34,8 @@ class SmearingWidget(SettingsWidget):
         """Creates a new layout with appropriate row/column count."""
         rearrangeWidgets(self.layout(), self._widgets, targetWidth)
 
-    def onUpdate(self, paramTuple):
-        param = paramTuple[0]
-        print >>sys.__stderr__, "onUpdate", param.name()
+    def onUpdate(self):
+        print >>sys.__stderr__, "SmearingWidget.onUpdate"
         print >>sys.__stderr__, unicode(self._smearingConfig)
         self.updateUi()
 
@@ -70,13 +69,15 @@ class DataWidget(SettingsWidget):
         kwargs["smearingConfig"] = self._dataConfig.smearing
         self.smearingWidget = SmearingWidget(*args, **kwargs)
         hlayout.addWidget(self.smearingWidget)
+        self.smearingWidget.sigBackendUpdated.connect(self.onUpdate)
 
     def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
         rearrangeWidgets(self.configLayout, self._widgets, targetWidth)
 
     def onUpdate(self):
+        print >>sys.__stderr__, "DataWidget.onUpdate"
         print >>sys.__stderr__, unicode(self._dataConfig)
-        self.smearingWidget.updateUi()
+        self.smearingWidget.onUpdate()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
