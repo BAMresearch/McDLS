@@ -225,7 +225,7 @@ class SASModel(ScatteringModel):
             ff = self.ff(locs).reshape(kansas)
             # we integrate the smeared result in one direction. This
             # implementation is for slit-smeared Kratky-type instruments only.
-            it = 2 * np.trapz(ff**2 * v**2 * 
+            it = 2 * np.trapz(ff**2 * v**2 * # outer() ?
                     (0 * ff + data.weightFunc), x = data.dU, axis = 1) 
         else:
             # calculate their form factors
