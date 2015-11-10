@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# dataobj/dataconfig.py
+# dataobj/sasconfig.py
 
 from __future__ import absolute_import # PEP328
 
