@@ -100,9 +100,14 @@ class AlgorithmBase(object):
         cls.setName(name)
         if not len(parameters) and hasattr(cls, "parameters"):
             # for backwards compatibility
-            cls.setParams(*cls.parameters)
-        else:
-            cls.setParams(*parameters)
+            parameters = []
+            for baseCls in reversed(cls.__mro__):
+                # get parameters from parent classes as well
+                try:
+                    parameters.extend(baseCls.parameters)
+                except:
+                    continue
+        cls.setParams(*parameters)
         return cls
 
     def __init__(self):
