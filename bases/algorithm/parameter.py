@@ -261,6 +261,8 @@ class ParameterBase(object):
     def setValue(selforcls, newValue):
         testfor(newValue is not None,
                 DefaultValueError, "Default value is mandatory!")
+        if selforcls._value == newValue:
+            return # no update necessary
         selforcls._value = newValue
         if isCallable(selforcls.onValueUpdate()):
             selforcls.onValueUpdate()()
