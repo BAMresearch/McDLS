@@ -11,6 +11,7 @@ from datafile import getFileFilter
 from utils.lastpath import LastPath
 from utils.units import ScatteringVector, ScatteringIntensity
 from datafile import loaddatafile
+from dataobj import DataObj
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
@@ -44,5 +45,11 @@ class FileList(DataList):
     def setupUi(self):
         self.listWidget.setAlternatingRowColors(True)
         setBackgroundStyleSheet(self, "./resources/background_files.svg")
+
+    def setDataConfig(self, dataConfig):
+        if self.isEmpty():
+            return
+        self.updateData(updateFunc = DataObj.setConfig, config = dataConfig,
+                        showProgress = False)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

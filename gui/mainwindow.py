@@ -232,6 +232,7 @@ class MainWindow(MainWindowBase):
     def _setupDataWidget(self):
         """Set up property widget with settings."""
         self.dataWidget = DataWidget(self, self.calculator)
+        self.dataWidget.sigConfig.connect(self.fileWidget.setDataConfig)
         return self.dataWidget
 
     def _setupAlgoWidget(self):
@@ -326,6 +327,7 @@ class MainWindow(MainWindowBase):
     def initUi(self):
         self.logWidget.scrollToTop()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
+        self.dataWidget.onUpdate() # propagate initial data config
         self.onStartStopClick(getattr(self._args, "start", False))
 
     def _updateWidgets(self):

@@ -7,6 +7,7 @@ import logging
 from gui.qt import QtCore, QtGui
 from QtCore import Qt
 from QtGui import (QWidget, QGridLayout, QVBoxLayout)
+from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
 from gui.settingswidget import SettingsWidget, rearrangeWidgets
@@ -35,12 +36,11 @@ class SmearingWidget(SettingsWidget):
         rearrangeWidgets(self.layout(), self._widgets, targetWidth)
 
     def onUpdate(self):
-        print >>sys.__stderr__, "SmearingWidget.onUpdate"
-        print >>sys.__stderr__, unicode(self._smearingConfig)
         self.updateUi()
 
 class DataWidget(SettingsWidget):
     _dataConfig = None
+    sigConfig = Signal(SASConfig)
 
     @property
     def algorithm(self):
@@ -76,8 +76,7 @@ class DataWidget(SettingsWidget):
         rearrangeWidgets(self.configLayout, self._widgets, targetWidth)
 
     def onUpdate(self):
-        print >>sys.__stderr__, "DataWidget.onUpdate"
-        print >>sys.__stderr__, unicode(self._dataConfig)
         self.smearingWidget.onUpdate()
+        self.sigConfig.emit(self._dataConfig)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
