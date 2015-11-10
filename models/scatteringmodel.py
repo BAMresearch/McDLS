@@ -218,9 +218,13 @@ class SASModel(ScatteringModel):
                      useSLD = useSLD)
 
         if data.doSmear:
+            # locs contains the two-dimensional q-value array for integration. 
             kansas = data.locs.shape
+            # the ff functions might only accept one-dimensional q arrays
             locs = data.locs.reshape((data.locs.size))
             ff = self.ff(locs).reshape(kansas)
+            # we integrate the smeared result in one direction. This
+            # implementation is for slit-smeared Kratky-type instruments only.
             it = 2 * np.trapz(ff**2 * v**2 * 
                     (0 * ff + data.weightFunc), x = data.dU, axis = 1) 
         else:
