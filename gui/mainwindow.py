@@ -203,7 +203,7 @@ class MainWindow(MainWindowBase):
         centralWidget.setLayout(self.centralLayout)
         centralWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self.setCentralWidget(centralWidget)
-        self.onStartupSignal.connect(self.initUI)
+        self.onStartupSignal.connect(self.initUi)
         # set program icon, same for Win+Lin
         icopath = "resources/icon/mcsas.ico"
         if isMac():
@@ -323,7 +323,7 @@ class MainWindow(MainWindowBase):
                                  LastPath.get(), multiple = True)
         self.loadFiles(filenames)
 
-    def initUI(self):
+    def initUi(self):
         self.logWidget.scrollToTop()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
