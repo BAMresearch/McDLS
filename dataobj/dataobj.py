@@ -10,7 +10,7 @@ import os # Miscellaneous operating system interfaces
 from numpy import all as np_all
 
 # related to the class below
-from abc import ABCMeta, abstractproperty
+from abc import ABCMeta, abstractproperty, abstractmethod
 from bases.dataset import DataSet, DisplayMixin
 
 # formerly known as 'ScatteringData', better? also for the module?
@@ -20,6 +20,7 @@ class DataObj(DataSet, DisplayMixin):
     """
     __metaclass__ = ABCMeta
     _filename = None
+    _config = None
 
     @property
     def filename(self):
@@ -42,6 +43,15 @@ class DataObj(DataSet, DisplayMixin):
 
     def accumulate(self, others):
         return None
+
+    @property
+    def config(self):
+        return self._config
+
+    def setConfig(self, config = None):
+        if self.config == config:
+            return
+        self._config = config.copy()
 
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)
