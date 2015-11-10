@@ -112,7 +112,6 @@ class TrapezoidSmearing(SmearingConfig):
 
     def onUmbraUpdate(self):
         """Value in umbra will not exceed available q."""
-        print >>sys.__stderr__, "onUmbraUpdate"
         # value in Penumbra must not be smaller than Umbra
         self.penumbra.setValueRange((self.umbra(), self.penumbra.max()))
 
@@ -193,6 +192,14 @@ class SASConfig(AlgorithmBase):
         assert isinstance(newSmearing, SmearingConfig)
         self._smearing = newSmearing
 
+    def copy(self):
+        other = super(SASConfig, self).copy()
+        other.iUnit = self.iUnit
+        other.qUnit = self.qUnit
+        other.pUnit = self.pUnit
+        other.smearing = self.smearing.copy()
+        return other
+
     def __init__(self):
         super(SASConfig, self).__init__()
         self.smearing = TrapezoidSmearing()
@@ -201,6 +208,11 @@ class SASConfig(AlgorithmBase):
         self.pUnit = Angle(u"°")
         self.qLow.setOnValueUpdate(self.updateConstraints)
         self.qHigh.setOnValueUpdate(self.updateConstraints)
+
+    def __eq__(self, other):
+        res = ((self.smearing == other.smearing) and
+                super(SASConfig, self).__eq__(other))
+        return res
 
     def __str__(self):
         return "\n".join((
