@@ -28,7 +28,7 @@ class SmearingWidget(SettingsWidget):
         layout = QGridLayout(self)
         layout.setObjectName("configLayout")
         layout.setContentsMargins(0, 0, 0, 0)
-        self._widgets = tuple(self.makeWidgets("umbra", "penumbra"))
+        self._widgets = tuple(self.makeWidgets("umbra", "penumbra", "collType"))
 
     def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""

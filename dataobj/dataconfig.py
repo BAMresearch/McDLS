@@ -14,12 +14,19 @@ from utils import clip
 class SmearingConfig(AlgorithmBase):
     """Abstract base class, can't be instantiated."""
     __metaclass__ = ABCMeta
+    _dU = None # integration point positions, depends on beam profile
+    _weights = None # integration weight per position, depends on beam profile
+    locs = None # integration location matrix, depends on collType
+
     parameters = (
         # not sure if this is the right place: is the nsteps parameter useful
-        # for all possible smearing settings?
+        # for all possible smearing settings? BRP: yes, I think so... 
         Parameter("nSteps", 25, unit = NoUnit(),
             displayName = "number of smearing points around each q",
             valueRange = (0, 1000)),
+        Parameter("collType", u"Slit", unit = NoUnit(),
+            displayName = "Type of collimation leading to smearing",
+            valueRange = [u"Slit", u"Pinhole", u"Rectangular", u"None"])
     )
 
     @abstractmethod
@@ -29,6 +36,7 @@ class SmearingConfig(AlgorithmBase):
     @abstractmethod
     def updateQLimits(self, qLow, qHigh):
         pass
+
 
 import sys
 
@@ -42,6 +50,53 @@ class TrapezoidSmearing(SmearingConfig):
             valueRange = (0., numpy.inf), decimals = 1),
     )
 
+    def _prepSmear(self, q):
+        """ prepares the smearing profile for a given collimation configuration. 
+        This is supposed to be in the SmearingConfig class """
+
+        # make sure we're getting a valid dataset:
+        assert( isinstance(q, np.ndarray))
+        assert( q.ndim == 1)
+
+        # prepare the smearing profile
+        self.setIntPoints(q)
+
+        if self.collType == u"Slit":
+            self.locs = np.sqrt(np.add.outer(q **2, self.dU[0,:] **2))
+        elif self.collType == u"None":
+            pass
+        else:
+            raise NotImplementedError
+
+    def setIntPoints(self, q):
+        """ sets smearing profile integration points for trapezoidal slit. 
+        Top (umbra) of trapezoid has full width xt, bottom of trapezoid 
+        (penumbra) has full width.
+        Since the smearing function is assumed to be symmetrical, the 
+        integration parameters are calculated in the interval [0, xb/2]
+        """
+        xt, xb = self.umbra, self.penumbra
+
+        # ensure things are what they are supposed to be
+        assert (xt >= 0.)
+        if xb < xt:
+            xb = xt # should use square profile in this case.
+
+        # prepare integration steps dU:
+        dU = np.logspace(np.log10(q.min() / 10.),
+                np.log10(xb / 2.), num = n)
+        dU = np.concatenate(([0,], dU)) [np.newaxis, :]
+
+        if xb == xt:
+            y = 1. - (dU * 0.)
+        else:
+            y = 1. - (dU - xt) / (xb - xt)
+
+        y = np.clip(y, 0., 1.)
+        y[dU < xt] = 1.
+        Area = (xt + 0.5 * (xb - xt))
+        self._dU, self._weights = dU, (y / Area)
+    
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
         self.umbra.setUnit(newUnit)
