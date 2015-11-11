@@ -278,7 +278,7 @@ class SASConfig(AlgorithmBase):
         self.qHigh.setOnValueUpdate(self.updateConstraints)
 
     def __eq__(self, other):
-        if not isinstance(SASConfig, type(other)):
+        if not isinstance(other, type(self)):
             return False
         res = ((self.smearing == other.smearing) and
                 super(SASConfig, self).__eq__(other))
