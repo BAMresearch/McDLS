@@ -62,6 +62,14 @@ class SmearingConfig(AlgorithmBase):
             other._weights = self._weights.copy()
         return other
 
+    def __str__(self):
+        s = [str(id(self)) + " " + super(SmearingConfig, self).__str__()]
+        s.append("  dU: {}".format(self.dU))
+        s.append("  weights: {}".format(self.weights))
+        return "\n".join(s)
+
+# SmearingConfig.factory() # not sure if required
+
 import sys
 
 class TrapezoidSmearing(SmearingConfig):
