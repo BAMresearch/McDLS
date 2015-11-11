@@ -166,18 +166,6 @@ class TrapezoidSmearing(SmearingConfig):
         area = (xt + 0.5 * (xb - xt))
         self._dU, self._weights = dU, y / area
 
-    @property
-    def dU(self):
-        return self._dU
-
-    @property
-    def weights(self):
-        return self._weights
-
-    @property
-    def prepared(self):
-        return self._dU, self._weights
-
 TrapezoidSmearing.factory()
 
 class SASConfig(AlgorithmBase):
