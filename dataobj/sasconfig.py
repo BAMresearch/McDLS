@@ -280,9 +280,9 @@ class SASConfig(AlgorithmBase):
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return False
-        res = ((self.smearing == other.smearing) and
+        equal = ((self.smearing == other.smearing) and
                 super(SASConfig, self).__eq__(other))
-        return res
+        return equal
 
     def __str__(self):
         return "\n".join((
