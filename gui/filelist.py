@@ -49,7 +49,11 @@ class FileList(DataList):
     def setDataConfig(self, dataConfig):
         if self.isEmpty():
             return
-        self.updateData(updateFunc = DataObj.setConfig, config = dataConfig,
+        def setConfigToData(data, config = None):
+            """Helper to call the appropriate method in the class hierarchy of
+            the dataset."""
+            data.setConfig(config)
+        self.updateData(updateFunc = setConfigToData, config = dataConfig,
                         showProgress = False)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
