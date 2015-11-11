@@ -151,6 +151,11 @@ class Unit(object):
     def name(cls):
         return cls.__name__
 
+    def __eq__(self, other):
+        equal = isinstance(other, type(self))
+        equal &= self.displayMagnitudeName == other.displayMagnitudeName
+        return equal
+
 class Temperature(Unit):
     """ test case for special conversions. Done by redefining toSI and toDisplay. 
     Implemented units are given in _magnitudeMap.
