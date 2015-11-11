@@ -15,6 +15,7 @@ from dataobj import DataObj
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
+import sys
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))
@@ -55,5 +56,7 @@ class FileList(DataList):
             data.setConfig(config)
         self.updateData(updateFunc = setConfigToData, config = dataConfig,
                         showProgress = False)
+        # data = self.data(0)[0]
+        # print >>sys.__stderr__, "FileList.data", type(data), id(data.config.smearing)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

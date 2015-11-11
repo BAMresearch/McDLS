@@ -60,9 +60,7 @@ class DataObj(DataSet, DisplayMixin):
             return True
         if self.config == config:
             return False
-        # print >>sys.__stderr__, "old", id(self._config), unicode(self._config)
         self._config = config.copy()
-        # print >>sys.__stderr__, "cpy", id(self._config), unicode(self._config)
         return True
 
     def __init__(self, **kwargs):

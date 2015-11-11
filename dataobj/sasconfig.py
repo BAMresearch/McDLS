@@ -256,7 +256,8 @@ class SASConfig(AlgorithmBase):
             return
         self.smearing.integrate(q)
         dU, weights = self.smearing.prepared
-        print >>sys.__stderr__, "prepareSmearing", dU, weights
+        print >>sys.__stderr__, "prepareSmearing"
+        print >>sys.__stderr__, unicode(self)
         # calculate the intensities at sqrt(q**2 + dU **2)
         return numpy.sqrt(numpy.add.outer(q**2, dU[0,:]**2))
 

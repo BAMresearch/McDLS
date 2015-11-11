@@ -224,7 +224,7 @@ class SASModel(ScatteringModel):
             ff = self.ff(locs).reshape(kansas)
             dU, weightFunc = data.config.smearing.prepared
             import sys
-            print >>sys.__stderr__, "prepared", dU, weightFunc
+            print >>sys.__stderr__, "prepared"
             print >>sys.__stderr__, unicode(data.config.smearing)
             it = 2 * np.trapz(ff**2 * v**2 * # outer() ?
                     (0 * ff + weightFunc), x = dU, axis = 1) 
