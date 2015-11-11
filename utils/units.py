@@ -204,6 +204,7 @@ class DynamicViscosity(Unit):
     _magnitudeMap = {
         u"Pa s"        : 1.,
         u"kg m⁻¹ s⁻¹"  : 1.,
+        u"N s m⁻²"     : 1.,
         u"mPa s"       : 1e-3,
         u"centiPoise"  : 1e-3,
         u"cp"          : 1e-3, # symbol read from DLS data file
