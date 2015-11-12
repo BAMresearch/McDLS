@@ -4,7 +4,7 @@
 
 from __future__ import absolute_import # PEP328
 from scipy import optimize
-from models import DLSModel
+from models import SASModel
 
 class BackgroundScalingFit(object):
     """
@@ -40,7 +40,7 @@ class BackgroundScalingFit(object):
 
     def __init__(self, findBackground, model):
         self.findBackground = findBackground
-        self._dataCalcSquared = isinstance(model, DLSModel)
+        self._dataCalcSquared = not isinstance(model, SASModel)
 
     @staticmethod
     def chi(sc, dataMeas, dataErr, dataCalc):
@@ -88,7 +88,7 @@ class BackgroundScalingFit(object):
         dataErr  = dataErr.flatten()
         dataCalc = dataCalc.flatten()
         if self._dataCalcSquared:
-            dataCalc = dataCalc**2 # for DLS only!
+            dataCalc = dataCalc**2 # required for other techniques than SAS
 
         # different data fit approaches: speed vs. stability (?)
         if ver == 2:
