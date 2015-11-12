@@ -350,7 +350,8 @@ class McSAS(AlgorithmBase):
         bgi = data.i.min()
         sc = numpy.array([sci, bgi])
         scIn = sc
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.model)
         sc, conval, dummy = bgScalingFit.calc(data.i, data.u, 
                 it / sum(vset**2), scIn, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
@@ -549,8 +550,8 @@ class McSAS(AlgorithmBase):
         q = data.q
         intensity = data.i
         intError = data.u
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
-
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.model)
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
