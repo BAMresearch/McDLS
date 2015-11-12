@@ -320,7 +320,8 @@ class McSAS(AlgorithmBase):
         sci = data.f.limit[1] / ft.max() # init. guess for the scaling factor
         bgi = data.f.limit[0]
         sc = numpy.array([sci, bgi])
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.model)
         sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
                 ft / sum(vset**2), sc, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
@@ -513,8 +514,8 @@ class McSAS(AlgorithmBase):
         # data, store it in result too, enables to postprocess later
         # store the model instance too
         data = self.data
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value())
-
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.model)
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
