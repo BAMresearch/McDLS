@@ -80,6 +80,7 @@ class SASData(DataObj):
     def qMin(self, newParam):
         """Value in cliprange will not exceed available q."""
         lims = self.qi.limit
+        print lims
         lims[0] = np.maximum(
                 newParam, self.qi.origin.min())
         self.qi.limit = lims
@@ -92,6 +93,7 @@ class SASData(DataObj):
     @qMax.setter
     def qMax(self, newParam):
         """Value in cliprange will not exceed available q."""
+        print lims
         lims = self.qi.limit
         lims[1] = np.minimum(
                newParam, self.qi.origin.max())
@@ -108,7 +110,7 @@ class SASData(DataObj):
         if not (np.size(newParam) == 2):
             logging.error('qClipRange must be supplied with two-element vector')
         else:
-            self.qi.limit = [np.min(newParam), np.min(newParam)]
+            self.qi.limit = [np.min(newParam), np.max(newParam)]
 
     @property
     def qLimsString(self):
@@ -331,6 +333,9 @@ class SASData(DataObj):
                 unit = ScatteringIntensity(u"(m sr)⁻¹"))
         self.qi = DataVector(rawArray[:, 0], 
                 unit = ScatteringVector(u"nm⁻¹"))
+        self.ei = DataVector(rawArray[:, -1],
+                unit = ScatteringIntensity(u"(m sr)⁻¹"))
+        self.qi.limits = [self.qi.value.min(), self.qi.value.max()]
 
         #set unit definitions for display and internal units
         self._rUnit = Length(u"nm")
@@ -433,18 +438,20 @@ class SASData(DataObj):
         prepares a clipmask for the full dataset
         """
         # init indices: index array is more flexible than boolean masks
-        bArr = np.isfinite(self.qOrigin)
+        bArr = np.isfinite(self.ii.origin)
 
         # Optional masking of negative intensity
         if self.maskZeroInt:
             # FIXME: compare with machine precision (EPS)?
-            bArr &= (self.iOrigin != 0.0)
+            bArr &= (self.ii.origin != 0.0)
         if self.maskNegativeInt:
-            bArr &= (self.iOrigin > 0.0)
+            bArr &= (self.ii.origin > 0.0)
 
+        print('size bArr: {}, qMin: {}, qMax: {}'.format(bArr.sum(), self.qMin, self.qMax))
         # clip to q bounds
-        bArr &= (self.qOrigin >= self.qMin)
-        bArr &= (self.qOrigin <= self.qMax)
+        bArr &= (self.qi.origin >= self.qMin)
+        bArr &= (self.qi.origin <= self.qMax)
+        print('size bArr: {}'.format(bArr.sum()))
         # clip to psi bounds
         if self.is2d:
             bArr &= (self.pOrigin > self.pMin)

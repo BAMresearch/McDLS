@@ -40,12 +40,16 @@ class DataVector(object):
             return self._validIndices
     @validIndices.setter
     def validIndices(self, value):
-        assert (value.max() <= self.raw.size)
+        # assert (value.max() <= self.raw.size)
         self._validIndices = value
 
     @property
     def value(self):
         return self.origin.copy()[self.validIndices]
+    @value.setter
+    def value(self, val):
+        assert(val.size == self.validIndices.size)
+        self.raw[self.validIndices] = self.unit.toDisplay(val)
 
     @property
     def origin(self):
@@ -54,6 +58,10 @@ class DataVector(object):
     @property
     def raw(self):
         return self._raw
+    @raw.setter
+    def raw(self, value):
+        assert (value.size == self.raw.size)
+        self._raw = value
     
     @property
     def unit(self):
@@ -68,11 +76,13 @@ class DataVector(object):
 
     @property
     def limit(self):
-        return self._limit
+        return [np.min(self._limit), np.max(self._limit)]
     @limit.setter
     def limit(self, value):
         if value is None:
             self._limit = [-np.inf, np.inf]
+        else:
+            self._limit = value
 
 # formerly known as 'ScatteringData', better? also for the module?
 class DataObj(DataSet, DisplayMixin):
