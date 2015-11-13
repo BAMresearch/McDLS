@@ -152,7 +152,7 @@ class TrapezoidSmearing(SmearingConfig):
         has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
         super(TrapezoidSmearing, self).integrate(q)
         n, xt, xb = self.nSteps(), self.umbra(), self.penumbra()
-        print >>sys.__stderr__, "integrate", xb, xt
+        #print >>sys.__stderr__, "integrate", xb, xt
 
         # ensure things are what they are supposed to be
         assert (xt >= 0.)
@@ -291,8 +291,8 @@ class SASConfig(AlgorithmBase, CallbackRegistry):
             return
         self.smearing.integrate(q)
         qOffset, weights = self.smearing.prepared
-        print >>sys.__stderr__, "prepareSmearing"
-        print >>sys.__stderr__, unicode(self)
+        #print >>sys.__stderr__, "prepareSmearing"
+        #print >>sys.__stderr__, unicode(self)
         # calculate the intensities at sqrt(q**2 + qOffset **2)
         return numpy.sqrt(numpy.add.outer(q**2, qOffset[0,:]**2))
 
