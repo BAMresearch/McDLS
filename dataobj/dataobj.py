@@ -24,6 +24,14 @@ class DataObj(DataSet, DisplayMixin):
     _filename = None
     _config = None
 
+    # These are to be set by the particular application dataset: 
+    # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = g1 for DLS
+    x = None # sampling vector 1
+    y = None # sampling vector 2
+    z = None # sampling vector 3
+    f = None # f returns measurement data at sampling locations
+    fu = None # fu returns measurement data uncertainty
+
     @property
     def filename(self):
         return self._filename
