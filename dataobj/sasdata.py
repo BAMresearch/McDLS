@@ -74,31 +74,33 @@ class SASData(DataObj):
     @property
     def qMin(self):
         """Returns minimum q from data or qClipRange, whichever is larger."""
-        return np.maximum(self.qClipRange[0], 
-                self.qOrigin.min())
+        return np.maximum(self.qi.limit[0], self.qi.origin.min())
 
     @qMin.setter
     def qMin(self, newParam):
         """Value in cliprange will not exceed available q."""
-        self._qClipRange[0] = np.maximum(
-                newParam, self.qOrigin.min())
+        lims = self.qi.limit
+        lims[0] = np.maximum(
+                newParam, self.qi.origin.min())
+        self.qi.limit = lims
         self._prepareValidIndices()
 
     @property
     def qMax(self):
-        return np.minimum(self.qClipRange[1], 
-                self.qOrigin.max())
+        return np.minimum(self.qi.limit[1], self.qi.origin.max())
 
     @qMax.setter
     def qMax(self, newParam):
         """Value in cliprange will not exceed available q."""
-        self._qClipRange[1] = np.minimum(
-               newParam, self.qOrigin.max())
+        lims = self.qi.limit
+        lims[1] = np.minimum(
+               newParam, self.qi.origin.max())
+        self.qi.limit = lims
         self._prepareValidIndices()
 
     @property
     def qClipRange(self):
-        return self._qClipRange
+        return self.qi.limit
 
     @qClipRange.setter
     def qClipRange(self, newParam):
@@ -106,15 +108,14 @@ class SASData(DataObj):
         if not (np.size(newParam) == 2):
             logging.error('qClipRange must be supplied with two-element vector')
         else:
-            self.qMin = np.min(newParam)
-            self.qMax = np.max(newParam)
+            self.qi.limit = [np.min(newParam), np.min(newParam)]
 
     @property
     def qLimsString(self):
         return u"{0:.3g} ≤ Q ({qMagnitudeName}) ≤ {1:.3g}".format(
-                self.qUnit.toDisplay(self.qMin),
-                self.qUnit.toDisplay(self.qMax),
-                qMagnitudeName = self.qUnit.displayMagnitudeName)
+                self.qi.unit.toDisplay(self.qi.limit[0]),
+                self.qi.unit.toDisplay(self.qi.limit[1]),
+                qMagnitudeName = self.qi.unit.displayMagnitudeName)
 
     # uncertainty on the intensities from data file
 
@@ -451,8 +452,9 @@ class SASData(DataObj):
 
         # store
         self._validIndices = np.argwhere(bArr)[:,0]
-        # a quick, temporary implementation
+        # a quick, temporary implementation to pass on all valid indices to the parameters:
         self.ii.validIndices = self._validIndices
+        self.qi.validIndices = self._validIndices
         self._prepareSizeEst() # recalculate based on limits. 
 
 if __name__ == "__main__":
