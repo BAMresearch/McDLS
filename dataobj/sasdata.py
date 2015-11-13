@@ -157,6 +157,10 @@ class SASData(DataObj):
         return self.rawArray[:, 3]
 
     @property
+    def pOrigin(self):
+        return self.qUnit.toSi(self.rawArray[:, 3])
+
+    @property
     def pUnit(self):
         return self.config.pUnit
 
