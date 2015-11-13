@@ -164,6 +164,8 @@ class SettingsWidget(SettingsWidgetBase):
 
     def updateParam(self, widget):
         """Write UI settings back to the algorithm."""
+        if widget in self.uiWidgets:
+            return # skip ui input widgets without a Parameter backend
         p = self._paramFromWidget(widget)
         if p is None:
             logging.error("updateParam({}) could not find associated parameter!"
