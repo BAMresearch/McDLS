@@ -14,7 +14,7 @@ from utils import clip
 class SmearingConfig(AlgorithmBase):
     """Abstract base class, can't be instantiated."""
     __metaclass__ = ABCMeta
-    _dU = None # integration point positions, depends on beam profile
+    _qOffset = None # integration point positions, depends on beam profile
     _weights = None # integration weight per position, depends on beam profile
     locs = None # integration location matrix, depends on collType
     parameters = (
@@ -43,8 +43,8 @@ class SmearingConfig(AlgorithmBase):
         assert (q.ndim == 1)
 
     @property
-    def dU(self):
-        return self._dU
+    def qOffset(self):
+        return self._qOffset
 
     @property
     def weights(self):
@@ -52,19 +52,19 @@ class SmearingConfig(AlgorithmBase):
 
     @property
     def prepared(self):
-        return self._dU, self._weights
+        return self._qOffset, self._weights
 
     def copy(self):
         other = super(SmearingConfig, self).copy()
-        if self.dU is not None:
-            other._dU = self._dU.copy()
+        if self.qOffset is not None:
+            other._qOffset = self._qOffset.copy()
         if self.weights is not None:
             other._weights = self._weights.copy()
         return other
 
     def __str__(self):
         s = [str(id(self)) + " " + super(SmearingConfig, self).__str__()]
-        s.append("  dU: {}".format(self.dU))
+        s.append("  qOffset: {}".format(self.qOffset))
         s.append("  weights: {}".format(self.weights))
         return "\n".join(s)
 
@@ -94,7 +94,7 @@ class TrapezoidSmearing(SmearingConfig):
         self.setIntPoints(q)
 
         if self.collType == u"Slit":
-            self.locs = np.sqrt(np.add.outer(q **2, self.dU[0,:] **2))
+            self.locs = np.sqrt(np.add.outer(q **2, self.qOffset[0,:] **2))
         elif self.collType == u"None":
             pass
         else:
@@ -114,20 +114,20 @@ class TrapezoidSmearing(SmearingConfig):
         if xb < xt:
             xb = xt # should use square profile in this case.
 
-        # prepare integration steps dU:
-        dU = np.logspace(np.log10(q.min() / 10.),
+        # prepare integration steps qOffset:
+        qOffset = np.logspace(np.log10(q.min() / 10.),
                 np.log10(xb / 2.), num = n)
-        dU = np.concatenate(([0,], dU)) [np.newaxis, :]
+        qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
 
         if xb == xt:
-            y = 1. - (dU * 0.)
+            y = 1. - (qOffset * 0.)
         else:
-            y = 1. - (dU - xt) / (xb - xt)
+            y = 1. - (qOffset - xt) / (xb - xt)
 
         y = np.clip(y, 0., 1.)
-        y[dU < xt] = 1.
+        y[qOffset < xt] = 1.
         Area = (xt + 0.5 * (xb - xt))
-        self._dU, self._weights = dU, (y / Area)
+        self._qOffset, self._weights = qOffset, (y / Area)
     
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
@@ -159,20 +159,20 @@ class TrapezoidSmearing(SmearingConfig):
         if xb < xt:
             xb = xt # should use square profile in this case.
 
-        # prepare integration steps dU:
-        dU = numpy.logspace(numpy.log10(q.min() / 10.),
+        # prepare integration steps qOffset:
+        qOffset = numpy.logspace(numpy.log10(q.min() / 10.),
                             numpy.log10(xb / 2.), num = n)
-        dU = numpy.concatenate(([0,], dU)) [numpy.newaxis, :]
+        qOffset = numpy.concatenate(([0,], qOffset)) [numpy.newaxis, :]
 
         if xb == xt: 
-            y = 1. - (dU * 0.)
+            y = 1. - (qOffset * 0.)
         else:
-            y = 1. - (dU - xt) / (xb - xt)
+            y = 1. - (qOffset - xt) / (xb - xt)
 
         y = numpy.clip(y, 0., 1.)
-        y[dU < xt] = 1.
+        y[qOffset < xt] = 1.
         area = (xt + 0.5 * (xb - xt))
-        self._dU, self._weights = dU, y / area
+        self._qOffset, self._weights = qOffset, y / area
 
 TrapezoidSmearing.factory()
 
@@ -255,11 +255,11 @@ class SASConfig(AlgorithmBase):
         if self.smearing is None:
             return
         self.smearing.integrate(q)
-        dU, weights = self.smearing.prepared
+        qOffset, weights = self.smearing.prepared
         print >>sys.__stderr__, "prepareSmearing"
         print >>sys.__stderr__, unicode(self)
-        # calculate the intensities at sqrt(q**2 + dU **2)
-        return numpy.sqrt(numpy.add.outer(q**2, dU[0,:]**2))
+        # calculate the intensities at sqrt(q**2 + qOffset **2)
+        return numpy.sqrt(numpy.add.outer(q**2, qOffset[0,:]**2))
 
     def copy(self):
         other = super(SASConfig, self).copy()

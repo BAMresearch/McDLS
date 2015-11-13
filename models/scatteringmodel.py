@@ -222,12 +222,12 @@ class SASModel(ScatteringModel):
             # the ff functions might only accept one-dimensional q arrays
             locs = data.locs.reshape((data.locs.size))
             ff = self.ff(locs).reshape(kansas)
-            dU, weightFunc = data.config.smearing.prepared
+            qOffset, weightFunc = data.config.smearing.prepared
             import sys
             print >>sys.__stderr__, "prepared"
             print >>sys.__stderr__, unicode(data.config.smearing)
             it = 2 * np.trapz(ff**2 * v**2 * # outer() ?
-                    (0 * ff + weightFunc), x = dU, axis = 1) 
+                    (0 * ff + weightFunc), x = qOffset, axis = 1) 
         else:
             # calculate their form factors
             ff = self.ff(data)
