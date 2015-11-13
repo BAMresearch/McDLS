@@ -208,7 +208,8 @@ class CallbackRegistry(object):
             "'{}' not in predefined callback slots '{}'"
             .format(what, self.callbackSlots))
 
-class SASConfig(AlgorithmBase):
+class SASConfig(AlgorithmBase, CallbackRegistry):
+    # TODO: implement callbacks for each value pair & unit
     # set units already for use in parameter definitions and UI
     _iUnit = NoUnit()
     _qUnit = NoUnit()
@@ -223,6 +224,10 @@ class SASConfig(AlgorithmBase):
             valueRange = (0., numpy.inf), decimals = 1),
     )
 
+    @property
+    def callbackSlots(self):
+        return set(("limits", "qunit", "punit", "iunit"))
+
     @mixedmethod
     def updateConstraints(self, *args):
         if not self.qLow() < self.qHigh():
@@ -231,7 +236,7 @@ class SASConfig(AlgorithmBase):
             self.qHigh.setValue(temp)
         if self.smearing is None:
             return
-        self.smearing.updateQLimits(self.qLow(), self.qHigh())
+        self.callback("limits", self.qLow(), self.qHigh())
 
     # not used yet, need a signal to get the available q-range of data from filelist to datawidget
     def setQRange(self, qMin, qMax):
@@ -258,21 +263,19 @@ class SASConfig(AlgorithmBase):
     def iUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringIntensity)
         self._iUnit = newUnit
+        self.callback("iunit", newUnit)
 
     @qUnit.setter
     def qUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
         self._qUnit = newUnit
-        self.qLow.setUnit(newUnit)
-        self.qHigh.setUnit(newUnit)
-        if self.smearing is None:
-            return
-        self.smearing.updateQUnit(newUnit)
+        self.callback("qunit", newUnit)
 
     @pUnit.setter
     def pUnit(self, newUnit):
         assert isinstance(newUnit, Angle)
         self._pUnit = newUnit
+        self.callback("punit", newUnit)
 
     @property
     def smearing(self):
@@ -304,11 +307,17 @@ class SASConfig(AlgorithmBase):
     def __init__(self):
         super(SASConfig, self).__init__()
         self.smearing = TrapezoidSmearing()
+        self.qLow.setOnValueUpdate(self.updateConstraints)
+        self.qHigh.setOnValueUpdate(self.updateConstraints)
+#        self.smearing.updateQLimits(self.qLow(), self.qHigh())
+        self.register("qunit", self.qLow.setUnit)
+        self.register("qunit", self.qHigh.setUnit)
+        if self.smearing is not None:
+            self.register("qunit", self.smearing.updateQUnit)
+            self.register("limits", self.smearing.updateQLimits)
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")
         self.pUnit = Angle(u"°")
-        self.qLow.setOnValueUpdate(self.updateConstraints)
-        self.qHigh.setOnValueUpdate(self.updateConstraints)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
