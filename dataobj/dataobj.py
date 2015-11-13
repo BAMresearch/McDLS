@@ -8,12 +8,69 @@ Represents input data associated with a measurement.
 from __future__ import absolute_import # PEP328
 import os # Miscellaneous operating system interfaces
 from numpy import all as np_all
+import numpy as np
 
 # related to the class below
 from abc import ABCMeta, abstractproperty, abstractmethod
 from bases.dataset import DataSet, DisplayMixin
+from utils.units import Unit, NoUnit
 
 import sys
+
+class DataVector(object):
+    """ a class for combining aspects of a particular vector of data. """
+    _raw = None # 
+    _unit = None # instance of unit
+    _limit = None # two-element vector with min-max
+    _validIndices = None # valid indices. 
+    
+    def __init__(self, raw, unit = None, limit = None):
+
+        self._raw = raw
+        self.limit = limit
+        self.unit = unit
+
+    @property
+    def validIndices(self):
+        if self._validIndices is None:
+            return range(self.raw.size)
+        else:
+            return _validIndices
+    @validIndices.setter
+    def validIndices(self, value):
+        assert (value.max() <= self.raw.size)
+        self._validIndices = value
+
+    @property
+    def value(self):
+        return self.origin.copy()[self.validIndices]
+
+    @property
+    def origin(self):
+        return self.unit.toSi(self.raw)
+
+    @property
+    def raw(self):
+        return self._raw
+    
+    @property
+    def unit(self):
+        return self._unit
+    @unit.setter
+    def unit(self, value):
+        if value is None:
+            self._unit = NoUnit
+        else:
+            assert(isinstance(value, Unit))
+            self._unit = value
+
+    @property
+    def limit(self):
+        return self._limit
+    @limit.setter
+    def limit(self, value):
+        if value is None:
+            self._limit = [-np.inf, np.inf]
 
 # formerly known as 'ScatteringData', better? also for the module?
 class DataObj(DataSet, DisplayMixin):
