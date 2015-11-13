@@ -23,7 +23,7 @@ import logging
 import numpy as np # For arrays
 from utils import classproperty
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
-from dataobj import DataObj, SASConfig
+from dataobj import DataObj, SASConfig, DataVector
 
 class SASData(DataObj):
     """Represents one set of data from a unique source (a file, for example).
@@ -44,30 +44,32 @@ class SASData(DataObj):
     @property
     def i(self):
         """Measured intensity at q."""
-        return self.iOrigin.copy()[self.validIndices]
+        return self.ii.value
+    f = i # define the measurement vector
 
     @property
     def iOrigin(self):
-        return self.iUnit.toSi(self.rawArray[:, 1])
+        return self.ii.origin
 
     @property
     def iUnit(self):
-        return self.config.iUnit
+        return self.ii.unit
 
     # scattering vector
 
     @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self.qOrigin.copy()[self.validIndices]
+        return self.qi.value
+    x0 = q #define the sampling vector
 
     @property
     def qOrigin(self):
-        return self.qUnit.toSi(self.rawArray[:, 0])
+        return self.qi.origin
 
     @property
     def qUnit(self):
-        return self.config.qUnit
+        return self.qi.unit
 
     @property
     def qMin(self):
@@ -120,6 +122,7 @@ class SASData(DataObj):
     def e(self):
         """Uncertainty or Error of the intensity at q loaded from file."""
         return self.eOrigin.copy()[self.validIndices]
+    fu = e # define the uncertainty on the measurement vector
 
     @property
     def eOrigin(self):
@@ -317,6 +320,17 @@ class SASData(DataObj):
 
     def __init__(self, **kwargs):
         super(SASData, self).__init__(**kwargs)
+        
+        # process rawArray for new DataVector instances:
+        rawArray = kwargs.pop('rawArray', None)
+        if rawArray is None:
+            logging.error('SASData must be called with a rawArray provided')
+
+        self.ii = DataVector(rawArray[:, -2], 
+                unit = ScatteringIntensity(u"(m sr)⁻¹"))
+        self.qi = DataVector(rawArray[:, 0], 
+                unit = ScatteringVector(u"nm⁻¹"))
+
         #set unit definitions for display and internal units
         self._rUnit = Length(u"nm")
         # init config as early as possible to get properties ready which
@@ -437,6 +451,8 @@ class SASData(DataObj):
 
         # store
         self._validIndices = np.argwhere(bArr)[:,0]
+        # a quick, temporary implementation
+        self.ii.validIndices = self._validIndices
         self._prepareSizeEst() # recalculate based on limits. 
 
 if __name__ == "__main__":

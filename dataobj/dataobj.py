@@ -18,7 +18,9 @@ from utils.units import Unit, NoUnit
 import sys
 
 class DataVector(object):
-    """ a class for combining aspects of a particular vector of data. """
+    """ a class for combining aspects of a particular vector of data.
+    This is intended only as a storage container without additional functionality.
+    """
     _raw = None # 
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
@@ -35,7 +37,7 @@ class DataVector(object):
         if self._validIndices is None:
             return range(self.raw.size)
         else:
-            return _validIndices
+            return self._validIndices
     @validIndices.setter
     def validIndices(self, value):
         assert (value.max() <= self.raw.size)
@@ -80,14 +82,33 @@ class DataObj(DataSet, DisplayMixin):
     __metaclass__ = ABCMeta
     _filename = None
     _config = None
+    _x0 = None
+    _x1 = None
+    _x2= None
+    _f = None
+    _fu = None
 
     # These are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = g1 for DLS
-    x = None # sampling vector 1
-    y = None # sampling vector 2
-    z = None # sampling vector 3
-    f = None # f returns measurement data at sampling locations
-    fu = None # fu returns measurement data uncertainty
+    @abstractproperty
+    def x0(self): # sampling vector 1
+        return self._x0
+
+    # @abstractproperty # sampling vector 2
+    # def x1(self):
+    #     return self._x1
+
+    # @abstractproperty # sampling vector 3
+    # def x2(self):
+    #     return self._x2
+
+    @abstractproperty # measurement vector
+    def f(self):
+        return self._f
+
+    @abstractproperty # measurement vector uncertainty
+    def fu(self):
+        return self._fu
 
     @property
     def filename(self):
