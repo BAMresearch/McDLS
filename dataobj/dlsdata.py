@@ -43,13 +43,14 @@ class DLSData(DataObj):
     @classproperty
     @classmethod
     def displayDataDescr(cls):
-        return ("Filename ", "Data points ", "Angles ",
+        return ("Filename", "Data points", "# Angles", "Angle(s)",
                 "Sample Name", "Description")
 
     @classproperty
     @classmethod
     def displayData(cls):
-        return ("title", "count", "numAngles", "sampleName", "description")
+        return ("title", "count", "numAngles", "anglesToStr", "sampleName",
+                "description")
 
     @property
     def dataContent(self):
@@ -96,6 +97,11 @@ class DLSData(DataObj):
         if self.angles is None:
             return 0
         return len(self.angles)
+
+    @property
+    def anglesToStr(self):
+        return "; ".join(("{0:.1f}".format(Angle(u"°").toDisplay(a))
+                          for a in self.angles))
 
     # temperature, viscosity, refractiveIndex, wavelength including std.err
 
