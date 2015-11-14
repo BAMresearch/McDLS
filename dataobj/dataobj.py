@@ -97,6 +97,7 @@ class DataVector(object):
         return self._limit
     @limit.setter
     def limit(self, value):
+        print('Limit value: {}'.format(value))
         if value is None:
             self._limit = [-np.inf, np.inf]
         else:

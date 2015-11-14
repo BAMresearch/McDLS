@@ -331,7 +331,7 @@ class SASData(DataObj):
                 unit = self.ii.unit)
         self.ui = DataVector(u'σI', rawArray[:, -1], # we should use self.ei.copy
                 unit = self.ii.unit, editable = True)
-        self.qi.limits = [self.qi.value.min(), self.qi.value.max()]
+        self.qi.limit = [self.qi.value.min(), self.qi.value.max()]
         print [self.qi.value.min(), self.qi.value.max()]
         print self.qi.limsString
         if rawArray.shape[1] > 3: # psi column is present
@@ -453,11 +453,11 @@ class SASData(DataObj):
         if self.maskNegativeInt:
             bArr &= (self.ii.origin > 0.0)
 
-        print('size bArr: {}, qMin: {}, qMax: {}'.format(bArr.sum(), self.qMin, self.qMax))
+        # print('size bArr: {}, qMin: {}, qMax: {}'.format(bArr.sum(), self.qMin, self.qMax))
         # clip to q bounds
         bArr &= (self.qi.origin >= self.qMin)
         bArr &= (self.qi.origin <= self.qMax)
-        print('size bArr: {}'.format(bArr.sum()))
+        # print('size bArr: {}'.format(bArr.sum()))
         # clip to psi bounds
         if self.is2d:
             bArr &= (self.pOrigin > self.pMin)
