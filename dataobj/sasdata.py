@@ -323,15 +323,21 @@ class SASData(DataObj):
         if rawArray is None:
             logging.error('SASData must be called with a rawArray provided')
 
-        self.ii = DataVector(u'I', rawArray[:, -2], 
-                unit = ScatteringIntensity(u"(m sr)⁻¹"))
         self.qi = DataVector(u'q', rawArray[:, 0], 
                 unit = ScatteringVector(u"nm⁻¹"))
-        self.ei = DataVector(u'∆I', rawArray[:, -1],
+        self.ii = DataVector(u'I', rawArray[:, 1], 
+                unit = ScatteringIntensity(u"(m sr)⁻¹"))
+        self.ei = DataVector(u'∆I', rawArray[:, 2],
                 unit = self.ii.unit)
         self.ui = DataVector(u'σI', rawArray[:, -1], # we should use self.ei.copy
                 unit = self.ii.unit, editable = True)
         self.qi.limits = [self.qi.value.min(), self.qi.value.max()]
+        print [self.qi.value.min(), self.qi.value.max()]
+        print self.qi.limsString
+        if rawArray.shape[1] > 3: # psi column is present
+            self.pi = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
+        else:
+            self.pi = None
 
         self.f = self.ii
         self.x0 = self.qi
@@ -345,7 +351,7 @@ class SASData(DataObj):
 
         self._prepareValidIndices()
         self._prepareSizeEst()
-        self._shannonChannelEst = self.q.max() / self.q.min()
+        self._shannonChannelEst = np.diff(self.qi.limit)
         self._prepareUncertainty()
 
     def setConfig(self, config):
@@ -355,8 +361,8 @@ class SASData(DataObj):
         self.locs = self.config.prepareSmearing(self.qi.value)
 
     def _prepareSizeEst(self):
-        self._sizeEst = np.pi / np.array([self.qi.value.max(),
-                                          abs(self.qi.value.min()) ])
+        self._sizeEst = np.pi / np.array([self.qi.limit[1],
+                                          abs(self.qi.limit[0]) ])
 
     def _prepareUncertainty(self):
         self.ui.value = self.eMin * self.f.origin
@@ -375,62 +381,62 @@ class SASData(DataObj):
         invInd = (True - np.isfinite(self.ui.value))
         self.ui.value[invInd] = np.inf
 
-    def _prepSmear(self):
-        # TODO: in the process of moving this to dataobj.dataconfig!!!
-
-        # def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.], nSmearSteps = 25):
-
-        def squareSlit(q, shapeParam, n):
-            """ Testing purposes only, since trapezoid encompasses square slit """
-
-            slitWidth = shapeParam[0]
-            # prepare integration steps qOffset:
-            qOffset = np.logspace(np.log10(q.min() / 10.),
-                    np.log10(slitWidth / 2.), num = n - 1)
-            qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
-            return qOffset, np.ones((qOffset.size,)) / slitWidth
-
-        def trapzSlit(q, shapeParam, n):
-            """ defines integration over trapezoidal slit. Top of trapezoid 
-            has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
-            xt, xb = shapeParam[0], shapeParam[1]
-
-            # ensure things are what they are supposed to be
-            assert (xt >= 0.)
-            if xb < xt:
-                xb = xt # should use square profile in this case.
-
-            # prepare integration steps qOffset:
-            qOffset = np.logspace(np.log10(q.min() / 10.),
-                    np.log10(xb / 2.), num = n)
-            qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
-
-            if xb == xt: 
-                y = 1. - (qOffset * 0.)
-            else:
-                y = 1. - (qOffset - xt) / (xb - xt)
-
-            y = np.clip(y, 0., 1.)
-            y[qOffset < xt] = 1.
-            Area = (xt + 0.5 * (xb - xt))
-            return qOffset, y / Area
-        
-        # now we do the actual smearing preparation
-        assert isinstance(self.q, np.ndarray)
-        assert (self.q.ndim == 1)
-
-        # define smearing profile
-        if self.slitShape == "trapezoid":
-            slitFcn = trapzSlit
-        else:
-            slitFcn = squareSlit
-
-        self.qOffset, self.weightFunc = slitFcn(self.q, 
-                [self.slitUmbra, self.slitPenumbra], 
-                self.nSmearSteps)
-
-        # calculate the intensities at sqrt(q**2 + qOffset **2)
-        self.locs = np.sqrt(np.add.outer(self.q **2, self.qOffset[0,:]**2)) 
+#     def _prepSmear(self):
+#         # TODO: in the process of moving this to dataobj.dataconfig!!!
+# 
+#         # def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.], nSmearSteps = 25):
+# 
+#         def squareSlit(q, shapeParam, n):
+#             """ Testing purposes only, since trapezoid encompasses square slit """
+# 
+#             slitWidth = shapeParam[0]
+#             # prepare integration steps qOffset:
+#             qOffset = np.logspace(np.log10(q.min() / 10.),
+#                     np.log10(slitWidth / 2.), num = n - 1)
+#             qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
+#             return qOffset, np.ones((qOffset.size,)) / slitWidth
+# 
+#         def trapzSlit(q, shapeParam, n):
+#             """ defines integration over trapezoidal slit. Top of trapezoid 
+#             has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
+#             xt, xb = shapeParam[0], shapeParam[1]
+# 
+#             # ensure things are what they are supposed to be
+#             assert (xt >= 0.)
+#             if xb < xt:
+#                 xb = xt # should use square profile in this case.
+# 
+#             # prepare integration steps qOffset:
+#             qOffset = np.logspace(np.log10(q.min() / 10.),
+#                     np.log10(xb / 2.), num = n)
+#             qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
+# 
+#             if xb == xt: 
+#                 y = 1. - (qOffset * 0.)
+#             else:
+#                 y = 1. - (qOffset - xt) / (xb - xt)
+# 
+#             y = np.clip(y, 0., 1.)
+#             y[qOffset < xt] = 1.
+#             Area = (xt + 0.5 * (xb - xt))
+#             return qOffset, y / Area
+#         
+#         # now we do the actual smearing preparation
+#         assert isinstance(self.q, np.ndarray)
+#         assert (self.q.ndim == 1)
+# 
+#         # define smearing profile
+#         if self.slitShape == "trapezoid":
+#             slitFcn = trapzSlit
+#         else:
+#             slitFcn = squareSlit
+# 
+#         self.qOffset, self.weightFunc = slitFcn(self.q, 
+#                 [self.slitUmbra, self.slitPenumbra], 
+#                 self.nSmearSteps)
+# 
+#         # calculate the intensities at sqrt(q**2 + qOffset **2)
+#         self.locs = np.sqrt(np.add.outer(self.q **2, self.qOffset[0,:]**2)) 
     
     def _prepareValidIndices(self):
         """
