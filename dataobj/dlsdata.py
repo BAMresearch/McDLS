@@ -217,8 +217,7 @@ class DLSData(DataObj):
         self.qUnit = self.iUnit = NoUnit()
 
     def __str__(self):
-        out = []
-        out.append(u"## {0} '{1}'".format(self.__class__.__name__, self.title))
+        out = [u"## {0} '{1}'".format(self.__class__.__name__, self.title)]
         for p in self._properties:
             out.append(u"{0}: {1}".format(p, getattr(self, _privPropName(p))))
         return u"\n".join(out)
