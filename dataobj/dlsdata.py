@@ -246,9 +246,9 @@ class DLSData(DataObj):
         lst = []
         for i in range(self.numAngles):
             another = copy.copy(self)
-            another.setAngles(self.angles[i, None])
-            another.setCorrelation(self.correlation[:, i, None])
-            another.setCorrelationError(self.correlationError[:, i, None])
+            another.setAngles(self.angles[i, newaxis])
+            another.setCorrelation(self.correlation[:, i, newaxis])
+            another.setCorrelationError(self.correlationError[:, i, newaxis])
             lst.append(another)
         return lst
 
