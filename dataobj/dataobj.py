@@ -21,16 +21,21 @@ class DataVector(object):
     """ a class for combining aspects of a particular vector of data.
     This is intended only as a storage container without additional functionality.
     """
+    _name = None # descriptor for axes and labels, unicode string at init.
     _raw = None # 
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
     
-    def __init__(self, raw, unit = None, limit = None):
-
+    def __init__(self, name, raw, unit = None, limit = None):
+        self._name = name
         self._raw = raw
         self.limit = limit
         self.unit = unit
+
+    @property
+    def name(self):
+        return unicode(self._name)
 
     @property
     def validIndices(self):
@@ -76,13 +81,20 @@ class DataVector(object):
 
     @property
     def limit(self):
-        return [np.min(self._limit), np.max(self._limit)]
+        return self._limit
     @limit.setter
     def limit(self, value):
         if value is None:
             self._limit = [-np.inf, np.inf]
         else:
-            self._limit = value
+            self._limit = [np.min(value), np.max(value)]
+
+    @property
+    def limsString(self):
+        return u"{0:.3g} ≤ Q ({magnitudeName}) ≤ {1:.3g}".format(
+                self.unit.toDisplay(self.limit[0]),
+                self.unit.toDisplay(self.limit[1]),
+                magnitudeName = self.unit.displayMagnitudeName)
 
 # formerly known as 'ScatteringData', better? also for the module?
 class DataObj(DataSet, DisplayMixin):
