@@ -59,8 +59,7 @@ class DataFile(object):
         """Absolute path name of this file."""
         return self._filename
 
-    @filename.setter
-    def filename(self, filename):
+    def setFilename(self, filename):
         """Checks provided filename for plausibility and updates LastPath"""
         self._filename = self.sanitizeReadFilename(filename)
         LastPath.set(self.filename)
@@ -93,7 +92,7 @@ class DataFile(object):
         raise NotImplementedError
 
     def __init__(self, filename, **kwargs):
-        self.filename = filename
+        self.setFilename(filename)
         self.readFile(**kwargs)
 
     # helpers for writing
@@ -120,7 +119,7 @@ class DataFile(object):
     def write(self, filename, **kwargs):
         filename = self.sanitizeWriteFilename(filename)
         self.writeFile(filename, self.data, **kwargs)
-        self.filename = filename
+        self.setFilename(filename)
 
     @classmethod
     @abstractmethod
