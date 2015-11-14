@@ -10,6 +10,7 @@ from __future__ import absolute_import # PEP328
 
 import logging
 import copy
+from collections import OrderedDict
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty)
 from utils import classproperty, isFunction, isInteger, isList
@@ -45,14 +46,14 @@ class DLSData(DataObj):
     @classproperty
     @classmethod
     def displayDataDescr(cls):
-        return ("Filename", "Data points", "# Angles", "Angle(s)",
-                "Sample Name", "Description")
+        return ("Sample Name", "Measurements", "Data points",
+                "# Angles", "Angle(s)", "Description")
 
     @classproperty
     @classmethod
     def displayData(cls):
-        return ("title", "count", "numAngles", "anglesToStr", "sampleName",
-                "description")
+        return ("sampleName", "measIndicesStr", "count",
+                "numAngles", "anglesToStr", "description")
 
     @property
     def dataContent(self):
@@ -75,6 +76,18 @@ class DLSData(DataObj):
         assert isList(measIndices)
         [verifyMeasIndex(mi) for mi in measIndices]
         self._measIndices = measIndices
+
+    @property
+    def measIndicesStr(self):
+        summary = OrderedDict()
+        for g, i in self.measIndices:
+            if g not in summary:
+                summary[g] = []
+            summary[g].append(i)
+        res = ";".join(["{group}: {indices}".format(group = g,
+            indices = ",".join([str(i) for i in lst]))
+                for g, lst in summary.iteritems()])
+        return res
 
     # correlation data
 
@@ -206,7 +219,6 @@ class DLSData(DataObj):
                     o is not None and
                     isinstance(o, DLSData) and
                     o.sampleName == self.sampleName]
-        self.title = self.sampleName + " (averaged)"
         # average basic properties
         for prop in ("temperature", "viscosity",
                      "refractiveIndex", "wavelength"):
