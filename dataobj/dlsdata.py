@@ -10,9 +10,11 @@ from __future__ import absolute_import # PEP328
 
 import logging
 import copy
-from numpy import pi, sin, array, dstack, hstack, newaxis, repeat, outer, flipud, concatenate, empty
-from utils import classproperty, isFunction
-from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle, NoUnit
+from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
+                   flipud, concatenate, empty)
+from utils import classproperty, isFunction, isInteger, isList
+from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
+                         NoUnit)
 from dataobj.dataobj import DataObj
 
 # Boltzmann constant in m²·kg·s⁻²·K⁻¹ (SI units)
@@ -36,6 +38,7 @@ class DLSData(DataObj):
                    "correlation", "correlationError",
                    "angles", "temperature", "viscosity",
                    "refractiveIndex", "wavelength",
+                   "measIndices",
                    # calculated properties
                    "scatteringVector", "gammaR", "tauGammaMat")
 
@@ -61,6 +64,17 @@ class DLSData(DataObj):
 
     def setSampleDescription(self, descr):
         self._description = descr
+
+    def setMeasIndices(self, measIndices):
+        """Sets the measurement index of this data set. Expects a list of
+        tuples containing two integers of the measurement group index and the
+        measurement index within that group."""
+        def verifyMeasIndex(measIndex):
+            assert isList(measIndex) and len(measIndex) == 2
+            assert all([isInteger(i) for i in measIndex])
+        assert isList(measIndices)
+        [verifyMeasIndex(mi) for mi in measIndices]
+        self._measIndices = measIndices
 
     # correlation data
 
@@ -200,6 +214,8 @@ class DLSData(DataObj):
             setFunc = getattr(self, _propSetterName(prop))
             if isFunction(setFunc):
                 setFunc(arr.mean(), arr.std())
+        # combine all measurement indices
+        self.setMeasIndices(tuple((mi for o in others for mi in o.measIndices)))
         # angles unchanged, but ensure they're identical everywhere
         assert array([self.angles == o.angles for o in others]).all(), \
                "Scattering angles differ between all DLS data to be combined!"
