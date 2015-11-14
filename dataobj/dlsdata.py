@@ -14,8 +14,6 @@ from utils import classproperty, isFunction
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle, NoUnit
 from dataobj.dataobj import DataObj
 
-import sys
-
 # Boltzmann constant in m²·kg·s⁻²·K⁻¹ (SI units)
 KB = 1.38064852 * 1e-23
 
@@ -76,7 +74,6 @@ class DLSData(DataObj):
         self._correlation = rawArray
 
     def setCorrelationError(self, rawArray):
-#        print >>sys.__stderr__, "setCorrelationError", rawArray
         assert self.isValidInput(rawArray), "Invalid data from file!"
         assert rawArray.shape[1] == self.numAngles, \
             "Correlation stddev: #columns differs from #scattering angles"
@@ -213,12 +210,6 @@ class DLSData(DataObj):
         self.setCorrelationError(stacked.std(-1))
         assert len(self.q) == len(self.i) and len(self.q) == len(self.u), \
             "Dimensions of flattened data arrays do not match!"
-#        print >>sys.__stderr__, unicode(self)
-#        print >>sys.__stderr__, "TAU * GAMMA", self.tauGammaMat.shape
-#        print >>sys.__stderr__, self.tauGammaMat[::4,0]
-#        print >>sys.__stderr__, self.tauGammaMat[::4,3]
-#        print >>sys.__stderr__, self.tauGammaMat[::4,6]
-#        sys.exit()
         return self
 
     def __init__(self, **kwargs):
