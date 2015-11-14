@@ -9,6 +9,7 @@ Represents data from dynamic light scattering (DLS) measurement.
 from __future__ import absolute_import # PEP328
 
 import logging
+import copy
 from numpy import pi, sin, array, dstack, hstack, newaxis, repeat, outer, flipud, concatenate, empty
 from utils import classproperty, isFunction
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle, NoUnit
@@ -211,6 +212,25 @@ class DLSData(DataObj):
         assert len(self.q) == len(self.i) and len(self.q) == len(self.u), \
             "Dimensions of flattened data arrays do not match!"
         return self
+
+    def splitPerAngle(self):
+        another = copy.copy(self)
+        lst = []
+        for i in range(self.numAngles):
+            another = copy.copy(self)
+            another.setAngles(self.angles[i, None])
+            another.setCorrelation(self.correlation[:, i, None])
+            another.setCorrelationError(self.correlationError[:, i, None])
+            lst.append(another)
+        return lst
+
+    def ids(self):
+        """Returns a text containing the objects ids of the embedded data
+        objects. (for debugging purposes)"""
+        out = [repr(self)]
+        for p in self._properties:
+            out.append("{}: {}".format(p, id(getattr(self, _privPropName(p)))))
+        return u"\n".join(out)
 
     def __init__(self, **kwargs):
         super(DLSData, self).__init__(**kwargs)
