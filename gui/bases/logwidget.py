@@ -152,7 +152,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
     def addWatchDir(self, path):
         """Adds a directory to check for *plotlog* messages from
         multiprocessing."""
-        if not os.path.exists(path):
+        if not os.path.exists(path) or path in self._watchDirs:
             return
         self._watchDirs.append(path)
 
@@ -164,7 +164,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         This is a quick fix for logging in multiprocessing environment."""
         if not hasattr(self, "_watchDirs"):
             return
-        toBeRemoved = []
+        toBeRemoved = set()
         for path in self._watchDirs:
             if not os.path.exists(path):
                 continue
@@ -175,7 +175,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
                     content = fd.read() # get all of it
                     if len(content):
                         self.append(content)
-                        toBeRemoved.append(path)
+                        toBeRemoved.add(path)
         for path in toBeRemoved:
             self._watchDirs.remove(path)
 
