@@ -26,12 +26,14 @@ class DataVector(object):
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
+    _editable = False # whether raw can be written or not
     
-    def __init__(self, name, raw, unit = None, limit = None):
+    def __init__(self, name, raw, unit = None, limit = None, editable = False):
         self._name = name
         self._raw = raw
         self.limit = limit
         self.unit = unit
+        self.editable = editable
 
     @property
     def name(self):
@@ -53,7 +55,9 @@ class DataVector(object):
         return self.origin.copy()[self.validIndices]
     @value.setter
     def value(self, val):
-        assert(val.size == self.validIndices.size)
+        assert(val.size == np.size(self.validIndices))
+        self.unit.toDisplay(val)
+        self.raw = val
         self.raw[self.validIndices] = self.unit.toDisplay(val)
 
     @property
@@ -65,9 +69,18 @@ class DataVector(object):
         return self._raw
     @raw.setter
     def raw(self, value):
-        assert (value.size == self.raw.size)
+        assert(self.editable)
+        assert(value.size == self.raw.size)
         self._raw = value
     
+    @property
+    def editable(self):
+        return self._editable
+    @editable.setter
+    def editable(self, value):
+        assert(isinstance(value, bool))
+        self._editable = value
+
     @property
     def unit(self):
         return self._unit
