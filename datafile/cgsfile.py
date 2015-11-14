@@ -5,6 +5,7 @@ from __future__ import absolute_import # PEP328
 import logging
 import datetime
 import re
+import os.path
 from numpy import array as np_array
 from collections import OrderedDict
 from utils import isList
@@ -33,7 +34,6 @@ class CGSFile(AsciiFile):
     Read-only at the moment."""
     # a set of attributes found in the data file:
     # pairs of the name in the file for lookup and the associated member name
-    # if both are the same (besides of case) only one name is required
     _knownProps = OrderedDict((
                     ("Date", "date"),
                     ("Time", "time"),
@@ -57,6 +57,7 @@ class CGSFile(AsciiFile):
                     ("Monitor Diode", "monitorDiode"),
                     # dict containing attribute specific units from file if found
                     ("units", None),
+                    ("measIndex", None),
     ))
     # regexp that matches the keys including index number and unit text
     # match group consists of: <key>, (<idx>), <idx>, [<unit>], unit
@@ -104,6 +105,7 @@ class CGSFile(AsciiFile):
         return False
 
     def parseLines(self, asciiLines, **kwargs):
+        """Will be called by the base class' readFile() method."""
         i = 0
         self.verifySignatures(asciiLines[i].strip())
         while i < len(asciiLines) - 1:
@@ -265,9 +267,29 @@ class CGSFile(AsciiFile):
     def parseMonitorDiode(self, text, *args):
         self.setNumberValue("monitorDiode", text)
 
+    def setFilename(self, fn):
+        super(CGSFile, self).setFilename(fn)
+        self._setMeasIndexFromFilename(self.filename)
+
+    def _setMeasIndexFromFilename(self, fn):
+        fn = os.path.basename(fn)
+        fn, dummy = os.path.splitext(fn)
+        result = re.match(".*(?P<mgroup>[0-9]{4})_(?P<meas>[0-9]{4})$", fn)
+        groupIndex, measIndex = None, None
+        try:
+            groupIndex = int(result.group("mgroup"))
+        except:
+            pass
+        try:
+            measIndex = int(result.group("meas"))
+        except:
+            pass
+        self._measIndex = groupIndex, measIndex
+
     def getDataObj(self):
         dlsData = DLSData(title = self.name)
         dlsData.setFilename(self.filename)
+        dlsData.setMeasIndices((self.measIndex,))
         dlsData.setSampleName(self.sampleName)
         dlsData.setSampleDescription(
                 " ".join([s for s in self.sampleMemo if len(s)]))
