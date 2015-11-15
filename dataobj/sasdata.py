@@ -381,63 +381,6 @@ class SASData(DataObj):
         invInd = (True - np.isfinite(self.ui.value))
         self.ui.value[invInd] = np.inf
 
-#     def _prepSmear(self):
-#         # TODO: in the process of moving this to dataobj.dataconfig!!!
-# 
-#         # def prepSmear(self, data, slitShape = "trapezoid", shapeParam = [0., 0.], nSmearSteps = 25):
-# 
-#         def squareSlit(q, shapeParam, n):
-#             """ Testing purposes only, since trapezoid encompasses square slit """
-# 
-#             slitWidth = shapeParam[0]
-#             # prepare integration steps qOffset:
-#             qOffset = np.logspace(np.log10(q.min() / 10.),
-#                     np.log10(slitWidth / 2.), num = n - 1)
-#             qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
-#             return qOffset, np.ones((qOffset.size,)) / slitWidth
-# 
-#         def trapzSlit(q, shapeParam, n):
-#             """ defines integration over trapezoidal slit. Top of trapezoid 
-#             has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
-#             xt, xb = shapeParam[0], shapeParam[1]
-# 
-#             # ensure things are what they are supposed to be
-#             assert (xt >= 0.)
-#             if xb < xt:
-#                 xb = xt # should use square profile in this case.
-# 
-#             # prepare integration steps qOffset:
-#             qOffset = np.logspace(np.log10(q.min() / 10.),
-#                     np.log10(xb / 2.), num = n)
-#             qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
-# 
-#             if xb == xt: 
-#                 y = 1. - (qOffset * 0.)
-#             else:
-#                 y = 1. - (qOffset - xt) / (xb - xt)
-# 
-#             y = np.clip(y, 0., 1.)
-#             y[qOffset < xt] = 1.
-#             Area = (xt + 0.5 * (xb - xt))
-#             return qOffset, y / Area
-#         
-#         # now we do the actual smearing preparation
-#         assert isinstance(self.q, np.ndarray)
-#         assert (self.q.ndim == 1)
-# 
-#         # define smearing profile
-#         if self.slitShape == "trapezoid":
-#             slitFcn = trapzSlit
-#         else:
-#             slitFcn = squareSlit
-# 
-#         self.qOffset, self.weightFunc = slitFcn(self.q, 
-#                 [self.slitUmbra, self.slitPenumbra], 
-#                 self.nSmearSteps)
-# 
-#         # calculate the intensities at sqrt(q**2 + qOffset **2)
-#         self.locs = np.sqrt(np.add.outer(self.q **2, self.qOffset[0,:]**2)) 
-    
     def _prepareValidIndices(self):
         """
         If q and/or psi limits are supplied in the dataset,
