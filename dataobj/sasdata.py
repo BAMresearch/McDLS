@@ -351,7 +351,7 @@ class SASData(DataObj):
 
         self._prepareValidIndices()
         self._prepareSizeEst()
-        self._shannonChannelEst = np.diff(self.qi.limit)
+        self._shannonChannelEst = self.qi.limit[1] / self.qi.limit[0]
         self._prepareUncertainty()
 
     def setConfig(self, config):
