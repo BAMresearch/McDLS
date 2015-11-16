@@ -58,8 +58,9 @@ class DataVector(object):
     @value.setter
     def value(self, val):
         assert(val.size == np.size(self.validIndices))
-        self.unit.toDisplay(val)
-        self.raw = val
+        # self.unit.toDisplay(val) # the value returned here isn't used, is it?
+        # why? this will change the size of raw if valididx contains sth.
+        # self.raw = val
         self.raw[self.validIndices] = self.unit.toDisplay(val)
 
     # proposal for naming to be clear about the differences between
