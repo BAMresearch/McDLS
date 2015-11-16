@@ -101,8 +101,8 @@ class DataVector(object):
         if value is None:
             self._limit = [self.raw.min(), self.raw.max()]
         else:
-            self._limit = [np.maximum(np.min(value), self.raw.min()), 
-                    np.minimum(np.max(value), self.raw.max())]
+            self._limit = [np.maximum(np.min(value), self.origin.min()), 
+                    np.minimum(np.max(value), self.origin.max())]
 
     @property
     def limsString(self):
