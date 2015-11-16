@@ -105,10 +105,11 @@ class DataVector(object):
 
     @property
     def limsString(self):
-        return u"{0:.3g} ≤ Q ({magnitudeName}) ≤ {1:.3g}".format(
+        return u"{0:.3g} ≤ {valName} ({magnitudeName}) ≤ {1:.3g}".format(
                 self.unit.toDisplay(self.limit[0]),
                 self.unit.toDisplay(self.limit[1]),
-                magnitudeName = self.unit.displayMagnitudeName)
+                magnitudeName = self.unit.displayMagnitudeName,
+                valName = self.name)
 
 # formerly known as 'ScatteringData', better? also for the module?
 class DataObj(DataSet, DisplayMixin):
