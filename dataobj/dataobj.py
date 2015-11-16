@@ -42,7 +42,7 @@ class DataVector(object):
     @property
     def validIndices(self):
         if self._validIndices is None:
-            return range(self.raw.size)
+            return np.arange(self.raw.size)
         else:
             return self._validIndices
 
@@ -57,7 +57,7 @@ class DataVector(object):
 
     @value.setter
     def value(self, val):
-        assert(val.size == np.size(self.validIndices))
+        assert(val.size == self.validIndices.size)
         # self.unit.toDisplay(val) # the value returned here isn't used, is it?
         # why? this will change the size of raw if valididx contains sth.
         # self.raw = val
