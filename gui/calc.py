@@ -231,8 +231,8 @@ class Calculator(object):
         config.set(sectionName, "model", self.model.name())
         # We don't have to do anything with these yet, but storing them for now:
         if isinstance(dataset, SASData): # useful with SAS data only
-            config.set(sectionName, "Q limits", 
-                    np.array([dataset.q.min(), dataset.q.max()]))
+            config.set(sectionName, "X0 limits", 
+                    np.array(dataset.x0.limit))
 
         sectionName = "Model Settings"
         config.add_section(sectionName)
