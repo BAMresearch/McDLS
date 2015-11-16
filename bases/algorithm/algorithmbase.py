@@ -91,16 +91,23 @@ class AlgorithmBase(object):
         """This sets the algorithm up and adds the defined parameters as class
         attributes. They become instance attributes automatically at
         initialization."""
-        if name is None and hasattr(cls, "shortName"):
-            # for backwards compatibility
-            cls.setName(cls.shortName)
-        else:
-            cls.setName(name)
+        if name is None:
+            if hasattr(cls, "shortName"):
+                # for backwards compatibility
+                name = cls.shortName
+            else:
+                name = cls.__name__
+        cls.setName(name)
         if not len(parameters) and hasattr(cls, "parameters"):
             # for backwards compatibility
-            cls.setParams(*cls.parameters)
-        else:
-            cls.setParams(*parameters)
+            parameters = []
+            for baseCls in reversed(cls.__mro__):
+                # get parameters from parent classes as well
+                try:
+                    parameters.extend(baseCls.parameters)
+                except:
+                    continue
+        cls.setParams(*parameters)
         return cls
 
     def __init__(self):

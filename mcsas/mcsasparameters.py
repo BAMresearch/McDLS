@@ -11,6 +11,7 @@ from utils.propertynames import PropertyNames
 from utils.parameter import Parameter
 from utils import isString
 from main import makeAbsolutePath
+from utils import units
 logging.basicConfig(level = logging.INFO)                                      
 
 class McSASParameters(PropertyNames):
@@ -103,8 +104,12 @@ class McSASParameters(PropertyNames):
                           .format(fn = filename))
         for pkey in parDict.keys():
             default = parDict[pkey].pop('default')
+            unitClass = parDict[pkey].pop('unitClass', None)
+            displayUnit = parDict[pkey].pop('displayUnit', None)
+            unitInstance = self.pickUnit(unitClass, displayUnit)
+
             self.parameters.append(
-                    Parameter(pkey, default,
+                    Parameter(pkey, default, unit = unitInstance,
                         **parDict[pkey])
                     )
             logging.debug('Parameter {} ingested'.format(pkey))
@@ -119,5 +124,25 @@ class McSASParameters(PropertyNames):
         if not isString(paramDefFile) or not os.path.exists(paramDefFile):
             paramDefFile = self.paramDefFile
         self.loadParameters(paramDefFile)
+
+    def pickUnit(self, unitClass = None, displayUnit = None):
+        """ returns a unit object instance of the right class and displayUnit """
+        #first make a dictionary of name-object pairs
+        if (unitClass is None) or (displayUnit is None):
+            logging.warning('Unit not properly set for parameter.')
+            return units.NoUnit()
+
+        unitDict = {}
+        for name, obj in inspect.getmembers(units):
+            if inspect.isclass(obj):
+                if issubclass(obj, units.Unit):
+                    unitDict.update({name: obj})
+        if unitClass in unitDict:
+            unitObj = unitDict[unitClass]
+            return unitObj(displayUnit)
+        else:
+            logging.warning('Unit class "{}" not found! Mind the case sensitivity!'
+                    .format(unitClass))
+            return units.NoUnit()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

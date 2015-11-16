@@ -18,7 +18,7 @@ class Sink(object):
             self.buf = StringIO()
         if msg[0] == '\t':
             self.buf.write('\n')
-        self.buf.write(msg)
+        self.buf.write(unicode(msg)) # make sure we add unicode only
         if msg[-1] in ('\n', '\r'):
             # call the logging function, removing duplicate newlines
             func(self.buf.getvalue().rstrip("\n"))

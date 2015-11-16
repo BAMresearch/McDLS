@@ -56,12 +56,12 @@ from inspect import getmembers
 import numpy as np
 import sys
 import logging
-from utils import isString, isNumber, isList, isMap, testfor, assertName
+from utils import isString, isNumber, isList, isMap, isSet, testfor, assertName
 from utils.mixedmethod import mixedmethod
 from utils.classproperty import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
 from utils.units import NoUnit
-from utils import clip
+from utils import clip, isCallable
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
     # works with vectors of multiple bounds too
@@ -169,7 +169,8 @@ class ParameterBase(object):
         # sets the ordered names of attributes
         dictionary["_attributeNames"] = names
 
-    setAttributes.__func__(None, locals(), "name", "value", "displayName")
+    setAttributes.__func__(None, locals(), "name", "value", "displayName",
+                           "onValueUpdate") # user provided callback function
 
     @classmethod
     def attributeNames(cls):
@@ -185,7 +186,7 @@ class ParameterBase(object):
         return mergedAttrNames
 
     @mixedmethod
-    def attributes(selforcls):
+    def attributes(selforcls, exclude = None):
         """Returns a dictionary with <key, value> pairs of all attributes and
         their values in this type or instance.
         Helps to avoid having explicit long argument lists"""
@@ -197,7 +198,11 @@ class ParameterBase(object):
         base = base.__mro__[1]
         # store the direct base class for duplication later
         res = dict(cls = base, description = selforcls.__doc__)
-        for name in selforcls.attributeNames():
+        attr = selforcls.attributeNames()
+        # filter a given list of attribute names
+        if isList(exclude) or isSet(exclude):
+            attr = [a for a in attr if a not in exclude]
+        for name in attr:
             # if this throws an exception, there is a bug
             res[name] = getattr(selforcls, name)()
         return res
@@ -219,12 +224,14 @@ class ParameterBase(object):
         attr.pop("cls")
         return (_unpickleParameter, (attr,))
 
-    @classmethod
-    def copy(cls):
-        attr = cls.attributes()
+    @mixedmethod
+    def copy(selforcls):
+        attr = selforcls.attributes()
         other = attr.pop("cls") # remove duplicate first argument of factory()
-        if not issubclass(other, cls):
-            other = cls
+        if isinstance(selforcls, object):
+            selforcls = type(selforcls)
+        if not issubclass(other, selforcls):
+            other = selforcls
         return other.factory(**attr)()
 
     @classmethod
@@ -260,7 +267,11 @@ class ParameterBase(object):
     def setValue(selforcls, newValue):
         testfor(newValue is not None,
                 DefaultValueError, "Default value is mandatory!")
+        if selforcls._value == newValue:
+            return # no update necessary
         selforcls._value = newValue
+        if isCallable(selforcls.onValueUpdate()):
+            selforcls.onValueUpdate()()
 
     @mixedmethod
     def setDisplayName(selforcls, newName):
@@ -297,7 +308,10 @@ class ParameterBase(object):
         if self.dtype != other.dtype:
             return False
         try:
-            return self.attributes() == other.attributes()
+            # avoid reference loops for objects of bound methods
+            equal = (self.attributes(exclude = ("onValueUpdate",))
+                    == other.attributes(exclude = ("onValueUpdate",)))
+            return equal
         except:
             return False
 
@@ -365,8 +379,10 @@ class ParameterNumerical(ParameterBase):
 
     @mixedmethod
     def setValue(selforcls, newValue, clip = False):
+        if newValue is None:
+            return # ignore
         testfor(isNumber(newValue), DefaultValueError,
-                "A value has to be numerical!")
+                "A value has to be numerical! ({})".format(newValue))
         if clip:
             # clip to min/max values:
             newValue = selforcls.clip(newValue)
@@ -389,7 +405,7 @@ class ParameterNumerical(ParameterBase):
         maxVal = min(maxVal,  1e200) # as good as inf?...
         selforcls._valueRange = minVal, maxVal
         # apply limits to value:
-        selforcls._value = selforcls.clip()
+        selforcls.setValue(selforcls.clip())
 
     @mixedmethod
     def setSuffix(selforcls, newSuffix):

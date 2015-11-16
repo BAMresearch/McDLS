@@ -11,9 +11,11 @@ from datafile import getFileFilter
 from utils.lastpath import LastPath
 from utils.units import ScatteringVector, ScatteringIntensity
 from datafile import loaddatafile
+from dataobj import DataObj
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
+import sys
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))
@@ -72,5 +74,17 @@ class FileList(DataList):
     def setupUi(self):
         self.listWidget.setAlternatingRowColors(True)
         setBackgroundStyleSheet(self, "./resources/background_files.svg")
+
+    def setDataConfig(self, dataConfig):
+        if self.isEmpty():
+            return
+        def setConfigToData(data, config = None):
+            """Helper to call the appropriate method in the class hierarchy of
+            the dataset."""
+            data.setConfig(config)
+        self.updateData(updateFunc = setConfigToData, config = dataConfig,
+                        showProgress = False)
+        # data = self.data(0)[0]
+        # print >>sys.__stderr__, "FileList.data", type(data), id(data.config.smearing)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

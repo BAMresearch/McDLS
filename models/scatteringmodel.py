@@ -4,23 +4,18 @@
 import os.path
 import logging
 import inspect
+import numpy as np
 from abc import ABCMeta, abstractmethod
 from itertools import izip
 from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor
 from bases.algorithm import AlgorithmBase
-from utils.propertynames import PropertyNames
 from utils.parameter import isActiveParam
 from dataobj import SASData
 
-class ScatteringModel(AlgorithmBase, PropertyNames):
+class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta
     # compensationExponent = 1./2 # default, overridden with that from JSON dict
-
-    # it doesn't belong to the model?
-    # should be instrumentation geometry ...
-    def smear(self, arg):
-        return arg
 
     @abstractmethod
     def volume(self):
@@ -51,7 +46,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         # calling user provided custom model
         i = self.formfactor(dataset)
         # there has to be one intensity value for each q-vector
-        assert i.size == dataset.q.size
+        # assert i.size == dataset.q.size
         return i
 
     @abstractmethod
@@ -95,9 +90,7 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
         """
         lst = zeros((count, self.activeParamCount()))
         for idx, param in enumerate(self.activeParams()):
-            # generate numbers in different range for each parameter
-            #only for active parameters, otherwise it may try to generate
-            #random values for a boolean-type parameter.
+            # generate numbers in different range for each active parameter
             if isActiveParam(param):
                 lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
@@ -219,13 +212,27 @@ class ScatteringModel(AlgorithmBase, PropertyNames):
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+    def calcIntensity(self, data, compensationExponent = None,
+            useSLD = False):
         v = self.vol(compensationExponent = compensationExponent,
                      useSLD = useSLD)
-        # calculate their form factors
-        ff = self.ff(data)
-        # a set of intensities
-        it = ff**2 * v**2
+
+        if data.config.smearing is not None:
+            kansas = data.locs.shape
+            # the ff functions might only accept one-dimensional q arrays
+            locs = data.locs.reshape((data.locs.size))
+            ff = self.ff(locs).reshape(kansas)
+            qOffset, weightFunc = data.config.smearing.prepared
+#            import sys
+#            print >>sys.__stderr__, "prepared"
+#            print >>sys.__stderr__, unicode(data.config.smearing)
+            it = 2 * np.trapz(ff**2 * v**2 * # outer() ?
+                    (0 * ff + weightFunc), x = qOffset, axis = 1)
+        else:
+            # calculate their form factors
+            ff = self.ff(data)
+            # a set of intensities
+            it = ff**2 * v**2
         return it, v
 
 class DLSModel(ScatteringModel):

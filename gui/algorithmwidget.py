@@ -7,25 +7,7 @@ from gui.qt import QtCore, QtGui
 from QtCore import Qt
 from QtGui import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)
 from gui.bases.mixins.titlehandler import TitleHandler
-from gui.settingswidget import SettingsWidget
-
-def rearrangeWidgets(layout, widgets, targetWidth):
-    def getNumCols():
-        width = 0
-        for i, w in enumerate(widgets):
-            width += w.sizeHint().width()
-            if width > targetWidth:
-                return i
-        return len(widgets)
-
-    SettingsWidget.clearLayout(layout)
-    numCols = max(1, getNumCols())
-    # add them again with new column count
-    for i, w in enumerate(widgets):
-        layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
-    # add empty spacer at the bottom
-    layout.addWidget(QWidget(), layout.rowCount(), 0)
-    layout.setRowStretch(layout.rowCount() - 1, 1)
+from gui.settingswidget import SettingsWidget, rearrangeWidgets
 
 class SettingsGroup(object):
     _widgets = None # preconfigured widgets to show in this group
@@ -88,29 +70,21 @@ class AlgorithmWidget(SettingsWidget):
         hlayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(hlayout)
 
-        self.defaults = DefaultSettings(self, widgets = tuple(self._widgets(
+        self.defaults = DefaultSettings(self, widgets = tuple(self.makeWidgets(
             "convergenceCriterion", "numReps", "autoClose")))
         # creating an ui entry with settings persistence via store/restore
         self.advanced = self._makeEntry("showAdvanced", bool, False,
-            widgetType = AdvancedSettings, widgets = tuple(self._widgets(
-                "numContribs", "compensationExponent", "findBackground")))
+            widgetType = AdvancedSettings, widgets = tuple(self.makeWidgets(
+                "numContribs", "compensationExponent", "findBackground", "maxIterations")))
         hlayout.addWidget(self.defaults)
         hlayout.addWidget(self.advanced)
         self.sigValueChanged.connect(self.advanced.updateWidgets)
 
-    # create inputs for a subset of calculator parameters
-    # allowed parameters could be configurable from file too
-    def _widgets(self, *args):
-        for p in args:
-            p = getattr(self.algorithm, p, None)
-            if p is None: continue
-            yield self.makeSetting(p)
-
-    def resizeEvent(self, resizeEvent):
+    def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
-        # basically, reacts to the size change by spawning scroll bar
-        targetWidth = resizeEvent.size().width()
         self.defaults.rearrangeWidgets(targetWidth)
         self.advanced.rearrangeWidgets(targetWidth)
+        # add empty spacer at the bottom
+        self.layout().addStretch()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

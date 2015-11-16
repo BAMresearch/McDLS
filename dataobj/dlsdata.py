@@ -13,7 +13,7 @@ import copy
 from collections import OrderedDict
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty)
-from utils import classproperty, isFunction, isInteger, isList
+from utils import classproperty, isCallable, isInteger, isList
 from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
                          NoUnit)
 from dataobj.dataobj import DataObj
@@ -224,7 +224,7 @@ class DLSData(DataObj):
                      "refractiveIndex", "wavelength"):
             arr = array([getattr(o, prop)[0] for o in others])
             setFunc = getattr(self, _propSetterName(prop))
-            if isFunction(setFunc):
+            if isCallable(setFunc):
                 setFunc(arr.mean(), arr.std())
         # combine all measurement indices
         self.setMeasIndices(tuple((mi for o in others for mi in o.measIndices)))

@@ -3,9 +3,10 @@
 
 from __future__ import absolute_import # PEP328
 
-__all__ = ["DataObj", "SASData", "DLSData"]
+__all__ = ["DataObj", "SASData", "DLSData", "DataConfig"]
 
-from dataobj.dataobj import DataObj
+from dataobj.dataobj import DataObj, DataVector
+from dataobj.sasconfig import SASConfig
 from dataobj.sasdata import SASData
 from dataobj.dlsdata import DLSData
 

@@ -25,12 +25,31 @@ def isNotNone(lst):
         return False
     return all((a is not None for a in lst))
 
+def rearrangeWidgets(layout, widgets, targetWidth):
+    def getNumCols():
+        width = 0
+        for i, w in enumerate(widgets):
+            width += w.sizeHint().width()
+            if width > targetWidth:
+                return i
+        return len(widgets)
+
+    SettingsWidget.clearLayout(layout)
+    numCols = max(1, getNumCols())
+    # add them again with new column count
+    for i, w in enumerate(widgets):
+        layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
+    # add empty spacer at the bottom
+    layout.addWidget(QWidget(), layout.rowCount(), 0)
+    layout.setRowStretch(layout.rowCount() - 1, 1)
+
 class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
     _appSettings = None
     sigRangeChanged = Signal()
+    sigBackendUpdated = Signal()
 
-    def __init__(self, parent, calculator = None):
+    def __init__(self, parent, calculator, *args, **kwargs):
         SettingsWidgetBase.__init__(self, parent)
         self.sigValueChanged.connect(self.updateParam)
         assert isinstance(calculator, Calculator)
@@ -54,6 +73,14 @@ class SettingsWidget(SettingsWidgetBase):
         """Retrieves AlgorithmBase object containing all parameters
         for this settings."""
         raise NotImplementedError
+
+    # create inputs for a subset of algorithm parameters
+    # allowed parameters could be configurable from file too
+    def makeWidgets(self, *args):
+        for p in args:
+            p = getattr(self.algorithm, p, None)
+            if p is None: continue
+            yield self.makeSetting(p)
 
     @property
     def inputWidgets(self):
@@ -137,6 +164,8 @@ class SettingsWidget(SettingsWidgetBase):
 
     def updateParam(self, widget):
         """Write UI settings back to the algorithm."""
+        if widget in self.uiWidgets:
+            return # skip ui input widgets without a Parameter backend
         p = self._paramFromWidget(widget)
         if p is None:
             logging.error("updateParam({}) could not find associated parameter!"
@@ -186,6 +215,9 @@ class SettingsWidget(SettingsWidgetBase):
             except: pass
         # enable signals again after ui updates
         self.sigValueChanged.connect(self.updateParam)
+        # param internals could have changed, update ui accordingly
+        self.updateUi()
+        self.sigBackendUpdated.emit() # update other widgets possibly
         if isNotNone(newRange):
             # the range was updated
             self.sigRangeChanged.emit()
@@ -194,6 +226,17 @@ class SettingsWidget(SettingsWidgetBase):
         """Called in MainWindow on calculation start."""
         for w in self.inputWidgets:
             self.updateParam(w)
+
+    def updateUi(self):
+        """Update input widgets according to possibly changed backend data."""
+        # disable signals during ui updates
+        self.sigValueChanged.disconnect(self.updateParam)
+        for p in self.algorithm.params():
+            if self.get(p.name()) == p.displayValue():
+                continue
+            self.set(p.name(), p.displayValue())
+        # enable signals again after ui updates
+        self.sigValueChanged.connect(self.updateParam)
 
     def setStatsWidget(self, statsWidget):
         """Sets the statistics widget to use for updating ranges."""
@@ -342,5 +385,14 @@ class SettingsWidget(SettingsWidgetBase):
     def removeWidgets(widget):
         """Removes all widgets from the layout of the given widget."""
         SettingsWidget.clearLayout(widget.layout(), QWidget())
+
+    def resizeEvent(self, resizeEvent):
+        """Resizes widget based on available width."""
+        # basically, reacts to the size change by spawned scroll bar
+        targetWidth = resizeEvent.size().width()
+        self.resizeWidgets(targetWidth)
+
+    def resizeWidgets(self, targetWidth):
+        pass
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

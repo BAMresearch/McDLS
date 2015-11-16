@@ -6,6 +6,7 @@ from numpy import pi, sin, cos
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import SASModel
+from dataobj import SASData
 from utils.units import Length, NM, SLD
 
 class Sphere(SASModel):
@@ -38,7 +39,11 @@ class Sphere(SASModel):
         return self.volume() * self.sld()**2
 
     def formfactor(self, dataset):
-        qr = dataset.q * self.radius() 
+        if isinstance(dataset, SASData):
+            q = dataset.q
+        else:
+            q = dataset
+        qr = q * self.radius() 
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         return result
 

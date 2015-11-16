@@ -30,6 +30,7 @@ from gui.scientrybox import SciEntryBox
 from gui.qt import QtSvg, QtXml, pluginDirs
 from gui.rangelist import RangeList
 from gui.settingswidget import SettingsWidget
+from gui.datawidget import DataWidget
 from gui.algorithmwidget import AlgorithmWidget
 from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
@@ -73,6 +74,10 @@ If convergence is not reached, the following can be attempted:
 [ For more information, please see http://www.mcsas.net ]"""
 
 CHANGESTEXT = (u"""
+Changes in v.1.1:
+- Slit-smearing added for Kratky-cameras
+- Q-limits added
+
 Changes in v1.0.1:
 - Updated SLD range limits for models: lmadensesphere and ellipsoids
 - Updated information on related literature
@@ -157,6 +162,8 @@ class ToolBox(QToolBox):
         child = self.currentWidget()
         if isinstance(child, AlgorithmWidget):
             child.resizeEvent(event)
+        if isinstance(child, DataWidget):
+            child.resizeEvent(event)
 
 class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
@@ -182,6 +189,7 @@ class MainWindow(MainWindowBase):
         # file widget at the top
         self.toolbox = ToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
+        self._addToolboxItem(self._setupDataWidget())
         self._addToolboxItem(self._setupAlgoWidget())
         self._addToolboxItem(self._setupModelWidget())
         self._addToolboxItem(self._setupStatsWidget())
@@ -195,7 +203,7 @@ class MainWindow(MainWindowBase):
         centralWidget.setLayout(self.centralLayout)
         centralWidget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self.setCentralWidget(centralWidget)
-        self.onStartupSignal.connect(self.initUI)
+        self.onStartupSignal.connect(self.initUi)
         # set program icon, same for Win+Lin
         icopath = "resources/icon/mcsas.ico"
         if isMac():
@@ -220,6 +228,12 @@ class MainWindow(MainWindowBase):
                 "Double click to use the estimated size for the model.")
         self.fileWidget = fileWidget
         return fileWidget
+
+    def _setupDataWidget(self):
+        """Set up property widget with settings."""
+        self.dataWidget = DataWidget(self, self.calculator)
+        self.dataWidget.sigConfig.connect(self.fileWidget.setDataConfig)
+        return self.dataWidget
 
     def _setupAlgoWidget(self):
         """Set up property widget with settings."""
@@ -310,9 +324,10 @@ class MainWindow(MainWindowBase):
                                  LastPath.get(), multiple = True)
         self.loadFiles(filenames)
 
-    def initUI(self):
+    def initUi(self):
         self.logWidget.scrollToTop()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
+        self.dataWidget.onUpdate() # propagate initial data config
         self.onStartStopClick(getattr(self._args, "start", False))
 
     def _updateWidgets(self):
