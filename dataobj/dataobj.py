@@ -45,6 +45,7 @@ class DataVector(object):
             return range(self.raw.size)
         else:
             return self._validIndices
+
     @validIndices.setter
     def validIndices(self, value):
         # assert (value.max() <= self.raw.size)
@@ -53,6 +54,7 @@ class DataVector(object):
     @property
     def value(self):
         return self.origin.copy()[self.validIndices]
+
     @value.setter
     def value(self, val):
         assert(val.size == np.size(self.validIndices))
@@ -67,6 +69,7 @@ class DataVector(object):
     @property
     def raw(self):
         return self._raw
+
     @raw.setter
     def raw(self, value):
         assert(self.editable)
@@ -76,6 +79,9 @@ class DataVector(object):
     @property
     def editable(self):
         return self._editable
+
+    # editable can be changes on-the-fly? Shouldn't it be set once via __init__
+    # and read-only since then?
     @editable.setter
     def editable(self, value):
         assert(isinstance(value, bool))
@@ -84,6 +90,7 @@ class DataVector(object):
     @property
     def unit(self):
         return self._unit
+
     @unit.setter
     def unit(self, value):
         if value is None:
@@ -95,6 +102,7 @@ class DataVector(object):
     @property
     def limit(self):
         return self._limit
+
     @limit.setter
     def limit(self, value):
         print('Limit value: {}'.format(value))
@@ -102,7 +110,7 @@ class DataVector(object):
             self._limit = [self.raw.min(), self.raw.max()]
         else:
             self._limit = [np.maximum(np.min(value), self.origin.min()), 
-                    np.minimum(np.max(value), self.origin.max())]
+                           np.minimum(np.max(value), self.origin.max())]
 
     @property
     def limsString(self):
@@ -112,7 +120,6 @@ class DataVector(object):
                 magnitudeName = self.unit.displayMagnitudeName,
                 valName = self.name)
 
-# formerly known as 'ScatteringData', better? also for the module?
 class DataObj(DataSet, DisplayMixin):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
