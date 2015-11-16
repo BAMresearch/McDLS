@@ -62,6 +62,11 @@ class DataVector(object):
         self.raw = val
         self.raw[self.validIndices] = self.unit.toDisplay(val)
 
+    # proposal for naming to be clear about the differences between
+    # origin, raw, and value in other modules code:
+    # 'origin' -> 'si' or 'siData'
+    # 'value' -> 'sanitized' or a shorter synonym(?)
+
     @property
     def origin(self):
         return self.unit.toSi(self.raw)
