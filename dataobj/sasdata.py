@@ -152,7 +152,7 @@ class SASData(DataObj):
     # psi scattering vector for 2D data
 
     @property
-    def p(self):
+    def p(self): # famous rapper of the Osdorp Posse!
         """Psi-Vector."""
         return self.rawArray[:, 3]
 
@@ -339,8 +339,10 @@ class SASData(DataObj):
         else:
             self.pi = None
 
+        # set identities for global MC optimization algorithm
         self.f = self.ii
         self.x0 = self.qi
+        self.x1 = self.pi
         self.fu = self.ui
 
         #set unit definitions for display and internal units
