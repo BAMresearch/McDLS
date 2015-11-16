@@ -22,8 +22,8 @@ class DataVector(object):
     This is intended only as a storage container without additional functionality.
     """
     _name = None # descriptor for axes and labels, unicode string at init.
-    _raw = None # 
-    _siData = None # copy raw data in si units, often accessed
+    _raw = None # Relevant data directly from input file, non-SI units, unsanitized
+    _siData = None # copy raw data in si units, often accessed, formerly "origin"
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
@@ -34,7 +34,8 @@ class DataVector(object):
         self._raw = raw
         self.limit = limit
         self.unit = unit
-        self.editable = editable
+        assert(isinstance(editable, bool))
+        self._editable = editable
 
     @property
     def name(self):
@@ -77,13 +78,6 @@ class DataVector(object):
     @property
     def editable(self):
         return self._editable
-
-    # editable can be changes on-the-fly? Shouldn't it be set once via __init__
-    # and read-only since then?
-    @editable.setter
-    def editable(self, value):
-        assert(isinstance(value, bool))
-        self._editable = value
 
     @property
     def unit(self):
