@@ -120,33 +120,38 @@ class DataObj(DataSet, DisplayMixin):
     __metaclass__ = ABCMeta
     _filename = None
     _config = None
-    _x0 = None
-    _x1 = None
-    _x2= None
-    _f = None
-    _fu = None
+
+    # interface for basic DataVectors
 
     # These are to be set by the particular application dataset: 
-    # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = g1 for DLS
-    @abstractproperty
-    def x0(self): # sampling vector 1
-        return self._x0
+    # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
+    @property
+    def x0(self):
+        """First sampling vector."""
+        raise NotImplementedError
 
-    # @abstractproperty # sampling vector 2
-    # def x1(self):
-    #     return self._x1
+    @property
+    def x1(self):
+        """Second sampling vector."""
+        raise NotImplementedError
 
-    # @abstractproperty # sampling vector 3
-    # def x2(self):
-    #     return self._x2
+    @property
+    def x2(self):
+        """Third sampling vector."""
+        raise NotImplementedError
 
-    @abstractproperty # measurement vector
+    @property
     def f(self):
-        return self._f
+        """The measurement vector."""
+        raise NotImplementedError
 
-    @abstractproperty # measurement vector uncertainty
+    @property
     def fu(self):
-        return self._fu
+        """The measurement uncertainty regarding the measurement vector *f*.
+        """
+        raise NotImplementedError
+
+    # other common meta data
 
     @property
     def filename(self):
