@@ -37,7 +37,7 @@ class PlotResults(object):
     """
     This function plots the output of the Monte-Carlo procedure in two
     windows, with the left window the measured signal versus the fitted
-    intensity (on double-log scale), and the righthand window the size
+    measVal (on double-log scale), and the righthand window the size
     distribution.
     """
 
@@ -108,27 +108,27 @@ class PlotResults(object):
         # show all ranges:
         for rangei in range(self._nR):
             
-            #plot intensity fit:
+            #plot measVal fit:
             if dataset.is2d:
                 # dysfunctional
                 pass
                 # psi = data[:, 3]
-                # intensity2d = allRes['intensity2d']
+                # measVal2d = allRes['measVal2d']
                 # qAxis = ax[self._nHists + nR]
-                # self.plot2D(self._q, psi, self._intensity, intensity2d, qAxis)
+                # self.plot2D(self._q, psi, self._measVal, measVal2d, qAxis)
 
             else:
                 # 1D data
                 qAxis = self._ah[rangei * 2 * (self._nHists + 1) 
                     + self._nHists + 1]
-                fitQ = self._result['fitQ']
-                fitIntensity = self._result['fitIntensityMean'][0,:]
+                fitX0 = self._result['fitX0']
+                fitMeasVal = self._result['fitMeasValMean'][0,:]
                 if isinstance(dataset, SASData):
-                    fitQ = np.sort(self._result['fitQ'])
-                    fitIntensity = self._result['fitIntensityMean'][0, 
-                            np.argsort(self._result['fitQ'])]
-                self.plot1D(self._dataset,
-                        fitQ, fitIntensity, qAxis)
+                    fitX0 = np.sort(self._result['fitX0'])
+                    fitMeasVal = self._result['fitMeasValMean'][0, 
+                            np.argsort(self._result['fitX0'])]
+                self.plot1D(dataset,
+                        fitX0, fitMeasVal, qAxis)
 
             ## Information on the settings can be shown here:
             InfoAxis = self._ah[rangei * 2 * (self._nHists + 1)]
@@ -147,8 +147,8 @@ class PlotResults(object):
                 # plot partial contribution in qAxis
                 # not yet available, need to find partial intensities:
                 # print sort(dict(inspect.getmembers(parHist)).keys())
-                # fitIntensity, fitSTD = parStat.intensity
-                # self.plotPartial(fitQ, fitIntensity, fitSTD, qAxis)
+                # fitMeasVal, fitSTD = parStat.measVal
+                # self.plotPartial(fitX0, fitMeasVal, fitSTD, qAxis)
 
                 self.plotHist(plotPar, parHist, 
                         hAxis, self._axisMargin, rangei)
@@ -204,17 +204,15 @@ class PlotResults(object):
     def formatAlgoInfo(self):
         """Preformats the algorithm information ready for printing
         the colons are surrounded by string-marks, to force laTeX rendering"""
-        oString = ' Fitting of data$:$ {} '.format(self._figureTitle)
-        oString += '\n Q-range$:$ {0:3.3g} to {1:3.3g} '.format(
-            self._dataset.qMin, self._dataset.qMax)
-        #oString.append('\n number of datapoints: {}'.format(len(self._q)))
-        oString += '\n Active parameters$:$ {}, ranges: {} '.format(
+        oString = u' Fitting of data$:$ {} '.format(self._figureTitle)
+        oString += u'\n {}'.format(self._dataset.x0.limsString)
+        oString += u'\n Active parameters$:$ {}, ranges: {} '.format(
             self._modelData['activeParamCount'], self._nR)
-        oString += '\n Background level: {0:3.3g} $\pm$ {1:3.3g}'.format(
+        oString += u'\n Background level: {0:3.3g} $\pm$ {1:3.3g}'.format(
                 self._BG[0], self._BG[1])
-        oString += '\n ( Scaling factor: {0:3.3g} $\pm$ {1:3.3g} )'.format(
+        oString += u'\n ( Scaling factor: {0:3.3g} $\pm$ {1:3.3g} )'.format(
                 self._SC[0], self._SC[1])
-        oString += '\n Timing: {0:d} repetitions of {1:3.3g} $\pm$ {2:3.3g} seconds'.format(
+        oString += u'\n Timing: {0:d} repetitions of {1:3.3g} $\pm$ {2:3.3g} seconds'.format(
                 np.size(self._times), self._times.mean(), self._times.std(ddof = 1))
 
         return oString
@@ -280,15 +278,15 @@ class PlotResults(object):
                 ah[-1].update(textAxDict)
         return fig, ah
 
-    def plot2D(self, q, psi, intensity, intensity2d, qAxis):
+    def plot2D(self, q, psi, measVal, measVal2d, qAxis):
         """plots 2D data and fit"""
         # 2D data
         # we need to recalculate the result in two dimensions
-        intShow = intensity.copy()
+        intShow = measVal.copy()
         # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
-        intShow[(psi >   0) * (psi <=  90)] = intensity2d[
+        intShow[(psi >   0) * (psi <=  90)] = measVal2d[
                 (psi >   0) * (psi <=  90)]
-        intShow[(psi > 180) * (psi <= 270)] = intensity2d[
+        intShow[(psi > 180) * (psi <= 270)] = measVal2d[
                 (psi > 180) * (psi <= 270)]
         xmidi = int(round(np.size(q, 1)/2))
         ymidi = int(round(np.size(q, 0)/2))
@@ -303,25 +301,25 @@ class PlotResults(object):
         imshow(np.log10(intShow), extent = extent, origin = 'lower')
         qAxis = self.setAxis(qAxis)
         colorbar()
-        title('Measured vs. Fitted intensity',
+        title('Measured vs. Fitted measVal',
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
         xlim(QX)
         ylim(QY)
 
-    def plotPartial(self, fitQ, fitIntensity, fitSTD, qAxis, label = 'MC partial intensity'):
+    def plotPartial(self, fitX0, fitMeasVal, fitSTD, qAxis, label = 'MC partial measVal'):
         """plots 1D data and fit"""
         #make active:
         axes(qAxis)
-        plot(fitQ, fitIntensity, 'b-', lw = 1, label = label)
+        plot(fitX0, fitMeasVal, 'b-', lw = 1, label = label)
 
-    def plot1D(self, dataset, fitQ, fitIntensity, qAxis):
+    def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
-        qOrigin = dataset.qUnit.toDisplay(dataset.qOrigin)
-        qUnitLabel = dataset.qUnit.displayMagnitudeName
-        iOrigin = dataset.iUnit.toDisplay(dataset.iOrigin)
-        iUnitLabel = dataset.iUnit.displayMagnitudeName
-        uOrigin = dataset.iUnit.toDisplay(dataset.uOrigin)
+        qOrigin = dataset.x0.unit.toDisplay(dataset.x0.origin)
+        qUnitLabel = dataset.x0.unit.displayMagnitudeName
+        iOrigin = dataset.f.unit.toDisplay(dataset.f.origin)
+        iUnitLabel = dataset.f.unit.displayMagnitudeName
+        uOrigin = dataset.fu.unit.toDisplay(dataset.fu.origin)
 
         xLim = (qOrigin.min() * (1 - self._axisMargin), 
                 qOrigin.max() * (1 + self._axisMargin))
@@ -332,7 +330,7 @@ class PlotResults(object):
                 'xlim' : xLim,
                 'ylim' : yLim,
                 'xlabel' : u'q ({})'.format(qUnitLabel), 
-                'ylabel' : u'intensity ({})'.format(iUnitLabel)
+                'ylabel' : u'measVal ({})'.format(iUnitLabel)
                 })
 
         """plots 1D data and fit"""
@@ -343,16 +341,16 @@ class PlotResults(object):
         # plot original data
         errorbar(qOrigin, iOrigin, uOrigin, zorder = 2, fmt = 'k.',
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
-                 label = 'Measured intensity', lw = 2,
+                 label = 'Measured measVal', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         self.plotGrid(qAxis)
         # plot fit data
-        plot(dataset.qUnit.toDisplay(fitQ),
-             dataset.iUnit.toDisplay(fitIntensity), 'r-',
-                lw = 3, label = 'MC Fit intensity', zorder = 4)
+        plot(dataset.x0.unit.toDisplay(fitX0),
+             dataset.f.unit.toDisplay(fitMeasVal), 'r-',
+                lw = 3, label = 'MC Fit measVal', zorder = 4)
         try: # try to plot the background level
-            plot(dataset.qUnit.toDisplay(fitQ),
-                 dataset.iUnit.toDisplay(self._BG[0] + 0*fitQ),
+            plot(dataset.x0.unit.toDisplay(fitX0),
+                 dataset.iUnit.toDisplay(self._BG[0] + 0*fitX0),
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n'
                          '        ({0:03.3g})'.format(
@@ -360,7 +358,7 @@ class PlotResults(object):
         except:
             logging.error('could not plot background')
             pass
-        title('Measured vs. Fitted intensity',
+        title('Measured vs. Fitted measVal',
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
         xlim(xLim)

@@ -52,12 +52,12 @@ class McSAS(AlgorithmBase):
 
     **Keyword** may be one of the following:
 
-        *fitIntensityMean*: 1D array (*common result*)
-            The fitted intensity, given as the mean of all numReps Results.
-        *fitQ*: 1D array (*common result*)
+        *fitMeasValMean*: 1D array (*common result*)
+            The fitted measVal, given as the mean of all numReps Results.
+        *fitX0*: 1D array (*common result*)
             Corresponding q values
-            (may be different than the input q if *QBounds* was used).
-        *fitIntensityStd*: array (*common result*)
+            (may be different than the input q if *X0Bounds* was used).
+        *fitMeasValStd*: array (*common result*)
             Standard deviation of the fitted I(q), calculated as the standard 
             deviation of all numReps results.
         *contribs*: size array (numContribs x numReps) (*common result*)
@@ -152,12 +152,13 @@ class McSAS(AlgorithmBase):
 
         assert(self.data is not None)
         #setting limits and smearing parameters in the data. TODO: put in the GUI code.
-        self.data.qClipRange = [self.qMin(), self.qMax()]
-        self.data.doSmear = self.doSmear()
+        # TODO: this is a not so nice way of doing things.
+        self.data.x0.limit = [self.qMin(), self.qMax()]
+        # self.data.doSmear = self.doSmear() # not in GUI
         self.data.slitUmbra = self.slitUmbra()
         self.data.slitPenumbra = self.slitPenumbra()
-        self.data.pMin = self.psiMin()
-        self.data.pMax = self.psiMax()
+        # self.data.pMin = self.psiMin() # not in GUI
+        # self.data.pMax = self.psiMax()
         self.data.eMin = self.eMin()
         self.data.maskZeroInt = self.maskZeroInt()
         self.data.maskNegativeInt = self.maskNegativeInt()
@@ -185,10 +186,10 @@ class McSAS(AlgorithmBase):
         self.histogram()
 
         ## Fix 2D mode
-        # if self.data.is2d:
-        #     # 2D mode, regenerate intensity
+        # if self.data.f.values2d:
+        #     # 2D mode, regenerate measVal
         #     # TODO: test 2D mode
-        #     self.gen2DIntensity()
+        #     self.gen2DMeasVal()
 
     ######################################################################
     ####################### optimisation Functions #######################
@@ -200,7 +201,7 @@ class McSAS(AlgorithmBase):
         again for a maximum of *maxRetries* attempts.
         """
         data = self.data
-        logging.debug('Q clip range: {}, sum validi: {}'.format(data._qClipRange, data._validIndices.shape))
+        logging.debug(u'{}, Shape validIndices: {}'.format(data.x0.limsString, data._validIndices.shape))
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
@@ -217,7 +218,7 @@ class McSAS(AlgorithmBase):
         scalings = zeros(numReps)
         backgrounds = zeros(numReps)
         times = zeros(numReps)
-        contribIntensity = zeros([1, data.count, numReps])
+        contribMeasVal = zeros([1, data.count, numReps])
 
         priorsflag = False
         # This is the loop that repeats the MC optimization numReps times,
@@ -237,10 +238,10 @@ class McSAS(AlgorithmBase):
                 # retry in the case we were unlucky in reaching
                 # convergence within MaximumIterations.
                 nt += 1
-                (contributions[:, :, nr], contribIntensity[:, :, nr],
+                (contributions[:, :, nr], contribMeasVal[:, :, nr],
                  convergence, details) = self.mcFit(
                                 numContribs, minConvergence,
-                                outputIntensity = True, outputDetails = True,
+                                outputMeasVal = True, outputDetails = True,
                                 nRun = nr)
                 if any(array(contributions.shape) == 0):
                     break # nothing active, nothing to fit
@@ -274,9 +275,9 @@ class McSAS(AlgorithmBase):
         # store in output dict
         self.result.append(dict(
             contribs = contributions, # Rrep
-            fitIntensityMean = contribIntensity.mean(axis = 2),
-            fitIntensityStd = contribIntensity.std(axis = 2),
-            fitQ = data.q,
+            fitMeasValMean = contribMeasVal.mean(axis = 2),
+            fitMeasValStd = contribMeasVal.std(axis = 2),
+            fitX0 = data.x0.value,
             # background details:
             scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
@@ -285,13 +286,13 @@ class McSAS(AlgorithmBase):
             numIter = numIter.mean()))
 
     def mcFit(self, numContribs, minConvergence,
-              outputIntensity = False, outputDetails = False, nRun = None):
+              outputMeasVal = False, outputDetails = False, nRun = None):
         """
         Object-oriented, shape-flexible core of the Monte Carlo procedure.
         Takes optional arguments:
 
-        *outputIntensity*:
-            Returns the fitted intensity besides the Result
+        *outputMeasVal*:
+            Returns the fitted measVal besides the Result
 
         *outputDetails*:
             details of the fitting procedure, number of iterations and so on
@@ -314,7 +315,7 @@ class McSAS(AlgorithmBase):
                 for idx, param in enumerate(self.model.activeParams()):
                     mb = min(param.activeRange())
                     if mb == 0: # FIXME: compare with EPS eventually?
-                        mb = pi / (data.q.max())
+                        mb = pi / (data.x0.limit[1])
                     rset[:, idx] = numpy.ones(numContribs) * mb * .5
             else:
                 rset = self.model.generateParameters(numContribs)
@@ -349,17 +350,17 @@ class McSAS(AlgorithmBase):
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sci = data.i.max() / it.max() # init. guess for the scaling factor
-        bgi = data.i.min()
+        sci = data.f.limit[1] / it.max() # init. guess for the scaling factor
+        bgi = data.f.limit[0]
         sc = numpy.array([sci, bgi])
         scIn = sc
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
-        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, 
+        sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
                 it / sum(vset**2), scIn, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         scIn = sc
-        sc, conval, dummy = bgScalingFit.calc(data.i, data.u, it / sum(vset**2), 
+        sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, it / sum(vset**2), 
                 scIn)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
@@ -375,9 +376,9 @@ class McSAS(AlgorithmBase):
                numIter < self.maxIterations.value() and
                not self.stop):
             rt = self.model.generateParameters()
-            # calculate contribution intensity:
+            # calculate contribution measVal:
             itt, vtt = self.model.calc(data, rt, compensationExponent)
-            # Calculate new total intensity, subtract old intensity, add new:
+            # Calculate new total measVal, subtract old measVal, add new:
             itest = None
             io, dummy = self.model.calc(data, rset[ri].reshape((1, -1)), 
                     compensationExponent)
@@ -386,9 +387,9 @@ class McSAS(AlgorithmBase):
             # based on number of valid "moves" and sys.float_info.epsilon
 
             vtest = vset.sum() - vset[ri] + vtt
-            # optimize intensity and calculate convergence criterium
+            # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-            sct, convalt, dummy = bgScalingFit.calc(data.i, data.u, 
+            sct, convalt, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
                     itest / vtest**2, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
@@ -431,12 +432,12 @@ class McSAS(AlgorithmBase):
             'numMoves': numMoves,
             'elapsed': elapsed})
 
-        sc, conval, ifinal = bgScalingFit.calc(data.i, data.u, 
+        sc, conval, ifinal = bgScalingFit.calc(data.f.value, data.fu.value, 
                 it / sum(vset**2), sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
-        if outputIntensity:
+        if outputMeasVal:
             result.append((ifinal * sc[0] + sc[1]))
         result.append(conval)
         if outputDetails:
@@ -445,7 +446,7 @@ class McSAS(AlgorithmBase):
             #store results in parameter
             for idx, param in enumerate(self.model.activeParams()):
                 param.setActiveVal(rset[:, idx], index = nRun) 
-        # returning <rset, intensity, conval, details>
+        # returning <rset, measVal, conval, details>
         return result
 
     #####################################################################
@@ -533,14 +534,14 @@ class McSAS(AlgorithmBase):
         # number fraction for each contribution
         numberFraction = zeros((numContribs, numReps))
         # volume fraction for each contribution
-        qm = zeros((numContribs, numReps))
+        x0m = zeros((numContribs, numReps))
         # volume frac. for each histogram bin
         minReqVol = zeros((numContribs, numReps)) 
         # number frac. for each histogram bin
         minReqNum = zeros((numContribs, numReps))
         totalVolumeFraction = zeros((numReps))
         totalNumberFraction = zeros((numReps))
-        # Intensity scaling factors for matching to the experimental
+        # MeasVal scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
         scalingFactors = zeros((2, numReps))
@@ -548,9 +549,9 @@ class McSAS(AlgorithmBase):
         # data, store it in result too, enables to postprocess later
         # store the model instance too
         data = self.data
-        q = data.q
-        intensity = data.i
-        intError = data.u
+        x0 = data.x0.value
+        measVal = data.f.value
+        intError = data.fu.value
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
 
         # calc vol/num fraction and scaling factors for each repetition
@@ -565,10 +566,10 @@ class McSAS(AlgorithmBase):
                     compensationExponent = 1.0, useSLD = True)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            sci = intensity.max() / it.max()
-            bgi = intensity.min()
+            sci = measVal.max() / it.max()
+            bgi = measVal.min()
             # optimize scaling and background for this repetition
-            sc, conval, dummy = bgScalingFit.calc(intensity, intError, it, (sci, bgi))
+            sc, conval, dummy = bgScalingFit.calc(measVal, intError, it, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             volumeFraction[:, ri] = (sc[0] * vset**2/(vpa)).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
@@ -587,9 +588,9 @@ class McSAS(AlgorithmBase):
                         self.compensationExponent())
                 # determine where this maximum observability is
                 # of contribution c (index)
-                qmi = numpy.argmax(ir.flatten()/it.flatten())
+                x0mi = numpy.argmax(ir.flatten()/it.flatten())
                 # point where the contribution of c is maximum
-                qm[c, ri] = q[qmi]
+                x0m[c, ri] = x0[x0mi]
                 minReqVol[c, ri] = (
                         intError * volumeFraction[c, ri]
                                 / (sc[0] * ir)).min()
@@ -607,24 +608,24 @@ class McSAS(AlgorithmBase):
         for paramIndex, param in enumerate(self.model.activeParams()):
             param.histograms().calc(contribs, paramIndex, fractions) # new method
 
-    def gen2DIntensity(self):
+    def gen2DMeasVal(self):
         """
         This function is optionally run after the histogram procedure for
-        anisotropic images, and will calculate the MC fit intensity in
+        anisotropic images, and will calculate the MC fit measVal in
         image form
         """
         contribs = self.result[0]['contribs']
         numContribs, dummy, numReps = contribs.shape
 
         # load original Dataset
-        q = data.q(clipData = False)
+        x0 = data.x0.origin
         # we need to recalculate the result in two dimensions
         kansas = shape(q) # we will return to this shape
-        q = q.flatten()
+        x0 = x0.value.flatten()
 
-        logging.info("Recalculating 2D intensity, please wait")
+        logging.info("Recalculating 2D measVal, please wait")
         # for each Result
-        intAvg = zeros(shape(q))
+        intAvg = zeros(shape(x0))
         # TODO: for which parameter?
         scalingFactors = self.result[0]['scalingFactors']
         for ri in range(numReps):
@@ -640,7 +641,7 @@ class McSAS(AlgorithmBase):
         validIndices = data.validIndices
         intAvg = intAvg[validIndices]
         # shape back to imageform
-        self.result[0]['intensity2d'] = reshape(intAvg, kansas)
+        self.result[0]['measVal2d'] = reshape(intAvg, kansas)
 
     def plot(self, axisMargin = 0.3,
              outputFilename = None, autoClose = False):
