@@ -92,12 +92,11 @@ class DataVector(object):
         return self._unit
 
     @unit.setter
-    def unit(self, value):
-        if value is None:
+    def unit(self, newUnit):
+        if not isinstance(newUnit, Unit):
             self._unit = NoUnit
         else:
-            assert(isinstance(value, Unit))
-            self._unit = value
+            self._unit = newUnit
 
     @property
     def limit(self):
