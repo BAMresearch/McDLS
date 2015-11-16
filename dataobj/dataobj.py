@@ -23,6 +23,7 @@ class DataVector(object):
     """
     _name = None # descriptor for axes and labels, unicode string at init.
     _raw = None # 
+    _siData = None # copy raw data in si units, often accessed
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
@@ -58,10 +59,7 @@ class DataVector(object):
     @value.setter
     def value(self, val):
         assert(val.size == self.validIndices.size)
-        # self.unit.toDisplay(val) # the value returned here isn't used, is it?
-        # why? this will change the size of raw if valididx contains sth.
-        # self.raw = val
-        self.raw[self.validIndices] = self.unit.toDisplay(val)
+        self.origin[self.validIndices] = val
 
     # proposal for naming to be clear about the differences between
     # origin, raw, and value in other modules code:
@@ -70,18 +68,12 @@ class DataVector(object):
 
     @property
     def origin(self):
-        return self.unit.toSi(self.raw)
+        return self._siData
 
     @property
     def raw(self):
         return self._raw
 
-    @raw.setter
-    def raw(self, value):
-        assert(self.editable)
-        assert(value.size == self.raw.size)
-        self._raw = value
-    
     @property
     def editable(self):
         return self._editable
@@ -101,8 +93,10 @@ class DataVector(object):
     def unit(self, newUnit):
         if not isinstance(newUnit, Unit):
             self._unit = NoUnit
+            self._siData = self.raw.copy()
         else:
             self._unit = newUnit
+            self._siData = self.unit.toSi(self.raw)
 
     @property
     def limit(self):
