@@ -495,8 +495,6 @@ class McSAS(AlgorithmBase):
         volumeFraction = zeros((numContribs, numReps))
         # number fraction for each contribution
         numberFraction = zeros((numContribs, numReps))
-        # volume fraction for each contribution
-        x0m = zeros((numContribs, numReps))
         # volume frac. for each histogram bin
         minReqVol = zeros((numContribs, numReps)) 
         # number frac. for each histogram bin
@@ -545,11 +543,6 @@ class McSAS(AlgorithmBase):
                 # again, partial intensities for this size only required
                 fr, dummy = self.model.calc(data, rset[c].reshape((1, -1)), 
                         self.compensationExponent())
-                # determine where this maximum observability is
-                # of contribution c (index)
-                x0mi = numpy.argmax(fr.flatten()/ft.flatten())
-                # point where the contribution of c is maximum
-                x0m[c, ri] = data.x0.value[x0mi]
                 minReqVol[c, ri] = (
                         data.fu.value * volumeFraction[c, ri]
                                 / (sc[0] * fr)).min()
