@@ -27,8 +27,8 @@ class DLSTest(DLSModel):
     def volume(self):
         return sqrt((pi*4./3.) * self.radius()**3.)
 
-    def formfactor(self, dataset):
-        return (exp( dataset.tauGamma / self.radius() ))
+    def formfactor(self, data):
+        return (exp( data.tauGamma.value / self.radius() ))
 
 DLSTest.factory()
 
