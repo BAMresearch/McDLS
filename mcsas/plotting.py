@@ -353,7 +353,7 @@ class PlotResults(object):
                 lw = 3, label = 'MC Fit measVal', zorder = 4)
         try: # try to plot the background level
             plot(dataset.x0.unit.toDisplay(fitX0),
-                 dataset.iUnit.toDisplay(self._BG[0] + 0*fitX0),
+                 dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
                  'g-', linewidth = 3,
                  label = 'MC Background level:\n'
                          '        ({0:03.3g})'.format(
