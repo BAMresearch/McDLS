@@ -201,7 +201,7 @@ class McSAS(AlgorithmBase):
         again for a maximum of *maxRetries* attempts.
         """
         data = self.data
-        logging.debug(u'{}, Shape validIndices: {}'.format(data.x0.limsString, data._validIndices.shape))
+#        logging.debug(u'{}, Shape validIndices: {}'.format(data.x0.limsString, data._validIndices.shape))
         # get settings
         priors = McSASParameters.priors
         prior = McSASParameters.prior
