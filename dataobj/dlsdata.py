@@ -274,7 +274,7 @@ class DLSData(DataObj):
     def setPropertyGetters(cls):
         for p in cls._properties:
             attr = _privPropName(p)
-            setattr(cls, attr, None) # init value
+            setattr(cls, attr, None) # init value = None
             setattr(cls, p, _makeProperty(attr))
 
 DLSData.setPropertyGetters()
