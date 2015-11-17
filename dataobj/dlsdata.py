@@ -132,11 +132,11 @@ class DLSData(DataObj):
 
     def setTemperature(self, temp, stddev = None):
         self._temperature = (temp, stddev)
-        self.calcGammaR()
+        self._calcGammaR()
 
     def setViscosity(self, vis, stddev = None):
         self._viscosity = (vis, stddev)
-        self.calcGammaR()
+        self._calcGammaR()
 
     def setRefractiveIndex(self, refIdx, stddev = None):
         self._refractiveIndex = (refIdx, stddev)
@@ -158,9 +158,9 @@ class DLSData(DataObj):
         self._scatteringVector = (
             4. * pi * self.refractiveIndex[0] * sin(self.angles * .5)
                 / self.wavelength[0])
-        self.calcGammaR()
+        self._calcGammaR()
 
-    def calcGammaR(self):
+    def _calcGammaR(self):
         """Calculates the gamma value without considering the hydrodynamical
         radius which is contributed (divided) by the model later on."""
         if (self.temperature is None or
