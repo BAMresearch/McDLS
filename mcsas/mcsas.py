@@ -203,8 +203,6 @@ class McSAS(AlgorithmBase):
         data = self.data
         logging.debug(u'{}, Shape validIndices: {}'.format(data.x0.limsString, data._validIndices.shape))
         # get settings
-        priors = McSASParameters.priors
-        prior = McSASParameters.prior
         numContribs = self.numContribs()
         numReps = self.numReps()
         minConvergence = self.convergenceCriterion()
@@ -220,16 +218,10 @@ class McSAS(AlgorithmBase):
         times = zeros(numReps)
         contribMeasVal = zeros([1, data.count, numReps])
 
-        priorsflag = False
         # This is the loop that repeats the MC optimization numReps times,
         # after which we can calculate an uncertainty on the Results.
         for nr in range(numReps):
             elapsedStart = time.time() # for tracking elapsed time
-            if (len(prior) <= 0 and len(priors) > 0) or priorsflag:
-                # this flag needs to be set as prior will be set after
-                # the first pass
-                priorsflag = True
-                McSASParameters.prior = priors[:, :, nr%size(priors, 2)]
             # keep track of how many failed attempts there have been
             nt = 0
             # do that MC thing! 
@@ -302,50 +294,21 @@ class McSAS(AlgorithmBase):
 
         """
         data = self.data
-        prior = McSASParameters.prior
         rset = numpy.zeros((numContribs, self.model.activeParamCount()))
         compensationExponent = self.compensationExponent()
         details = dict()
         # index of sphere to change. We'll sequentially change spheres,
         # which is perfectly random since they are in random order.
         
-        # generate initial set of spheres
-        if size(prior) == 0:
-            if self.startFromMinimum():
-                for idx, param in enumerate(self.model.activeParams()):
-                    mb = min(param.activeRange())
-                    if mb == 0: # FIXME: compare with EPS eventually?
-                        mb = pi / (data.x0.limit[1])
-                    rset[:, idx] = numpy.ones(numContribs) * mb * .5
-            else:
-                rset = self.model.generateParameters(numContribs)
-        # A prior set can be provided, f.ex. to continue an interrupted run.
-        elif (prior.shape[0] != 0) and (numContribs == 0):
-            # In this case, rset will assume whatever size prior happens to be
-            numContribs = prior.shape[0]
-            rset = prior
-        elif prior.shape[0] == numContribs:
-            # same size prior as requested
-            rset = prior
-        elif prior.shape[0] < numContribs:
-            # prior is smaller in size than requested
-            logging.info("size of prior is smaller than numContribs. "
-                         "duplicating random prior values")
-            randomIndices = numpy.random.randint(prior.shape[0],
-                            size = numContribs - prior.shape[0])
-            rset = numpy.concatenate((prior, prior[randomIndices, :]))
-            logging.info("size now: {}".format(rset.shape))
-        elif prior.shape[0] > numContribs:
-            # prior is larger in size than requested.
-            logging.info("Size of prior is larger than numContribs. "
-                         "removing random prior values")
-            # remaining choices
-            randomIndices = numpy.random.randint(prior.shape[0],
-                                                 size = numContribs)
-            rset = prior[randomIndices, :]
-            logging.info("size now: {}".format(rset.shape))
+        if self.startFromMinimum():
+            for idx, param in enumerate(self.model.activeParams()):
+                mb = min(param.activeRange())
+                if mb == 0: # FIXME: compare with EPS eventually?
+                    mb = pi / (data.x0.limit[1])
+                rset[:, idx] = numpy.ones(numContribs) * mb * .5
+        else:
+            rset = self.model.generateParameters(numContribs)
 
-        # NOTE: put prior into each Parameter, initially
         ft, vset = self.model.calc(data, rset, compensationExponent)
 
         # Optimize the intensities and calculate convergence criterium

@@ -24,11 +24,6 @@ class McSASParameters(PropertyNames):
             the fit is applied
         - *qMagnitude*: indicates the multiplier to scale q to m^-1
         - *iMagnitude*: indicates the multiplier to scale I to (m sr)^-1
-        - *priors*: a set of contribution parameters for a number of McSAS 
-            repetitions. These can be used to resume or recalculate an older
-            result
-        - *prior*: same as *priors*, but only for a single repetition. Can be
-            used as an initial guess. WARNING: intial guesses may skew result
         - *histogramBins*: number of bins to use for size distribution
             determination. Does not affect fit
         - *histogramXScale*: can be "log" or "linear", sets the horizontal
@@ -76,10 +71,6 @@ class McSASParameters(PropertyNames):
     # set old-style defaults
     model = None
     contribParamBounds = ()
-    priors = () # of shape Rrep, to be used as initial guess for
-                # analyse(). It will pass on a Prior to MCFit.
-    prior = ()  # of shape Rset, to be used as initial guess for
-                # MCFit function
 
     # new defaults for loading parameters
     parameters = list()
