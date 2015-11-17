@@ -32,8 +32,8 @@ class DataVector(object):
     def __init__(self, name, raw, unit = None, limit = None, editable = False):
         self._name = name
         self._raw = raw
-        self.limit = limit
         self.unit = unit
+        self.limit = limit
         assert(isinstance(editable, bool))
         self._editable = editable
 
@@ -100,7 +100,7 @@ class DataVector(object):
     def limit(self, value):
         print('Limit value: {}'.format(value))
         if value is None:
-            self._limit = [self.raw.min(), self.raw.max()]
+            self._limit = [self.origin.min(), self.origin.max()]
         else:
             self._limit = [np.maximum(np.min(value), self.origin.min()), 
                            np.minimum(np.max(value), self.origin.max())]
