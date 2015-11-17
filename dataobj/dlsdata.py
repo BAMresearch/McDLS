@@ -115,7 +115,7 @@ class DLSData(DataObj):
 
     def setAngles(self, angles):
         self._angles = angles
-        self.calcScatteringVector()
+        self._calcScatteringVector()
 
     @property
     def numAngles(self):
@@ -140,15 +140,15 @@ class DLSData(DataObj):
 
     def setRefractiveIndex(self, refIdx, stddev = None):
         self._refractiveIndex = (refIdx, stddev)
-        self.calcScatteringVector()
+        self._calcScatteringVector()
 
     def setWavelength(self, wavelen, stddev = None):
         self._wavelength = (wavelen, stddev)
-        self.calcScatteringVector()
+        self._calcScatteringVector()
 
     # calculated properties, prepared for model evaluation
 
-    def calcScatteringVector(self):
+    def _calcScatteringVector(self):
         """Calculates the scattering vector which is part of the scattering
         formula."""
         if (self.refractiveIndex is None or
