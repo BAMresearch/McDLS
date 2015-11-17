@@ -14,9 +14,8 @@ from collections import OrderedDict
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty)
 from utils import classproperty, isCallable, isInteger, isList
-from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
-                         NoUnit)
-from dataobj.dataobj import DataObj
+from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle)
+from dataobj.dataobj import DataObj, DataVector
 
 # Boltzmann constant in m²·kg·s⁻²·K⁻¹ (SI units)
 KB = 1.38064852 * 1e-23
@@ -32,6 +31,62 @@ def _privPropName(propName):
 def _propSetterName(propName):
     return "set" + propName[0].upper() + propName[1:]
 
+class MultiDataVector(DataVector):
+    _count = None
+    _wasRepeated = False
+
+    def __init__(self, name, raw, count = None, **kwargs):
+        # not beautiful but the easiest for now ...
+        super(MultiDataVector, self).__init__(name,
+                self.flatten(raw, count), **kwargs)
+
+    # http://stackoverflow.com/a/7020271
+    def flatten(self, a, count = None):
+        if isInteger(count) and (a.ndim == 1 or min(a.shape) == 1):
+            # repeat one-dimensional data <count> times
+            a = a.reshape((1, -1))
+            a = repeat(a, count, axis = 0).T
+            self._wasRepeated = True
+        self._count = a.shape[1]
+        a = self.concat(a)
+        return a
+
+    @property
+    def originSrcShape(self):
+        return self.unflatten(self.origin)
+
+    @property
+    def rawSrcShape(self):
+        return self.unflatten(self.raw)
+
+    def unflatten(self, a):
+        if self._count == 1:
+            return a # nothing to do
+        rowCount = len(a) / self._count
+        if self._wasRepeated: # just take the first non-duplicates
+            result = a[:rowCount]
+        else:
+            result = self.unconcat(a, rowCount, self._count)
+        return result
+
+    @classmethod
+    def concat(cls, a):
+        """Returns a flat array, column-wise concatenated and each second
+        column reversed. This way the data stays continuous and the plotting
+        goes back and forth through the domain of definition as often as there
+        are angles."""
+        if a.shape[1] == 1:
+            return a.flatten() # nothing to do
+        o = a.copy()
+        o[:,1::2] = o[::-1,1::2] # reverses the odd columns, see numpy.flipud()
+        return o.ravel(order = 'F') # column-wise concat, Fortran style
+
+    @classmethod
+    def unconcat(cls, a, rows, cols):
+        o = a.reshape((rows, cols), order = 'F').copy()
+        o[:,1::2] = o[::-1,1::2] # reverses the odd columns, see numpy.flipud()
+        return o
+
 class DLSData(DataObj):
     """Represents one data set.
     """
@@ -41,7 +96,7 @@ class DLSData(DataObj):
                    "refractiveIndex", "wavelength",
                    "measIndices",
                    # calculated properties
-                   "scatteringVector", "gammaDivR", "tauGammaMat")
+                   "scatteringVector", "gammaDivR", "tauGamma")
 
     @classproperty
     @classmethod
@@ -89,27 +144,49 @@ class DLSData(DataObj):
                 for g, lst in summary.iteritems()])
         return res
 
-    # correlation data
+    # define DataObj interface
 
-    def setTau(self, rawArray):
-        self._tau = rawArray.flatten()
+    @property
+    def x0(self):
+        return self._tau
+
+    @property
+    def f(self):
+        return self._correlation
+
+    @property
+    def fu(self):
+        return self._correlationError
+
+    @property
+    def q(self): return self.x0.value
+    @property
+    def i(self): return self.f.value
+    @property
+    def u(self): return self.fu.value
+
+    def setTau(self, tauUnit, rawArray):
+        # TODO: tau symbol?
+        self._tau = MultiDataVector(u"tau", rawArray.flatten(), unit = tauUnit,
+                                    count = self.numAngles)
         self._calcTauGamma()
 
     def setCorrelation(self, rawArray):
         assert self.isValidInput(rawArray), "Invalid data from file!"
-        assert rawArray.shape[1] == self.numAngles, \
-            "Correlation intensity: #columns differs from #scattering angles"
-        self._correlation = rawArray
+        assert rawArray.shape[1] == self.numAngles, (
+            "Correlation intensity: {} columns != {} scattering angles"
+            .format(rawArray.shape[1], self.numAngles))
+        self._correlation = MultiDataVector(u"G_2(tau)-1", rawArray)
 
     def setCorrelationError(self, rawArray):
         assert self.isValidInput(rawArray), "Invalid data from file!"
         assert rawArray.shape[1] == self.numAngles, \
             "Correlation stddev: #columns differs from #scattering angles"
-        self._correlationError = rawArray
+        self._correlationError = MultiDataVector(u"σ[G_2(tau)-1]", rawArray)
 
     @property
     def count(self):
-        return len(self.q)
+        return len(self.x0.origin)
 
     # scattering angles
 
@@ -178,40 +255,8 @@ class DLSData(DataObj):
         a matrix of the same dimensions as the correlation data."""
         if self.tau is None or self.gammaDivR is None:
             return
-        self._tauGammaMat = outer(self.tau, self.gammaDivR)
-
-    @staticmethod
-    def _flatten(a):
-        """Returns a flat array, column-wise concatenated and each second
-        column reversed. This way the data stays continuous and the plotting
-        goes back and forth through the domain of definition as often as there
-        are angles."""
-        o = a.copy()
-        o[:,1::2] = o[::-1,1::2] # reverses the odd columns, see numpy.flipud()
-        return o.ravel(order = 'F') # column-wise concat, Fortran style
-
-    @property
-    def q(self):
-        return self._flatten(repeat(self.tau[newaxis], self.numAngles, axis = 0).T)
-
-    @property
-    def i(self):
-        return self._flatten(self.correlation)
-
-    @property
-    def u(self):
-        return self._flatten(self.correlationError)
-
-    @property
-    def qOrigin(self): return self.q
-    @property
-    def iOrigin(self): return self.i
-    @property
-    def uOrigin(self): return self.u
-
-    @property
-    def tauGamma(self):
-        return self._flatten(self.tauGammaMat)
+        self._tauGammaMat = outer(self.tau.originSrcShape, self.gammaDivR)
+        self._tauGamma = MultiDataVector(u"tauGamma", self._tauGammaMat)
 
     def accumulate(self, others):
         # consider only data of the same type and sample name
@@ -232,12 +277,13 @@ class DLSData(DataObj):
         assert array([self.angles == o.angles for o in others]).all(), \
                "Scattering angles differ between all DLS data to be combined!"
         # calculate average correlation values and their standard deviation
-        stacked = dstack((o.correlation for o in others))
+        stacked = dstack((o.correlation.rawSrcShape for o in others))
         # combine the mean across all data sets with the existing tau
         self.setCorrelation(stacked.mean(-1))
         # combine the std. deviation with the existing tau
         self.setCorrelationError(stacked.std(-1))
-        assert len(self.q) == len(self.i) and len(self.q) == len(self.u), \
+        assert len(self.x0.origin) == len(self.f.origin) and \
+               len(self.x0.origin) == len(self.fu.origin), \
             "Dimensions of flattened data arrays do not match!"
         return self
 
@@ -247,8 +293,9 @@ class DLSData(DataObj):
         for i in range(self.numAngles):
             another = copy.copy(self)
             another.setAngles(self.angles[i, newaxis])
-            another.setCorrelation(self.correlation[:, i, newaxis])
-            another.setCorrelationError(self.correlationError[:, i, newaxis])
+            another.setTau(self.tau.unit, self.tau.rawSrcShape)
+            another.setCorrelation(self.correlation.rawSrcShape[:, i, newaxis])
+            another.setCorrelationError(self.correlationError.rawSrcShape[:, i, newaxis])
             lst.append(another)
         return lst
 
@@ -262,7 +309,6 @@ class DLSData(DataObj):
 
     def __init__(self, **kwargs):
         super(DLSData, self).__init__(**kwargs)
-        self.qUnit = self.iUnit = NoUnit()
 
     def __str__(self):
         out = [u"## {0} '{1}'".format(self.__class__.__name__, self.title)]
