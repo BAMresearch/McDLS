@@ -56,8 +56,8 @@ class FileList(DataList):
             self.setCurrentIndex(i)
             self.removeSelected()
         # add the new combined data set (again)
-#        self.add(avg)
-#        return
+        # self.add(avg)
+        # return
         # add the combined dls data split up per angle
         [self.add(d) for d in avg.splitPerAngle()]
         # TODO: alternatively, add a new hierarchical DataSet object containing
