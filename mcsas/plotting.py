@@ -85,10 +85,13 @@ class PlotResults(object):
         fontPath = makeAbsolutePath("dejavuserif.ttf")
         self._textfont = fm.FontProperties(fname = fontPath)
 
+        yscale = 'linear'
+        if isinstance(dataset, SASData):
+            yscale = 'log'
         # set general axes settings:
         self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
                 'xscale' : 'log', 
-                'yscale' : 'log',
+                'yscale' : yscale,
                 }
 
         # number of histograms:
