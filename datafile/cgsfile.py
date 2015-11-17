@@ -288,9 +288,9 @@ class CGSFile(AsciiFile):
         dlsData.setWavelength(Length(self.units['wavelength'])
                 .toSi(self.wavelength))
         # scattering angles
-        unit = self.units['angles']
+        aUnit = self.units['angles']
         angles = np_array(self.angles)
-        dlsData.setAngles(Angle(unit).toSi(angles))
+        dlsData.setAngles(Angle(aUnit).toSi(angles))
         # correlation array
         dlsData.setTau(self._tauUnit.toSi(self.correlation[:, 0]))
         dlsData.setCorrelation(self.correlation[:, 1:])
