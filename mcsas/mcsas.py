@@ -346,22 +346,20 @@ class McSAS(AlgorithmBase):
             logging.info("size now: {}".format(rset.shape))
 
         # NOTE: put prior into each Parameter, initially
-        it, vset = self.model.calc(data, rset, compensationExponent)
+        ft, vset = self.model.calc(data, rset, compensationExponent)
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sci = data.f.limit[1] / it.max() # init. guess for the scaling factor
+        sci = data.f.limit[1] / ft.max() # init. guess for the scaling factor
         bgi = data.f.limit[0]
         sc = numpy.array([sci, bgi])
-        scIn = sc
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
         sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
-                it / sum(vset**2), scIn, ver = 1)
+                ft / sum(vset**2), sc, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
-        scIn = sc
-        sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, it / sum(vset**2), 
-                scIn)
+        sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, ft / sum(vset**2), 
+                sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -370,6 +368,7 @@ class McSAS(AlgorithmBase):
         numMoves, numIter, lastUpdate = 0, 0, 0
         # running variable indicating which contribution to change
         ri = 0
+        ftest = None
         #NOTE: keep track of uncertainties in MC procedure through epsilon
         while (len(vset) > 1 and # see if there is a distribution at all
                conval > minConvergence and
@@ -377,12 +376,11 @@ class McSAS(AlgorithmBase):
                not self.stop):
             rt = self.model.generateParameters()
             # calculate contribution measVal:
-            itt, vtt = self.model.calc(data, rt, compensationExponent)
+            ftt, vtt = self.model.calc(data, rt, compensationExponent)
             # Calculate new total measVal, subtract old measVal, add new:
-            itest = None
-            io, dummy = self.model.calc(data, rset[ri].reshape((1, -1)), 
+            fo, dummy = self.model.calc(data, rset[ri].reshape((1, -1)), 
                     compensationExponent)
-            itest = (it.flatten() - io + itt) # is this numerically stable?
+            ftest = (ft - fo + ftt) # is this numerically stable?
             # is numerically stable (so far). Can calculate final uncertainty
             # based on number of valid "moves" and sys.float_info.epsilon
 
@@ -390,12 +388,12 @@ class McSAS(AlgorithmBase):
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
-                    itest / vtest**2, sc)
+                    ftest / vtest**2, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
-                it, vset[ri] = itest, vtt
+                ft, vset[ri] = ftest, vtt
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
@@ -404,10 +402,11 @@ class McSAS(AlgorithmBase):
             if time.time() - lastUpdate > 0.25:
                 # update twice a sec max -> speedup for fast models
                 # because output takes much time especially in GUI
-                # process events, check for user input
                 # TODO: don't need this:
                 # if we calc in separate processes (multiprocessing) the gui 
                 # would have its own thread and will not be blocked by calc
+
+                # process events, check for user input
                 processEventLoop()
                 lastUpdate = time.time()
             # move to next contribution in list, loop if last contribution
@@ -433,7 +432,7 @@ class McSAS(AlgorithmBase):
             'elapsed': elapsed})
 
         sc, conval, ifinal = bgScalingFit.calc(data.f.value, data.fu.value, 
-                it / sum(vset**2), sc)
+                ft / sum(vset**2), sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -549,16 +548,13 @@ class McSAS(AlgorithmBase):
         # data, store it in result too, enables to postprocess later
         # store the model instance too
         data = self.data
-        x0 = data.x0.value
-        measVal = data.f.value
-        intError = data.fu.value
         bgScalingFit = BackgroundScalingFit(self.findBackground.value())
 
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere in the set
-            it, vset = self.model.calc(data, rset, self.compensationExponent())
+            ft, vset = self.model.calc(data, rset, self.compensationExponent())
             
             # Now for each sphere, its volume fraction (compensated): is vset
             # And the real particle volume vpa:
@@ -566,10 +562,10 @@ class McSAS(AlgorithmBase):
                     compensationExponent = 1.0, useSLD = True)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            sci = measVal.max() / it.max()
-            bgi = measVal.min()
+            sci = data.f.value.max() / ft.max()
+            bgi = data.f.value.min()
             # optimize scaling and background for this repetition
-            sc, conval, dummy = bgScalingFit.calc(measVal, intError, it, (sci, bgi))
+            sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, ft, (sci, bgi))
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             volumeFraction[:, ri] = (sc[0] * vset**2/(vpa)).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
@@ -584,16 +580,16 @@ class McSAS(AlgorithmBase):
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
                 # again, partial intensities for this size only required
-                ir, dummy = self.model.calc(data, rset[c].reshape((1, -1)), 
+                fr, dummy = self.model.calc(data, rset[c].reshape((1, -1)), 
                         self.compensationExponent())
                 # determine where this maximum observability is
                 # of contribution c (index)
-                x0mi = numpy.argmax(ir.flatten()/it.flatten())
+                x0mi = numpy.argmax(fr.flatten()/ft.flatten())
                 # point where the contribution of c is maximum
-                x0m[c, ri] = x0[x0mi]
+                x0m[c, ri] = data.x0.value[x0mi]
                 minReqVol[c, ri] = (
-                        intError * volumeFraction[c, ri]
-                                / (sc[0] * ir)).min()
+                        data.fu.value * volumeFraction[c, ri]
+                                / (sc[0] * fr)).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / vpa[c]
 
             numberFraction[:, ri] /= totalNumberFraction[ri]
@@ -632,9 +628,9 @@ class McSAS(AlgorithmBase):
             logging.info('regenerating set {} of {}'.format(ri, numReps-1))
             rset = contribs[:, :, ri]
             # calculate their form factors
-            it, vset = self.model.calc(data, rset, compensationExponent)
+            ft, vset = self.model.calc(data, rset, compensationExponent)
             # Optimize the intensities and calculate convergence criterium
-            intAvg = intAvg + it*scalingFactors[0, ri] + scalingFactors[1, ri]
+            intAvg = intAvg + ft*scalingFactors[0, ri] + scalingFactors[1, ri]
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
