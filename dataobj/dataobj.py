@@ -86,7 +86,7 @@ class DataVector(object):
     @unit.setter
     def unit(self, newUnit):
         if not isinstance(newUnit, Unit):
-            self._unit = NoUnit
+            self._unit = NoUnit()
             self._siData = self.raw.copy()
         else:
             self._unit = newUnit
