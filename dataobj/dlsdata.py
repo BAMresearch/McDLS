@@ -41,7 +41,7 @@ class DLSData(DataObj):
                    "refractiveIndex", "wavelength",
                    "measIndices",
                    # calculated properties
-                   "scatteringVector", "gammaR", "tauGammaMat")
+                   "scatteringVector", "gammaDivR", "tauGammaMat")
 
     @classproperty
     @classmethod
@@ -93,7 +93,7 @@ class DLSData(DataObj):
 
     def setTau(self, rawArray):
         self._tau = rawArray.flatten()
-        self.calcTauGamma()
+        self._calcTauGamma()
 
     def setCorrelation(self, rawArray):
         assert self.isValidInput(rawArray), "Invalid data from file!"
@@ -132,11 +132,11 @@ class DLSData(DataObj):
 
     def setTemperature(self, temp, stddev = None):
         self._temperature = (temp, stddev)
-        self._calcGammaR()
+        self._calcGammaDivR()
 
     def setViscosity(self, vis, stddev = None):
         self._viscosity = (vis, stddev)
-        self._calcGammaR()
+        self._calcGammaDivR()
 
     def setRefractiveIndex(self, refIdx, stddev = None):
         self._refractiveIndex = (refIdx, stddev)
@@ -158,9 +158,9 @@ class DLSData(DataObj):
         self._scatteringVector = (
             4. * pi * self.refractiveIndex[0] * sin(self.angles * .5)
                 / self.wavelength[0])
-        self._calcGammaR()
+        self._calcGammaDivR()
 
-    def _calcGammaR(self):
+    def _calcGammaDivR(self):
         """Calculates the gamma value without considering the hydrodynamical
         radius which is contributed (divided) by the model later on."""
         if (self.temperature is None or
@@ -169,16 +169,16 @@ class DLSData(DataObj):
             return
         q2 = self._scatteringVector * self._scatteringVector
         # 0.5 ensures the necessary sqrt() within the model
-        self._gammaR = ( (- q2 * self.temperature[0] * KB)
+        self._gammaDivR = ( (- q2 * self.temperature[0] * KB)
                          / (6. * pi * self.viscosity[0]) )
-        self.calcTauGamma()
+        self._calcTauGamma()
 
-    def calcTauGamma(self):
+    def _calcTauGamma(self):
         """tau premultiplied by gamma without hydrodynamical radius produces
         a matrix of the same dimensions as the correlation data."""
-        if self.tau is None or self.gammaR is None:
+        if self.tau is None or self.gammaDivR is None:
             return
-        self._tauGammaMat = outer(self.tau, self.gammaR)
+        self._tauGammaMat = outer(self.tau, self.gammaDivR)
 
     @staticmethod
     def _flatten(a):
