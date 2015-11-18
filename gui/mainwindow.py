@@ -328,7 +328,7 @@ class MainWindow(MainWindowBase):
     def initUi(self):
         self.logWidget.scrollToTop()
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
-        self.dataWidget.onUpdate() # propagate initial data config
+        self.dataWidget.onBackendUpdate() # propagate initial data config
         self.onStartStopClick(getattr(self._args, "start", False))
 
     def _updateWidgets(self):
