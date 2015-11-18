@@ -51,6 +51,7 @@ class FileList(DataList):
         setBackgroundStyleSheet(self, "./resources/background_files.svg")
 
     def setDataConfig(self, dataConfig):
+        """Propagates the given DataConfig to all DataObj in the list."""
         if self.isEmpty():
             return
         def setConfigToData(data, config = None):
