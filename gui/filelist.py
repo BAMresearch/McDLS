@@ -34,7 +34,10 @@ class FileList(DataList):
         # populates to data list widget with items based on the return of
         # processSourceFunc(filename)
         def loaddataobj(fn):
-            return loaddatafile(fn).getDataObj()
+            datafile = loaddatafile(fn)
+            if datafile is not None:
+                return datafile.getDataObj()
+
         DataList.loadData(self, sourceList = fileList, showProgress = False,
                           processSourceFunc = loaddataobj)
 
