@@ -59,6 +59,11 @@ class SASData(DataObj):
 
     # legacy SASData properties
 
+    @classproperty
+    @classmethod
+    def sourceName(cls):
+        return "Small Angle Scattering"
+
     @property # not related to e, this is the minimum fractional uncertainty parameter
     def eMin(self):
         return self._eMin

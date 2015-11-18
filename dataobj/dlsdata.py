@@ -115,6 +115,11 @@ class DLSData(DataObj):
         """Shows the content of the loaded data: DLS?"""
         return ""
 
+    @classproperty
+    @classmethod
+    def sourceName(cls):
+        return "Dynamic Light Scattering"
+
     def setSampleName(self, sampleName):
         self._sampleName = sampleName
 

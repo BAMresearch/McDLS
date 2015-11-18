@@ -6,7 +6,7 @@ import logging
 
 from gui.qt import QtCore, QtGui
 from QtCore import Qt
-from QtGui import (QWidget, QGridLayout, QVBoxLayout)
+from QtGui import (QWidget, QGridLayout, QVBoxLayout, QLabel)
 from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
@@ -54,6 +54,10 @@ class DataWidget(SettingsWidget):
         hlayout.setObjectName("baseLayout")
         hlayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(hlayout)
+        # descriptive top row label
+        lbl = QLabel(self)
+        self.layout().addWidget(lbl)
+        self.headLabel = lbl
 
         self._dataConfig = SASConfig()
         # create a new layout
@@ -84,5 +88,7 @@ class DataWidget(SettingsWidget):
             return
         import sys
         print >>sys.__stderr__, "onDataSelected", repr(dataobj), dataobj.sourceName
+        self.headLabel.setText("Configure all data sets measured by {}:"
+                               .format(dataobj.sourceName))
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

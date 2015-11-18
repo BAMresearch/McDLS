@@ -10,12 +10,10 @@ import os # Miscellaneous operating system interfaces
 from numpy import all as np_all
 import numpy as np
 
-# related to the class below
 from abc import ABCMeta, abstractproperty, abstractmethod
 from bases.dataset import DataSet, DisplayMixin
 from utils.units import Unit, NoUnit
-
-import sys
+from utils import classproperty
 
 class DataVector(object):
     """ a class for combining aspects of a particular vector of data.
@@ -152,6 +150,12 @@ class DataObj(DataSet, DisplayMixin):
         raise NotImplementedError
 
     # other common meta data
+
+    @classproperty
+    @classmethod
+    def sourceName(cls):
+        """Returns the name of the measurement method."""
+        raise NotImplementedError
 
     @property
     def filename(self):
