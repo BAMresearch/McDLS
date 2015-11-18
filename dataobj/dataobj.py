@@ -98,7 +98,7 @@ class DataVector(object):
 
     @limit.setter
     def limit(self, value):
-        print('Limit value: {}'.format(value))
+#        print('Limit value: {}'.format(value))
         if value is None:
             self._limit = [self.origin.min(), self.origin.max()]
         else:
