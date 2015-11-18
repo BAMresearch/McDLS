@@ -52,6 +52,7 @@ class SettingsWidget(SettingsWidgetBase):
     def __init__(self, parent, calculator, *args, **kwargs):
         SettingsWidgetBase.__init__(self, parent)
         self.sigValueChanged.connect(self.updateParam)
+        self.sigBackendUpdated.connect(self.onBackendUpdate)
         assert isinstance(calculator, Calculator)
         self._calculator = calculator
 
@@ -216,7 +217,6 @@ class SettingsWidget(SettingsWidgetBase):
         # enable signals again after ui updates
         self.sigValueChanged.connect(self.updateParam)
         # param internals could have changed, update ui accordingly
-        self.updateUi()
         self.sigBackendUpdated.emit() # update other widgets possibly
         if isNotNone(newRange):
             # the range was updated
@@ -226,6 +226,9 @@ class SettingsWidget(SettingsWidgetBase):
         """Called in MainWindow on calculation start."""
         for w in self.inputWidgets:
             self.updateParam(w)
+
+    def onBackendUpdate(self):
+        self.updateUi()
 
     def updateUi(self):
         """Update input widgets according to possibly changed backend data."""

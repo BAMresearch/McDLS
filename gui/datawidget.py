@@ -35,8 +35,6 @@ class SmearingWidget(SettingsWidget):
         """Creates a new layout with appropriate row/column count."""
         rearrangeWidgets(self.layout(), self._widgets, targetWidth)
 
-    def onUpdate(self):
-        self.updateUi()
 
 class DataWidget(SettingsWidget):
     _dataConfig = None
@@ -67,20 +65,22 @@ class DataWidget(SettingsWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         self.configLayout = layout
         self._widgets = tuple(self.makeWidgets("qLow", "qHigh"))
-        self.sigBackendUpdated.connect(self.onUpdate)
+
         hlayout.addWidget(configWidget)
 
         kwargs["smearingConfig"] = self._dataConfig.smearing
         self.smearingWidget = SmearingWidget(*args, **kwargs)
         hlayout.addWidget(self.smearingWidget)
-        self.smearingWidget.sigBackendUpdated.connect(self.onUpdate)
+        self.smearingWidget.sigBackendUpdated.connect(self.onBackendUpdate)
 
     def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
         rearrangeWidgets(self.configLayout, self._widgets, targetWidth)
 
-    def onUpdate(self):
-        self.smearingWidget.onUpdate()
+    def onBackendUpdate(self):
+        super(DataWidget, self).onBackendUpdate()
+        if hasattr(self, "smearingWidget"):
+            self.smearingWidget.onBackendUpdate()
         self.sigConfig.emit(self._dataConfig)
 
     def onDataSelected(self, dataobj):
