@@ -17,6 +17,7 @@ class SmearingConfig(AlgorithmBase):
     _qOffset = None # integration point positions, depends on beam profile
     _weights = None # integration weight per position, depends on beam profile
     locs = None # integration location matrix, depends on collType
+    shortName = "SAS smearing configuration"
     parameters = (
         # not sure if this is the right place: is the nsteps parameter useful
         # for all possible smearing settings? BRP: yes, I think so... 
@@ -215,6 +216,7 @@ class SASConfig(AlgorithmBase, CallbackRegistry):
     _qUnit = NoUnit()
     _pUnit = NoUnit()
     _smearing = None
+    shortName = "SAS data configuration"
     parameters = (
         Parameter("qLow", 0., unit = NoUnit(),
             displayName = "lower q cut-off",
