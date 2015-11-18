@@ -24,7 +24,7 @@ class SmearingWidget(SettingsWidget):
 
     def __init__(self, *args, **kwargs):
         super(SmearingWidget, self).__init__(*args, **kwargs)
-        self.title = TitleHandler.setup(self, "Smearing Settings")
+        self.title = TitleHandler.setup(self, self.algorithm.name())
         self._smearingConfig = kwargs.pop("smearingConfig", None)
         layout = QGridLayout(self)
         layout.setObjectName("configLayout")
