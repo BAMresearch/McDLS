@@ -39,9 +39,6 @@ def rearrangeWidgets(layout, widgets, targetWidth):
     # add them again with new column count
     for i, w in enumerate(widgets):
         layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
-    # add empty spacer at the bottom
-    layout.addWidget(QWidget(), layout.rowCount(), 0)
-    layout.setRowStretch(layout.rowCount() - 1, 1)
 
 class SettingsWidget(SettingsWidgetBase):
     _calculator = None # calculator instance associated
