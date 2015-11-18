@@ -110,8 +110,12 @@ class AsciiFile(DataFile):
             # strip trailing white space, replace decimal operators 
             # eventually, split data fields
             # we read floating point numbers only
+            if '.' in line:
+                line = line.replace(","," ") # comma separated
+            else: # no points in line
+                # convert D/A/CH decimal separator to point
+                line = line.replace(",",".")
             fields = (line.strip()
-                          .replace(",",".")
                           .replace(";"," ")
                           .split())
             record = None
