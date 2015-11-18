@@ -42,9 +42,11 @@ from gui.settingswidget import SettingsWidget
 
 class ModelWidget(SettingsWidget):
     sigModelChanged = Signal()
+    _calculator = None
 
-    def __init__(self, *args, **kwargs):
-        SettingsWidget.__init__(self, *args, **kwargs)
+    def __init__(self, parent, calculator):
+        super(ModelWidget, self).__init__(parent, None)
+        self._calculator = calculator
         self.title = TitleHandler.setup(self, "Model")
 
         layout = QVBoxLayout(self)
@@ -66,9 +68,9 @@ class ModelWidget(SettingsWidget):
         self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
 
     def storeSession(self, section = None):
-        if self.appSettings is None or self.algorithm is None:
+        if self.appSettings is None or self.model is None:
             return
-        model = self.algorithm.name()
+        model = self.model.name()
         self.appSettings.beginGroup(self.objectName())
         self.appSettings.setValue("model", model)
         super(ModelWidget, self).storeSession(model)
@@ -103,17 +105,17 @@ class ModelWidget(SettingsWidget):
             return
         # store current settings before changing the model
         self.storeSession()
-        self.calculator.model = model()
+        self._calculator.model = model()
         # remove parameter widgets from layout
         layout = self.modelWidget.layout()
         self.removeWidgets(self.modelWidget)
         # create new parameter widget based on current selection
-        for p in self.algorithm.params():
+        for p in self.model.params():
             widget = self.makeSetting(p, activeBtns = True)
             layout.addWidget(widget)
         layout.addStretch()
         # restore user settings for this model
-        self.restoreSession(self.calculator.model.name())
+        self.restoreSession(self.model.name())
         self.sigRangeChanged.connect(self.sigModelChanged)
         self.sigModelChanged.emit()
 
@@ -130,19 +132,19 @@ class ModelWidget(SettingsWidget):
         # set the index found or the first one otherwise
         self.modelBox.setCurrentIndex(index)
 
-    @property
+    @SettingsWidget.algorithm.getter
     def algorithm(self):
-        # This should really be called "model", not "algorithm" to avoid 
-        # confusion
-        if self.calculator is None:
+        if self._calculator is None:
             return None
-        return self.calculator.model
+        return self._calculator.model
+
+    model = algorithm
 
     def setSphericalSizeRange(self, minVal, maxVal):
         key = "radius"
         # get parameter display order of magnitude: 
         param = None
-        for p in self.algorithm.params():
+        for p in self.model.params():
             if key in p.name().lower():
                 param = p
                 break

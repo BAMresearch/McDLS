@@ -51,18 +51,14 @@ class AdvancedSettings(SettingsGroup, QGroupBox):
 class AlgorithmWidget(SettingsWidget):
 
     @property
-    def algorithm(self):
-        return self.calculator.algo
-
-    @property
     def uiWidgets(self):
         if hasattr(self, "advanced"):
             return (self.advanced,)
         else:
             return ()
 
-    def __init__(self, *args, **kwargs):
-        SettingsWidget.__init__(self, *args, **kwargs)
+    def __init__(self, *args):
+        SettingsWidget.__init__(self, *args)
         self.title = TitleHandler.setup(self, "Algorithm")
         # basic row oriented layout
         hlayout = QVBoxLayout(self)

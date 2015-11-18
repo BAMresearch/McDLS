@@ -11,7 +11,7 @@ from QtGui import (QWidget, QHBoxLayout, QPushButton,
                    QLabel, QLayout)
 from gui.bases.datalist import DataList
 from gui.bases.settingswidget import SettingsWidget as SettingsWidgetBase
-from bases.algorithm.parameter import ParameterFloat # instance for test
+from bases.algorithm import AlgorithmBase, ParameterFloat # instance for test
 from utils import isList, isString, testfor
 from utils.parameter import (ParameterNumerical, FitParameterBase)
 from gui.calc import Calculator
@@ -41,17 +41,27 @@ def rearrangeWidgets(layout, widgets, targetWidth):
         layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
 
 class SettingsWidget(SettingsWidgetBase):
-    _calculator = None # calculator instance associated
+    _algo = None
     _appSettings = None
     sigRangeChanged = Signal()
     sigBackendUpdated = Signal()
 
-    def __init__(self, parent, calculator, *args, **kwargs):
-        SettingsWidgetBase.__init__(self, parent)
+    def __init__(self, parent, algorithm):
+        super(SettingsWidget, self).__init__(parent)
+        self.algorithm = algorithm
         self.sigValueChanged.connect(self.updateParam)
         self.sigBackendUpdated.connect(self.onBackendUpdate)
-        assert isinstance(calculator, Calculator)
-        self._calculator = calculator
+
+    @property
+    def algorithm(self):
+        """Retrieves AlgorithmBase object containing all parameters
+        for this settings."""
+        return self._algo
+
+    @algorithm.setter
+    def algorithm(self, algo):
+        assert algo is None or isinstance(algo, AlgorithmBase)
+        self._algo = algo
 
     @property
     def appSettings(self):
@@ -61,16 +71,6 @@ class SettingsWidget(SettingsWidgetBase):
     def appSettings(self, settings):
         assert isinstance(settings, QSettings)
         self._appSettings = settings
-
-    @property
-    def calculator(self):
-        return self._calculator
-
-    @property
-    def algorithm(self):
-        """Retrieves AlgorithmBase object containing all parameters
-        for this settings."""
-        raise NotImplementedError
 
     # create inputs for a subset of algorithm parameters
     # allowed parameters could be configurable from file too
