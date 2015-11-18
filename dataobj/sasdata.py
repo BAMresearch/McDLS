@@ -368,6 +368,8 @@ class SASData(DataObj):
         self._prepareUncertainty()
 
     def setConfig(self, config):
+        if not isinstance(config, SASConfig):
+            return # ignore incompatible configurations
         if not super(SASData, self).setConfig(config):
             return # no update, nothing todo
         # prepare
