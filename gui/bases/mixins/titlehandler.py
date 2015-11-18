@@ -6,7 +6,7 @@ from gui.qt import QtCore, QtGui
 from QtCore import QObject
 from QtGui import QWidget
 from bases.dataset import HierarchicalDataSet, TitleMixin
-from utils import isString
+from utils import isString, isCallable
 
 class TitleHandler(TitleMixin):
     _updateFunc = None
@@ -41,7 +41,7 @@ class TitleHandler(TitleMixin):
             func(title)
 
     def registerUpdateFunc(self, func):
-        assert callable(func)
+        assert isCallable(func)
         self._updateFunc.append(func)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
