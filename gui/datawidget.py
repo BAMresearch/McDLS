@@ -7,6 +7,7 @@ import logging
 from gui.qt import QtCore, QtGui
 from QtCore import Qt
 from QtGui import (QWidget, QGridLayout, QVBoxLayout, QLabel)
+from utils import isList
 from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
@@ -14,80 +15,86 @@ from gui.settingswidget import SettingsWidget, rearrangeWidgets
 from dataobj import DataObj, SASConfig
 
 import sys
+from bases.algorithm.algorithmbase import AlgorithmBase
 
-class SmearingWidget(SettingsWidget):
-    _smearingConfig = None
+class ConfigWidget(SettingsWidget):
+    _algo = None
 
     @property
     def algorithm(self):
-        return self._smearingConfig
+        return self._algo
+
+    @algorithm.setter
+    def algorithm(self, algo):
+        assert isinstance(algo, AlgorithmBase)
+        self._algo = algo
 
     def __init__(self, *args, **kwargs):
-        super(SmearingWidget, self).__init__(*args, **kwargs)
+        """Additional arguments: *algorithm* and ??"""
+        super(ConfigWidget, self).__init__(*args, **kwargs)
+        self.algorithm = kwargs.pop("algorithm", None)
         self.title = TitleHandler.setup(self, self.algorithm.name())
-        self._smearingConfig = kwargs.pop("smearingConfig", None)
         layout = QGridLayout(self)
         layout.setObjectName("configLayout")
         layout.setContentsMargins(0, 0, 0, 0)
-        self._widgets = tuple(self.makeWidgets("umbra", "penumbra", "collType"))
+        self.gridLayout = layout
+
+        pNames = kwargs.pop("showParams", None)
+        if not isList(pNames) or not len(pNames):
+            pNames = [p.name() for p in self.algorithm.params()]
+        print >>sys.__stderr__, "ConfigWidget", pNames
+        self._widgets = tuple(self.makeWidgets(*pNames))
 
     def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
-        rearrangeWidgets(self.layout(), self._widgets, targetWidth)
+        rearrangeWidgets(self.gridLayout, self._widgets, targetWidth)
 
-
-class DataWidget(SettingsWidget):
-    _dataConfig = None
+class DataWidget(QWidget):
     sigConfig = Signal(SASConfig)
 
-    @property
-    def algorithm(self):
-        return self._dataConfig
-
-    def __init__(self, *args, **kwargs):
-        super(DataWidget, self).__init__(*args, **kwargs)
+    def __init__(self, parent, calculator, *args, **kwargs):
+        super(DataWidget, self).__init__(parent, *args, **kwargs)
         self.title = TitleHandler.setup(self, "Data Settings")
         # basic row oriented layout
         hlayout = QVBoxLayout(self)
         hlayout.setObjectName("baseLayout")
         hlayout.setContentsMargins(0, 0, 0, 0)
-        self.setLayout(hlayout)
+
+        args = (self, calculator) + args
+        self.buildUi(SASConfig(), args)
+
+    def buildUi(self, config, args):
+        SettingsWidget.removeWidgets(self)
+        
         # descriptive top row label
         lbl = QLabel(self)
         self.layout().addWidget(lbl)
         self.headLabel = lbl
 
-        self._dataConfig = SASConfig()
+        self._widgets = self.makeConfigUi(config, args)
+        self.layout().addStretch()
+
+    def makeConfigUi(self, config, args):
         # create a new layout
-        configWidget = QWidget()
-        layout = QGridLayout(configWidget)
-        layout.setObjectName("configLayout")
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.configLayout = layout
-        self._widgets = tuple(self.makeWidgets("qLow", "qHigh"))
-
-        hlayout.addWidget(configWidget)
-
-        kwargs["smearingConfig"] = self._dataConfig.smearing
-        self.smearingWidget = SmearingWidget(*args, **kwargs)
-        hlayout.addWidget(self.smearingWidget)
-        self.smearingWidget.sigBackendUpdated.connect(self.onBackendUpdate)
-
-    def resizeWidgets(self, targetWidth):
-        """Creates a new layout with appropriate row/column count."""
-        rearrangeWidgets(self.configLayout, self._widgets, targetWidth)
+        w = ConfigWidget(*args, algorithm = config)
+        w.sigBackendUpdated.connect(self.onBackendUpdate)
+        self.layout().addWidget(w)
+        lst = [w]
+        if getattr(config, "smearing", None) is not None:
+            lst += self.makeConfigUi(config.smearing, args)
+        return lst
 
     def onBackendUpdate(self):
-        super(DataWidget, self).onBackendUpdate()
-        if hasattr(self, "smearingWidget"):
-            self.smearingWidget.onBackendUpdate()
-        self.sigConfig.emit(self._dataConfig)
+        [w.onBackendUpdate() for w in self._widgets]
+        # emit the first which contains the other
+        self.sigConfig.emit(self._widgets[0].algorithm)
 
     def onDataSelected(self, dataobj):
         if not isinstance(dataobj, DataObj):
             return
-        import sys
-        print >>sys.__stderr__, "onDataSelected", repr(dataobj), dataobj.sourceName
+        if dataobj.config is not None:
+            print >>sys.__stderr__, "onDataSelected", dataobj.config.name()
+        print >>sys.__stderr__, "onDataSelected", repr(dataobj)
         self.headLabel.setText("Configure all data sets measured by {}:"
                                .format(dataobj.sourceName))
 
