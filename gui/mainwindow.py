@@ -231,14 +231,14 @@ class MainWindow(MainWindowBase):
 
     def _setupDataWidget(self):
         """Set up property widget with settings."""
-        self.dataWidget = DataWidget(self, self.calculator)
+        self.dataWidget = DataWidget(self)
         self.dataWidget.sigConfig.connect(self.fileWidget.setDataConfig)
         self.fileWidget.sigSelectedData.connect(self.dataWidget.onDataSelected)
         return self.dataWidget
 
     def _setupAlgoWidget(self):
         """Set up property widget with settings."""
-        self.algoWidget = AlgorithmWidget(self, self.calculator)
+        self.algoWidget = AlgorithmWidget(self, self.calculator.algo)
         return self.algoWidget
 
     def _setupModelWidget(self):

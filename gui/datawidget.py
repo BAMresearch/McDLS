@@ -18,32 +18,22 @@ import sys
 from bases.algorithm.algorithmbase import AlgorithmBase
 
 class ConfigWidget(SettingsWidget):
-    _algo = None
 
-    @property
-    def algorithm(self):
-        return self._algo
-
-    @algorithm.setter
-    def algorithm(self, algo):
-        assert isinstance(algo, AlgorithmBase)
-        self._algo = algo
-
-    def __init__(self, *args, **kwargs):
-        """Additional arguments: *algorithm* and ??"""
-        super(ConfigWidget, self).__init__(*args, **kwargs)
-        self.algorithm = kwargs.pop("algorithm", None)
+    def __init__(self, parent, algorithm, showParams = None):
+        """Additional arguments: *showParams* is a list of parameter names to
+        show in this widget. If not specified it show all available parameters
+        by default."""
+        super(ConfigWidget, self).__init__(parent, algorithm)
         self.title = TitleHandler.setup(self, self.algorithm.name())
         layout = QGridLayout(self)
         layout.setObjectName("configLayout")
         layout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout = layout
 
-        pNames = kwargs.pop("showParams", None)
-        if not isList(pNames) or not len(pNames):
-            pNames = [p.name() for p in self.algorithm.params()]
-        print >>sys.__stderr__, "ConfigWidget", pNames
-        self._widgets = tuple(self.makeWidgets(*pNames))
+        if not isList(showParams) or not len(showParams):
+            showParams = [p.name() for p in self.algorithm.params()]
+        print >>sys.__stderr__, "ConfigWidget", showParams
+        self._widgets = tuple(self.makeWidgets(*showParams))
 
     def resizeWidgets(self, targetWidth):
         """Creates a new layout with appropriate row/column count."""
@@ -52,18 +42,17 @@ class ConfigWidget(SettingsWidget):
 class DataWidget(QWidget):
     sigConfig = Signal(SASConfig)
 
-    def __init__(self, parent, calculator, *args, **kwargs):
-        super(DataWidget, self).__init__(parent, *args, **kwargs)
+    def __init__(self, parent):
+        super(DataWidget, self).__init__(parent)
         self.title = TitleHandler.setup(self, "Data Settings")
         # basic row oriented layout
         hlayout = QVBoxLayout(self)
         hlayout.setObjectName("baseLayout")
         hlayout.setContentsMargins(0, 0, 0, 0)
 
-        args = (self, calculator) + args
-        self.buildUi(SASConfig(), args)
+        self.buildUi(SASConfig())
 
-    def buildUi(self, config, args):
+    def buildUi(self, config):
         SettingsWidget.removeWidgets(self)
         
         # descriptive top row label
@@ -71,17 +60,17 @@ class DataWidget(QWidget):
         self.layout().addWidget(lbl)
         self.headLabel = lbl
 
-        self._widgets = self.makeConfigUi(config, args)
+        self._widgets = self.makeConfigUi(config)
         self.layout().addStretch()
 
-    def makeConfigUi(self, config, args):
+    def makeConfigUi(self, config):
         # create a new layout
-        w = ConfigWidget(*args, algorithm = config)
+        w = ConfigWidget(self, algorithm = config)
         w.sigBackendUpdated.connect(self.onBackendUpdate)
         self.layout().addWidget(w)
         lst = [w]
         if getattr(config, "smearing", None) is not None:
-            lst += self.makeConfigUi(config.smearing, args)
+            lst += self.makeConfigUi(config.smearing)
         return lst
 
     def onBackendUpdate(self):
