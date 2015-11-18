@@ -233,6 +233,7 @@ class MainWindow(MainWindowBase):
         """Set up property widget with settings."""
         self.dataWidget = DataWidget(self, self.calculator)
         self.dataWidget.sigConfig.connect(self.fileWidget.setDataConfig)
+        self.fileWidget.sigSelectedData.connect(self.dataWidget.onDataSelected)
         return self.dataWidget
 
     def _setupAlgoWidget(self):

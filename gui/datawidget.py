@@ -11,7 +11,7 @@ from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
 from gui.settingswidget import SettingsWidget, rearrangeWidgets
-from dataobj import SASConfig
+from dataobj import DataObj, SASConfig
 
 import sys
 
@@ -78,5 +78,11 @@ class DataWidget(SettingsWidget):
     def onUpdate(self):
         self.smearingWidget.onUpdate()
         self.sigConfig.emit(self._dataConfig)
+
+    def onDataSelected(self, dataobj):
+        if not isinstance(dataobj, DataObj):
+            return
+        import sys
+        print >>sys.__stderr__, "onDataSelected", repr(dataobj), dataobj.sourceName
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
