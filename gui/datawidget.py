@@ -11,32 +11,10 @@ from utils import isList
 from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
-from gui.algorithmwidget import AlgorithmWidget, rearrangeWidgets
+from gui.algorithmwidget import AlgorithmWidget, SettingsGridWidget 
 from dataobj import DataObj, SASConfig
 
 import sys
-from bases.algorithm.algorithmbase import AlgorithmBase
-
-class ConfigWidget(AlgorithmWidget):
-
-    def __init__(self, parent, algorithm, showParams = None):
-        """Additional arguments: *showParams* is a list of parameter names to
-        show in this widget. If not specified it shows all available parameters
-        by default."""
-        super(ConfigWidget, self).__init__(parent, algorithm)
-        self.title = TitleHandler.setup(self, self.algorithm.name())
-        layout = QGridLayout(self)
-        layout.setObjectName("configLayout")
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout = layout
-
-        if not isList(showParams) or not len(showParams):
-            showParams = [p.name() for p in self.algorithm.params()]
-        self._widgets = tuple(self.makeWidgets(*showParams))
-
-    def resizeWidgets(self, targetWidth):
-        """Creates a new layout with appropriate row/column count."""
-        rearrangeWidgets(self.gridLayout, self._widgets, targetWidth)
 
 class DataWidget(QWidget):
     sigConfig = Signal(SASConfig)
@@ -64,7 +42,7 @@ class DataWidget(QWidget):
 
     def makeConfigUi(self, config):
         # create a new layout
-        w = ConfigWidget(self, algorithm = config)
+        w = SettingsGridWidget(self, algorithm = config)
         w.sigBackendUpdated.connect(self.onBackendUpdate)
         self.layout().addWidget(w)
         lst = [w]
