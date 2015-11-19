@@ -200,8 +200,6 @@ class McSAS(AlgorithmBase):
         (*numReps*) of times. If convergence is not achieved, it will try 
         again for a maximum of *maxRetries* attempts.
         """
-        data = self.data
-#        logging.debug(u'{}, Shape validIndices: {}'.format(data.x0.limsString, data._validIndices.shape))
         # get settings
         numContribs = self.numContribs()
         numReps = self.numReps()
@@ -209,14 +207,14 @@ class McSAS(AlgorithmBase):
         if not any([isActiveParam(p) for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
-        contributions = zeros((self.numContribs(), 
+        contributions = zeros((numContribs, 
             self.model.activeParamCount(), 
-            self.numReps()))
+            numReps))
         numIter = zeros(numReps)
         scalings = zeros(numReps)
         backgrounds = zeros(numReps)
         times = zeros(numReps)
-        contribMeasVal = zeros([1, data.count, numReps])
+        contribMeasVal = zeros([1, self.data.count, numReps])
 
         # This is the loop that repeats the MC optimization numReps times,
         # after which we can calculate an uncertainty on the Results.
@@ -239,14 +237,16 @@ class McSAS(AlgorithmBase):
                     break # nothing active, nothing to fit
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
-                    return
+                    # return # if not to show incomplete results
+                    break
                 if nt > self.maxRetries():
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
                     logging.warning("Could not reach optimization criterion "
                                     "within {0} attempts, exiting..."
                                     .format(self.maxRetries() + 2))
-                    return
+                    # return # if not to show incomplete results
+                    break
             # in minutes:
             # keep track of how many iterations were needed to reach converg.
             numIter[nr] = details.get('numIterations', 0)
@@ -269,7 +269,7 @@ class McSAS(AlgorithmBase):
             contribs = contributions, # Rrep
             fitMeasValMean = contribMeasVal.mean(axis = 2),
             fitMeasValStd = contribMeasVal.std(axis = 2),
-            fitX0 = data.x0.value,
+            fitX0 = self.data.x0.value,
             # background details:
             scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
