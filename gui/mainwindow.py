@@ -31,7 +31,7 @@ from gui.qt import QtSvg, QtXml, pluginDirs
 from gui.rangelist import RangeList
 from gui.settingswidget import SettingsWidget
 from gui.datawidget import DataWidget
-from gui.algorithmwidget import AlgorithmWidget
+from gui.optimizationwidget import OptimizationWidget
 from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
 from main import makeAbsolutePath
@@ -160,7 +160,7 @@ class ToolBox(QToolBox):
     """
     def resizeEvent(self, event):
         child = self.currentWidget()
-        if isinstance(child, AlgorithmWidget):
+        if isinstance(child, OptimizationWidget):
             child.resizeEvent(event)
         if isinstance(child, DataWidget):
             child.resizeEvent(event)
@@ -190,7 +190,7 @@ class MainWindow(MainWindowBase):
         self.toolbox = ToolBox(self)
         self._addToolboxItem(self._setupFileWidget())
         self._addToolboxItem(self._setupDataWidget())
-        self._addToolboxItem(self._setupAlgoWidget())
+        self._addToolboxItem(self._setupOptimWidget())
         self._addToolboxItem(self._setupModelWidget())
         self._addToolboxItem(self._setupStatsWidget())
 
@@ -236,10 +236,10 @@ class MainWindow(MainWindowBase):
         self.fileWidget.sigSelectedData.connect(self.dataWidget.onDataSelected)
         return self.dataWidget
 
-    def _setupAlgoWidget(self):
+    def _setupOptimWidget(self):
         """Set up property widget with settings."""
-        self.algoWidget = AlgorithmWidget(self, self.calculator.algo)
-        return self.algoWidget
+        self.optimWidget = OptimizationWidget(self, self.calculator.algo)
+        return self.optimWidget
 
     def _setupModelWidget(self):
         """Set up property widget with settings."""
@@ -294,7 +294,7 @@ class MainWindow(MainWindowBase):
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
         settings = self.appSettings()
-        for settingsWidget in self.algoWidget, self.modelWidget:
+        for settingsWidget in self.optimWidget, self.modelWidget:
             settingsWidget.appSettings = self.appSettings()
             settingsWidget.restoreSession()
         try:
@@ -307,7 +307,7 @@ class MainWindow(MainWindowBase):
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
         settings = self.appSettings()
-        for settingsWidget in self.algoWidget, self.modelWidget:
+        for settingsWidget in self.optimWidget, self.modelWidget:
             settingsWidget.storeSession()
         settings.setValue("lastpath", LastPath.get())
         settings.sync()
