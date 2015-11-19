@@ -40,9 +40,9 @@ MODELS = OrderedDict((
 ))
 FIXEDWIDTH = 120
 
-from gui.settingswidget import SettingsWidget
+from gui.algorithmwidget import AlgorithmWidget
 
-class ModelWidget(SettingsWidget):
+class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
 
@@ -134,7 +134,7 @@ class ModelWidget(SettingsWidget):
         # set the index found or the first one otherwise
         self.modelBox.setCurrentIndex(index)
 
-    @SettingsWidget.algorithm.getter
+    @AlgorithmWidget.algorithm.getter
     def algorithm(self):
         if self._calculator is None:
             return None

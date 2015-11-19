@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# gui/settingswidget.py
+# gui/algorithmwidget.py
 
 from __future__ import absolute_import # PEP328
 import logging
@@ -10,7 +10,7 @@ from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QPushButton,
                    QLabel, QLayout)
 from gui.bases.datalist import DataList
-from gui.bases.settingswidget import SettingsWidget as SettingsWidgetBase
+from gui.bases.settingswidget import SettingsWidget
 from bases.algorithm import AlgorithmBase, ParameterFloat # instance for test
 from utils import isList, isString, testfor
 from utils.parameter import (ParameterNumerical, FitParameterBase)
@@ -34,20 +34,20 @@ def rearrangeWidgets(layout, widgets, targetWidth):
                 return i
         return len(widgets)
 
-    SettingsWidget.clearLayout(layout)
+    AlgorithmWidget.clearLayout(layout)
     numCols = max(1, getNumCols())
     # add them again with new column count
     for i, w in enumerate(widgets):
         layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
 
-class SettingsWidget(SettingsWidgetBase):
+class AlgorithmWidget(SettingsWidget):
     _algo = None
     _appSettings = None
     sigRangeChanged = Signal()
     sigBackendUpdated = Signal()
 
     def __init__(self, parent, algorithm):
-        super(SettingsWidget, self).__init__(parent)
+        super(AlgorithmWidget, self).__init__(parent)
         self.algorithm = algorithm
         self.sigValueChanged.connect(self.updateParam)
         self.sigBackendUpdated.connect(self.onBackendUpdate)
@@ -384,7 +384,7 @@ class SettingsWidget(SettingsWidgetBase):
     @staticmethod
     def removeWidgets(widget):
         """Removes all widgets from the layout of the given widget."""
-        SettingsWidget.clearLayout(widget.layout(), QWidget())
+        AlgorithmWidget.clearLayout(widget.layout(), QWidget())
 
     def resizeEvent(self, resizeEvent):
         """Resizes widget based on available width."""

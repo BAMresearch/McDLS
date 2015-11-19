@@ -11,17 +11,17 @@ from utils import isList
 from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.scientrybox import SciEntryBox
-from gui.settingswidget import SettingsWidget, rearrangeWidgets
+from gui.algorithmwidget import AlgorithmWidget, rearrangeWidgets
 from dataobj import DataObj, SASConfig
 
 import sys
 from bases.algorithm.algorithmbase import AlgorithmBase
 
-class ConfigWidget(SettingsWidget):
+class ConfigWidget(AlgorithmWidget):
 
     def __init__(self, parent, algorithm, showParams = None):
         """Additional arguments: *showParams* is a list of parameter names to
-        show in this widget. If not specified it show all available parameters
+        show in this widget. If not specified it shows all available parameters
         by default."""
         super(ConfigWidget, self).__init__(parent, algorithm)
         self.title = TitleHandler.setup(self, self.algorithm.name())
@@ -32,7 +32,6 @@ class ConfigWidget(SettingsWidget):
 
         if not isList(showParams) or not len(showParams):
             showParams = [p.name() for p in self.algorithm.params()]
-        print >>sys.__stderr__, "ConfigWidget", showParams
         self._widgets = tuple(self.makeWidgets(*showParams))
 
     def resizeWidgets(self, targetWidth):
@@ -53,7 +52,7 @@ class DataWidget(QWidget):
         self.buildUi(SASConfig())
 
     def buildUi(self, config):
-        SettingsWidget.removeWidgets(self)
+        AlgorithmWidget.removeWidgets(self)
         
         # descriptive top row label
         lbl = QLabel(self)
