@@ -59,22 +59,37 @@ class AlgorithmBase(object):
         """Expects a list of ParameterBase classes/types and sets them as
         class attributes to this class. They will become instances later,
         please see __init__()"""
-        ptypes = []
         for i, p in enumerate(parameters):
             testfor(isinstance(p, type) and issubclass(p, ParameterBase),
                     AlgorithmParameterError, "{name}: Expected a "
                     "ParameterBase for parameter {index}, got {type}!"
                     .format(name = cls.__name__, index = i, type = type(p)))
-            # char replacement for unicode
-            name = unicode(p.name())
-            replacements = dict([(ord(char), None) for char in u' \t\n\r'])
-            attrname = name.translate(replacements)
-            if hasattr(cls, attrname):
-                continue # ignore duplicate parameters
-            # set the clean name
-            setattr(cls, name.translate(replacements), p)
-            ptypes.append(p)
-        cls._parameters = tuple(ptypes)
+            cls.setParam(p)
+
+    @mixedmethod
+    def setParam(selforcls, p):
+        """Sets the given parameter as an attribute of this object. Use this
+        method instead of setattr()."""
+        # sanitize the parameter name
+        name = unicode(p.name())
+        replacements = dict([(ord(char), None) for char in u' \t\n\r'])
+        attrname = name.translate(replacements)
+        # use the clean name
+        if not isList(selforcls._parameters):
+            selforcls._parameters = []
+        old = getattr(selforcls, attrname, None)
+        oldIdx = -1
+        if old is not None:
+            try:
+                oldIdx = selforcls._parameters.index(old)
+            except ValueError:
+                pass
+        setattr(selforcls, attrname, p)
+        # maintain a list of all parameters
+        if oldIdx >= 0:
+            selforcls._parameters[oldIdx] = p
+        else:
+            selforcls._parameters.append(p)
 
     @mixedmethod
     def params(selforcls):
@@ -126,12 +141,10 @@ class AlgorithmBase(object):
                 "Parameters not configured! "
                 "Set up {name} by calling factory() first."
                 .format(name = type(self).__name__))
-        instParams = []
-        for ptype in self._parameters:
-            p = ptype()
-            instParams.append(p)
-            setattr(self, p.name(), p)
-        self._parameters = tuple(instParams)
+        paramTypes = self.params()
+        self._parameters = None
+        for ptype in paramTypes:
+            self.setParam(ptype())
 
     def __str__(self):
         text = [ self.name() ]
@@ -144,10 +157,10 @@ class AlgorithmBase(object):
         return cls()
 
     def copy(self):
-        f = self.makeDefault()
+        other = self.makeDefault()
         for p in self.params():
-            setattr(f, p.name(), getattr(self, p.name()).copy())
-        return f
+            other.setParam(p.copy())
+        return other
 
     def __eq__(self, other):
         if (self.name() != other.name() or
@@ -167,7 +180,7 @@ class AlgorithmBase(object):
 def _unpickleAlgo(cls, name, params):
     algo = cls.makeDefault()
     for p in params:
-        setattr(algo, p.name(), p)
+        algo.setParam(p)
     return algo
 
 if __name__ == "__main__":
