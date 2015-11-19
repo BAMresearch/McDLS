@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# gui/algorithmwidget.py
+# gui/optimizationwidget.py
 
 from __future__ import absolute_import # PEP328
 
@@ -48,7 +48,7 @@ class AdvancedSettings(SettingsGroup, QGroupBox):
         for w in self._widgets:
             func(w)
 
-class AlgorithmWidget(SettingsWidget):
+class OptimizationWidget(SettingsWidget):
 
     @property
     def uiWidgets(self):
@@ -58,8 +58,8 @@ class AlgorithmWidget(SettingsWidget):
             return ()
 
     def __init__(self, *args):
-        SettingsWidget.__init__(self, *args)
-        self.title = TitleHandler.setup(self, "Algorithm")
+        super(OptimizationWidget, self).__init__(*args)
+        self.title = TitleHandler.setup(self, "Optimization")
         # basic row oriented layout
         hlayout = QVBoxLayout(self)
         hlayout.setObjectName("baseLayout")
