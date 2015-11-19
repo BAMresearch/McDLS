@@ -8,14 +8,14 @@ from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
 from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QPushButton,
-                   QLabel, QLayout)
+                   QLabel, QLayout, QGridLayout)
 from gui.bases.datalist import DataList
 from gui.bases.settingswidget import SettingsWidget
+from gui.bases.mixins.titlehandler import TitleHandler
 from bases.algorithm import AlgorithmBase, ParameterFloat # instance for test
 from utils import isList, isString, testfor
 from utils.parameter import (ParameterNumerical, FitParameterBase)
 from gui.calc import Calculator
-
 from gui.scientrybox import SciEntryBox
 
 FIXEDWIDTH = 120
@@ -394,5 +394,28 @@ class AlgorithmWidget(SettingsWidget):
 
     def resizeWidgets(self, targetWidth):
         pass
+
+class SettingsGridWidget(AlgorithmWidget):
+    """Base class for displaying simple input boxes of various settings
+    arranged on a grid dynamically based on the width of the window."""
+
+    def __init__(self, parent, algorithm, showParams = None):
+        """Additional arguments: *showParams* is a list of parameter names to
+        show in this widget. If not specified it shows all available parameters
+        by default."""
+        super(SettingsGridWidget, self).__init__(parent, algorithm)
+        self.title = TitleHandler.setup(self, self.algorithm.name())
+        layout = QGridLayout(self)
+        layout.setObjectName("configLayout")
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout = layout
+
+        if not isList(showParams) or not len(showParams):
+            showParams = [p.name() for p in self.algorithm.params()]
+        self._widgets = tuple(self.makeWidgets(*showParams))
+
+    def resizeWidgets(self, targetWidth):
+        """Creates a new layout with appropriate row/column count."""
+        rearrangeWidgets(self.gridLayout, self._widgets, targetWidth)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
