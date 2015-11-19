@@ -209,7 +209,10 @@ class CallbackRegistry(object):
             "'{}' not in predefined callback slots '{}'"
             .format(what, self.callbackSlots))
 
-class SASConfig(AlgorithmBase, CallbackRegistry):
+class DataConfig(AlgorithmBase, CallbackRegistry):
+    pass
+
+class SASConfig(DataConfig):
     # TODO: implement callbacks for each value pair & unit
     # set units already for use in parameter definitions and UI
     _iUnit = NoUnit()
@@ -231,13 +234,11 @@ class SASConfig(AlgorithmBase, CallbackRegistry):
         return set(("limits", "qunit", "punit", "iunit"))
 
     @mixedmethod
-    def updateConstraints(self, *args):
-        if not self.qLow() < self.qHigh():
+    def updateConstraints(self):
+        if not self.qLow() <= self.qHigh():
             temp = self.qLow()
             self.qLow.setValue(self.qHigh())
             self.qHigh.setValue(temp)
-        if self.smearing is None:
-            return
         self.callback("limits", self.qLow(), self.qHigh())
 
     # not used yet, need a signal to get the available q-range of data from filelist to datawidget
