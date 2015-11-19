@@ -10,7 +10,6 @@ from QtGui import (QWidget, QGridLayout, QVBoxLayout, QLabel)
 from utils import isList
 from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
-from gui.scientrybox import SciEntryBox
 from gui.algorithmwidget import AlgorithmWidget, SettingsGridWidget 
 from dataobj import DataObj, SASConfig
 
@@ -41,6 +40,8 @@ class DataWidget(QWidget):
         self.layout().addStretch()
 
     def makeConfigUi(self, config):
+        if config is None: # not isinstance(config, DataConfig)
+            return []
         # create a new layout
         w = SettingsGridWidget(self, algorithm = config)
         w.sigBackendUpdated.connect(self.onBackendUpdate)
@@ -51,6 +52,8 @@ class DataWidget(QWidget):
         return lst
 
     def onBackendUpdate(self):
+        if not isList(self._widgets) or not len(self._widgets):
+            return
         [w.onBackendUpdate() for w in self._widgets]
         # emit the first which contains the other
         self.sigConfig.emit(self._widgets[0].algorithm)
@@ -58,10 +61,9 @@ class DataWidget(QWidget):
     def onDataSelected(self, dataobj):
         if not isinstance(dataobj, DataObj):
             return
-        if dataobj.config is not None:
-            print >>sys.__stderr__, "onDataSelected", dataobj.config.name()
-        print >>sys.__stderr__, "onDataSelected", repr(dataobj)
         self.headLabel.setText("Configure all data sets measured by {}:"
                                .format(dataobj.sourceName))
+        self.buildUi(dataobj.config)
+
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

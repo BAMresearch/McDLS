@@ -16,6 +16,7 @@ from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
 from utils import classproperty, isCallable, isInteger, isList
 from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle)
 from dataobj.dataobj import DataObj, DataVector
+#from dataobj.dlsconfig import DLSConfig
 
 # Boltzmann constant in m²·kg·s⁻²·K⁻¹ (SI units)
 KB = 1.38064852 * 1e-23
@@ -119,6 +120,13 @@ class DLSData(DataObj):
     @classmethod
     def sourceName(cls):
         return "Dynamic Light Scattering"
+
+    @property
+    def configType(self):
+        return type(None)
+#        return DLSConfig
+
+    # object specific properties
 
     def setSampleName(self, sampleName):
         self._sampleName = sampleName

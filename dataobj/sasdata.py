@@ -365,7 +365,7 @@ class SASData(DataObj):
         self._rUnit = Length(u"nm")
         # init config as early as possible to get properties ready which
         # depend on it (qlow/qhigh?)
-        self.setConfig(SASConfig())
+        self.setConfig(self.configType())
 
         self._prepareValidIndices()
         self._prepareSizeEst()
@@ -373,12 +373,14 @@ class SASData(DataObj):
         self._prepareUncertainty()
 
     def setConfig(self, config):
-        if not isinstance(config, SASConfig):
-            return # ignore incompatible configurations
         if not super(SASData, self).setConfig(config):
             return # no update, nothing todo
         # prepare
         self.locs = self.config.prepareSmearing(self.qi.value)
+
+    @property
+    def configType(self):
+        return SASConfig
 
     def _prepareSizeEst(self):
         self._sizeEst = np.pi / np.array([self.qi.limit[1],
