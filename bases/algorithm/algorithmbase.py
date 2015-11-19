@@ -68,6 +68,9 @@ class AlgorithmBase(object):
             # char replacement for unicode
             name = unicode(p.name())
             replacements = dict([(ord(char), None) for char in u' \t\n\r'])
+            attrname = name.translate(replacements)
+            if hasattr(cls, attrname):
+                continue # ignore duplicate parameters
             # set the clean name
             setattr(cls, name.translate(replacements), p)
             ptypes.append(p)
@@ -104,7 +107,9 @@ class AlgorithmBase(object):
             for baseCls in reversed(cls.__mro__):
                 # get parameters from parent classes as well
                 try:
-                    parameters.extend(baseCls.parameters)
+                    # add parameters to final list without duplicates
+                    parameters.extend([p for p in baseCls.parameters
+                                          if p not in parameters])
                 except:
                     continue
         cls.setParams(*parameters)
