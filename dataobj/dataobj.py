@@ -186,15 +186,17 @@ class DataObj(DataSet, DisplayMixin):
     def setConfig(self, config = None):
         """Set the extended configuration for this data and returns true if
         the configuration was different and an update was necessary."""
-        if config is None:
+        if not isinstance(config, self.configType):
             return False
-        if self.config is None:
-            self._config = config
+        if self.config is None or self.config != config:
+            self._config = config.copy()
             return True
-        if self.config == config:
-            return False
-        self._config = config.copy()
+        # else:
         return True
+
+    @abstractproperty
+    def configType(self):
+        raise NotImplementedError
 
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)
