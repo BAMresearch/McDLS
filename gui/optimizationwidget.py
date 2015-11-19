@@ -7,7 +7,7 @@ from gui.qt import QtCore, QtGui
 from QtCore import Qt
 from QtGui import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)
 from gui.bases.mixins.titlehandler import TitleHandler
-from gui.settingswidget import SettingsWidget, rearrangeWidgets
+from gui.algorithmwidget import AlgorithmWidget, rearrangeWidgets
 
 class SettingsGroup(object):
     _widgets = None # preconfigured widgets to show in this group
@@ -31,7 +31,7 @@ class AdvancedSettings(SettingsGroup, QGroupBox):
     def __init__(self, *args, **kwargs):
         super(AdvancedSettings, self).__init__(*args, **kwargs)
         self.setTitle("Advanced Settings")
-#        set by SettingsWidget._makeEntry()
+#        set by AlgorithmWidget._makeEntry()
 #        self.setCheckable(True)
 #        self.setChecked(False)
         self.clicked[bool].connect(self.showAdvanced)
@@ -48,7 +48,7 @@ class AdvancedSettings(SettingsGroup, QGroupBox):
         for w in self._widgets:
             func(w)
 
-class OptimizationWidget(SettingsWidget):
+class OptimizationWidget(AlgorithmWidget):
 
     @property
     def uiWidgets(self):

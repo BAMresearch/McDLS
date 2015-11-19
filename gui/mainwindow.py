@@ -29,7 +29,7 @@ from gui.scientrybox import SciEntryBox
 # required for svg graphics support
 from gui.qt import QtSvg, QtXml, pluginDirs
 from gui.rangelist import RangeList
-from gui.settingswidget import SettingsWidget
+from gui.algorithmwidget import AlgorithmWidget
 from gui.datawidget import DataWidget
 from gui.optimizationwidget import OptimizationWidget
 from gui.modelwidget import ModelWidget
@@ -332,7 +332,7 @@ class MainWindow(MainWindowBase):
         self.onStartStopClick(getattr(self._args, "start", False))
 
     def _updateWidgets(self):
-        for w in self.findChildren(SettingsWidget):
+        for w in self.findChildren(AlgorithmWidget):
             w.updateAll()
 
     def onStartStopClick(self, checked):
