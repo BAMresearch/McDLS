@@ -237,16 +237,20 @@ class McSAS(AlgorithmBase):
                     break # nothing active, nothing to fit
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
-                    # return # if not to show incomplete results
-                    break
+                    if self.showIncomplete():
+                        break
+                    else:
+                        return
                 if nt > self.maxRetries():
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
                     logging.warning("Could not reach optimization criterion "
                                     "within {0} attempts, exiting..."
                                     .format(self.maxRetries() + 2))
-                    # return # if not to show incomplete results
-                    break
+                    if self.showIncomplete():
+                        break
+                    else:
+                        return
             # in minutes:
             # keep track of how many iterations were needed to reach converg.
             numIter[nr] = details.get('numIterations', 0)

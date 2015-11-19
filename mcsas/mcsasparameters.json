@@ -93,19 +93,19 @@
         "displayUnit" : "-",
         "isActive" : false 
     },
+    "showIncomplete" : {
+        "displayName" : "Plot unsuccessful / incomplete results",
+        "description" : "After an interrupted run or an optimization that did not reach convergence, show results anyway.",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false 
+    },
     "eMin" : {
         "displayName" : "minimum uncertainty estimate",
         "valueRange" : [0.00,1.0],
         "description" : "Minimum possible uncertainty estimate as fraction of intensity",
         "default" : 0.01,
-        "unitClass" : "NoUnit",
-        "displayUnit" : "-",
-        "isActive" : false 
-    },
-    "doSmear" : {
-        "displayName" : "Apply slit smearing",
-        "description" : "Applies slit smearing for slit-collimated instruments",
-        "default" : false,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
         "isActive" : false 
