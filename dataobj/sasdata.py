@@ -435,8 +435,9 @@ class SASData(DataObj):
         # store
         self._validIndices = np.argwhere(bArr)[:,0]
         # a quick, temporary implementation to pass on all valid indices to the parameters:
-        self.ii.validIndices = self._validIndices
-        self.qi.validIndices = self._validIndices
+        self.f.validIndices = self._validIndices
+        self.fu.validIndices = self._validIndices
+        self.x0.validIndices = self._validIndices
         self._prepareSizeEst() # recalculate based on limits. 
 
 if __name__ == "__main__":
