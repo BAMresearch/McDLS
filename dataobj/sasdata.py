@@ -378,7 +378,7 @@ class SASData(DataObj):
         self.config.register("xlimits", self.qi.setLimit)
         self.qi.limit = self.config.xLow(), self.config.xHigh()
         # prepare
-        self.locs = self.config.prepareSmearing(self.qi.value)
+        self.locs = self.config.prepareSmearing(self.qi.origin)
 
     @property
     def configType(self):

@@ -218,9 +218,10 @@ class SASModel(ScatteringModel):
                      useSLD = useSLD)
 
         if data.config.smearing is not None:
-            kansas = data.locs.shape
+            locs = data.locs[data.x0.validIndices] # apply xlimits
+            kansas = locs.shape
             # the ff functions might only accept one-dimensional q arrays
-            locs = data.locs.reshape((data.locs.size))
+            locs = locs.reshape((locs.size))
             ff = self.ff(locs).reshape(kansas)
             qOffset, weightFunc = data.config.smearing.prepared
 #            import sys
