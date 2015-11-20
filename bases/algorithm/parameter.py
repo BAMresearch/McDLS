@@ -215,7 +215,7 @@ class ParameterBase(object):
             # set the attributes for which we find setters
             # the setter may raise exceptions for invalid data
             setter = getattr(cls, _setterName(key), None)
-            if setter is not None: # key exists, check for method?
+            if isCallable(setter): # key exists
                 setter(value)
         return cls
 
