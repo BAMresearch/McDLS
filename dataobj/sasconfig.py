@@ -34,7 +34,7 @@ class SmearingConfig(AlgorithmBase):
         pass
 
     @abstractmethod
-    def updateQLimits(self, qLow, qHigh):
+    def updateQLimits(self, qLimit):
         pass
 
     @abstractmethod
@@ -135,8 +135,9 @@ class TrapezoidSmearing(SmearingConfig):
         self.umbra.setUnit(newUnit)
         self.penumbra.setUnit(newUnit)
 
-    def updateQLimits(self, qLow, qHigh):
-        self.umbra.setValueRange((qLow, qHigh))
+    def updateQLimits(self, qLimit):
+        qLow, qHigh = qLimit
+        self.umbra.setValueRange(qLimit)
         self.penumbra.setValueRange((self.umbra(), qHigh))
 
     def __init__(self):
@@ -234,7 +235,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
             temp = self.xLow()
             self.xLow.setValue(self.xHigh())
             self.xHigh.setValue(temp)
-        self.callback("xlimits", self.xLow(), self.xHigh())
+        self.callback("xlimits", (self.xLow(), self.xHigh()))
 
 class SASConfig(DataConfig):
     # TODO: implement callbacks for each value pair & unit
@@ -256,7 +257,7 @@ class SASConfig(DataConfig):
         self.qHigh.setValueRange((qMin, qMax))
         if self.smearing is None:
             return
-        self.smearing.updateQLimits(self.qLow(), self.qHigh())
+        self.smearing.updateQLimits((self.qLow(), self.qHigh()))
 
     @property
     def iUnit(self):
