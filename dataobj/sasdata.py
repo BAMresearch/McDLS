@@ -375,6 +375,8 @@ class SASData(DataObj):
     def setConfig(self, config):
         if not super(SASData, self).setConfig(config):
             return # no update, nothing todo
+        self.config.register("xlimits", self.qi.setLimit)
+        self.qi.limit = self.config.xLow(), self.config.xHigh()
         # prepare
         self.locs = self.config.prepareSmearing(self.qi.value)
 
