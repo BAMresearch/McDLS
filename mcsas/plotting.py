@@ -318,22 +318,23 @@ class PlotResults(object):
 
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
-        qOrigin = dataset.x0.unit.toDisplay(dataset.x0.origin)
-        qUnitLabel = dataset.x0.unit.displayMagnitudeName
-        iOrigin = dataset.f.unit.toDisplay(dataset.f.origin)
-        iUnitLabel = dataset.f.unit.displayMagnitudeName
+        xOrigin = dataset.x0.unit.toDisplay(dataset.x0.origin)
+        xLabel = u'{} ({})'.format(dataset.x0.name, 
+                dataset.x0.unit.displayMagnitudeName)
+        yOrigin = dataset.f.unit.toDisplay(dataset.f.origin)
+        yLabel = u'{} ({})'.format(dataset.f.name, dataset.f.unit.displayMagnitudeName)
         uOrigin = dataset.fu.unit.toDisplay(dataset.fu.origin)
 
-        xLim = (qOrigin.min() * (1 - self._axisMargin), 
-                qOrigin.max() * (1 + self._axisMargin))
-        yLim = (iOrigin[iOrigin != 0].min() * (1 - self._axisMargin), 
-                iOrigin.max() * (1 + self._axisMargin))
+        xLim = (xOrigin.min() * (1 - self._axisMargin), 
+                xOrigin.max() * (1 + self._axisMargin))
+        yLim = (yOrigin[yOrigin != 0].min() * (1 - self._axisMargin), 
+                yOrigin.max() * (1 + self._axisMargin))
         qAxDict = self._AxDict.copy()
         qAxDict.update({
                 'xlim' : xLim,
                 'ylim' : yLim,
-                'xlabel' : u'q ({})'.format(qUnitLabel), 
-                'ylabel' : u'measVal ({})'.format(iUnitLabel)
+                'xlabel' : xLabel,
+                'ylabel' : yLabel
                 })
 
         """plots 1D data and fit"""
@@ -342,7 +343,7 @@ class PlotResults(object):
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
         # plot original data
-        errorbar(qOrigin, iOrigin, uOrigin, zorder = 2, fmt = 'k.',
+        errorbar(xOrigin, yOrigin, uOrigin, zorder = 2, fmt = 'k.',
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
                  label = 'Measured measVal', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
