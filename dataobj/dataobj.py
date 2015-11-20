@@ -96,12 +96,15 @@ class DataVector(object):
 
     @limit.setter
     def limit(self, value):
+        self.setLimit(value)
+
+    def setLimit(self, newLimit): # override&referencable
 #        print('Limit value: {}'.format(value))
-        if value is None:
+        if newLimit is None:
             self._limit = [self.origin.min(), self.origin.max()]
         else:
-            self._limit = [np.maximum(np.min(value), self.origin.min()), 
-                           np.minimum(np.max(value), self.origin.max())]
+            self._limit = [np.maximum(np.min(newLimit), self.origin.min()),
+                           np.minimum(np.max(newLimit), self.origin.max())]
 
     @property
     def limsString(self):
