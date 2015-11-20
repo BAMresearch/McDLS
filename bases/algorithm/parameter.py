@@ -309,8 +309,9 @@ class ParameterBase(object):
             return False
         try:
             # avoid reference loops for objects of bound methods
-            equal = (self.attributes(exclude = ("onValueUpdate",))
-                    == other.attributes(exclude = ("onValueUpdate",)))
+            xlst = ("onValueUpdate",)
+            equal = (self.attributes(exclude = xlst)
+                    == other.attributes(exclude = xlst))
             return equal
         except:
             return False
