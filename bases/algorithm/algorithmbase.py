@@ -182,6 +182,7 @@ class AlgorithmBase(object):
     def __reduce__(self):
         return (_unpickleAlgo, (type(self), self.name(), self.params(),))
 
+# not used atm
 def _unpickleAlgo(cls, name, params):
     algo = cls.makeDefault()
     for p in params:
