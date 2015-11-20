@@ -225,14 +225,20 @@ class ParameterBase(object):
         return (_unpickleParameter, (attr,))
 
     @mixedmethod
-    def copy(selforcls):
-        attr = selforcls.attributes()
+    def templateType(selforcls):
+        """Returns a type replicating the current object and its values."""
+        attr = selforcls.attributes(exclude = ("onValueUpdate",))
         other = attr.pop("cls") # remove duplicate first argument of factory()
         if isinstance(selforcls, object):
             selforcls = type(selforcls)
         if not issubclass(other, selforcls):
             other = selforcls
-        return other.factory(**attr)()
+        other.factory(**attr)
+        return other
+
+    @mixedmethod
+    def copy(selforcls):
+        return selforcls.templateType()()
 
     @classmethod
     def get(self, key, default = None):
