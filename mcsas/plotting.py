@@ -345,13 +345,13 @@ class PlotResults(object):
         # plot original data
         errorbar(xOrigin, yOrigin, uOrigin, zorder = 2, fmt = 'k.',
                  ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
-                 label = 'Measured measVal', lw = 2,
+                 label = 'Measured', lw = 2,
                  solid_capstyle = 'round', solid_joinstyle = 'miter')
         self.plotGrid(qAxis)
         # plot fit data
         plot(dataset.x0.unit.toDisplay(fitX0),
              dataset.f.unit.toDisplay(fitMeasVal), 'r-',
-                lw = 3, label = 'MC Fit measVal', zorder = 4)
+                lw = 3, label = 'MC Fit', zorder = 4)
         try: # try to plot the background level
             plot(dataset.x0.unit.toDisplay(fitX0),
                  dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
@@ -362,7 +362,7 @@ class PlotResults(object):
         except:
             logging.error('could not plot background')
             pass
-        title('Measured vs. Fitted measVal',
+        title('Measured vs. Fitted',
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
         xlim(xLim)
