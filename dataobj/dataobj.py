@@ -69,6 +69,10 @@ class DataVector(object):
     def origin(self):
         return self._siData
 
+    @origin.setter
+    def origin(self, vec):
+        self._siData = vec
+
     @property
     def raw(self):
         return self._raw
