@@ -81,11 +81,16 @@ class AlgorithmBase(object):
         oldIdx = -1
         if old is not None:
             try:
+                p.setOnValueUpdate(old.onValueUpdate())
+            except AttributeError:
+                pass
+            try:
                 oldIdx = selforcls._parameters.index(old)
             except ValueError:
                 pass
         setattr(selforcls, attrname, p)
-        # maintain a list of all parameters
+        # maintain a list of all parameters, replace the old by the new to
+        # keep the ordering or append the new if it didn't exist already
         if oldIdx >= 0:
             selforcls._parameters[oldIdx] = p
         else:
