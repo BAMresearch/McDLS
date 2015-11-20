@@ -389,21 +389,23 @@ class SASData(DataObj):
                                           abs(self.qi.limit[0]) ])
 
     def _prepareUncertainty(self):
-        self.ui.value = self.eMin * self.f.origin
+        """Modifies the uncertainty of the whole range of measured data to be
+        above a previously set minimum threshold *eMin*."""
+        self.ui.origin = self.eMin * self.f.origin
         minUncertaintyPercent = self.eMin * 100.
         if not self.hasError:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
         else:
-            count = sum(self.ui.value > self.ei.origin)
+            count = sum(self.ui.origin > self.ei.origin)
             if count > 0:
                 logging.warning("Minimum uncertainty ({}% of intensity) set "
                                 "for {} datapoints.".format(
                                 minUncertaintyPercent, count))
-            self.ui.value = np.maximum(self.ui.value, self.ei.origin)
+            self.ui.origin = np.maximum(self.ui.origin, self.ei.origin)
         # reset invalid uncertainties to np.inf
-        invInd = (True - np.isfinite(self.ui.value))
-        self.ui.value[invInd] = np.inf
+        invInd = (True - np.isfinite(self.ui.origin))
+        self.ui.origin[invInd] = np.inf
 
     def _prepareValidIndices(self):
         """
