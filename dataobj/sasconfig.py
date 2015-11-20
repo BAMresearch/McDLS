@@ -210,7 +210,31 @@ class CallbackRegistry(object):
             .format(what, self.callbackSlots))
 
 class DataConfig(AlgorithmBase, CallbackRegistry):
-    pass
+    parameters = (
+        Parameter("xLow", 0., unit = NoUnit(),
+            displayName = "lower {x} cut-off",
+            valueRange = (0., numpy.inf), decimals = 1),
+        Parameter("xHigh", numpy.inf, unit = NoUnit(),
+            displayName = "upper {x} cut-off",
+            valueRange = (0., numpy.inf), decimals = 1),
+    )
+
+    @property
+    def callbackSlots(self):
+        return set(("xlimits",))
+
+    def __init__(self):
+        super(DataConfig, self).__init__()
+        self.xLow.setOnValueUpdate(self.updateXLimits)
+        self.xHigh.setOnValueUpdate(self.updateXLimits)
+
+    @mixedmethod
+    def updateXLimits(self):
+        if not self.xLow() <= self.xHigh():
+            temp = self.xLow()
+            self.xLow.setValue(self.xHigh())
+            self.xHigh.setValue(temp)
+        self.callback("xlimits", self.xLow(), self.xHigh())
 
 class SASConfig(DataConfig):
     # TODO: implement callbacks for each value pair & unit
@@ -220,26 +244,10 @@ class SASConfig(DataConfig):
     _pUnit = NoUnit()
     _smearing = None
     shortName = "SAS data configuration"
-    parameters = (
-        Parameter("qLow", 0., unit = NoUnit(),
-            displayName = "lower q cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
-        Parameter("qHigh", numpy.inf, unit = NoUnit(),
-            displayName = "upper q cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
-    )
 
     @property
     def callbackSlots(self):
-        return set(("limits", "qunit", "punit", "iunit"))
-
-    @mixedmethod
-    def updateConstraints(self):
-        if not self.qLow() <= self.qHigh():
-            temp = self.qLow()
-            self.qLow.setValue(self.qHigh())
-            self.qHigh.setValue(temp)
-        self.callback("limits", self.qLow(), self.qHigh())
+        return super(SASConfig, self).callbackSlots | set(("qunit", "punit", "iunit"))
 
     # not used yet, need a signal to get the available q-range of data from filelist to datawidget
     def setQRange(self, qMin, qMax):
@@ -300,24 +308,23 @@ class SASConfig(DataConfig):
         return numpy.sqrt(numpy.add.outer(q**2, qOffset[0,:]**2))
 
     def copy(self):
-        other = super(SASConfig, self).copy()
+        other = super(SASConfig, self).copy(smearing = self.smearing.copy())
         other.iUnit = self.iUnit
         other.qUnit = self.qUnit
         other.pUnit = self.pUnit
-        other.smearing = self.smearing.copy()
         return other
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super(SASConfig, self).__init__()
-        self.smearing = TrapezoidSmearing()
-        self.qLow.setOnValueUpdate(self.updateConstraints)
-        self.qHigh.setOnValueUpdate(self.updateConstraints)
-#        self.smearing.updateQLimits(self.qLow(), self.qHigh())
-        self.register("qunit", self.qLow.setUnit)
-        self.register("qunit", self.qHigh.setUnit)
+        smearing = kwargs.pop("smearing", None)
+        if smearing is None:
+            smearing = TrapezoidSmearing()
+        self.smearing = smearing
+        self.register("qunit", self.xLow.setUnit)
+        self.register("qunit", self.xHigh.setUnit)
         if self.smearing is not None:
             self.register("qunit", self.smearing.updateQUnit)
-            self.register("limits", self.smearing.updateQLimits)
+            self.register("xlimits", self.smearing.updateQLimits)
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")
         self.pUnit = Angle(u"°")
