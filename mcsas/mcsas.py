@@ -153,7 +153,7 @@ class McSAS(AlgorithmBase):
         assert(self.data is not None)
         #setting limits and smearing parameters in the data. TODO: put in the GUI code.
         # TODO: this is a not so nice way of doing things.
-        self.data.x0.limit = [self.qMin(), self.qMax()]
+        #self.data.x0.limit = [self.qMin(), self.qMax()] # implicitly provided by the UI now
         # self.data.doSmear = self.doSmear() # not in GUI
         self.data.slitUmbra = self.slitUmbra()
         self.data.slitPenumbra = self.slitPenumbra()
