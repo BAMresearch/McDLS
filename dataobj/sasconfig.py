@@ -135,8 +135,8 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.umbra.setValueRange(qLimit)
-        self.penumbra.setValueRange((self.umbra(), qHigh))
+        self.umbra.setValueRange((0., qHigh))
+        self.penumbra.setValueRange((0., qHigh))
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
