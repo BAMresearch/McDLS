@@ -55,6 +55,14 @@ class PlotResults(object):
             "horizontalalignment" : 'center', 
             "multialignment" : 'center', 
             "verticalalignment" : 'center'}
+    _result = None
+    _dataset = None
+    _axisMargin = None
+    _figureTitle = None
+    _BG = None
+    _SC = None
+    _plotfont = None
+    _textfont = None
    
     def __init__(self, allRes, dataset, 
                  axisMargin = 0.3,
@@ -73,7 +81,6 @@ class PlotResults(object):
             return
 
         # set parameters
-        self._allRes = allRes
         self._result = allRes[0]
         self._dataset = dataset
         self._axisMargin = axisMargin
@@ -82,16 +89,8 @@ class PlotResults(object):
         except AttributeError:
             self._figureTitle = ""
         self._modelData = modelData
-        self._times = self._result['times']
-        try:
-            # replacable by "self._BG = self._result.get('background', (0., 0.))"?
-            self._BG = self._result['background']
-        except:
-            self._BG = (0., 0.)
-        try:
-            self._SC = self._result['scaling']
-        except:
-            self._SC = (1., 0.)
+        self._BG = self._result.get('background', (0., 0.))
+        self._SC = self._result.get('scaling', (0., 0.))
 
         # set plot font
         fontFamilyArial = ["Arial", "Bitstream Vera Sans", "sans-serif"]
@@ -116,8 +115,6 @@ class PlotResults(object):
         if False and self._nHists > 0: # disabled for testing
             self._ranges = ( modelData['histograms'][0].ranges )
             self._nR = len( self._ranges )
-        else:
-            self._nR = 1 # no active parameters
 
         # initialise figure:
         self._fig, self._ah = self.figInit(self._nHists, 
@@ -201,7 +198,7 @@ class PlotResults(object):
             
     def formatRangeInfo(self, parHist, RI, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
-        oString = 'Range {} to {}, {}-weighted'.format(
+        oString = u'Range {} to {}, {}-weighted'.format(
                 parHist.lower, parHist.upper,
                 parHist.yweight)
         pStat = parHist.moments
@@ -211,7 +208,7 @@ class PlotResults(object):
             pStatFieldName = pStatFieldNames[si]
             pStatField = pStatFields[si]
             pStatFieldSTD = pStatFields[si + 1]
-            oString += '\n {0}:  {1:0.03e} $\pm$ {2:0.03e}'.format(
+            oString += u'\n {0}:  {1:0.03e} $\pm$ {2:0.03e}'.format(
                     pStatFieldName,
                     pStatField,
                     pStatFieldSTD)
@@ -230,7 +227,9 @@ class PlotResults(object):
         oString += u'\n ( Scaling factor: {0:3.3g} $\pm$ {1:3.3g} )'.format(
                 self._SC[0], self._SC[1])
         oString += u'\n Timing: {0:d} repetitions of {1:3.3g} $\pm$ {2:3.3g} seconds'.format(
-                np.size(self._times), self._times.mean(), self._times.std(ddof = 1))
+                np.size(self._result['times']), 
+                self._result['times'].mean(), 
+                self._result['times'].std(ddof = 1))
 
         return oString
 
