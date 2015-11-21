@@ -41,6 +41,21 @@ class PlotResults(object):
     distribution.
     """
 
+    _errorBarOpts = { "fmt" : 'k.', 
+            "ecolor" : 'k', 
+            "elinewidth" : 2, 
+            "capsize" : 4, 
+            "ms" : 5, 
+            "lw" : 2, 
+            "solid_capstyle" : 'round', 
+            "solid_joinstyle" : 'miter'}
+
+    _infoText = {"family" : "monospace", 
+            "size" : "small", 
+            "horizontalalignment" : 'center', 
+            "multialignment" : 'center', 
+            "verticalalignment" : 'center'}
+   
     def __init__(self, allRes, dataset, 
                  axisMargin = 0.3,
                  outputFilename = None,
@@ -138,7 +153,6 @@ class PlotResults(object):
             # make active:
             self.plotInfo(InfoAxis)
             axes(InfoAxis)
-            # axis('tight')
 
             # plot histograms
             # https://stackoverflow.com/a/952952
@@ -281,34 +295,35 @@ class PlotResults(object):
                 ah[-1].update(textAxDict)
         return fig, ah
 
-    def plot2D(self, q, psi, measVal, measVal2d, qAxis):
-        """plots 2D data and fit"""
-        # 2D data
-        # we need to recalculate the result in two dimensions
-        intShow = measVal.copy()
-        # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
-        intShow[(psi >   0) * (psi <=  90)] = measVal2d[
-                (psi >   0) * (psi <=  90)]
-        intShow[(psi > 180) * (psi <= 270)] = measVal2d[
-                (psi > 180) * (psi <= 270)]
-        xmidi = int(round(np.size(q, 1)/2))
-        ymidi = int(round(np.size(q, 0)/2))
-        QX = np.array([-q[ymidi, 0], q[ymidi, -1]])
-        QY = np.array([-q[0, xmidi], q[-1, xmidi]])
-        extent = (QX[0], QX[1], QY[0], QY[1])
-
-        # indexing probably wrong:
-        qAxis.update( axisbg = (.95, .95, .95),
-                               xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
-                               ylabel = 'q_y, 1/m')
-        imshow(np.log10(intShow), extent = extent, origin = 'lower')
-        qAxis = self.setAxis(qAxis)
-        colorbar()
-        title('Measured vs. Fitted measVal',
-              fontproperties = self._textfont, size = 'large')
-        # reapply limits, necessary for some reason:
-        xlim(QX)
-        ylim(QY)
+    ## 2D plotting needs to be refactored after re-implementation
+    # def plot2D(self, q, psi, measVal, measVal2d, qAxis):
+    #     """plots 2D data and fit"""
+    #     # 2D data
+    #     # we need to recalculate the result in two dimensions
+    #     intShow = measVal.copy()
+    #     # quadrant 1 and 4 are simulated data, 2 and 3 are measured data
+    #     intShow[(psi >   0) * (psi <=  90)] = measVal2d[
+    #             (psi >   0) * (psi <=  90)]
+    #     intShow[(psi > 180) * (psi <= 270)] = measVal2d[
+    #             (psi > 180) * (psi <= 270)]
+    #     xmidi = int(round(np.size(q, 1)/2))
+    #     ymidi = int(round(np.size(q, 0)/2))
+    #     QX = np.array([-q[ymidi, 0], q[ymidi, -1]])
+    #     QY = np.array([-q[0, xmidi], q[-1, xmidi]])
+    #     extent = (QX[0], QX[1], QY[0], QY[1])
+    # 
+    #     # indexing probably wrong:
+    #     qAxis.update( axisbg = (.95, .95, .95),
+    #                            xlim = QX, ylim = QY, xlabel = 'q_x, 1/m',
+    #                            ylabel = 'q_y, 1/m')
+    #     imshow(np.log10(intShow), extent = extent, origin = 'lower')
+    #     qAxis = self.setAxis(qAxis)
+    #     colorbar()
+    #     title('Measured vs. Fitted measVal',
+    #           fontproperties = self._textfont, size = 'large')
+    #     # reapply limits, necessary for some reason:
+    #     xlim(QX)
+    #     ylim(QY)
 
     def plotPartial(self, fitX0, fitMeasVal, fitSTD, qAxis, label = 'MC partial measVal'):
         """plots 1D data and fit"""
@@ -319,10 +334,7 @@ class PlotResults(object):
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
         xOrigin = dataset.x0.unit.toDisplay(dataset.x0.origin)
-        xLabel = u'{} ({})'.format(dataset.x0.name, 
-                dataset.x0.unit.displayMagnitudeName)
         yOrigin = dataset.f.unit.toDisplay(dataset.f.origin)
-        yLabel = u'{} ({})'.format(dataset.f.name, dataset.f.unit.displayMagnitudeName)
         uOrigin = dataset.fu.unit.toDisplay(dataset.fu.origin)
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
@@ -331,10 +343,11 @@ class PlotResults(object):
                 yOrigin.max() * (1 + self._axisMargin))
         qAxDict = self._AxDict.copy()
         qAxDict.update({
-                'xlim' : xLim,
-                'ylim' : yLim,
-                'xlabel' : xLabel,
-                'ylabel' : yLabel
+                'xlim' : xLim, 'ylim' : yLim,
+                'xlabel' : u'{name} ({mag})'.format(name = dataset.x0.name, 
+                mag = dataset.x0.unit.displayMagnitudeName),
+                'ylabel' : u'{name} ({mag})'.format(name = dataset.f.name, 
+                mag = dataset.f.unit.displayMagnitudeName)
                 })
 
         """plots 1D data and fit"""
@@ -343,15 +356,15 @@ class PlotResults(object):
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
         # plot original data
-        errorbar(xOrigin, yOrigin, uOrigin, zorder = 2, fmt = 'k.',
-                 ecolor = 'k', elinewidth = 2, capsize = 4, ms = 5,
-                 label = 'Measured', lw = 2,
-                 solid_capstyle = 'round', solid_joinstyle = 'miter')
+        errorbar(xOrigin, yOrigin, uOrigin, zorder = 2,
+                 label = 'Measured {name}'.format(name = dataset.f.name), 
+                 **self._errorBarOpts)
         self.plotGrid(qAxis)
         # plot fit data
         plot(dataset.x0.unit.toDisplay(fitX0),
              dataset.f.unit.toDisplay(fitMeasVal), 'r-',
-                lw = 3, label = 'MC Fit', zorder = 4)
+                lw = 3, label = 'MC Fit {name}'.format(name = dataset.f.name), 
+                zorder = 4)
         try: # try to plot the background level
             plot(dataset.x0.unit.toDisplay(fitX0),
                  dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
@@ -362,7 +375,7 @@ class PlotResults(object):
         except:
             logging.error('could not plot background')
             pass
-        title('Measured vs. Fitted',
+        title('Measured vs. Fitted {name}'.format(name = dataset.f.name),
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
         xlim(xLim)
@@ -375,11 +388,7 @@ class PlotResults(object):
         axes(InfoAxis)
         # show volume-weighted info:
         ovString = self.formatAlgoInfo()
-        tvObj = text(0. - delta, 0. + delta, ovString,
-                family = "monospace", size = "small", 
-                horizontalalignment = 'center',
-                multialignment = 'center',
-                verticalalignment = 'center')
+        tvObj = text(0. - delta, 0. + delta, ovString, **self._infoText)
         self._fig.show()
         axis('tight')
 
@@ -391,11 +400,7 @@ class PlotResults(object):
         # show volume-weighted info:
         ovString = self.formatRangeInfo(parHist, rangei, weighti = 0)
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
-                {'facecolor' : 'white', 'alpha': 0.95},
-                family = "monospace", size = "small", 
-                horizontalalignment = 'center',
-                multialignment = 'right',
-                verticalalignment = 'center')
+                {'facecolor' : 'white', 'alpha': 0.95}, **self._infoText)
         fig.show()
         axis('tight')
 
@@ -465,9 +470,7 @@ class PlotResults(object):
         # plot active uncertainties
         errorbar(histXMean[validi[0:-1]], HistYMean[validi[0:-1]], 
             HistYStd[validi[0:-1]],
-                zorder = 4, fmt = 'k.', ecolor = 'k',
-                elinewidth = 2, capsize = 4, ms = 0, lw = 2,
-                solid_capstyle = 'round', solid_joinstyle = 'miter')
+                zorder = 4, **self._errorBarOpts)
         legend(loc = 1, fancybox = True, prop = self._textfont)
         title(plotTitle, fontproperties = self._textfont,
               size = 'large')
