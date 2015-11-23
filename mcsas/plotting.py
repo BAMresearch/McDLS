@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # mcsas/plotting.py
 """
-Add docstring
+Defines the format of the final report on success of an MC fit. 
 """
 
 import logging
