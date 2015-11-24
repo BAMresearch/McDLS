@@ -66,9 +66,7 @@ class FileList(DataList):
             else:
                 newData.append(avg)
         # remove the single data sets which where just loaded
-        for i in range(firstIdx, len(self)):
-            self.setCurrentIndex(i)
-            self.removeSelected()
+        self.removeItems(range(firstIdx, len(self)))
         # add the new combined data set (again)
 #        [self.add(d) for d in newData]
 #        return
