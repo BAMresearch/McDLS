@@ -4,12 +4,14 @@
 from __future__ import absolute_import # PEP328
 import logging
 
+from collections import OrderedDict
 from gui.utils.signal import Signal
 from gui.bases.datalist import DataList
 from gui.utils.filedialog import getOpenFiles
 from datafile import getFileFilter
 from utils.lastpath import LastPath
 from utils.units import ScatteringVector, ScatteringIntensity
+from utils import isList
 from datafile import loaddatafile
 from dataobj import DataObj
 
@@ -37,36 +39,45 @@ class FileList(DataList):
             datafile = loaddatafile(fn)
             if datafile is not None:
                 return datafile.getDataObj()
-        newIndex = len(self) # index of the next data set added
+        nextIdx = len(self) # index of the next data set added
         DataList.loadData(self, sourceList = fileList, showProgress = False,
                           processSourceFunc = loaddataobj)
-        self.triggerAccumulation(newIndex)
+        self.preProcess(nextIdx)
 
-    def triggerAccumulation(self, newIndex):
+    def preProcess(self, firstIdx):
         """Starts accumulation of related data sets among the currently loaded
         ones. Finally, removes such source data sets and adds the new combined
-        one. newIndex is the index of the first newly loaded entries."""
+        one. firstIdx is the index of the first newly loaded entries."""
         # allow accumulation of items based on the last item loaded
-        lastIndex, lastData = self.currentSelection()
-        if lastData is None:
-            return
-        avg = lastData.accumulate(self.data())
-        if avg is None:
-            return
+        from utils.devtools import DBG
+        newData = self.data()[firstIdx:]
+        if not isList(newData) or not len(newData):
+            return # nothing to do
+        samples = OrderedDict()
+        for d in newData: # group data objects by their title
+            if d.title not in samples:
+                samples[d.title] = []
+            samples[d.title].append(d)
+        newData = [] # accumulate data objects if possible
+        for title, lst in samples.iteritems():
+            avg = lst[0].accumulate(lst)
+            if avg is None:
+                newData.extend(lst)
+            else:
+                newData.append(avg)
         # remove the single data sets which where just loaded
-        for i in range(newIndex, lastIndex + 1):
+        for i in range(firstIdx, len(self)):
             self.setCurrentIndex(i)
             self.removeSelected()
         # add the new combined data set (again)
-        # self.add(avg)
-        # return
+#        [self.add(d) for d in newData]
+#        return
         # add the combined dls data split up per angle
-        [self.add(d) for d in avg.splitPerAngle()]
-        # TODO: alternatively, add a new hierarchical DataSet object containing
-        # the source files as children which aren't processed further
-        # FileList needs to be reconfigured towards a tree structure; while
-        # being just a construtor switch the general appereance and behaviour
-        # might change
+        for d in newData:
+            try:
+                [self.add(s) for s in d.splitPerAngle()]
+            except AttributeError:
+                self.add(d)
 
     def itemDoubleClicked(self, item, column):
         valueRange = item.data().sphericalSizeEst()
