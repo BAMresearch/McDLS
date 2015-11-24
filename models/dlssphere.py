@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# models/dlstest.py
+# models/dlssphere.py
 
 import numpy
 from numpy import pi, exp, sqrt
@@ -8,9 +8,9 @@ from utils.parameter import FitParameter
 from scatteringmodel import DLSModel
 from utils.units import NM
 
-class DLSTest(DLSModel):
-    """Test Form factor for DLS"""
-    shortName = "DLS-Test"
+class DLSSphere(DLSModel):
+    """Sphere Form factor for DLS"""
+    shortName = "Sphere (DLS)"
     parameters = (FitParameter("radius",
                     NM.toSi(100.), unit = NM,
                     displayName = "Hydrodynamic Radius",
@@ -21,7 +21,7 @@ class DLSTest(DLSModel):
                   )
 
     def __init__(self):
-        super(DLSTest, self).__init__()
+        super(DLSSphere, self).__init__()
         self.radius.setActive(True)
 
     def volume(self):
@@ -30,7 +30,7 @@ class DLSTest(DLSModel):
     def formfactor(self, data):
         return (exp( data.tauGamma.value / self.radius() ))
 
-DLSTest.factory()
+DLSSphere.factory()
 
 def test():
     pass

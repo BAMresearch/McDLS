@@ -24,10 +24,10 @@ from models.ellipsoidsisotropic import EllipsoidsIsotropic
 from models.ellipsoidalcoreshell import EllipsoidalCoreShell
 from models.sphericalcoreshell import SphericalCoreShell
 from collections import OrderedDict
-from models.dlstest import DLSTest
+from models.dlssphere import DLSSphere
 
 MODELS = OrderedDict((
-    (DLSTest.name(), DLSTest),
+    (DLSSphere.name(), DLSSphere),
     (Sphere.name(), Sphere),
     (CylindersIsotropic.name(), CylindersIsotropic),
     (CylindersRadiallyIsotropic.name(), CylindersRadiallyIsotropic),
