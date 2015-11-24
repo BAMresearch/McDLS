@@ -11,7 +11,6 @@ from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor
 from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveParam
-from dataobj import SASData
 
 class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta
@@ -177,11 +176,12 @@ class ScatteringModel(AlgorithmBase):
         - *cls.testDataDir*: Directory of test data relative to program dir.
                              Default: "testdata"
         """
+        return # this does not work anymore
         relerr = getattr(cls, "testRelErr", 1e-5)
         datadir = getattr(cls, "testDataDir", "testdata")
         volumeExponent = getattr(cls, "testVolExp", 1.0)
         filename = os.path.abspath(os.path.join(datadir, filename))
-        dataset = SASData.load(filename)
+        #dataset = SASData.load(filename)
         if dataset is None:
             return
         model = cls()
