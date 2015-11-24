@@ -8,15 +8,17 @@ from gui.qt import QtCore, QtGui
 from QtCore import Qt
 from QtGui import (QWidget, QGridLayout, QVBoxLayout, QLabel)
 from utils import isList
+from bases.algorithm import AlgorithmBase
 from gui.utils.signal import Signal
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.algorithmwidget import AlgorithmWidget, SettingsGridWidget 
-from dataobj import DataObj, SASConfig
+from dataobj import DataObj, DataConfig
 
 import sys
 
 class DataWidget(QWidget):
-    sigConfig = Signal(SASConfig)
+    sigConfig = Signal((object,))
+    _widgets = None
 
     def __init__(self, parent):
         super(DataWidget, self).__init__(parent)
@@ -26,28 +28,31 @@ class DataWidget(QWidget):
         hlayout.setObjectName("baseLayout")
         hlayout.setContentsMargins(0, 0, 0, 0)
 
-        self.buildUi(SASConfig())
-
-    def buildUi(self, config):
+    def buildUi(self, dataobj):
         AlgorithmWidget.removeWidgets(self)
+        if not isinstance(dataobj, DataObj):
+            return
         
         # descriptive top row label
         lbl = QLabel(self)
         self.layout().addWidget(lbl)
         self.headLabel = lbl
-
-        self._widgets = self.makeConfigUi(config)
+        self.headLabel.setText("Configure all data sets measured by {}:"
+                               .format(dataobj.sourceName))
+        self._widgets = self.makeConfigUi(dataobj.config)
         self.layout().addStretch()
 
+    onDataSelected = buildUi
+
     def makeConfigUi(self, config):
-        if config is None: # not isinstance(config, DataConfig)
+        if not isinstance(config, AlgorithmBase):
             return []
         # create a new layout
         w = SettingsGridWidget(self, algorithm = config)
         w.sigBackendUpdated.connect(self.onBackendUpdate)
         self.layout().addWidget(w)
         lst = [w]
-        if getattr(config, "smearing", None) is not None:
+        if hasattr(config, "smearing"):
             lst += self.makeConfigUi(config.smearing)
         return lst
 
@@ -57,13 +62,5 @@ class DataWidget(QWidget):
         [w.onBackendUpdate() for w in self._widgets]
         # emit the first which contains the other
         self.sigConfig.emit(self._widgets[0].algorithm)
-
-    def onDataSelected(self, dataobj):
-        if not isinstance(dataobj, DataObj):
-            return
-        self.headLabel.setText("Configure all data sets measured by {}:"
-                               .format(dataobj.sourceName))
-        self.buildUi(dataobj.config)
-
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

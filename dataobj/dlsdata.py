@@ -15,8 +15,7 @@ from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty)
 from utils import classproperty, isCallable, isInteger, isList
 from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle)
-from dataobj.dataobj import DataObj, DataVector
-#from dataobj.dlsconfig import DLSConfig
+from dataobj import DataObj, DataVector, DataConfig
 from models import DLSModel
 
 # Boltzmann constant in m²·kg·s⁻²·K⁻¹ (SI units)
@@ -32,6 +31,12 @@ def _privPropName(propName):
 
 def _propSetterName(propName):
     return "set" + propName[0].upper() + propName[1:]
+
+class DLSConfig(DataConfig):
+    def __init__(self):
+        super(DLSConfig, self).__init__()
+
+DLSConfig.factory()
 
 class MultiDataVector(DataVector):
     _count = None
@@ -124,8 +129,7 @@ class DLSData(DataObj):
 
     @property
     def configType(self):
-        return type(None)
-#        return DLSConfig
+        return DLSConfig
 
     @property
     def modelType(self):
@@ -330,6 +334,12 @@ class DLSData(DataObj):
 
     def __init__(self, **kwargs):
         super(DLSData, self).__init__(**kwargs)
+
+    def setConfig(self, config):
+        if not super(DLSData, self).setConfig(config):
+            return # no update, nothing todo
+        self.config.register("xlimits", self.x0.setLimit)
+        self.x0.limit = self.config.xLow(), self.config.xHigh()
 
     def __str__(self):
         out = [u"## {0} '{1}'".format(self.__class__.__name__, self.title)]

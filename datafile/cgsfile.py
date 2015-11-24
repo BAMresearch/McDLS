@@ -294,6 +294,7 @@ class CGSFile(AsciiFile):
         # correlation array
         dlsData.setTau(self._tauUnit, self.correlation[:, 0])
         dlsData.setCorrelation(self.correlation[:, 1:])
+        dlsData.setConfig(dlsData.configType()) # FIXME: move this to constructor
         return dlsData
 
 CGSFile.setPropertyGetters()

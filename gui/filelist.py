@@ -49,7 +49,6 @@ class FileList(DataList):
         ones. Finally, removes such source data sets and adds the new combined
         one. firstIdx is the index of the first newly loaded entries."""
         # allow accumulation of items based on the last item loaded
-        from utils.devtools import DBG
         newData = self.data()[firstIdx:]
         if not isList(newData) or not len(newData):
             return # nothing to do

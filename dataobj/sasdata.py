@@ -355,7 +355,7 @@ class SASData(DataObj):
         self.ui = DataVector(u'σI', rawArray[:, -1], # we should use self.ei.copy
                 unit = self.ii.unit, editable = True)
         self.qi.limit = [self.qi.value.min(), self.qi.value.max()]
-        print [self.qi.value.min(), self.qi.value.max()]
+        #print [self.qi.value.min(), self.qi.value.max()]
         logging.info(self.qi.limsString)
         if rawArray.shape[1] > 3: # psi column is present
             self.pi = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
