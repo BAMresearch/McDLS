@@ -203,6 +203,12 @@ class DataObj(DataSet, DisplayMixin):
 
     @abstractproperty
     def configType(self):
+        """Returns a compatible DataConfig type."""
+        raise NotImplementedError
+
+    @abstractproperty
+    def modelType(self):
+        """Returns a compatible ScatteringModel type."""
         raise NotImplementedError
 
     def __init__(self, **kwargs):
