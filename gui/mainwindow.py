@@ -352,8 +352,12 @@ class MainWindow(MainWindowBase):
             return
         self.logWidget.clear()
         self.logWidget.scrollToBottom()
+        idx, data = self.fileWidget.currentSelection()
+        # process the selected data only if there is a selection
+        selectedOnly = data is not None
         self.fileWidget.updateData(updateFunc = self.calculator,
                                    stopFunc = self.calculator.isStopped,
+                                   selectedOnly = selectedOnly,
                                    showProgress = False)
 
     def closeEvent(self, closeEvent):
