@@ -26,17 +26,21 @@ class CallbackRegistry(object):
             self._callbacks = dict()
         if what not in self._callbacks:
             self._callbacks[what] = []
-        self._callbacks[what].append(func)
+        if func not in self._callbacks[what]:
+            self._callbacks[what].append(func)
 
     def callback(self, what, *args, **kwargs):
         self._assertPurpose(what)
         if self._callbacks is None:
             return
-        funcLst = self._callbacks.get(what, [])
-        for func in funcLst:
+        funcLst = []
+        for func in self._callbacks.get(what, []):
             if not isCallable(func):
                 continue
             func(*args, **kwargs)
+            funcLst.append(func)
+        # update the callback list, invalid functions removed
+        self._callbacks[what] = funcLst
 
     def _assertPurpose(self, what):
         assert what in self.callbackSlots, (
