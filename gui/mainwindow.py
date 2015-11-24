@@ -246,6 +246,7 @@ class MainWindow(MainWindowBase):
         self.modelWidget = ModelWidget(self, self.calculator)
         self.fileWidget.sigSphericalSizeRange.connect(
                 self._onSphericalSizeRange)
+        self.fileWidget.sigSelectedData.connect(self.modelWidget.onDataSelected)
         return self.modelWidget
 
     def _onSphericalSizeRange(self, *args):
