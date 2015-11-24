@@ -247,7 +247,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.addMenuEntry(
             name = "selectall", text = tr("select all"),
             shortCut = QKeySequence.SelectAll, menuStates = "isNotEmpty",
-            callbacks = self.listWidget.selectAll)
+            callbacks = self.selectAll)
         self.addMenuEntry(
             name = "expandall", text = tr("expand all"),
             toolTip = tr("Show nested items of this %1. (double-click)"),
@@ -271,6 +271,16 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
 
     def clear(self):
         self.listWidget.clear()
+
+    def selectAll(self):
+        """Selects all items in the list if not all are selected.
+        Clears the selection if all items in the list already are selected.
+        """
+        if (len(self.listWidget.selectedIndexes())
+            / self.listWidget.columnCount()) == len(self):
+            self.listWidget.clearSelection()
+        else:
+            self.listWidget.selectAll()
 
     def expandAll(self):
         self.listWidget.expandAll()
