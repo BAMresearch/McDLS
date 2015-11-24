@@ -348,6 +348,20 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.sigSelectedData.emit(data)
         self._updateContextMenu()
 
+    def removeItems(self, indexList):
+        """Deletes items specified in the given list of indices."""
+        if not isList(indexList) or not len(indexList):
+            return
+        removedItems = []
+        for i in reversed(sorted(indexList)):
+            item = self.listWidget.topLevelItem(i)
+            if not item.isRemovable:
+                continue
+            item.remove()
+            removedItems.append(item.data())
+        self.sigRemovedData.emit(removedItems)
+        self.selectionChanged()
+
     def removeSelected(self):
         selected = self.listWidget.selectedItems()
         index = 0
@@ -378,10 +392,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
     def add(self, data):
         if self.isEmpty():
             self.setHeader(data.displayDataDescr)
-#        print "ADD1", self.topLevelItems()
         DataItem(data) # WTF? w/o it returns QTreeWidgetItem instead of DataItem below!
         self.listWidget.addTopLevelItem(DataItem(data))
-#        print "ADD2", self.topLevelItems()
         item = self.listWidget.topLevelItem(len(self)-1)
         if not self._nestedItems:
             item.setFlags(int(item.flags()) - int(Qt.ItemIsDropEnabled))
