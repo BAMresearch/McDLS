@@ -39,6 +39,7 @@ MODELS = OrderedDict((
 FIXEDWIDTH = 120
 
 from gui.algorithmwidget import AlgorithmWidget
+from dataobj import DataObj
 
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
@@ -54,18 +55,31 @@ class ModelWidget(AlgorithmWidget):
         self.setLayout(layout)
 
         self.modelBox = QComboBox(self)
-        for name in MODELS.iterkeys():
-            self.modelBox.addItem(name)
         self.modelBox.setFixedWidth(FIXEDWIDTH)
         layout.addWidget(self.modelBox)
-
         self.modelWidget = QWidget(self)
         paramLayout = QVBoxLayout(self.modelWidget)
         self.modelWidget.setLayout(paramLayout)
         layout.addWidget(self.modelWidget)
 
-        self.modelBox.setCurrentIndex(-1)
+    def onDataSelected(self, dataobj):
+        """Gets the data which is currently selected in the UI and rebuilds
+        the model selection box based on compatible models."""
+        if not isinstance(dataobj, DataObj):
+            return
+        try:
+            self.modelBox.currentIndexChanged[str].disconnect()
+        except:
+            pass
+        self.modelBox.clear()
+        for name, cls in MODELS.iteritems():
+            if cls is None or not issubclass(cls, dataobj.modelType):
+                continue
+            self.modelBox.addItem(name)
+        self.modelBox.setCurrentIndex(-1) # select none first
         self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
+        # trigger signal by switching from none -> 0
+        self.modelBox.setCurrentIndex(0)
 
     def storeSession(self, section = None):
         if self.appSettings is None or self.model is None:
@@ -120,7 +134,8 @@ class ModelWidget(AlgorithmWidget):
         self.sigModelChanged.emit()
 
     def selectModel(self, model):
-        """*model*: string containing the name of the model to select."""
+        """*model*: string containing the name of the model to select.
+        Calls _selectModelSlot() via signal."""
         if not isString(model):
             return
         index = 0
