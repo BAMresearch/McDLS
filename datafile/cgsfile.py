@@ -274,7 +274,7 @@ class CGSFile(AsciiFile):
         self._measIndex = groupIndex, measIndex
 
     def getDataObj(self):
-        dlsData = DLSData(title = self.name)
+        dlsData = DLSData(title = self.sampleName)
         dlsData.setFilename(self.filename)
         dlsData.setMeasIndices((self.measIndex,))
         dlsData.setSampleName(self.sampleName)

@@ -272,11 +272,15 @@ class DLSData(DataObj):
         self._tauGamma = MultiDataVector(u"tauGamma", self._tauGammaMat)
 
     def accumulate(self, others):
+        """Combines several measured data of the same sample into a single
+        data set with an uncertainty for each measured value."""
         # consider only data of the same type and sample name
         others = [o for o in others if 
                     o is not None and
                     isinstance(o, DLSData) and
                     o.sampleName == self.sampleName]
+        if not len(others):
+            return None
         # average basic properties
         for prop in ("temperature", "viscosity",
                      "refractiveIndex", "wavelength"):
@@ -301,7 +305,6 @@ class DLSData(DataObj):
         return self
 
     def splitPerAngle(self):
-        another = copy.copy(self)
         lst = []
         for i in range(self.numAngles):
             another = copy.copy(self)
