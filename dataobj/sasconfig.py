@@ -176,38 +176,6 @@ class TrapezoidSmearing(SmearingConfig):
 
 TrapezoidSmearing.factory()
 
-class CallbackRegistry(object):
-    _callbacks = None # registered callbacks on certain events
-
-    @abstractproperty
-    def callbackSlots(self):
-        raise NotImplementedError
-
-    def register(self, what, func):
-        # check for the correct number of arguments of func as well?
-        assert isCallable(func)
-        self._assertPurpose(what)
-        if self._callbacks is None: # lazy init
-            self._callbacks = dict()
-        if what not in self._callbacks:
-            self._callbacks[what] = []
-        self._callbacks[what].append(func)
-
-    def callback(self, what, *args, **kwargs):
-        self._assertPurpose(what)
-        if self._callbacks is None:
-            return
-        funcLst = self._callbacks.get(what, [])
-        for func in funcLst:
-            if not isCallable(func):
-                continue
-            func(*args, **kwargs)
-
-    def _assertPurpose(self, what):
-        assert what in self.callbackSlots, (
-            "'{}' not in predefined callback slots '{}'"
-            .format(what, self.callbackSlots))
-
 class SASConfig(DataConfig):
     # TODO: implement callbacks for each value pair & unit
     # set units already for use in parameter definitions and UI
