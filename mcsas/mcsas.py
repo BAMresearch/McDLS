@@ -319,9 +319,7 @@ class McSAS(AlgorithmBase):
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sci = data.f.limit[1] / ft.max() # init. guess for the scaling factor
-        bgi = data.f.limit[0]
-        sc = numpy.array([sci, bgi])
+        sc = [data.f.limit[1] / ft.max(), data.f.limit[0]]
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
                                             self.model)
         sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
@@ -530,10 +528,9 @@ class McSAS(AlgorithmBase):
                     compensationExponent = 1.0, useSLD = True)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            sci = data.f.value.max() / ft.max()
-            bgi = data.f.value.min()
+            sc = [data.f.limit[1] / ft.max(), data.f.limit[0]]
             # optimize scaling and background for this repetition
-            sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, ft, (sci, bgi))
+            sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, ft, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             volumeFraction[:, ri] = (sc[0] * vset**2/(vpa)).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
