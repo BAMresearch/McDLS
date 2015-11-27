@@ -77,14 +77,6 @@
         "displayUnit" : "-",
         "isActive" : false 
     },
-    "maskZeroInt" : {
-        "displayName" : "Masks intensity values of 0",
-        "description" : "Renders intensity values that are zero invalid for fitting",
-        "default" : false,
-        "unitClass" : "NoUnit",
-        "displayUnit" : "-",
-        "isActive" : false 
-    },
     "autoClose" : {
         "displayName" : "Automatically close result windows",
         "description" : "Prevents cluttering the screen with many windows if series are fited",
@@ -100,70 +92,6 @@
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
         "isActive" : false 
-    },
-    "eMin" : {
-        "displayName" : "minimum uncertainty estimate",
-        "valueRange" : [0.00,1.0],
-        "description" : "Minimum possible uncertainty estimate as fraction of intensity",
-        "default" : 0.01,
-        "unitClass" : "NoUnit",
-        "displayUnit" : "-",
-        "isActive" : false 
-    },
-    "slitUmbra" : {
-        "displayName" : "Umbral size of trapezoidal slit",
-        "valueRange" : [0.00, Infinity],
-        "description" : "Assuming a trapezoidal beam profile, full width (in Q) of the umbra",
-        "default" : 0.00,
-        "unitClass" : "ScatteringVector",
-        "displayUnit" : "nm⁻¹",
-        "isActive" : false 
-    },
-    "slitPenumbra" : {
-        "displayName" : "Penumbral size of trapezoidal slit",
-        "valueRange" : [0.00, Infinity],
-        "description" : "Assuming a trapezoidal beam profile, full width (in Q) of the penumbra",
-        "default" : 0.00,
-        "unitClass" : "ScatteringVector",
-        "displayUnit" : "nm⁻¹",
-        "isActive" : false 
-    },
-    "qMin" : {
-        "displayName" : "Lower Q-limit",
-        "valueRange" : [0.00,Infinity],
-        "description" : "Lower bound of the Q-limits in between which the MC fit should be applied.",
-        "default" : 0.00,
-        "unitClass" : "ScatteringVector",
-        "displayUnit" : "nm⁻¹",
-        "isActive" : false 
-    },
-    "qMax" : {
-        "displayName" : "Upper Q-limit",
-        "valueRange" : [0,Infinity],
-        "description" : "Upper bound of the Q-limits in between which the MC fit should be applied.",
-        "default" : Infinity,
-        "unitClass" : "ScatteringVector",
-        "displayUnit" : "nm⁻¹",
-        "isActive" : false 
-    },
-    "psiMin" : {
-        "displayName" : "Lower Psi-limit (2D only)",
-        "valueRange" : [0,Infinity],
-        "description" : "Lower bound of the Psi-limits in between which the MC fit should be applied (2D only)",
-        "default" : 0,
-        "unitClass" : "Angle",
-        "displayUnit" : "°",
-        "isActive" : false 
-    },
-    "psiMax" : {
-        "displayName" : "Upper Psi-limit (2D only)",
-        "valueRange" : [0,Infinity],
-        "description" : "Upper bound of the Psi-limits in between which the MC fit should be applied (2D only)",
-        "default" : Infinity,
-        "unitClass" : "Angle",
-        "displayUnit" : "°",
-        "isActive" : false 
     }
-
 }
                 
