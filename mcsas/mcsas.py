@@ -161,9 +161,11 @@ class McSAS(AlgorithmBase):
         # # self.data.pMax = self.psiMax()
         # self.data.eMin = self.eMin()
         # self.data.maskZeroInt = self.maskZeroInt()
+        # self.data.maskNegativeInt = self.maskNegativeInt()
 
-        # TODO: one of these must be active to take over the details from GUI ???
-        self.data.maskNegativeInt = self.maskNegativeInt()
+        # TODO: a setter from sasData must be called to get all the UI parameters. 
+        self.data.runPrepares()
+        # self.data.maskNegativeInt = self.data.maskNegativeInt
 
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):
