@@ -207,6 +207,10 @@ class DataObj(DataSet, DisplayMixin):
         self.config.xLow.setDisplayName(descr)
         descr = self.config.xHigh.displayName().format(x = self.x0.name)
         self.config.xHigh.setDisplayName(descr)
+        descr = self.config.fMaskZero.displayName().format(f = self.f.name)
+        self.config.fMaskZero.setDisplayName(descr)
+        descr = self.config.fMaskNeg.displayName().format(f = self.f.name)
+        self.config.fMaskNeg.setDisplayName(descr)
 
     @abstractproperty
     def configType(self):

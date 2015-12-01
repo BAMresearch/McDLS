@@ -55,23 +55,33 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         Parameter("xHigh", numpy.inf, unit = NoUnit(),
             displayName = "upper {x} cut-off",
             valueRange = (0., numpy.inf), decimals = 1),
+        Parameter("fMaskZero", False, unit = NoUnit(),
+            displayName = "Mask {f} values of 0", description =
+            "Renders intensity values that are zero invalid for fitting"),
+        Parameter("fMaskNeg", False, unit = NoUnit(),
+            displayName = "Mask negative {f} values", description =
+            "Renders negative intensity values invalid for fitting"),
     )
 
     @property
     def callbackSlots(self):
-        return set(("xlimits",))
+        return set(("xlimits", "fMasks"))
 
     def __init__(self):
         super(DataConfig, self).__init__()
         self.xLow.setOnValueUpdate(self.updateXLimits)
         self.xHigh.setOnValueUpdate(self.updateXLimits)
+        self.fMaskZero.setOnValueUpdate(self.updateFMasks)
+        self.fMaskNeg.setOnValueUpdate(self.updateFMasks)
 
-    @mixedmethod
     def updateXLimits(self):
         if not self.xLow() <= self.xHigh():
             temp = self.xLow()
             self.xLow.setValue(self.xHigh())
             self.xHigh.setValue(temp)
         self.callback("xlimits", (self.xLow(), self.xHigh()))
+
+    def updateFMasks(self):
+        self.callback("fMasks", (self.fMaskZero(), self.fMaskNeg()))
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

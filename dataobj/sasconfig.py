@@ -74,10 +74,10 @@ class SmearingConfig(AlgorithmBase):
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
         Parameter("umbra", 1e9, unit = NoUnit(), # unit set outside
-            displayName = "top width of the trapezoidal beam length profile",
+            displayName = "top width of the trapezoidal <br />beam length profile",
             valueRange = (0., numpy.inf), decimals = 1),
         Parameter("penumbra", 2e9, unit = NoUnit(), # unit set outside
-            displayName = "bottom width of the trapezoidal beam length profile",
+            displayName = "bottom width of the <br />trapezoidal beam length profile",
             valueRange = (0., numpy.inf), decimals = 1),
     )
 
