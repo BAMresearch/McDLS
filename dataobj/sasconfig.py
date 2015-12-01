@@ -81,6 +81,13 @@ class TrapezoidSmearing(SmearingConfig):
             valueRange = (0., numpy.inf), decimals = 1),
     )
 
+    @property
+    def showParams(self):
+        lst = ["umbra", "penumbra"]
+        return lst + [name
+                for name in super(TrapezoidSmearing, self).showParams
+                    if name not in lst]
+
     def _prepSmear(self, q):
         """ prepares the smearing profile for a given collimation configuration. 
         This is supposed to be in the SmearingConfig class """

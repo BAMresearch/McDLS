@@ -109,6 +109,12 @@ class AlgorithmBase(object):
     def paramCount(selforcls):
         return len(selforcls._parameters)
 
+    @property
+    def showParams(self):
+        """A list of parameter names which defines the parameters and their
+        ordering shown in a UI. To be overridden in sub classes."""
+        return [p.name() for p in self.params()]
+
     @classmethod
     def factory(cls, name = None, *parameters):
         """This sets the algorithm up and adds the defined parameters as class

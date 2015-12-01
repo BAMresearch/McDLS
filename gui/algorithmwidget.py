@@ -411,7 +411,7 @@ class SettingsGridWidget(AlgorithmWidget):
         self.gridLayout = layout
 
         if not isList(showParams) or not len(showParams):
-            showParams = [p.name() for p in self.algorithm.params()]
+            showParams = self.algorithm.showParams
         self._widgets = tuple(self.makeWidgets(*showParams))
 
     def resizeWidgets(self, targetWidth):
