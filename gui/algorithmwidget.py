@@ -232,7 +232,7 @@ class AlgorithmWidget(SettingsWidget):
         # disable signals during ui updates
         self.sigValueChanged.disconnect(self.updateParam)
         for p in self.algorithm.params():
-            if self.get(p.name()) == p.displayValue():
+            if self.get(p.name()) in (p.displayValue(), None):
                 continue
             self.set(p.name(), p.displayValue())
         # enable signals again after ui updates
