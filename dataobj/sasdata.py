@@ -422,27 +422,27 @@ class SASData(DataObj):
         prepares a clipmask for the full dataset
         """
         # init indices: index array is more flexible than boolean masks
-        bArr = np.isfinite(self.ii.origin)
+        mask = np.isfinite(self.ii.origin)
 
         # Optional masking of negative intensity
         if self.maskZeroInt:
             # FIXME: compare with machine precision (EPS)?
-            bArr &= (self.ii.origin != 0.0)
+            mask &= (self.ii.origin != 0.0)
         if self.maskNegativeInt:
-            bArr &= (self.ii.origin > 0.0)
+            mask &= (self.ii.origin > 0.0)
 
-        # print('size bArr: {}, qMin: {}, qMax: {}'.format(bArr.sum(), self.qMin, self.qMax))
+        # print('size mask: {}, qMin: {}, qMax: {}'.format(mask.sum(), self.qMin, self.qMax))
         # clip to q bounds
-        bArr &= (self.qi.origin >= self.qMin)
-        bArr &= (self.qi.origin <= self.qMax)
-        # print('size bArr: {}'.format(bArr.sum()))
+        mask &= (self.qi.origin >= self.qMin)
+        mask &= (self.qi.origin <= self.qMax)
+        # print('size mask: {}'.format(mask.sum()))
         # clip to psi bounds
         if self.is2d:
-            bArr &= (self.pOrigin > self.pMin)
-            bArr &= (self.pOrigin <= self.pMax)
+            mask &= (self.pOrigin > self.pMin)
+            mask &= (self.pOrigin <= self.pMax)
 
         # store
-        self._validIndices = np.argwhere(bArr)[:,0]
+        self._validIndices = np.argwhere(mask)[:,0]
         # a quick, temporary implementation to pass on all valid indices to the parameters:
         self.f.validIndices = self._validIndices
         self.fu.validIndices = self._validIndices
