@@ -67,7 +67,7 @@ class SASData(DataObj):
     @property
     def i(self):
         """Measured intensity at q."""
-        return self.ii.value
+        return self.ii.sanitized
 
     @property
     def iOrigin(self):
@@ -82,7 +82,7 @@ class SASData(DataObj):
     @property
     def q(self):
         """Q-Vector at which the intensities are measured."""
-        return self.qi.value
+        return self.qi.sanitized
 
     @property
     def qOrigin(self):
@@ -101,7 +101,7 @@ class SASData(DataObj):
     @property
     def e(self):
         """Uncertainty or Error of the intensity at q loaded from file."""
-        return self.ei.value
+        return self.ei.sanitized
 
     @property
     def eOrigin(self):
@@ -112,7 +112,7 @@ class SASData(DataObj):
     @property
     def u(self):
         """Corrected uncertainty or error of the intensity at q."""
-        return self.ui.value
+        return self.ui.sanitized
 
     @property
     def uOrigin(self):
@@ -280,8 +280,7 @@ class SASData(DataObj):
                 unit = self.ii.unit)
         self.ui = DataVector(u'σI', rawArray[:, -1], # we should use self.ei.copy
                 unit = self.ii.unit, editable = True)
-        self.qi.limit = [self.qi.value.min(), self.qi.value.max()]
-        #print [self.qi.value.min(), self.qi.value.max()]
+        self.qi.limit = [self.qi.sanitized.min(), self.qi.sanitized.max()]
         logging.info(self.qi.limsString)
         if rawArray.shape[1] > 3: # psi column is present
             self.pi = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))

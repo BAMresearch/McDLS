@@ -52,18 +52,13 @@ class DataVector(object):
         self._validIndices = value
 
     @property
-    def value(self):
+    def sanitized(self):
         return self.siData.copy()[self.validIndices]
 
-    @value.setter
-    def value(self, val):
+    @sanitized.setter
+    def sanitized(self, val):
         assert(val.size == self.validIndices.size)
         self.siData[self.validIndices] = val
-
-    # proposal for naming to be clear about the differences between
-    # origin, raw, and value in other modules code:
-    # 'origin' -> 'si' or 'siData'
-    # 'value' -> 'sanitized' or a shorter synonym(?)
 
     @property
     def siData(self):

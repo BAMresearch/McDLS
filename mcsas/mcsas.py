@@ -262,7 +262,7 @@ class McSAS(AlgorithmBase):
             contribs = contributions, # Rrep
             fitMeasValMean = contribMeasVal.mean(axis = 2),
             fitMeasValStd = contribMeasVal.std(axis = 2),
-            fitX0 = self.data.x0.value,
+            fitX0 = self.data.x0.sanitized,
             # background details:
             scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
@@ -309,12 +309,13 @@ class McSAS(AlgorithmBase):
         sc = [data.f.limit[1] / ft.max(), data.f.limit[0]]
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
                                             self.model)
-        sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
+        sc, conval, dummy = bgScalingFit.calc(
+                data.f.sanitized, data.fu.sanitized,
                 ft / sum(vset**2), sc, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
-        sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, ft / sum(vset**2), 
-                sc)
+        sc, conval, dummy = bgScalingFit.calc(
+                data.f.sanitized, data.fu.sanitized, ft / sum(vset**2), sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -342,8 +343,8 @@ class McSAS(AlgorithmBase):
             vtest = vset.sum() - vset[ri] + vtt
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-            sct, convalt, dummy = bgScalingFit.calc(data.f.value, data.fu.value, 
-                    ftest / vtest**2, sc)
+            sct, convalt, dummy = bgScalingFit.calc(
+                    data.f.sanitized, data.fu.sanitized, ftest / vtest**2, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -386,8 +387,8 @@ class McSAS(AlgorithmBase):
             'numMoves': numMoves,
             'elapsed': elapsed})
 
-        sc, conval, ifinal = bgScalingFit.calc(data.f.value, data.fu.value, 
-                ft / sum(vset**2), sc)
+        sc, conval, ifinal = bgScalingFit.calc(
+                data.f.sanitized, data.fu.sanitized, ft / sum(vset**2), sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -517,7 +518,8 @@ class McSAS(AlgorithmBase):
             # initial guess for the scaling factor.
             sc = [data.f.limit[1] / ft.max(), data.f.limit[0]]
             # optimize scaling and background for this repetition
-            sc, conval, dummy = bgScalingFit.calc(data.f.value, data.fu.value, ft, sc)
+            sc, conval, dummy = bgScalingFit.calc(
+                    data.f.sanitized, data.fu.sanitized, ft, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             volumeFraction[:, ri] = (sc[0] * vset**2/(vpa)).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
@@ -535,7 +537,7 @@ class McSAS(AlgorithmBase):
                 fr, dummy = self.model.calc(data, rset[c].reshape((1, -1)), 
                         self.compensationExponent())
                 minReqVol[c, ri] = (
-                        data.fu.value * volumeFraction[c, ri]
+                        data.fu.sanitized * volumeFraction[c, ri]
                                 / (sc[0] * fr)).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / vpa[c]
 
@@ -564,7 +566,7 @@ class McSAS(AlgorithmBase):
         x0 = data.x0.siData
         # we need to recalculate the result in two dimensions
         kansas = shape(q) # we will return to this shape
-        x0 = x0.value.flatten()
+        x0 = x0.sanitized.flatten()
 
         logging.info("Recalculating 2D measVal, please wait")
         # for each Result
