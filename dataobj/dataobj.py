@@ -195,11 +195,18 @@ class DataObj(DataSet, DisplayMixin):
         the configuration was different and an update was necessary."""
         if not isinstance(config, self.configType):
             return False
-        if self.config is None or self.config != config:
-            self._config = config.copy()
-            return True
-        # else:
+        # always replacing the config if it's valid, it originates from here
+        self._config = config
+        self.updateConfigMeta()
         return True
+
+    def updateConfigMeta(self):
+        """Updates general meta data of the config object
+        based on this data set."""
+        descr = self.config.xLow.displayName().format(x = self.x0.name)
+        self.config.xLow.setDisplayName(descr)
+        descr = self.config.xHigh.displayName().format(x = self.x0.name)
+        self.config.xHigh.setDisplayName(descr)
 
     @abstractproperty
     def configType(self):
