@@ -151,21 +151,6 @@ class McSAS(AlgorithmBase):
         self.stop = False # TODO, move this into some simple result structure
 
         assert(self.data is not None)
-        #setting limits and smearing parameters in the data. TODO: put in the GUI code.
-        # TODO: this is a not so nice way of doing things.
-        # self.data.x0.limit = [self.qMin(), self.qMax()] # implicitly provided by the UI now
-        # self.data.doSmear = self.doSmear() # not in GUI
-        # self.data.slitUmbra = self.slitUmbra()
-        # self.data.slitPenumbra = self.slitPenumbra()
-        # # self.data.pMin = self.psiMin() # not in GUI
-        # # self.data.pMax = self.psiMax()
-        # self.data.eMin = self.eMin()
-        # self.data.maskZeroInt = self.maskZeroInt()
-        # self.data.maskNegativeInt = self.maskNegativeInt()
-
-        # TODO: a setter from sasData must be called to get all the UI parameters. 
-        self.data.runPrepares()
-        # self.data.maskNegativeInt = self.data.maskNegativeInt
 
         if (McSASParameters.model is None or
             not isinstance(McSASParameters.model, ScatteringModel)):

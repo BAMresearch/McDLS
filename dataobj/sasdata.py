@@ -293,14 +293,6 @@ class SASData(DataObj):
         # init config as early as possible to get properties ready which
         # depend on it (qlow/qhigh?)
         self.setConfig(self.configType())
-        self.runPrepares()
-
-    def runPrepares(self):
-        # called by McSAS to update everything
-        self._prepareValidIndices()
-        self._prepareSizeEst()
-        self._shannonChannelEst = self.qi.limit[1] / self.qi.limit[0]
-        self._prepareUncertainty()
 
     def setConfig(self, config):
         if not super(SASData, self).setConfig(config):
