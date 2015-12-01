@@ -7,7 +7,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import numpy
 from bases.algorithm import AlgorithmBase
 from utils.parameter import Parameter
-from utils.units import ScatteringIntensity, ScatteringVector, Angle, NoUnit
+from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
+                         Fraction, NoUnit)
 from utils import clip
 from dataobj import DataConfig
 
@@ -192,9 +193,19 @@ class SASConfig(DataConfig):
     _smearing = None
     shortName = "SAS data configuration"
 
+    parameters = (
+        Parameter("eMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
+            displayName = "minimum uncertainty estimate",
+            valueRange = (0., 1.), decimals = 1),
+    )
+
     @property
     def callbackSlots(self):
-        return super(SASConfig, self).callbackSlots | set(("qunit", "punit", "iunit"))
+        return super(SASConfig, self).callbackSlots | set((
+            "qunit", "punit", "iunit", "eMin"))
+
+    def updateEMin(self):
+        self.callback("eMin", self.eMin())
 
     # not used yet, need a signal to get the available q-range of data from filelist to datawidget
     def setQRange(self, qMin, qMax):
@@ -275,6 +286,7 @@ class SASConfig(DataConfig):
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")
         self.pUnit = Angle(u"°")
+        self.eMin.setOnValueUpdate(self.updateEMin)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):

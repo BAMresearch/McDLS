@@ -62,19 +62,6 @@ class SASData(DataObj):
     def sourceName(cls):
         return "Small Angle Scattering"
 
-    @property # not related to e, this is the minimum fractional uncertainty parameter
-    def eMin(self):
-        return self._eMin
-
-    @eMin.setter
-    def eMin(self, value):
-        value = float(value) 
-        assert((value > 0.) and (value < 1.))
-        self._eMin = value
-        #update uncertainty in case eMin was adjusted
-        self._prepareUncertainty() 
-        self._prepareValidIndices()
-
     # intensity related helpers
 
     @property
@@ -323,6 +310,7 @@ class SASData(DataObj):
         self.config.register("xlimits", self._onQLimitUpdate)
         self._onQLimitUpdate((self.config.xLow(), self.config.xHigh()))
         self.config.register("fMasks", self._prepareValidIndices)
+        self.config.register("eMin", self._prepareUncertainty)
         # prepare
         self.locs = self.config.prepareSmearing(self.qi.origin)
 
@@ -342,11 +330,11 @@ class SASData(DataObj):
         return SASModel
 
 
-    def _prepareUncertainty(self):
+    def _prepareUncertainty(self, *dummy):
         """Modifies the uncertainty of the whole range of measured data to be
         above a previously set minimum threshold *eMin*."""
-        self.ui.origin = self.eMin * self.f.origin
-        minUncertaintyPercent = self.eMin * 100.
+        self.ui.origin = self.config.eMin() * self.f.origin
+        minUncertaintyPercent = self.config.eMin() * 100.
         if not self.hasError:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
