@@ -71,7 +71,7 @@ class SASData(DataObj):
 
     @property
     def iOrigin(self):
-        return self.ii.origin
+        return self.ii.siData
 
     @property
     def iUnit(self):
@@ -86,7 +86,7 @@ class SASData(DataObj):
 
     @property
     def qOrigin(self):
-        return self.qi.origin
+        return self.qi.siData
 
     @property
     def qUnit(self):
@@ -105,7 +105,7 @@ class SASData(DataObj):
 
     @property
     def eOrigin(self):
-        return self.ei.origin
+        return self.ei.siData
 
     # sanitized uncertainty on the intensities
 
@@ -116,7 +116,7 @@ class SASData(DataObj):
 
     @property
     def uOrigin(self):
-        return self.ui.origin
+        return self.ui.siData
 
     # psi scattering vector for 2D data
 
@@ -304,7 +304,7 @@ class SASData(DataObj):
         self.config.register("fMasks", self._prepareValidIndices)
         self.config.register("eMin", self._prepareUncertainty)
         # prepare
-        self.locs = self.config.prepareSmearing(self.qi.origin)
+        self.locs = self.config.prepareSmearing(self.qi.siData)
 
     # short-hand for three different updates
     def _onQLimitUpdate(self, newLimit):
@@ -325,21 +325,21 @@ class SASData(DataObj):
     def _prepareUncertainty(self, *dummy):
         """Modifies the uncertainty of the whole range of measured data to be
         above a previously set minimum threshold *eMin*."""
-        self.ui.origin = self.config.eMin() * self.f.origin
+        self.ui.siData = self.config.eMin() * self.f.siData
         minUncertaintyPercent = self.config.eMin() * 100.
         if not self.hasError:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
         else:
-            count = sum(self.ui.origin > self.ei.origin)
+            count = sum(self.ui.siData > self.ei.siData)
             if count > 0:
                 logging.warning("Minimum uncertainty ({}% of intensity) set "
                                 "for {} datapoints.".format(
                                 minUncertaintyPercent, count))
-            self.ui.origin = np.maximum(self.ui.origin, self.ei.origin)
+            self.ui.siData = np.maximum(self.ui.siData, self.ei.siData)
         # reset invalid uncertainties to np.inf
-        invInd = (True - np.isfinite(self.ui.origin))
-        self.ui.origin[invInd] = np.inf
+        invInd = (True - np.isfinite(self.ui.siData))
+        self.ui.siData[invInd] = np.inf
 
     def _prepareValidIndices(self, *dummy):
         """
@@ -347,21 +347,21 @@ class SASData(DataObj):
         prepares a clipmask for the full dataset
         """
         # init indices: index array is more flexible than boolean masks
-        mask = np.isfinite(self.ii.origin)
+        mask = np.isfinite(self.ii.siData)
 
         # Optional masking of negative intensity
         if self.config.fMaskZero():
             # FIXME: compare with machine precision (EPS)?
-            mask &= (self.ii.origin != 0.0)
+            mask &= (self.ii.siData != 0.0)
         if self.config.fMaskNeg():
-            mask &= (self.ii.origin > 0.0)
+            mask &= (self.ii.siData > 0.0)
 
 #        from utils.devtools import DBG
 #        DBG('size mask: {}, qMin: {}, qMax: {}'
 #            .format(mask.sum(), self.config.xLow(), self.config.xHigh()))
         # clip to q bounds
-        mask &= (self.qi.origin >= self.config.xLow())
-        mask &= (self.qi.origin <= self.config.xHigh())
+        mask &= (self.qi.siData >= self.config.xLow())
+        mask &= (self.qi.siData <= self.config.xHigh())
         # clip to psi bounds
         if self.is2d:
             raise NotImplementedError

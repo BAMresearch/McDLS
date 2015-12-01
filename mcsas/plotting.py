@@ -332,9 +332,9 @@ class PlotResults(object):
 
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
-        xOrigin = dataset.x0.unit.toDisplay(dataset.x0.origin)
-        yOrigin = dataset.f.unit.toDisplay(dataset.f.origin)
-        uOrigin = dataset.fu.unit.toDisplay(dataset.fu.origin)
+        xOrigin = dataset.x0.unit.toDisplay(dataset.x0.siData)
+        yOrigin = dataset.f.unit.toDisplay(dataset.f.siData)
+        uOrigin = dataset.fu.unit.toDisplay(dataset.fu.siData)
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
                 xOrigin.max() * (1 + self._axisMargin))

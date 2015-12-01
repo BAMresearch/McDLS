@@ -21,7 +21,7 @@ class DataVector(object):
     """
     _name = None # descriptor for axes and labels, unicode string at init.
     _raw = None # Relevant data directly from input file, non-SI units, unsanitized
-    _siData = None # copy raw data in si units, often accessed, formerly "origin"
+    _siData = None # copy raw data in si units, often accessed
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
@@ -53,12 +53,12 @@ class DataVector(object):
 
     @property
     def value(self):
-        return self.origin.copy()[self.validIndices]
+        return self.siData.copy()[self.validIndices]
 
     @value.setter
     def value(self, val):
         assert(val.size == self.validIndices.size)
-        self.origin[self.validIndices] = val
+        self.siData[self.validIndices] = val
 
     # proposal for naming to be clear about the differences between
     # origin, raw, and value in other modules code:
@@ -66,11 +66,11 @@ class DataVector(object):
     # 'value' -> 'sanitized' or a shorter synonym(?)
 
     @property
-    def origin(self):
+    def siData(self):
         return self._siData
 
-    @origin.setter
-    def origin(self, vec):
+    @siData.setter
+    def siData(self, vec):
         self._siData = vec
 
     @property
@@ -105,10 +105,10 @@ class DataVector(object):
     def setLimit(self, newLimit): # override&referencable
 #        print('Limit value: {}'.format(value))
         if newLimit is None:
-            self._limit = [self.origin.min(), self.origin.max()]
+            self._limit = [self.siData.min(), self.siData.max()]
         else:
-            self._limit = [np.maximum(np.min(newLimit), self.origin.min()),
-                           np.minimum(np.max(newLimit), self.origin.max())]
+            self._limit = [np.maximum(np.min(newLimit), self.siData.min()),
+                           np.minimum(np.max(newLimit), self.siData.max())]
 
     @property
     def limsString(self):

@@ -561,7 +561,7 @@ class McSAS(AlgorithmBase):
         numContribs, dummy, numReps = contribs.shape
 
         # load original Dataset
-        x0 = data.x0.origin
+        x0 = data.x0.siData
         # we need to recalculate the result in two dimensions
         kansas = shape(q) # we will return to this shape
         x0 = x0.value.flatten()
