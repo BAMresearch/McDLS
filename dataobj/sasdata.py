@@ -55,31 +55,22 @@ class SASData(DataObj):
     def fu(self):
         return self.ui
 
-    # legacy SASData properties
-
     @classproperty
     @classmethod
     def sourceName(cls):
+        """The type of data source for UI label text."""
         return "Small Angle Scattering"
-
-    # scattering vector
-
-    @property
-    def q(self):
-        """Q-Vector at which the intensities are measured."""
-        return self.qi.sanitized
-
-    @property
-    def qOrigin(self):
-        return self.qi.siData
-
-    @property
-    def qUnit(self):
-        return self.qi.unit
 
     @property
     def qLimsString(self):
+        """Properly formatted q-limits for UI label text."""
         return self.qi.limsString
+
+    @property
+    def q(self):
+        """Q-Vector at which the intensities are measured.
+        Provided for convenience use within models."""
+        return self.x0.sanitized
 
     # uncertainty on the intensities from data file
 
@@ -178,7 +169,7 @@ class SASData(DataObj):
 
     @property
     def count(self):
-        return len(self.q)
+        return len(self.qi.sanitized)
 
     @property
     def validIndices(self): # global valid indices

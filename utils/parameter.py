@@ -125,7 +125,7 @@ class Moments(object):
         numContribs, numParams, numReps = contribs.shape
         data = algo.data
         # loop over each repetition
-        partialIntensities = np.zeros((numReps, data.q.shape[0]))
+        partialIntensities = np.zeros((numReps, data.count))
         # Intensity scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
