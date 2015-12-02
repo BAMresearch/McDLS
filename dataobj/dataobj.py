@@ -21,7 +21,7 @@ class DataVector(object):
     """
     _name = None # descriptor for axes and labels, unicode string at init.
     _raw = None # Relevant data directly from input file, non-SI units, unsanitized
-    _siData = None # copy raw data in si units, often accessed, formerly "origin"
+    _siData = None # copy raw data in si units, often accessed
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
@@ -52,25 +52,20 @@ class DataVector(object):
         self._validIndices = value
 
     @property
-    def value(self):
-        return self.origin.copy()[self.validIndices]
+    def sanitized(self):
+        return self.siData.copy()[self.validIndices]
 
-    @value.setter
-    def value(self, val):
+    @sanitized.setter
+    def sanitized(self, val):
         assert(val.size == self.validIndices.size)
-        self.origin[self.validIndices] = val
-
-    # proposal for naming to be clear about the differences between
-    # origin, raw, and value in other modules code:
-    # 'origin' -> 'si' or 'siData'
-    # 'value' -> 'sanitized' or a shorter synonym(?)
+        self.siData[self.validIndices] = val
 
     @property
-    def origin(self):
+    def siData(self):
         return self._siData
 
-    @origin.setter
-    def origin(self, vec):
+    @siData.setter
+    def siData(self, vec):
         self._siData = vec
 
     @property
@@ -105,10 +100,12 @@ class DataVector(object):
     def setLimit(self, newLimit): # override&referencable
 #        print('Limit value: {}'.format(value))
         if newLimit is None:
-            self._limit = [self.origin.min(), self.origin.max()]
+            self._limit = [self.siData.min(), self.siData.max()]
         else:
-            self._limit = [np.maximum(np.min(newLimit), self.origin.min()),
-                           np.minimum(np.max(newLimit), self.origin.max())]
+            self._limit = [np.maximum(np.min(newLimit), self.siData.min()),
+                           np.minimum(np.max(newLimit), self.siData.max())]
+
+    # TODO: define min/max properties for convenience?
 
     @property
     def limsString(self):
@@ -181,7 +178,9 @@ class DataObj(DataSet, DisplayMixin):
 
     @property
     def is2d(self):
-        return False
+        """Returns true if this dataset contains two-dimensional data with
+        psi information available."""
+        return isinstance(self.x1, DataVector)
 
     def accumulate(self, others):
         return None
@@ -195,11 +194,35 @@ class DataObj(DataSet, DisplayMixin):
         the configuration was different and an update was necessary."""
         if not isinstance(config, self.configType):
             return False
-        if self.config is None or self.config != config:
-            self._config = config.copy()
-            return True
-        # else:
+        # always replacing the config if it's valid, it originates from here
+        self._config = config
+        self.updateConfigMeta()
         return True
+
+    def updateConfigMeta(self):
+        """Updates general meta data of the config object
+        based on this data set."""
+        descr = self.config.x0Low.displayName().format(x0 = self.x0.name)
+        self.config.x0Low.setDisplayName(descr)
+        descr = self.config.x0High.displayName().format(x0 = self.x0.name)
+        self.config.x0High.setDisplayName(descr)
+        descr = self.config.fMaskZero.displayName().format(f = self.f.name)
+        self.config.fMaskZero.setDisplayName(descr)
+        descr = self.config.fMaskNeg.displayName().format(f = self.f.name)
+        self.config.fMaskNeg.setDisplayName(descr)
+        # FIXME: Problem with a many2one relation (many data sets, one config)
+        #        -> What is the valid range supposed to be?
+        #           Atm, the smallest common range wins. [ingo]
+        self.config.setX0ValueRange(
+                (self.x0.siData.min(), self.x0.siData.max()))
+        if not self.is2d:
+            return # self.x1 will be None
+        descr = self.config.x1Low.displayName().format(x1 = self.x1.name)
+        self.config.x1Low.setDisplayName(descr)
+        descr = self.config.x1High.displayName().format(x1 = self.x1.name)
+        self.config.x1High.setDisplayName(descr)
+        self.config.setX1ValueRange(
+                (self.x1.siData.min(), self.x1.siData.max()))
 
     @abstractproperty
     def configType(self):

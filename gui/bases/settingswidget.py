@@ -89,9 +89,9 @@ class SettingsWidget(QWidget):
                 value.lower() == "false"):
                 value = ""
             setter(dtype(value))
-        except (TypeError, ValueError):
-            raise IndexError("Could not set widget '{0}' to '{1}'!".
-                             format(key, value))
+        except (TypeError, ValueError), e:
+            raise IndexError("Could not set widget '{0}' to '{1}'!: ".
+                             format(key, value) + str(e).title())
         else:
             self.getEditingFinishedSignal(child).emit()
             child.update()

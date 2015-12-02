@@ -65,7 +65,7 @@ class ScatteringModel(AlgorithmBase):
         # remember parameter values
         params = self.activeParams()
         oldValues = [p() for p in params] # this sucks. But we dont want to loose the user provided value
-        cumInt = zeros(data.f.value.shape) # cumulated intensities
+        cumInt = zeros(data.f.sanitized.shape) # cumulated intensities
         vset = zeros(pset.shape[0])
         # call the model for each parameter set explicitly
         # otherwise the model gets complex for multiple params incl. fitting
@@ -192,7 +192,7 @@ class ScatteringModel(AlgorithmBase):
                                compensationExponent = volumeExponent)
                      * model.ff(dataset, None))**2.
         # computing the relative error to reference data
-        delta = abs((dataset.f.value - intensity) / dataset.f.value)
+        delta = abs((dataset.f.sanitized - intensity) / dataset.f.sanitized)
         dmax = argmax(delta)
         testfor(delta.mean() < relerr, AssertionError,
                 "Could not verify {model} intensity against\n'{fn}',"
@@ -202,8 +202,8 @@ class ScatteringModel(AlgorithmBase):
                 .format(model = cls.name(), fn = filename,
                         mean = delta.mean(), relerr = relerr,
                         dmax = dmax, data = hstack((
-                            dataset.x0.value.reshape(-1, 1),
-                            dataset.f.value.reshape(-1, 1),
+                            dataset.x0.sanitized.reshape(-1, 1),
+                            dataset.f.sanitized.reshape(-1, 1),
                             intensity.reshape(-1, 1),
                             delta.reshape(-1, 1)))[max(0, dmax-4):dmax+5]
                         )

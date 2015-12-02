@@ -7,7 +7,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import numpy
 from bases.algorithm import AlgorithmBase
 from utils.parameter import Parameter
-from utils.units import ScatteringIntensity, ScatteringVector, Angle, NoUnit
+from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
+                         Fraction, NoUnit)
 from utils import clip
 from dataobj import DataConfig
 
@@ -74,12 +75,19 @@ class SmearingConfig(AlgorithmBase):
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
         Parameter("umbra", 1e9, unit = NoUnit(), # unit set outside
-            displayName = "top width of the trapezoidal beam length profile",
+            displayName = "top width of the trapezoidal <br />beam length profile",
             valueRange = (0., numpy.inf), decimals = 1),
         Parameter("penumbra", 2e9, unit = NoUnit(), # unit set outside
-            displayName = "bottom width of the trapezoidal beam length profile",
+            displayName = "bottom width of the <br />trapezoidal beam length profile",
             valueRange = (0., numpy.inf), decimals = 1),
     )
+
+    @property
+    def showParams(self):
+        lst = ["umbra", "penumbra"]
+        return lst + [name
+                for name in super(TrapezoidSmearing, self).showParams
+                    if name not in lst]
 
     def _prepSmear(self, q):
         """ prepares the smearing profile for a given collimation configuration. 
@@ -133,10 +141,18 @@ class TrapezoidSmearing(SmearingConfig):
         self.umbra.setUnit(newUnit)
         self.penumbra.setUnit(newUnit)
 
+    def updatePUnit(self, newUnit):
+        assert isinstance(newUnit, Angle)
+        # TODO
+
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
         self.umbra.setValueRange((0., qHigh))
         self.penumbra.setValueRange((0., qHigh))
+
+    def updatePLimits(self, pLimit):
+        pLow, pHigh = pLimit
+        # TODO
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
@@ -177,26 +193,47 @@ class TrapezoidSmearing(SmearingConfig):
 TrapezoidSmearing.factory()
 
 class SASConfig(DataConfig):
-    # TODO: implement callbacks for each value pair & unit
-    # set units already for use in parameter definitions and UI
+    # TODO: fix UI elsewhere for unit selection along to each input and forward
+    #       that to the DataVector
+    _is2d = False
     _iUnit = NoUnit()
     _qUnit = NoUnit()
     _pUnit = NoUnit()
     _smearing = None
     shortName = "SAS data configuration"
 
+    parameters = (
+        Parameter("eMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
+            displayName = "minimum uncertainty estimate",
+            valueRange = (0., 1.), decimals = 1),
+    )
+
     @property
     def callbackSlots(self):
-        return super(SASConfig, self).callbackSlots | set(("qunit", "punit", "iunit"))
+        return super(SASConfig, self).callbackSlots | set((
+            "qunit", "punit", "iunit", "eMin"))
 
-    # not used yet, need a signal to get the available q-range of data from filelist to datawidget
-    def setQRange(self, qMin, qMax):
+    def updateEMin(self):
+        self.callback("eMin", self.eMin())
+
+    def setX0ValueRange(self, limit):
         """Sets available range of loaded data."""
-        self.qLow.setValueRange((qMin, qMax))
-        self.qHigh.setValueRange((qMin, qMax))
+        super(SASConfig, self).setX0ValueRange(limit)
         if self.smearing is None:
             return
-        self.smearing.updateQLimits((self.qLow(), self.qHigh()))
+        self.smearing.updateQLimits((self.x0Low(), self.x0High())) # correct?
+
+    def setX1ValueRange(self, limit):
+        super(SASConfig, self).setX1ValueRange(limit)
+        # TODO
+
+    @property
+    def is2d(self):
+        return self._is2d
+
+    @is2d.setter
+    def is2d(self, isit):
+        self._is2d = isit
 
     @property
     def iUnit(self):
@@ -260,14 +297,19 @@ class SASConfig(DataConfig):
         if smearing is None:
             smearing = TrapezoidSmearing()
         self.smearing = smearing
-        self.register("qunit", self.xLow.setUnit)
-        self.register("qunit", self.xHigh.setUnit)
+        self.register("qunit", self.x0Low.setUnit)
+        self.register("qunit", self.x0High.setUnit)
+        self.register("punit", self.x1Low.setUnit)
+        self.register("punit", self.x1High.setUnit)
         if self.smearing is not None:
             self.register("qunit", self.smearing.updateQUnit)
-            self.register("xlimits", self.smearing.updateQLimits)
+            self.register("punit", self.smearing.updatePUnit)
+            self.register("x0limits", self.smearing.updateQLimits)
+            self.register("x1limits", self.smearing.updatePLimits)
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")
         self.pUnit = Angle(u"°")
+        self.eMin.setOnValueUpdate(self.updateEMin)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):

@@ -232,7 +232,7 @@ class AlgorithmWidget(SettingsWidget):
         # disable signals during ui updates
         self.sigValueChanged.disconnect(self.updateParam)
         for p in self.algorithm.params():
-            if self.get(p.name()) == p.displayValue():
+            if self.get(p.name()) in (p.displayValue(), None):
                 continue
             self.set(p.name(), p.displayValue())
         # enable signals again after ui updates
@@ -411,7 +411,7 @@ class SettingsGridWidget(AlgorithmWidget):
         self.gridLayout = layout
 
         if not isList(showParams) or not len(showParams):
-            showParams = [p.name() for p in self.algorithm.params()]
+            showParams = self.algorithm.showParams
         self._widgets = tuple(self.makeWidgets(*showParams))
 
     def resizeWidgets(self, targetWidth):
