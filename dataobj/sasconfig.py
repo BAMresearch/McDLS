@@ -203,45 +203,29 @@ class SASConfig(DataConfig):
     shortName = "SAS data configuration"
 
     parameters = (
-        Parameter("pLow", 0., unit = NoUnit(),
-            displayName = "lower {p} cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
-        Parameter("pHigh", numpy.inf, unit = NoUnit(),
-            displayName = "upper {p} cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
         Parameter("eMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
             displayName = "minimum uncertainty estimate",
             valueRange = (0., 1.), decimals = 1),
     )
 
     @property
-    def showParams(self):
-        lst = super(SASConfig, self).showParams
-        lst.remove("pLow")
-        lst.remove("pHigh")
-        if self.is2d: # put psi settings right behind q settings
-            lst.insert(2, "pHigh")
-            lst.insert(2, "pLow")
-        return lst
-
-    @property
     def callbackSlots(self):
         return super(SASConfig, self).callbackSlots | set((
-            "qunit", "punit", "iunit", "eMin", "plimits"))
+            "qunit", "punit", "iunit", "eMin"))
 
     def updateEMin(self):
         self.callback("eMin", self.eMin())
 
-    def setQRange(self, limits): # FIXME
+    def setX0ValueRange(self, limit):
         """Sets available range of loaded data."""
-        self.xLow.setValueRange(limits)
-        self.xHigh.setValueRange(limits)
+        super(SASConfig, self).setX0ValueRange(limit)
         if self.smearing is None:
             return
-        self.smearing.updateQLimits((self.xLow(), self.xHigh()))
+        self.smearing.updateQLimits((self.x0Low(), self.x0High())) # correct?
 
-    def setPRange(self, limits): # FIXME
-        pass
+    def setX1ValueRange(self, limit):
+        super(SASConfig, self).setX1ValueRange(limit)
+        # TODO
 
     @property
     def is2d(self):
@@ -313,15 +297,15 @@ class SASConfig(DataConfig):
         if smearing is None:
             smearing = TrapezoidSmearing()
         self.smearing = smearing
-        self.register("qunit", self.xLow.setUnit)
-        self.register("qunit", self.xHigh.setUnit)
-        self.register("punit", self.pLow.setUnit)
-        self.register("punit", self.pHigh.setUnit)
+        self.register("qunit", self.x0Low.setUnit)
+        self.register("qunit", self.x0High.setUnit)
+        self.register("punit", self.x1Low.setUnit)
+        self.register("punit", self.x1High.setUnit)
         if self.smearing is not None:
             self.register("qunit", self.smearing.updateQUnit)
             self.register("punit", self.smearing.updatePUnit)
-            self.register("xlimits", self.smearing.updateQLimits)
-            self.register("plimits", self.smearing.updatePLimits)
+            self.register("x0limits", self.smearing.updateQLimits)
+            self.register("x1limits", self.smearing.updatePLimits)
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")
         self.pUnit = Angle(u"°")

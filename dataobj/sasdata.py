@@ -103,12 +103,6 @@ class SASData(DataObj):
             return self._validIndices
 
     @property
-    def is2d(self):
-        """Returns true if this dataset contains two-dimensional data with
-        psi information available."""
-        return isinstance(self.x1, DataVector)
-
-    @property
     def hasError(self):
         """Returns True if this data set has an error bar for its
         intensities."""
@@ -196,17 +190,11 @@ class SASData(DataObj):
     def setConfig(self, config):
         if not super(SASData, self).setConfig(config):
             return # no update, nothing todo
-        # FIXME: Problem with a many2one relation (many data sets, one config)
-        #        -> What is the valid range supposed to be?
-        #           Atm, the smallest common range wins. [ingo]
-        self.config.setQRange((self.qi.siData.min(), self.qi.siData.max()))
-        if self.is2d:
-            self.config.setPRange((self.qi.piData.min(), self.qi.piData.max()))
         # call setLimit() on change of x-limits in config
-        self.config.register("xlimits", self._onQLimitUpdate)
-        self._onQLimitUpdate((self.config.xLow(), self.config.xHigh()))
-        self.config.register("plimits", self._onPLimitUpdate)
-        self._onPLimitUpdate((self.config.pLow(), self.config.pHigh()))
+        self.config.register("x0limits", self._onQLimitUpdate)
+        self._onQLimitUpdate((self.config.x0Low(), self.config.x0High()))
+        self.config.register("x1limits", self._onPLimitUpdate)
+        self._onPLimitUpdate((self.config.x1Low(), self.config.x1High()))
         self.config.register("fMasks", self._prepareValidIndices)
         self.config.register("eMin", self._prepareUncertainty)
         self.config.is2d = self.is2d # forward if we are 2d or not
@@ -229,17 +217,6 @@ class SASData(DataObj):
             return # self.x1 will be None
         self.x1.setLimit(newLimit)
         self._prepareValidIndices()
-
-    def updateConfigMeta(self):
-        """Updates general meta data of the config object
-        based on this data set."""
-        super(SASData, self).updateConfigMeta()
-        if not self.is2d:
-            return # self.x1 will be None
-        descr = self.config.pLow.displayName().format(p = self.x1.name)
-        self.config.pLow.setDisplayName(descr)
-        descr = self.config.pHigh.displayName().format(p = self.x1.name)
-        self.config.pHigh.setDisplayName(descr)
 
     @property
     def configType(self):
@@ -284,13 +261,13 @@ class SASData(DataObj):
             mask &= (self.ii.siData > 0.0)
 
         # clip to q bounds
-        mask &= (self.qi.siData >= self.config.xLow())
-        mask &= (self.qi.siData <= self.config.xHigh())
+        mask &= (self.qi.siData >= self.config.x0Low())
+        mask &= (self.qi.siData <= self.config.x0High())
         # clip to psi bounds
         if self.is2d:
             raise NotImplementedError
-            mask &= (self.pi.siData > self.config.pLow())
-            mask &= (self.pi.siData <= self.config.pHigh())
+            mask &= (self.pi.siData > self.config.x1Low())
+            mask &= (self.pi.siData <= self.config.x1High())
         # store
         self._validIndices = np.argwhere(mask)[:,0]
         # a quick, temporary implementation to pass on all valid indices to the parameters:

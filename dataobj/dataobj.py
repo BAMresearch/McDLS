@@ -178,7 +178,9 @@ class DataObj(DataSet, DisplayMixin):
 
     @property
     def is2d(self):
-        return False
+        """Returns true if this dataset contains two-dimensional data with
+        psi information available."""
+        return isinstance(self.x1, DataVector)
 
     def accumulate(self, others):
         return None
@@ -200,14 +202,27 @@ class DataObj(DataSet, DisplayMixin):
     def updateConfigMeta(self):
         """Updates general meta data of the config object
         based on this data set."""
-        descr = self.config.xLow.displayName().format(x = self.x0.name)
-        self.config.xLow.setDisplayName(descr)
-        descr = self.config.xHigh.displayName().format(x = self.x0.name)
-        self.config.xHigh.setDisplayName(descr)
+        descr = self.config.x0Low.displayName().format(x0 = self.x0.name)
+        self.config.x0Low.setDisplayName(descr)
+        descr = self.config.x0High.displayName().format(x0 = self.x0.name)
+        self.config.x0High.setDisplayName(descr)
         descr = self.config.fMaskZero.displayName().format(f = self.f.name)
         self.config.fMaskZero.setDisplayName(descr)
         descr = self.config.fMaskNeg.displayName().format(f = self.f.name)
         self.config.fMaskNeg.setDisplayName(descr)
+        # FIXME: Problem with a many2one relation (many data sets, one config)
+        #        -> What is the valid range supposed to be?
+        #           Atm, the smallest common range wins. [ingo]
+        self.config.setX0ValueRange(
+                (self.x0.siData.min(), self.x0.siData.max()))
+        if not self.is2d:
+            return # self.x1 will be None
+        descr = self.config.x1Low.displayName().format(x1 = self.x1.name)
+        self.config.x1Low.setDisplayName(descr)
+        descr = self.config.x1High.displayName().format(x1 = self.x1.name)
+        self.config.x1High.setDisplayName(descr)
+        self.config.setX1ValueRange(
+                (self.x1.siData.min(), self.x1.siData.max()))
 
     @abstractproperty
     def configType(self):
