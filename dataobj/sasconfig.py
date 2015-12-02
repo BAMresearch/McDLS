@@ -141,10 +141,18 @@ class TrapezoidSmearing(SmearingConfig):
         self.umbra.setUnit(newUnit)
         self.penumbra.setUnit(newUnit)
 
+    def updatePUnit(self, newUnit):
+        assert isinstance(newUnit, Angle)
+        # TODO
+
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
         self.umbra.setValueRange((0., qHigh))
         self.penumbra.setValueRange((0., qHigh))
+
+    def updatePLimits(self, pLimit):
+        pLow, pHigh = pLimit
+        # TODO
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
@@ -185,8 +193,9 @@ class TrapezoidSmearing(SmearingConfig):
 TrapezoidSmearing.factory()
 
 class SASConfig(DataConfig):
-    # TODO: implement callbacks for each value pair & unit
-    # set units already for use in parameter definitions and UI
+    # TODO: fix UI elsewhere for unit selection along to each input and forward
+    #       that to the DataVector
+    _is2d = False
     _iUnit = NoUnit()
     _qUnit = NoUnit()
     _pUnit = NoUnit()
@@ -194,27 +203,53 @@ class SASConfig(DataConfig):
     shortName = "SAS data configuration"
 
     parameters = (
+        Parameter("pLow", 0., unit = NoUnit(),
+            displayName = "lower {p} cut-off",
+            valueRange = (0., numpy.inf), decimals = 1),
+        Parameter("pHigh", numpy.inf, unit = NoUnit(),
+            displayName = "upper {p} cut-off",
+            valueRange = (0., numpy.inf), decimals = 1),
         Parameter("eMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
             displayName = "minimum uncertainty estimate",
             valueRange = (0., 1.), decimals = 1),
     )
 
     @property
+    def showParams(self):
+        lst = super(SASConfig, self).showParams
+        lst.remove("pLow")
+        lst.remove("pHigh")
+        if self.is2d: # put psi settings right behind q settings
+            lst.insert(2, "pHigh")
+            lst.insert(2, "pLow")
+        return lst
+
+    @property
     def callbackSlots(self):
         return super(SASConfig, self).callbackSlots | set((
-            "qunit", "punit", "iunit", "eMin"))
+            "qunit", "punit", "iunit", "eMin", "plimits"))
 
     def updateEMin(self):
         self.callback("eMin", self.eMin())
 
-    # not used yet, need a signal to get the available q-range of data from filelist to datawidget
-    def setQRange(self, qMin, qMax):
+    def setQRange(self, limits): # FIXME
         """Sets available range of loaded data."""
-        self.qLow.setValueRange((qMin, qMax))
-        self.qHigh.setValueRange((qMin, qMax))
+        self.xLow.setValueRange(limits)
+        self.xHigh.setValueRange(limits)
         if self.smearing is None:
             return
-        self.smearing.updateQLimits((self.qLow(), self.qHigh()))
+        self.smearing.updateQLimits((self.xLow(), self.xHigh()))
+
+    def setPRange(self, limits): # FIXME
+        pass
+
+    @property
+    def is2d(self):
+        return self._is2d
+
+    @is2d.setter
+    def is2d(self, isit):
+        self._is2d = isit
 
     @property
     def iUnit(self):
@@ -280,9 +315,13 @@ class SASConfig(DataConfig):
         self.smearing = smearing
         self.register("qunit", self.xLow.setUnit)
         self.register("qunit", self.xHigh.setUnit)
+        self.register("punit", self.pLow.setUnit)
+        self.register("punit", self.pHigh.setUnit)
         if self.smearing is not None:
             self.register("qunit", self.smearing.updateQUnit)
+            self.register("punit", self.smearing.updatePUnit)
             self.register("xlimits", self.smearing.updateQLimits)
+            self.register("plimits", self.smearing.updatePLimits)
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")
         self.pUnit = Angle(u"°")

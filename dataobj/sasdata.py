@@ -72,98 +72,20 @@ class SASData(DataObj):
         Provided for convenience use within models."""
         return self.x0.sanitized
 
-    # uncertainty on the intensities from data file
-
-    @property
-    def e(self):
-        """Uncertainty or Error of the intensity at q loaded from file."""
-        return self.ei.sanitized
-
-    @property
-    def eOrigin(self):
-        return self.ei.siData
-
-    # sanitized uncertainty on the intensities
-
-    @property
-    def u(self):
-        """Corrected uncertainty or error of the intensity at q."""
-        return self.ui.sanitized
-
-    @property
-    def uOrigin(self):
-        return self.ui.siData
-
-    # psi scattering vector for 2D data
-
-    @property
-    def p(self): # famous rapper of the Osdorp Posse!
-        """Psi-Vector."""
-        return self.rawArray[:, 3]
-
-    @property
-    def pOrigin(self):
-        return self.pUnit.toSi(self.rawArray[:, 3])
-
-    @property
-    def pUnit(self):
-        return self.config.pUnit
-
-    @property
-    def pMin(self):
-        """Returns minimum psi from data or psiClipRange, whichever is larger."""
-        if self.is2d:
-            return np.maximum(self.pClipRange[0], 
-                    self.pOrigin.min())
-        else:
-            return self.pClipRange[0]
-
-    @pMin.setter
-    def pMin(self, newParam):
-        """Value in cliprange will not exceed available psi."""
-        if self.is2d:
-            self._pClipRange[0] = np.maximum(
-                newParam, self.pOrigin.min())
-        else:
-            self._pClipRange[0] = self.pUnit.toSi(newParam)
-        self._prepareValidIndices()
-
-    @property
-    def pMax(self):
-        if self.is2d:
-            return np.minimum(self.pClipRange[1], 
-                    self.pOrigin.max())
-        else:
-            return self.pClipRange[1]
-
-    @pMax.setter
-    def pMax(self, newParam):
-        """Value in cliprange will not exceed available psi."""
-        if self.is2d:
-            self._pClipRange[1] = np.minimum(
-                newParam, self.pOrigin.max())
-        else:
-            self._pClipRange[1] = self.pUnit.toSi(newParam)
-        self._prepareValidIndices()
-
-    @property
-    def pClipRange(self):
-        return self._pClipRange
-
-    @pClipRange.setter
-    def pClipRange(self, newParam):
-        if not (np.size(newParam) == 2):
-            logging.error('pClipRange must be supplied with two-element vector')
-        else:
-            self.pMin(np.min(newParam))
-            self.pMax(np.min(newParam))
-
     @property
     def pLimsString(self):
-        return u"{0:.3g} ≤ psi ({psiMagnitudeName}) ≤ {1:.3g}".format(
-                self.pUnit.toDisplay(self.pMin),
-                self.pUnit.toDisplay(self.pMax),
-                pMagnitudeName = self.pUnit.displayMagnitudeName)
+        """Properly formatted q-limits for UI label text."""
+        if self.x1 is None:
+            return ""
+        return self.x1.limsString
+
+    @property
+    def p(self):
+        """Q-Vector at which the intensities are measured.
+        Provided for convenience use within models."""
+        if self.x1 is None:
+            return np.array(())
+        return self.x1.sanitized
 
     # general information on this data set
 
@@ -184,7 +106,7 @@ class SASData(DataObj):
     def is2d(self):
         """Returns true if this dataset contains two-dimensional data with
         psi information available."""
-        return self.rawArray.shape[1] > 3 # psi column is present
+        return isinstance(self.x1, DataVector)
 
     @property
     def hasError(self):
@@ -257,29 +179,42 @@ class SASData(DataObj):
         self.ui = DataVector(u'σI', rawArray[:, -1], # we should use self.ei.copy
                 unit = self.ii.unit, editable = True)
         self.qi.limit = [self.qi.sanitized.min(), self.qi.sanitized.max()]
-        logging.info(self.qi.limsString)
+        logging.info("Init SASData: " + self.qLimsString)
+        self.pi = None
         if rawArray.shape[1] > 3: # psi column is present
             self.pi = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
-        else:
-            self.pi = None
+            self.pi.limit = [self.pi.sanitized.min(), self.pi.sanitized.max()]
+            logging.info(self.pLimsString)
 
         #set unit definitions for display and internal units
         self._rUnit = Length(u"nm")
         # init config as early as possible to get properties ready which
         # depend on it (qlow/qhigh?)
+        # (should be moved to DataObj but the DataVectors have to be set earlier)
         self.setConfig(self.configType())
 
     def setConfig(self, config):
         if not super(SASData, self).setConfig(config):
             return # no update, nothing todo
+        # FIXME: Problem with a many2one relation (many data sets, one config)
+        #        -> What is the valid range supposed to be?
+        #           Atm, the smallest common range wins. [ingo]
+        self.config.setQRange((self.qi.siData.min(), self.qi.siData.max()))
+        if self.is2d:
+            self.config.setPRange((self.qi.piData.min(), self.qi.piData.max()))
         # call setLimit() on change of x-limits in config
         self.config.register("xlimits", self._onQLimitUpdate)
-        self.config.register("xlimits", self._onQLimitUpdate)
         self._onQLimitUpdate((self.config.xLow(), self.config.xHigh()))
+        self.config.register("plimits", self._onPLimitUpdate)
+        self._onPLimitUpdate((self.config.pLow(), self.config.pHigh()))
         self.config.register("fMasks", self._prepareValidIndices)
         self.config.register("eMin", self._prepareUncertainty)
+        self.config.is2d = self.is2d # forward if we are 2d or not
         # prepare
         self.locs = self.config.prepareSmearing(self.qi.siData)
+        # suggested upgrade for 2d smearing:
+        # self.locs = self.config.prepareSmearing(
+        #                           self.qi.siData, self.pi.siData)
 
     # short-hand for three different updates
     def _onQLimitUpdate(self, newLimit):
@@ -288,6 +223,24 @@ class SASData(DataObj):
         self._shannonChannelEst = self.qi.limit[1] / self.qi.limit[0]
         self._prepareValidIndices()
 
+    def _onPLimitUpdate(self, newLimit):
+        """Bulk update of all parts directly dependent on Psi-min/max."""
+        if not self.is2d:
+            return # self.x1 will be None
+        self.x1.setLimit(newLimit)
+        self._prepareValidIndices()
+
+    def updateConfigMeta(self):
+        """Updates general meta data of the config object
+        based on this data set."""
+        super(SASData, self).updateConfigMeta()
+        if not self.is2d:
+            return # self.x1 will be None
+        descr = self.config.pLow.displayName().format(p = self.x1.name)
+        self.config.pLow.setDisplayName(descr)
+        descr = self.config.pHigh.displayName().format(p = self.x1.name)
+        self.config.pHigh.setDisplayName(descr)
+
     @property
     def configType(self):
         return SASConfig
@@ -295,7 +248,6 @@ class SASData(DataObj):
     @property
     def modelType(self):
         return SASModel
-
 
     def _prepareUncertainty(self, *dummy):
         """Modifies the uncertainty of the whole range of measured data to be
@@ -331,23 +283,21 @@ class SASData(DataObj):
         if self.config.fMaskNeg():
             mask &= (self.ii.siData > 0.0)
 
-#        from utils.devtools import DBG
-#        DBG('size mask: {}, qMin: {}, qMax: {}'
-#            .format(mask.sum(), self.config.xLow(), self.config.xHigh()))
         # clip to q bounds
         mask &= (self.qi.siData >= self.config.xLow())
         mask &= (self.qi.siData <= self.config.xHigh())
         # clip to psi bounds
         if self.is2d:
             raise NotImplementedError
-            mask &= (self.pOrigin > self.pMin)
-            mask &= (self.pOrigin <= self.pMax)
+            mask &= (self.pi.siData > self.config.pLow())
+            mask &= (self.pi.siData <= self.config.pHigh())
         # store
         self._validIndices = np.argwhere(mask)[:,0]
         # a quick, temporary implementation to pass on all valid indices to the parameters:
         self.f.validIndices = self._validIndices
         self.fu.validIndices = self._validIndices
         self.x0.validIndices = self._validIndices
+        # self.x1.validIndices = self._validIndices # ?? ok this way?
         self._prepareSizeEst() # recalculate based on limits. 
 
     def _prepareSizeEst(self):

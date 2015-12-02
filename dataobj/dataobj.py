@@ -105,6 +105,8 @@ class DataVector(object):
             self._limit = [np.maximum(np.min(newLimit), self.siData.min()),
                            np.minimum(np.max(newLimit), self.siData.max())]
 
+    # TODO: define min/max properties for convenience?
+
     @property
     def limsString(self):
         return u"{0:.3g} ≤ {valName} ({magnitudeName}) ≤ {1:.3g}".format(
