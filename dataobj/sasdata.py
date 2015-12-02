@@ -62,21 +62,6 @@ class SASData(DataObj):
     def sourceName(cls):
         return "Small Angle Scattering"
 
-    # intensity related helpers
-
-    @property
-    def i(self):
-        """Measured intensity at q."""
-        return self.ii.sanitized
-
-    @property
-    def iOrigin(self):
-        return self.ii.siData
-
-    @property
-    def iUnit(self):
-        return self.ii.unit
-
     # scattering vector
 
     @property
@@ -222,12 +207,12 @@ class SASData(DataObj):
     def dataContent(self):
         """shows the content of the loaded data: Q, I, IErr, etc"""
         content = []
-        if self.q is not None:
-            content.append('Q')
-        if self.i is not None:
-            content.append('I')
-        if self.hasError:
-            content.append('IErr')
+        if self.x0 is not None:
+            content.append(self.x0.name)
+        if self.f is not None:
+            content.append(self.f.name)
+        if self.fu is not None:
+            content.append(self.fu.name)
         if self.is2d:
             content.append('Psi')
         return ", ".join(content)
