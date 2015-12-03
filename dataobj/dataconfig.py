@@ -4,12 +4,30 @@
 from __future__ import absolute_import # PEP328
 
 from abc import ABCMeta, abstractproperty
+from types import MethodType
 import numpy
 from bases.algorithm import AlgorithmBase
 from utils.parameter import Parameter
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
 from utils import isCallable
+
+def funcNotInFuncList(f, flst):
+    """Custom predicate for comparing bounded methods:
+    Duplicate only if instance ID and method name match.
+    """
+    if not isinstance(f, MethodType):
+        return (f not in flst)
+
+    idExists = (id(f.im_self) in [id(of.im_self)
+                    for of in flst if isinstance(of, MethodType)])
+    if not idExists:
+        return True
+    nameExists = (f.im_func.func_name in [of.im_func.func_name
+                    for of in flst if isinstance(of, MethodType)])
+    if not nameExists:
+        return True
+    return False # both exist
 
 class CallbackRegistry(object):
     _callbacks = None # registered callbacks on certain events
@@ -27,7 +45,7 @@ class CallbackRegistry(object):
         if what not in self._callbacks:
             self._callbacks[what] = []
         for f in func:
-            if f not in self._callbacks[what]:
+            if funcNotInFuncList(f, self._callbacks[what]):
                 self._callbacks[what].append(f)
 
     def callback(self, what, *args, **kwargs):
