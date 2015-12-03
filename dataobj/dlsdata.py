@@ -59,8 +59,8 @@ class MultiDataVector(DataVector):
         return a
 
     @property
-    def originSrcShape(self):
-        return self.unflatten(self.origin)
+    def siDataSrcShape(self):
+        return self.unflatten(self.siData)
 
     @property
     def rawSrcShape(self):
@@ -181,11 +181,13 @@ class DLSData(DataObj):
         return self._correlationError
 
     @property
-    def q(self): return self.x0.value
+    def q(self): return self.x0.sanitized
+
     @property
-    def i(self): return self.f.value
+    def i(self): return self.f.sanitized
+
     @property
-    def u(self): return self.fu.value
+    def u(self): return self.fu.sanitized
 
     def setTau(self, tauUnit, rawArray):
         # TODO: tau symbol?
@@ -208,7 +210,7 @@ class DLSData(DataObj):
 
     @property
     def count(self):
-        return len(self.x0.origin)
+        return len(self.x0.siData)
 
     # scattering angles
 
@@ -277,7 +279,7 @@ class DLSData(DataObj):
         a matrix of the same dimensions as the correlation data."""
         if self.tau is None or self.gammaDivR is None:
             return
-        self._tauGammaMat = outer(self.tau.originSrcShape, self.gammaDivR)
+        self._tauGammaMat = outer(self.tau.siDataSrcShape, self.gammaDivR)
         self._tauGamma = MultiDataVector(u"tauGamma", self._tauGammaMat)
 
     def accumulate(self, others):
@@ -308,8 +310,8 @@ class DLSData(DataObj):
         self.setCorrelation(stacked.mean(-1))
         # combine the std. deviation with the existing tau
         self.setCorrelationError(stacked.std(-1))
-        assert len(self.x0.origin) == len(self.f.origin) and \
-               len(self.x0.origin) == len(self.fu.origin), \
+        assert len(self.x0.siData) == len(self.f.siData) and \
+               len(self.x0.siData) == len(self.fu.siData), \
             "Dimensions of flattened data arrays do not match!"
         return self
 
@@ -338,8 +340,8 @@ class DLSData(DataObj):
     def setConfig(self, config):
         if not super(DLSData, self).setConfig(config):
             return # no update, nothing todo
-        self.config.register("xlimits", self.x0.setLimit)
-        self.x0.limit = self.config.xLow(), self.config.xHigh()
+        self.config.register("x0limits", self.x0.setLimit)
+        self.x0.limit = self.config.x0Low(), self.config.x0High()
 
     def __str__(self):
         out = [u"## {0} '{1}'".format(self.__class__.__name__, self.title)]

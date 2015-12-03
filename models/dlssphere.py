@@ -28,7 +28,7 @@ class DLSSphere(DLSModel):
         return sqrt((pi*4./3.) * self.radius()**3.)
 
     def formfactor(self, data):
-        return (exp( data.tauGamma.value / self.radius() ))
+        return (exp( data.tauGamma.sanitized / self.radius() ))
 
 DLSSphere.factory()
 
