@@ -122,6 +122,7 @@ class DataObj(DataSet, DisplayMixin):
     __metaclass__ = ABCMeta
     _filename = None
     _config = None
+    _validIndices = None # based on masks to filter certain values
 
     # interface for basic DataVectors
 
@@ -152,6 +153,13 @@ class DataObj(DataSet, DisplayMixin):
         """The measurement uncertainty regarding the measurement vector *f*.
         """
         raise NotImplementedError
+
+    @property
+    def validIndices(self): # global valid indices
+        if self._validIndices is None:
+            # valid indices not set yet
+            self.prepareValidIndices()
+        return self._validIndices
 
     # other common meta data
 
