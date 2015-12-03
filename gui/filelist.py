@@ -78,12 +78,18 @@ class FileList(DataList):
         # add the new combined data set (again)
 #        [self.add(d) for d in newData]
 #        return
+
         # add the combined dls data split up per angle
-        for d in newData:
-            try:
-                [self.add(s) for s in d.splitPerAngle()]
+        def splitUp(d):
+            try: # perhaps test for isinstance(d, DLSData) instead
+                return d.splitPerAngle()
             except AttributeError:
-                self.add(d)
+                return (d,)
+        dataLst = [s for dl in (splitUp(d) for d in newData) for s in dl]
+        # use loadData() to communicate new data finally via signal
+        DataList.loadData(self, sourceList = dataLst,
+                          showProgress = False,
+                          processSourceFunc = lambda x: x)
 
     def itemDoubleClicked(self, item, column):
         valueRange = item.data().sphericalSizeEst()
