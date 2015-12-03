@@ -343,9 +343,9 @@ class PlotResults(object):
         qAxDict = self._AxDict.copy()
         qAxDict.update({
                 'xlim' : xLim, 'ylim' : yLim,
-                'xlabel' : u'{name} ({mag})'.format(name = dataset.x0.name, 
+                'xlabel' : u'{name} ({mag})'.format(name = dataset.x0.name,
                 mag = dataset.x0.unit.displayMagnitudeName),
-                'ylabel' : u'{name} ({mag})'.format(name = dataset.f.name, 
+                'ylabel' : u'{name} ({mag})'.format(name = dataset.f.name,
                 mag = dataset.f.unit.displayMagnitudeName)
                 })
 
@@ -356,25 +356,25 @@ class PlotResults(object):
         qAxis = self.setAxis(qAxis)
         # plot original data
         errorbar(xOrigin, yOrigin, uOrigin, zorder = 2,
-                 label = 'Measured {name}'.format(name = dataset.f.name), 
+                 label = u"Measured {name}".format(name = dataset.f.name),
                  **self._errorBarOpts)
         self.plotGrid(qAxis)
         # plot fit data
         plot(dataset.x0.unit.toDisplay(fitX0),
              dataset.f.unit.toDisplay(fitMeasVal), 'r-',
-                lw = 3, label = 'MC Fit {name}'.format(name = dataset.f.name), 
+                lw = 3, label = u"MC Fit {name}".format(name = dataset.f.name),
                 zorder = 4)
         try: # try to plot the background level
             plot(dataset.x0.unit.toDisplay(fitX0),
                  dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
                  'g-', linewidth = 3,
-                 label = 'MC Background level:\n'
-                         '        ({0:03.3g})'.format(
+                 label = "MC Background level:\n"
+                         "        ({0:03.3g})".format(
                             self._BG[0]), zorder = 3)
         except:
-            logging.error('could not plot background')
+            logging.error("could not plot background")
             pass
-        title('Measured vs. Fitted {name}'.format(name = dataset.f.name),
+        title(u"Measured vs. Fitted {name}".format(name = dataset.f.name),
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
         xlim(xLim)
