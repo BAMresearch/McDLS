@@ -336,8 +336,6 @@ class DLSData(DataObj):
             return # no update, nothing todo
         self.config.x0Low.setUnit(self.tau.unit)
         self.config.x0High.setUnit(self.tau.unit)
-        self.config.register("x0limits", self.x0.setLimit)
-        self.x0.limit = self.config.x0Low(), self.config.x0High()
 
     def __str__(self):
         out = [u"## {0} '{1}'".format(self.__class__.__name__, self.title)]
