@@ -282,9 +282,7 @@ class Histogram(DataSet, DisplayMixin):
         """Restricts histogram range according to changed parameter range
         if needed. Checks histogram range against parameter limits."""
         if self.autoFollow:
-            try:
-                self.xrange = self.param.activeRange()
-            except: pass # ignored on failure
+            self.xrange = self.param.activeRange()
         self.xrange = self.xrange # call getter & setter again to verify limits
 
     @classproperty
@@ -514,7 +512,7 @@ class Histograms(list):
     def append(self, value):
         if value in self:
             return
-        list.append(self, value)
+        super(Histograms, self).append(value)
 
     def updateRanges(self):
         """Updates ranges of all histograms."""
@@ -549,11 +547,9 @@ class FitParameterBase(ParameterBase):
 
     @mixedmethod
     def setValueRange(selforcls, newRange):
-        try:
-            super(FitParameterBase, selforcls).setValueRange(newRange)
+        super(FitParameterBase, selforcls).setValueRange(newRange)
+        if isinstance(selforcls.histograms(), Histograms):
             selforcls.histograms().updateRanges()
-        except:
-            pass
 
     @mixedmethod
     def isActive(selforcls):
@@ -633,9 +629,8 @@ class FitParameterBase(ParameterBase):
         newRange = selforcls.clip(newRange)
         # sets range for active fitting parameter limits
         selforcls._activeRange = (min(newRange), max(newRange))
-        try:
+        if isinstance(selforcls.histograms(), Histograms):
             selforcls.histograms().updateRanges()
-        except: pass # ignored on failure
 
     @mixedmethod
     def activeRange(selforcls):

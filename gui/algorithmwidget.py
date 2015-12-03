@@ -154,7 +154,7 @@ class AlgorithmWidget(SettingsWidget):
         try:
             param.setDisplayActiveRange(newRange)
             displayRange = param.displayActiveRange() # get updated values
-        except:
+        except AttributeError:
             param.setActiveRange(newRange)
             displayRange = param.activeRange()
         param.histograms().updateRanges()
