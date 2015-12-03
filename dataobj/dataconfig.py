@@ -48,6 +48,7 @@ class CallbackRegistry(object):
             .format(what, self.callbackSlots))
 
 class DataConfig(AlgorithmBase, CallbackRegistry):
+    _is2d = False
     parameters = (
         Parameter("x0Low", 0., unit = NoUnit(),
             displayName = "lower {x0} cut-off",
@@ -80,6 +81,14 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     @property
     def callbackSlots(self):
         return set(("x0limits", "x1limits", "fMasks"))
+
+    @property
+    def is2d(self):
+        return self._is2d
+
+    @is2d.setter
+    def is2d(self, isit):
+        self._is2d = isit
 
     def __init__(self):
         super(DataConfig, self).__init__()

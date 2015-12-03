@@ -605,22 +605,21 @@ class McSAS(AlgorithmBase):
         # http://bytes.com/topic/python/answers/37656-assertionerror-pickles-memoize-function#post141263
         # https://stackoverflow.com/questions/23706736/assertion-error-madness-with-qt-and-pickle
         # "autoClose" closes figure after saving for runs of many files. 
-        # get histograms to pass them to plotting
-        histograms = [parHist for histograms in
-                (p.histograms() for p in self.model.activeParams())
-                    for parHist in histograms]
-        # modify copies only below,
-        # otherwise internal object structure gets inconsistent
-        histograms = [copy.copy(h) for h in histograms]
-        # remove circular references first for pickling
-        for i in range(len(histograms)):
-            newParam = histograms[i].param.copy()
-            newParam.setActive(False)
-            histograms[i].param = newParam
+
+        # remove circular parameter references for pickling/forwarding
+        # need a list of histograms only, with params for meta info
+        histograms = []
+        for p in self.model.activeParams():
+            # calls FitParameter.__init__() which sets histogram.param
+            newParam = p.copy()
+            newParam.setActive(False) # remove the old histograms
+            for h in p.histograms():
+                newHist = copy.copy(h) # new hist containing old param
+                histograms.append(newHist)
+                h.param = p # reset to the old param, revert FitParameter.__init__()
         # arguments for plotting process below
         modelData = dict(activeParamCount = self.model.activeParamCount(),
-                         histograms = histograms
-                         )
+                         histograms = histograms)
         plotArgs = [self.result, self.data, axisMargin,
                     outputFilename, modelData, autoClose]
         if isMac():

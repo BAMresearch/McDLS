@@ -180,7 +180,12 @@ class DataObj(DataSet, DisplayMixin):
     def is2d(self):
         """Returns true if this dataset contains two-dimensional data with
         psi information available."""
-        return isinstance(self.x1, DataVector)
+        res = False
+        try:
+            res = isinstance(self.x1, DataVector)
+        except NotImplementedError:
+            pass
+        return res
 
     def accumulate(self, others):
         return None
