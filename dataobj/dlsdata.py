@@ -200,7 +200,7 @@ class DLSData(DataObj):
 
     @property
     def count(self):
-        return len(self.x0.siData)
+        return len(self.x0.sanitized)
 
     # scattering angles
 
@@ -271,6 +271,10 @@ class DLSData(DataObj):
             return
         self._tauGammaMat = outer(self.tau.siDataSrcShape, self.gammaDivR)
         self._tauGamma = MultiDataVector(u"tauGamma", self._tauGammaMat)
+
+    def prepareValidIndices(self, *args):
+        super(DLSData, self).prepareValidIndices()
+        self._tauGamma.validIndices = self._validIndices
 
     def accumulate(self, others):
         """Combines several measured data of the same sample into a single
