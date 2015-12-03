@@ -101,12 +101,12 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         self.fMaskNeg.setOnValueUpdate(self.updateFMasks)
 
     def updateX0Limits(self):
-        self._onLimitUpdate(self.x0Low, self.x0High, "x0limits")
+        self._onLimitUpdate("x0limits", self.x0Low, self.x0High)
 
     def updateX1Limits(self):
-        self._onLimitUpdate(self.x1Low, self.x1High, "x1limits")
+        self._onLimitUpdate("x1limits", self.x1Low, self.x1High)
 
-    def _onLimitUpdate(self, pLow, pHigh, callbackName):
+    def _onLimitUpdate(self, callbackName, pLow, pHigh):
         if not pLow() <= pHigh():
             temp = pLow()
             pLow.setValue(pHigh())
