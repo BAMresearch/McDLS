@@ -51,9 +51,9 @@ class FileList(DataList):
         nextIdx = len(self) # index of the next data set added
         DataList.loadData(self, sourceList = fileList, showProgress = False,
                           processSourceFunc = loaddataobj)
-        self.preProcess(nextIdx)
+        self.postProcess(nextIdx)
 
-    def preProcess(self, firstIdx):
+    def postProcess(self, firstIdx):
         """Starts accumulation of related data sets among the currently loaded
         ones. Finally, removes such source data sets and adds the new combined
         one. firstIdx is the index of the first newly loaded entries."""
