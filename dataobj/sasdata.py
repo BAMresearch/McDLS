@@ -178,33 +178,17 @@ class SASData(DataObj):
     def setConfig(self, config):
         if not super(SASData, self).setConfig(config):
             return # no update, nothing todo
-        # call setLimit() on change of x-limits in config
-        self.config.register("x0limits", self._onQLimitUpdate)
-        self._onQLimitUpdate((self.config.x0Low(), self.config.x0High()))
-        self.config.register("x1limits", self._onPLimitUpdate)
-        self._onPLimitUpdate((self.config.x1Low(), self.config.x1High()))
-        self.config.register("fMasks", self._prepareValidIndices)
-        self.config.register("eMin", self._prepareUncertainty)
-        self.config.is2d = self.is2d # forward if we are 2d or not
+        # self.config.updateEMin()
         # prepare
         self.locs = self.config.prepareSmearing(self._q.siData)
         # suggested upgrade for 2d smearing:
         # self.locs = self.config.prepareSmearing(
         #                           self._q.siData, self._p.siData)
 
-    # short-hand for three different updates
-    def _onQLimitUpdate(self, newLimit):
-        """Bulk update of all parts directly dependent on Q-min/max."""
-        self._q.setLimit(newLimit)
-        self._shannonChannelEst = self._q.limit[1] / self._q.limit[0]
-        self._prepareValidIndices()
-
-    def _onPLimitUpdate(self, newLimit):
-        """Bulk update of all parts directly dependent on Psi-min/max."""
-        if not self.is2d:
-            return # self.x1 will be None
-        self.x1.setLimit(newLimit)
-        self._prepareValidIndices()
+    def updateConfig(self):
+        super(SASData, self).updateConfig()
+        self.config.register("x0limits", self._prepareShannonChannelEst)
+        self.config.register("eMin", self._prepareUncertainty)
 
     @property
     def configType(self):
@@ -233,37 +217,9 @@ class SASData(DataObj):
         invInd = (True - np.isfinite(self._u.siData))
         self._u.siData[invInd] = np.inf
 
-    def _prepareValidIndices(self, *dummy):
-        """
-        If q and/or psi limits are supplied in the dataset,
-        prepares a clipmask for the full dataset
-        """
-        # init indices: index array is more flexible than boolean masks
-        mask = np.isfinite(self._i.siData)
-
-        # Optional masking of negative intensity
-        if self.config.fMaskZero():
-            # FIXME: compare with machine precision (EPS)?
-            mask &= (self._i.siData != 0.0)
-        if self.config.fMaskNeg():
-            mask &= (self._i.siData > 0.0)
-
-        # clip to q bounds
-        mask &= (self._q.siData >= self.config.x0Low())
-        mask &= (self._q.siData <= self.config.x0High())
-        # clip to psi bounds
-        if self.is2d:
-            raise NotImplementedError
-            mask &= (self._p.siData > self.config.x1Low())
-            mask &= (self._p.siData <= self.config.x1High())
-        # store
-        self._validIndices = np.argwhere(mask)[:,0]
-        # a quick, temporary implementation to pass on all valid indices to the parameters:
-        self.f.validIndices = self._validIndices
-        self.fu.validIndices = self._validIndices
-        self.x0.validIndices = self._validIndices
-        # self.x1.validIndices = self._validIndices # ?? ok this way?
-        self._prepareSizeEst() # recalculate based on limits. 
+    def prepareValidIndices(self, *args):
+        super(SASData, self).prepareValidIndices()
+        self._prepareSizeEst()
 
     def _prepareSizeEst(self):
         self._sizeEst = np.pi / np.array([self._q.limit[1],
