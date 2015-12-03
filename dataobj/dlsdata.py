@@ -190,8 +190,7 @@ class DLSData(DataObj):
     def u(self): return self.fu.sanitized
 
     def setTau(self, tauUnit, rawArray):
-        # TODO: tau symbol?
-        self._tau = MultiDataVector(u"tau", rawArray.flatten(), unit = tauUnit,
+        self._tau = MultiDataVector(u"τ", rawArray.flatten(), unit = tauUnit,
                                     count = self.numAngles)
         self._calcTauGamma()
 
@@ -200,13 +199,13 @@ class DLSData(DataObj):
         assert rawArray.shape[1] == self.numAngles, (
             "Correlation intensity: {} columns != {} scattering angles"
             .format(rawArray.shape[1], self.numAngles))
-        self._correlation = MultiDataVector(u"G_2(tau)-1", rawArray)
+        self._correlation = MultiDataVector(u"G_2(τ)-1", rawArray)
 
     def setCorrelationError(self, rawArray):
         assert self.isValidInput(rawArray), "Invalid data from file!"
         assert rawArray.shape[1] == self.numAngles, \
             "Correlation stddev: #columns differs from #scattering angles"
-        self._correlationError = MultiDataVector(u"σ[G_2(tau)-1]", rawArray)
+        self._correlationError = MultiDataVector(u"σ[G_2(τ)-1]", rawArray)
 
     @property
     def count(self):
