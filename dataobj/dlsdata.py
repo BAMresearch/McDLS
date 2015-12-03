@@ -303,6 +303,8 @@ class DLSData(DataObj):
         assert len(self.x0.siData) == len(self.f.siData) and \
                len(self.x0.siData) == len(self.fu.siData), \
             "Dimensions of flattened data arrays do not match!"
+        # reset config in order to fix callbacks
+        self.setConfig(self.configType())
         return self
 
     def splitPerAngle(self):
@@ -313,6 +315,8 @@ class DLSData(DataObj):
             another.setTau(self.tau.unit, self.tau.rawSrcShape)
             another.setCorrelation(self.correlation.rawSrcShape[:, i, newaxis])
             another.setCorrelationError(self.correlationError.rawSrcShape[:, i, newaxis])
+            # reset config in order to fix callbacks
+            another.setConfig(another.configType())
             lst.append(another)
         return lst
 
