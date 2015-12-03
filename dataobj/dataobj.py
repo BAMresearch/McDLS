@@ -209,12 +209,19 @@ class DataObj(DataSet, DisplayMixin):
             return False
         # always replacing the config if it's valid, it originates from here
         self._config = config
-        self.updateConfigMeta()
+        self.updateConfig()
+        # not sure yet, if it's necessary to run all callbacks afterwards
+#        self.config.updateX0Limits()
+#        self.config.updateX1Limits()
+#        self.config.updateFMasks()
         return True
 
-    def updateConfigMeta(self):
-        """Updates general meta data of the config object
-        based on this data set."""
+    def updateConfig(self):
+        """Updates the config object based on this data set. All callbacks are
+        run right after this method in setConfig()."""
+        self.config.is2d = self.is2d # forward if we are 2d or not
+        self.config.register("x0limits", self.prepareValidIndices, self.x0.setLimit)
+        self.config.register("fMasks", self.prepareValidIndices)
         descr = self.config.x0Low.displayName().format(x0 = self.x0.name)
         self.config.x0Low.setDisplayName(descr)
         descr = self.config.x0High.displayName().format(x0 = self.x0.name)
@@ -230,6 +237,7 @@ class DataObj(DataSet, DisplayMixin):
                 (self.x0.siData.min(), self.x0.siData.max()))
         if not self.is2d:
             return # self.x1 will be None
+        self.config.register("x1limits", self.prepareValidIndices, self.x1.setLimit)
         descr = self.config.x1Low.displayName().format(x1 = self.x1.name)
         self.config.x1Low.setDisplayName(descr)
         descr = self.config.x1High.displayName().format(x1 = self.x1.name)
@@ -246,6 +254,38 @@ class DataObj(DataSet, DisplayMixin):
     def modelType(self):
         """Returns a compatible ScatteringModel type."""
         raise NotImplementedError
+
+    def prepareValidIndices(self, *dummy):
+        """
+        If x0 and/or x1 limits are provided, it prepares a set of allowed
+        indices for the full dataset.
+        """
+        # init indices: index array is more flexible than boolean masks
+        mask = np.isfinite(self.f.siData)
+
+        # Optional masking of negative intensity
+        if self.config.fMaskZero():
+            # FIXME: compare with machine precision (EPS)?
+            mask &= (self.f.siData != 0.0)
+        if self.config.fMaskNeg():
+            mask &= (self.f.siData > 0.0)
+
+        # clip to q bounds
+        mask &= (self.x0.siData >= self.config.x0Low())
+        mask &= (self.x0.siData <= self.config.x0High())
+        # clip to psi bounds
+        if self.is2d:
+            mask &= (self.x1.siData > self.config.x1Low())
+            mask &= (self.x1.siData <= self.config.x1High())
+        # store
+        self._validIndices = np.argwhere(mask)[:,0]
+        # a quick, temporary implementation to pass on all valid indices to the parameters:
+        self.f.validIndices = self._validIndices
+        if isinstance(self.fu, DataVector):
+            self.fu.validIndices = self._validIndices
+        self.x0.validIndices = self._validIndices
+        if self.is2d:
+            self.x1.validIndices = self._validIndices
 
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)
