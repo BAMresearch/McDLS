@@ -195,7 +195,6 @@ TrapezoidSmearing.factory()
 class SASConfig(DataConfig):
     # TODO: fix UI elsewhere for unit selection along to each input and forward
     #       that to the DataVector
-    _is2d = False
     _iUnit = NoUnit()
     _qUnit = NoUnit()
     _pUnit = NoUnit()
@@ -226,14 +225,6 @@ class SASConfig(DataConfig):
     def setX1ValueRange(self, limit):
         super(SASConfig, self).setX1ValueRange(limit)
         # TODO
-
-    @property
-    def is2d(self):
-        return self._is2d
-
-    @is2d.setter
-    def is2d(self, isit):
-        self._is2d = isit
 
     @property
     def iUnit(self):
