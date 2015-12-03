@@ -18,16 +18,17 @@ class CallbackRegistry(object):
     def callbackSlots(self):
         raise NotImplementedError
 
-    def register(self, what, func):
+    def register(self, what, *func):
         # check for the correct number of arguments of func as well?
-        assert isCallable(func)
+        assert all((isCallable(f) for f in func))
         self._assertPurpose(what)
         if self._callbacks is None: # lazy init
             self._callbacks = dict()
         if what not in self._callbacks:
             self._callbacks[what] = []
-        if func not in self._callbacks[what]:
-            self._callbacks[what].append(func)
+        for f in func:
+            if f not in self._callbacks[what]:
+                self._callbacks[what].append(f)
 
     def callback(self, what, *args, **kwargs):
         self._assertPurpose(what)
