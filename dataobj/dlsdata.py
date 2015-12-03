@@ -180,15 +180,6 @@ class DLSData(DataObj):
     def fu(self):
         return self._correlationError
 
-    @property
-    def q(self): return self.x0.sanitized
-
-    @property
-    def i(self): return self.f.sanitized
-
-    @property
-    def u(self): return self.fu.sanitized
-
     def setTau(self, tauUnit, rawArray):
         self._tau = MultiDataVector(u"τ", rawArray.flatten(), unit = tauUnit,
                                     count = self.numAngles)
