@@ -140,6 +140,9 @@ class SASData(DataObj):
     def shannonChannelEst(self):
         return int(self._shannonChannelEst)
 
+    def _prepareShannonChannelEst(self, *args):
+        self._shannonChannelEst = self._q.limit[1] / self._q.limit[0]
+
     @property
     def shannonChannelEstText(self):
         return u"≤ {0:2d} bins ".format(self.shannonChannelEst())
