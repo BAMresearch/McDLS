@@ -275,16 +275,16 @@ class PlotResults(object):
 
         gs = gridspec.GridSpec(2 * nR, nHists + 1,
                 height_ratios = np.tile([1,6],nR ) )
-        #update margins
-        gs.update(left = 0.08, bottom = 0.10,
-                            right = 0.96, top = 0.95,
-                            wspace = 0.23, hspace = 0.13)
+        # update margins
+        gs.update(left = 0.12, bottom = 0.10,
+                  right = 0.96, top = 0.95,
+                  wspace = 0.23, hspace = 0.13)
 
         for ai in range((nHists + 1) * nR * 2 ):
-            #initialise axes 
+            # initialise axes
             ah.append(subplot(gs[ai]))
             if ai%((nHists + 1) * 2) < (nHists + 1) : 
-                #text box settings:
+                # text box settings:
                 textAxDict = {
                         'frame_on' : False,
                         'yticks' : [],
