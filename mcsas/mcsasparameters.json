@@ -71,11 +71,19 @@
     },
     "autoClose" : {
         "displayName" : "Automatically close result windows",
-        "description" : "Prevents cluttering the screen with many windows if series are fited",
+        "description" : "Prevents cluttering the screen with many windows if series are fitted",
         "default" : false,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
+    },
+    "seriesStats" : {
+        "displayName" : "Combine DLS statistics for each sample",
+        "description" : "Writes an output file containing the moments of an histogram per sample, also plots them against the scattering angle (for DLS).",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
     },
     "showIncomplete" : {
         "displayName" : "Plot unsuccessful / incomplete results",

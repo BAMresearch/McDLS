@@ -15,8 +15,9 @@ import pickle
 from gui.qt import QtCore
 from QtCore import QUrl
 from bases.dataset import DataSet
-from utils import isList, isString, testfor
+from utils import isList, isString, testfor, isMac
 from utils.lastpath import LastPath
+from utils.units import Angle
 from datafile import PDHFile, AsciiFile
 from gui.utils.displayexception import DisplayException
 import log
@@ -107,6 +108,7 @@ class OutputFilename(object):
 class Calculator(object):
     _algo = None  # McSAS algorithm instance
     _outFn = None # handles output file names, creates directories
+    _series = None # stores results of multiple data sets for a final summary
     # static settings, move this to global app settings later
     indent = "    "
     nolog = False
@@ -143,6 +145,11 @@ class Calculator(object):
 
     def isStopped(self):
         return self._algo.stop
+
+    def prepare(self):
+        """Resets series data. Supposed to be called before each run of
+        multiple __call__() invokations."""
+        self._series = dict()
 
     def __call__(self, dataset):
         """ the *recalc* boolean skips the optimisation algorithm and moves
@@ -181,6 +188,7 @@ class Calculator(object):
             for p in self.model.activeParams():
                 self._writeDistrib(p)
                 self._writeStatistics(p)
+            self._updateSeries(dataset, self.model)
             # plotting last so stats were already calculated
             if res is not None:
                 self._writeFit(res)
@@ -191,6 +199,81 @@ class Calculator(object):
             logging.info("No results available!")
 
         log.removeHandler(logFile)
+
+    def _updateSeries(self, data, model):
+        if not self.algo.seriesStats():
+            return
+        if not hasattr(data, 'sampleName'):
+            return
+        def addSeriesData(key, hist, angles):
+            if key not in self._series:
+                self._series[key] = []
+            self._series[key].append((angles, hist.moments.fields))
+
+        key = data.sampleName
+        for p in model.activeParams():
+            for h in p.histograms():
+                # derive a unique key for each pair of sample and histogram
+                key = (data.sampleName, h.xrange + (h.yweight,))
+                angles = ";".join((str(Angle(u"°").toDisplay(a)) for a in data.angles))
+                addSeriesData(key, h, angles)
+
+    def postProcess(self):
+        if not self.algo.seriesStats():
+            return
+        def plotStats(stats):
+            """Simple 1D plotting of series statistics."""
+            # need a simple (generic) plotting method in mcsas.plotting
+            # kind of a dirty hack for now ...
+            from matplotlib.pyplot import (figure, show, subplot, plot, errorbar, axes, legend)
+            fig = figure(figsize = (7, 7), dpi = 80,
+                         facecolor = 'w', edgecolor = 'k')
+            fig.canvas.set_window_title("series statistics plot")
+            a = subplot()
+            angle = [float(v) for v in stats["angle"]]
+            mean = [float(v) for v in stats["mean"]]
+            meanStd = [float(v) for v in stats["meanStd"]]
+            plot(angle, mean, 'r-', label = "mean")
+            errorbar(angle, mean, meanStd)
+            axes(a)
+            legend(loc = 1, fancybox = True)
+            fig.canvas.draw()
+            fig.show()
+            show()
+        def processSeriesStats(sampleName, histCfg, valuePairs):
+            # similar to _writeStatistics() but not using parameters
+            angles, moments = valuePairs[0]
+            stats = dict()
+            columnNames = (("lower", "upper", "weighting", "angle")
+                            + Moments.fieldNames())
+            for angles, moments in valuePairs:
+                values = histCfg + (angles,) + moments
+                for name, value in zip(columnNames, values):
+                    if name not in stats:
+                        stats[name] = []
+                    stats[name].append(value)
+            class fakeDataSet(object):
+                title = u"{name} [{lo},{hi}] {w}".format(name = sampleName,
+                        lo = histCfg[0], hi = histCfg[1], w = histCfg[2])
+            self._outFn = OutputFilename(fakeDataSet)
+            self._outFn.outDirUp()
+            # convert numerical stats to proper formatted text
+            statsStr = dict()
+            for key, values in stats.iteritems():
+                statsStr[key] = [AsciiFile.formatValue(v) for v in values]
+            self._writeResultHelper(statsStr, "seriesStats",
+                                    "series statistics",
+                                    columnNames, extension = '.dat')
+            # simple statistics plotting, kind of a prototype for now ...
+            if isMac():
+                plotStats(stats)
+            else:
+                from multiprocessing import Process
+                proc = Process(target = plotStats, args = (stats,))
+                proc.start()
+        for key, valuePairs in self._series.iteritems():
+            sampleName, histCfg = key
+            processSeriesStats(sampleName, histCfg, valuePairs)
 
     def _writeStatistics(self, param):
         """Gathers the statistics column-wise first and converts them to a
