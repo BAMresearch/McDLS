@@ -355,10 +355,12 @@ class MainWindow(MainWindowBase):
         idx, data = self.fileWidget.currentSelection()
         # process the selected data only if there is a selection
         selectedOnly = data is not None
+        self.calculator.prepare()
         self.fileWidget.updateData(updateFunc = self.calculator,
                                    stopFunc = self.calculator.isStopped,
                                    selectedOnly = selectedOnly,
                                    showProgress = False)
+        self.calculator.postProcess()
 
     def closeEvent(self, closeEvent):
         super(MainWindow, self).closeEvent(closeEvent)
