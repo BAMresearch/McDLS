@@ -60,10 +60,15 @@ class OutputFilename(object):
     def outDir(self):
         return self._outDir
 
+    def outDirUp(self):
+        """Sets the output directory one level up relative to the current
+        output directory."""
+        self._outDir = os.path.dirname(self._outDir)
+
     def __init__(self, dataset):
         self._outDir = LastPath.get()
         if not os.path.isdir(self._outDir):
-            logging.warning("Provided output path '{}' does not exist!"
+            logging.warning("Output path '{}' does not exist!"
                             .format(self._outDir))
             self._outDir = ""
         self._basename = u"{title} {ts}".format(
@@ -76,6 +81,7 @@ class OutputFilename(object):
             os.mkdir(newDir)
             self._outDir = newDir
         except OSError:
+            logging.warning("Failed to create directory '{}'!".format(newDir))
             pass # on failure: no subdirectory
 
     def filename(self, kind = None, extension = '.txt'):
