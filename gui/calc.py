@@ -176,9 +176,9 @@ class Calculator(object):
         if isList(self._algo.result) and len(self._algo.result):
             res = self._algo.result[0]
             # quick hack for now, will get fixed with Parameter design
-            for i, p in enumerate(self.model.activeParams()):
+            for p in self.model.activeParams():
                 self._writeDistrib(p)
-                self._writeStatistics(i, p)
+                self._writeStatistics(p)
             # plotting last so stats were already calculated
             if res is not None:
                 self._writeFit(res)
@@ -190,17 +190,17 @@ class Calculator(object):
 
         log.removeHandler(logFile)
 
-    def _writeStatistics(self, paramIndex, param):
+    def _writeStatistics(self, param):
+        """Gathers the statistics column-wise first and converts them to a
+        row oriented text file in _writeResultHelper()"""
         stats = dict()
         columnNames = (("lower", "upper", "weighting")
                         + Moments.fieldNames())
-        for cn in columnNames:
-            stats[cn] = []
         # not optimal, but for now, it helps
         for h in param.histograms():
             values = h.xrange + (h.yweight,) + h.moments.fields
             for name, value in zip(columnNames, values):
-                if stats.get(name) is None:
+                if name not in stats:
                     stats[name] = []
                 stats[name].append(AsciiFile.formatValue(value))
         self._writeResultHelper(stats, "stats_"+param.name(),
