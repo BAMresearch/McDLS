@@ -626,9 +626,17 @@ class McSAS(AlgorithmBase):
             plotArgs.append(False) # logToFile, for multithreaded plotting below only
             PlotResults(*plotArgs)
         else:
-            from multiprocessing import Process
+            from multiprocessing import Process, Queue
+            q = Queue()
             plotArgs.append(True) # logToFile
-            proc = Process(target = PlotResults, args = plotArgs)
+            proc = Process(target = PlotResults, args = plotArgs,
+                           kwargs = dict(queue = q))
             proc.start()
+            if not autoClose:
+                return # keeps the plot window open
+            interval = 0.1 # time steps to check if plotting is done
+            while q.empty(): # usually needs 1.5sec on my box [ingo]
+                time.sleep(interval)
+            proc.terminate()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
