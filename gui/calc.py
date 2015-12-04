@@ -6,6 +6,7 @@ import sys
 import logging
 import time
 import os.path
+import codecs
 import ConfigParser
 import numpy
 import numpy as np
@@ -22,6 +23,27 @@ import log
 from mcsas.mcsas import McSAS
 from utils.parameter import Histogram, Moments, isActiveParam
 from dataobj import SASData
+
+DEFAULTSECT = ConfigParser.DEFAULTSECT
+
+def cfgwrite(self, fp):
+    """Write an .ini-format representation of the configuration state."""
+    if self._defaults:
+        fp.write("[%s]\n" % DEFAULTSECT)
+        for (key, value) in self._defaults.items():
+            fp.write("%s = %s\n" % (key, unicode(value).replace('\n', '\n\t')))
+        fp.write("\n")
+    for section in self._sections:
+        fp.write("[%s]\n" % section)
+        for (key, value) in self._sections[section].items():
+            if key == "__name__":
+                continue
+            if (value is not None) or (self._optcre == self.OPTCRE):
+                key = " = ".join((key, unicode(value).replace('\n', '\n\t')))
+            fp.write("%s\n" % (key))
+        fp.write("\n")
+
+ConfigParser.RawConfigParser.write = cfgwrite
 
 class OutputFilename(object):
     """Generates output filenames with a common time stamp and logs
@@ -44,7 +66,7 @@ class OutputFilename(object):
             logging.warning("Provided output path '{}' does not exist!"
                             .format(self._outDir))
             self._outDir = ""
-        self._basename = "{title}_{ts}".format(
+        self._basename = u"{title}_{ts}".format(
                 title = dataset.title, ts = log.timestamp())
         # create a directory for all output files
         newDir = os.path.join(self._outDir, self._basename)
@@ -242,7 +264,7 @@ class Calculator(object):
                 config.set(sectionName, p.name()+"_max", p.max())
             else:
                 config.set(sectionName, p.name(), p.value())
-        with open(fn, 'w') as configfile:
+        with codecs.open(fn, 'w', encoding = 'utf8') as configfile:
             config.write(configfile)
 
     def _writeResultHelper(self, mcResult, fileKey, descr, columnNames,
