@@ -66,8 +66,10 @@ class OutputFilename(object):
             logging.warning("Provided output path '{}' does not exist!"
                             .format(self._outDir))
             self._outDir = ""
-        self._basename = u"{title}_{ts}".format(
+        self._basename = u"{title} {ts}".format(
                 title = dataset.title, ts = log.timestamp())
+        if hasattr(dataset, "anglesToStr"):
+            self._basename += u" [{}]".format(dataset.anglesToStr)
         # create a directory for all output files
         newDir = os.path.join(self._outDir, self._basename)
         try:

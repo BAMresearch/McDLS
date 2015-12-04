@@ -207,7 +207,6 @@ class DLSData(DataObj):
     def setAngles(self, angles):
         self._angles = angles
         self._calcScatteringVector()
-        self.title = (self.sampleName + u" [{}]".format(self.anglesToStr))
 
     @property
     def numAngles(self):
