@@ -216,8 +216,15 @@ class DLSData(DataObj):
 
     @property
     def anglesToStr(self):
-        return "; ".join(("{0:.1f}".format(Angle(u"°").toDisplay(a))
-                          for a in self.angles))
+        return self.anglesFmt()
+
+    def anglesFmt(self, fmt = None):
+        unit = Angle(u"°")
+        if fmt is None:
+            fmt = u"{0:.0f}{1}"
+        return u";".join((unicode(fmt).format(unit.toDisplay(a),
+                                               unit.displayMagnitudeName)
+                           for a in self.angles))
 
     # temperature, viscosity, refractiveIndex, wavelength including std.err
 
