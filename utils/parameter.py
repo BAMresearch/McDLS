@@ -181,7 +181,6 @@ class Histogram(DataSet, DisplayMixin):
     _xscale     = None # list of scalings
     _yweight    = None # list of weightings
     _xrange     = None # list of tuples/pairs
-    _stats      = None # rangeInfo() results, RangeStats lists
 
     # results: class HistogramResult?
     _xLowerEdge = None
