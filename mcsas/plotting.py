@@ -64,10 +64,9 @@ class PlotResults(object):
     _plotfont = None
     _textfont = None
    
-    def __init__(self, allRes, dataset, 
-                 axisMargin = 0.3,
-                 outputFilename = None,
-                 modelData = None, autoClose = False, logToFile = False ):
+    def __init__(self, allRes, dataset, axisMargin = 0.3,
+                 outputFilename = None, modelData = None, autoClose = False,
+                 logToFile = False, queue = None):
 
         # set up multiprocessing compatible logging
         # redirect to file if requested, a workaround for the moment
@@ -182,11 +181,13 @@ class PlotResults(object):
             savefig(outputFilename.filenameVerbose(
                     None, "plot PDF", extension = '.pdf'))
         except AttributeError: pass
+        if queue is not None:
+            queue.put(True) # quene not empty means: plotting done here
         # show() seems to be nescessary otherwise the plot window is
         # unresponsive/hangs on Ubuntu or the whole program crashes on windows
         # 'python stopped working'
-        show()
-        if autoClose():
+        show() # this is synchronous on Linux, waits here until the window is closed
+        if autoClose:
             close(self._fig)
 
     def plotGrid(self, figh):
