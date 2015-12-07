@@ -283,7 +283,8 @@ class ParameterBase(object):
     def setDisplayName(selforcls, newName):
         if (not isString(newName) or len(newName) <= 0):
             newName = selforcls.name()
-        selforcls._displayName = unicode(newName)
+        if newName is not None:
+            selforcls._displayName = unicode(newName)
 
     #in ParameterFloat, this is scaled to units used. For GUI display
     @mixedmethod
