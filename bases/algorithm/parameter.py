@@ -204,7 +204,11 @@ class ParameterBase(object):
             attr = [a for a in attr if a not in exclude]
         for name in attr:
             # if this throws an exception, there is a bug
-            res[name] = getattr(selforcls, name)()
+            value = getattr(selforcls, name)()
+            # use values which differ from the defaults only
+            defValue = getattr(base, name)()
+            if value != defValue:
+                res[name] = value
         return res
 
     @classmethod
