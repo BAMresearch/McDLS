@@ -397,7 +397,7 @@ class ParameterNumerical(ParameterBase):
         if newValue is None:
             return # ignore
         testfor(isNumber(newValue), DefaultValueError,
-                "A value has to be numerical! ({})".format(newValue))
+                u"A value has to be numerical! ({})".format(newValue))
         if clip:
             # clip to min/max values:
             newValue = selforcls.clip(newValue)
@@ -533,8 +533,7 @@ class ParameterFloat(ParameterNumerical):
 
     @mixedmethod
     def setSuffix(selforcls, newSuffix):
-# not used atm
-#        selforcls.unit.displayMagnitudeName = newSuffix
+        """deprecated"""
         pass
 
     @mixedmethod
