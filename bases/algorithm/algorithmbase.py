@@ -62,8 +62,8 @@ class AlgorithmBase(object):
         for i, p in enumerate(parameters):
             testfor(isinstance(p, type) and issubclass(p, ParameterBase),
                     AlgorithmParameterError, "{name}: Expected a "
-                    "ParameterBase for parameter {index}, got {type}!"
-                    .format(name = cls.__name__, index = i, type = type(p)))
+                    "ParameterBase type for parameter {index}, got {type}!"
+                    .format(name = cls.__name__, index = i, type = p))
             cls.setParam(p)
 
     @mixedmethod
