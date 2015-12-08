@@ -323,7 +323,7 @@ if __name__ == "__main__":
             ("resources/background_files.svg", "resources/background_files.svg"),
             ("resources/background_ranges.svg", "resources/background_ranges.svg"),
             ("resources/icon/mcsas.ico", "resources/icon/mcsas.ico"),
-            "dejavuserif.ttf",
+            "dejavuserif.ttf", "dejavumono.ttf",
     ]
     if isLinux():
         INCLUDEFILES += [
