@@ -47,8 +47,8 @@ class DisplayException(QMessageBox):
         self.setDefaultButton(okBtn)
         className, methodName = self.classAndMethodName()
         excName, excMsg = type(exception).__name__, unicode(exception)
-        text = "{3}\n[ {2} in {0}.{1} ]".format(className, methodName, excName, excMsg)
-        self.setText("<nobr>{0}</nobr>".format(text.replace("\n", "<br />")))
+        text = u"{3}\n[ {2} in {0}.{1} ]".format(className, methodName, excName, excMsg)
+        self.setText(u"<nobr>{0}</nobr>".format(text.replace("\n", "<br />")))
         logfunc = self._logging.get(level, logging.error)
         logfunc(traceback.format_exc()) # log exception traceback
         self.exec_()
