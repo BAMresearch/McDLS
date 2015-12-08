@@ -41,20 +41,22 @@ class PlotResults(object):
     distribution.
     """
 
-    _errorBarOpts = { "fmt" : 'k.', 
-            "ecolor" : 'k', 
-            "elinewidth" : 2, 
-            "capsize" : 4, 
-            "ms" : 5, 
-            "lw" : 2, 
-            "solid_capstyle" : 'round', 
-            "solid_joinstyle" : 'miter'}
-
-    _infoText = {"family" : "monospace", 
-            "size" : "small", 
-            "horizontalalignment" : 'center', 
-            "multialignment" : 'center', 
-            "verticalalignment" : 'center'}
+    _errorBarOpts = {
+            "fmt" : 'k.',
+            "ecolor" : 'k',
+            "elinewidth" : 2,
+            "capsize" : 4,
+            "ms" : 5,
+            "lw" : 2,
+            "solid_capstyle" : 'round',
+            "solid_joinstyle" : 'miter'
+    }
+    _infoText = {
+            "size" : "small",
+            "horizontalalignment" : 'center',
+            "multialignment" : 'center',
+            "verticalalignment" : 'center'
+    }
     _result = None
     _dataset = None
     _axisMargin = None
@@ -63,6 +65,7 @@ class PlotResults(object):
     _SC = None
     _plotfont = None
     _textfont = None
+    _monofont = None
    
     def __init__(self, allRes, dataset, axisMargin = 0.3,
                  outputFilename = None, modelData = None, autoClose = False,
@@ -97,6 +100,9 @@ class PlotResults(object):
         # DejaVu shows UTF8 superscript minus properly
         fontPath = makeAbsolutePath("dejavuserif.ttf")
         self._textfont = fm.FontProperties(fname = fontPath)
+        fontPath = makeAbsolutePath("dejavumono.ttf")
+        self._monofont = fm.FontProperties(fname = fontPath)
+        self._infoText['fontproperties'] = self._monofont
 
         yscale = 'linear'
         if isinstance(dataset, SASData):
