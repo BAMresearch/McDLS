@@ -393,7 +393,7 @@ class ParameterNumerical(ParameterBase):
                   "stepping", "displayValues", "generator")
 
     @mixedmethod
-    def setValue(selforcls, newValue, clip = False):
+    def setValue(selforcls, newValue, clip = True):
         if newValue is None:
             return # ignore
         testfor(isNumber(newValue), DefaultValueError,
