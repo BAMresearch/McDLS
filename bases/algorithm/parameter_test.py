@@ -10,6 +10,10 @@ from bases.algorithm.parameter import (
 from bases.algorithm import Parameter, NumberGenerator, RandomUniform
 from nose.tools import raises
 
+class Dummy(object):
+    def dummyFunc(value):
+        pass
+
 def testParameterName():
     @raises(ParameterNameError)
     def testName(newName):
@@ -82,8 +86,8 @@ def testParameterFloat():
         yield testDecimals, value
 
 def testParameterBaseCopy():
-    p1 = Parameter(name = "p", value = "a", displayName = "displayname"
-                      )()
+    p1 = Parameter(name = "p", value = "a", displayName = "displayname",
+                   onValueUpdate = Dummy().dummyFunc)()
     p2 = p1.copy()
     assert isinstance(p1, ParameterBase)
     assert isinstance(p2, ParameterBase)
@@ -141,7 +145,8 @@ def testParameterCompare():
                 dict(name = "p", value = "12", displayName = "displayname",
                      description = "description")),
             (ParameterNumerical,
-                dict(name = "p", value = 1, valueRange = (1, 5))),
+                dict(name = "p", value = 1, valueRange = (1, 5),
+                     onValueUpdate = Dummy().dummyFunc)),
             (ParameterNumerical,
                 dict(name = "p", value = 1.0, valueRange = (1, 5),
                      suffix = "suf")),
@@ -159,17 +164,14 @@ def testParameterCompare():
             ):
         yield compareParameters, pType, kwargs
 
-def testParameterPickle():
+def testParameterSerialize():
     import pickle
+    import utils.pickleinstancemethods
     pType = factory(name = "radius", value = 3.4, valueRange = (1,5), decimals = 3)
-    r = pType()
-    data = pickle.dumps(r)
-    r2 = pickle.loads(data)
-    print r.attributes()
-    print r2.attributes()
-    assert r == r2
-
-if __name__ == "__main__":
-    testParameterPickle()
+    p = pType()
+    p.setOnValueUpdate(Dummy().dummyFunc)
+    data = pickle.dumps(p)
+    p2 = pickle.loads(data)
+    assert p == p2
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
