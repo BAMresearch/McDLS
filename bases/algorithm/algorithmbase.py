@@ -70,11 +70,7 @@ class AlgorithmBase(object):
     def setParam(selforcls, p):
         """Sets the given parameter as an attribute of this object. Use this
         method instead of setattr()."""
-        # sanitize the parameter name
-        name = unicode(p.name())
-        replacements = dict([(ord(char), None) for char in u' \t\n\r'])
-        attrname = name.translate(replacements)
-        # use the clean name
+        attrname = p.name()
         if not isList(selforcls._parameters):
             selforcls._parameters = []
         old = getattr(selforcls, attrname, None)

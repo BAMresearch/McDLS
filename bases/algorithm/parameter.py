@@ -271,7 +271,9 @@ class ParameterBase(object):
         """Changing the name is allowed for the class/type only,
         not for instances."""
         assertName(name, ParameterNameError)
-        cls._name = name
+        replacements = dict([(ord(char), None) for char in u' \t\n\r'])
+        safename = unicode(name).translate(replacements)
+        cls._name = safename
 
     @mixedmethod
     def setValue(selforcls, newValue):
