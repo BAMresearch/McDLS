@@ -59,6 +59,7 @@ class AlgorithmBase(object):
         """Expects a list of ParameterBase classes/types and sets them as
         class attributes to this class. They will become instances later,
         please see __init__()"""
+        cls._parameters = []
         for i, p in enumerate(parameters):
             testfor(isinstance(p, type) and issubclass(p, ParameterBase),
                     AlgorithmParameterError, "{name}: Expected a "
@@ -95,6 +96,8 @@ class AlgorithmBase(object):
     @mixedmethod
     def params(selforcls):
         """All parameters of this algorithm."""
+        if selforcls._parameters is None:
+            return []
         return selforcls._parameters
 
     @mixedmethod
@@ -126,14 +129,21 @@ class AlgorithmBase(object):
         if not len(parameters) and hasattr(cls, "parameters"):
             # for backwards compatibility
             parameters = []
-            for baseCls in reversed(cls.__mro__):
+            for baseCls in reversed(cls.mro()):
                 # get parameters from parent classes as well
+                params = []
                 try:
-                    # add parameters to final list without duplicates
-                    parameters.extend([p for p in baseCls.parameters
-                                          if p not in parameters])
-                except:
-                    continue
+                    params = baseCls.params()
+                except AttributeError:
+                    pass
+                try:
+                    params += [p for p in baseCls.parameters
+                                 if p not in params]
+                except AttributeError:
+                    pass
+                # add parameters to final list without duplicates
+                parameters.extend([p for p in params if p not in parameters])
+            # cls.parameters = None # enforce usage of params()
         cls.setParams(*parameters)
         return cls
 
