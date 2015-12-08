@@ -544,7 +544,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                 # DisplayException(e)
                 # on error, skip the current file
                 errorOccured = True
-                logging.error(str(e).replace("\n"," ") + " ... skipping")
+                logging.error(unicode(e).replace("\n"," ") + " ... skipping")
                 continue
             if data is not None:
                 lastItem = self.add(data)
