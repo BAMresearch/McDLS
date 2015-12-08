@@ -170,7 +170,8 @@ class AlgorithmBase(object):
         return cls(*args, **kwargs)
 
     def __eq__(self, other):
-        if (self.name() != other.name() or
+        if (not isinstance(other, type(self)) or
+            self.name() != other.name() or
             self.paramCount() != other.paramCount()):
             return False
         for p in self.params():

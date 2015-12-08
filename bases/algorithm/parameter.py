@@ -318,7 +318,8 @@ class ParameterBase(object):
     __repr__ = __str__
 
     def __eq__(self, other):
-        if self.dtype != other.dtype:
+        if (not isinstance(other, type(self).mro()[1]) or
+            self.dtype != other.dtype):
             return False
         try:
             # avoid reference loops for objects of bound methods
