@@ -6,12 +6,10 @@ import os
 import inspect
 import logging                                                                 
 import json
+from utils import units, isString
 from utils.propertynames import PropertyNames
-# more flexible parameter definitions:
 from utils.parameter import Parameter
-from utils import isString
 from main import makeAbsolutePath
-from utils import units
 logging.basicConfig(level = logging.INFO)                                      
 
 class McSASParameters(PropertyNames):
