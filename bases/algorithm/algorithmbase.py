@@ -192,15 +192,22 @@ class AlgorithmBase(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __reduce__(self):
-        return (_unpickleAlgo, (type(self), self.name(), self.params(),))
+    def __getstate__(self):
+        """Prepares the internal state for pickle by removing the attribute
+        for each parameter which is usually set by __init__() and during
+        unpickle."""
+        state = self.__dict__.copy()
+        for p in self.params():
+            del state[p.name()]
+        return state
 
-# not used atm
-def _unpickleAlgo(cls, name, params):
-    algo = cls.makeDefault()
-    for p in params:
-        algo.setParam(p)
-    return algo
+    def __setstate__(self, state):
+        self.__dict__ = state
+        parameters = self.params()
+        self._parameters = []
+        for p in parameters:
+            self._parameters.append(p.templateType())
+        self.__init__()
 
 if __name__ == "__main__":
     pass
