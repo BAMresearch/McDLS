@@ -7,9 +7,9 @@ from numpy import array as np_array
 from numpy import uint32, float64, dtype
 from bases.algorithm.algorithmbase import (AlgorithmBase, AlgorithmNameError,
                                            AlgorithmParameterError)
-from bases.algorithm.parameter import factory as ParameterFactory
+from bases.algorithm.parameter import factory as Parameter
 
-TestPar = ParameterFactory("testPar", 5.0, valueRange = (4.0, 13.0))
+TestPar = Parameter("testPar", 5.0, valueRange = (4.0, 13.0))
 
 @raises(AlgorithmNameError)
 def testName():
