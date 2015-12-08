@@ -634,6 +634,8 @@ class McSAS(AlgorithmBase):
             proc.start()
             if not autoClose:
                 return # keeps the plot window open
+            # wait for the plot window to finish drawing, then close it
+            # FIXME: use QTimer for polling in background
             interval = 0.1 # time steps to check if plotting is done
             while q.empty(): # usually needs 1.5sec on my box [ingo]
                 time.sleep(interval)
