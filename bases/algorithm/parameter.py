@@ -123,20 +123,6 @@ def _makeSetter(varName):
 def _setterName(attrName):
     return "set" + attrName[0].upper() + attrName[1:]
 
-def _unpickleParameter(attr):
-    # write to file for debugging output in another process
-    #with open("mylog.txt", "a") as fd:
-    #    fd.write("in: {}\n".format(attr))
-    paramType = factory(**attr)
-    param = paramType()
-#    with open("mylog.txt", "a") as fd:
-#        attr['cls'] = paramType
-#        isSame = param.attributes() == attr
-#        fd.write("_unpickleParameter: '{}' '{}'\n".format(param.name(), isSame))
-#        if not isSame:
-#            fd.write("out: {}\n".format(param.attributes()))
-    return param
-
 class ParameterBase(object):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
@@ -222,11 +208,6 @@ class ParameterBase(object):
             if isCallable(setter): # key exists
                 setter(value)
         return cls
-
-    def __reduce__(self):
-        attr = self.attributes()
-        attr.pop("cls")
-        return (_unpickleParameter, (attr,))
 
     @mixedmethod
     def templateType(selforcls):
@@ -345,6 +326,16 @@ class ParameterBase(object):
         """Shortcut for Parameter.value().
         For instances only (usually in model implementation)."""
         return self.value()
+
+    def __reduce__(self):
+        # remove possible callbacks to other objects
+        attr = self.attributes(exclude = ("onValueUpdate",))
+        return (_unpickleParameter, (attr,))
+
+def _unpickleParameter(attr):
+    # reconstruct based on parent class and attributes, call constructor
+    param = factory(**attr)()
+    return param
 
 class ParameterBoolean(ParameterBase):
     @classproperty
