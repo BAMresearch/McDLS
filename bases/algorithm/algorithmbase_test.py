@@ -14,29 +14,29 @@ TestPar = Parameter("testPar", 5.0, valueRange = (4.0, 13.0))
 @raises(AlgorithmNameError)
 def testName():
     """name is mandatory"""
-    class TestAlgo(AlgorithmBase):
+    class DummyAlgo(AlgorithmBase):
         pass
-    t = TestAlgo()
+    t = DummyAlgo()
 
 def testParam():
     """Algorithm without parameters allowed"""
-    class TestAlgo(AlgorithmBase):
+    class DummyAlgo(AlgorithmBase):
         pass
-    atype = TestAlgo.factory("testalgo")
+    atype = DummyAlgo.factory("testalgo")
     t = atype()
 
 def testParam1():
-    class TestAlgo(AlgorithmBase):
+    class DummyAlgo(AlgorithmBase):
         pass
-    atype = TestAlgo.factory("testalgo", TestPar)
+    atype = DummyAlgo.factory("testalgo", TestPar)
     t = atype()
 
 @raises(AlgorithmParameterError)
 def testParam4():
     """Provided parameters have to be a subclass of ParameterBase"""
-    class TestAlgo(AlgorithmBase):
+    class DummyAlgo(AlgorithmBase):
         pass
-    atype = TestAlgo.factory("testalgo", "dummy")
+    atype = DummyAlgo.factory("testalgo", "dummy")
     t = atype()
 
 @raises(AlgorithmParameterError)
@@ -47,9 +47,9 @@ def testParam5():
     atype = AnotherAlgo.factory("testalgo", TestPar)
 
 def testTypeVsInstance():
-    class TestAlgo(AlgorithmBase):
+    class DummyAlgo(AlgorithmBase):
         pass
-    atype = TestAlgo.factory("testalgo", TestPar)
+    atype = DummyAlgo.factory("testalgo", TestPar)
     ainst = atype()
     # same name
     assert atype.name() == ainst.name()
@@ -63,37 +63,26 @@ def testTypeVsInstance():
     assert id(atype.testPar) == id(type(ainst).testPar)
 
 def testCopy():
-    class TestAlgo(AlgorithmBase):
+    class DummyAlgo(AlgorithmBase):
         pass
-    a1 = TestAlgo.factory("testalgo", TestPar)()
+    a1 = DummyAlgo.factory("testalgo", TestPar)()
     a2 = a1.copy()
     assert a1 == a2
     a1.testPar.setValue(a1.testPar.value() + 1)
     assert a1.testPar != a2.testPar
     assert a1 != a2
 
-from models.scatteringmodel import ScatteringModel
-from utils.parameter import FitParameter
+class DummyAlgo(AlgorithmBase):
+    shortName = "Dummy"
+    parameters = (TestPar, Parameter(name = "test", value = 3.4,
+                                     valueRange = (1,5)))
 
-class TestAlgo(ScatteringModel):
-    shortName = "Test"
-    parameters = (TestPar,FitParameter(name = "test", value = 3.4, valueRange = (1,5)))
-    def volume(*args): pass
-    def formfactor(*args): pass
+    def __init__(self):
+        super(DummyAlgo, self).__init__()
+        self.test.setOnValueUpdate(self.dummy)
 
-from models.sphere import Sphere
-def testPickle():
-    import pickle
-    ta = TestAlgo.factory()
-    a = ta()
-    a = Sphere()
-    data = pickle.dumps(a)
-    a2 = pickle.loads(data)
-    print repr(a)
-    print repr(a2)
-    assert a == a2
+    def dummy(self, v):
+        pass
 
-if __name__ == "__main__":
-    testPickle()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
