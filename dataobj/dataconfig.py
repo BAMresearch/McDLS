@@ -66,6 +66,11 @@ class CallbackRegistry(object):
             "'{}' not in predefined callback slots '{}'"
             .format(what, self.callbackSlots))
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_callbacks"] = None
+        return state
+
 class DataConfig(AlgorithmBase, CallbackRegistry):
     _is2d = False
     parameters = (
@@ -141,5 +146,21 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
 
     def setX1ValueRange(self, limits):
         pass
+
+    def __getstate__(self):
+        view = self.__dict__.viewkeys()
+        state = dict()
+        for cls in type(self).mro():
+            if issubclass(cls, DataConfig) or not hasattr(cls, "__getstate__"):
+                continue
+            parentState = cls.__getstate__(self)
+            view = view & parentState.viewkeys()
+            state.update([(key, parentState[key]) for key in view])
+        return state
+
+    def __setstate__(self, state):
+        super(DataConfig, self).__setstate__(state)
+
+DataConfig.factory()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
