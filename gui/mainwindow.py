@@ -36,20 +36,36 @@ from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
 from main import makeAbsolutePath
 
-INFOTEXT = """McSAS: Software for the retrieval of model parameter distributions from scattering patterns.
+INFOTEXT = (u"""
+<strong>Notes on DLS data handling:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>The program expects *.ASC data files, containing "ALV-7004 CGS-8F Data" in the first line of the file. It shows a warning otherwise.</li>
+
+<li>It is recommended to load multiple files from measurements of the same sample at once. They are averaged automatically in order to infer uncertainties for all values. In a second step, the averaged data set is separated in one data set for every angle. For example, loading six files of measurements at eight angles will result in eight averaged data sets being listed in the program.</li>
+
+<li>Files from more than one sample can be loaded, all files containing the same sample name and angles are averaged.</li>
+
+<li>The measurement numbers ("indices") are taken from the file name of each data file. They consist of a group index and a measurement index which are shown in the column "Measurements".</li>
+
+<li>The behaviour for selected data sets changed: The program processes and fits only those data sets which are selected. If none are selected it processes all data sets (old behaviour). The selection of all data sets can be toggled by <Ctrl-A> key presses or via context menu at the data set list (right mouse button). In previous versions, the selection of data sets did not change anything.</li>
+
+<li>The new menu "Data Settings" shows configuration options for the first of the selected data sets. Changes are transferred to all selected data sets of the same type (DLS or SAS).</li>
+
+<li>In the optimization menu there is a new option "combine statistics [...]". If enabled, it combines the distribution moments of all data sets in one output file ("[...]_seriesStats.dat") for each active parameter. Finally, it shows a simple plot of the mean and its standard deviation for all angles.</li>
+
+</ul><hr />
+McSAS: Software for the retrieval of model parameter distributions from scattering patterns.
 
 Output files of a Monte Carlo run are stored in a directory named after the input file followed with a timestamp to avoid overwriting existing results.
 
-Literature:
------------
+<br /><strong>Literature:</strong>
 This suite and method are detailed in:
 - Bressler, I. et al, J. Appl. Cryst. 48: 962-969.
   http://dx.doi.org/10.1107/S1600576715007347
 - Pauw, B. R. et al., J. Appl. Cryst. 46: 365-371.
   http://dx.doi.org/10.1107/S0021889813001295
 
-What to do in case of unsuccessful fits:
-----------------------------------------
+<br /><strong>What to do in case of unsuccessful fits:</strong>
 If convergence is not reached no output is generated, and only this log is 
 stored in a file. On success, the resulting size distribution and data 
 fit are stored to files with uncertainties.
@@ -71,7 +87,8 @@ If convergence is not reached, the following can be attempted:
    sample (e.g. from TEM images). If a model fits your scattering pattern, 
    it does not mean it is *the* model. 
 
-[ For more information, please see http://www.mcsas.net ]"""
+[ For more information, please see http://www.mcsas.net ]
+""")
 
 CHANGESTEXT = (u"""
 Changes in v.1.1:
@@ -138,7 +155,8 @@ Changes in 0.0.5:
 'Number-weighted distributions now come with correct-looking observability limits.'
  https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
 
-""".replace('\n\n', '<hr />'))
+""".replace('\n\n', '<hr />')) # html horz. line instead of 2x newline
+# make 'changes xyz' bold; wondering how much weight markdown might add (?)
 CHANGESTEXT = re.sub(r"([\s\w]*[cC]hanges.*\:)",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
