@@ -2,6 +2,7 @@
 # gui/bases/logwidget.py
 
 from __future__ import absolute_import # PEP328
+import os
 import os.path
 import sys
 import re
@@ -168,9 +169,11 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         for path in self._watchDirs:
             if not os.path.exists(path):
                 continue
-            pattern = os.path.join(path, '*_plotlog.txt')
-            fileList = glob.glob(pattern)
+            fileList = os.listdir(path)
             for fn in fileList:
+                if not fn.endswith(u"_plotlog.txt"):
+                    continue
+                fn = os.path.join(path, fn)
                 with open(fn, 'r') as fd:
                     content = fd.read() # get all of it
                     if len(content):
