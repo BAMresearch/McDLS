@@ -99,7 +99,7 @@ class DLSData(DataObj):
     """
     _properties = ("sampleName", "description", "tau",
                    "correlation", "correlationError",
-                   "angles", "temperature", "viscosity",
+                   "angles", "anglesUnit", "temperature", "viscosity",
                    "refractiveIndex", "wavelength",
                    "measIndices",
                    # calculated properties
@@ -204,8 +204,11 @@ class DLSData(DataObj):
 
     # scattering angles
 
-    def setAngles(self, angles):
+    def setAngles(self, anglesUnit, angles):
+        """Expects angles in si units and their associated unit for proper
+        formatting."""
         self._angles = angles
+        self._anglesUnit = anglesUnit
         self._calcScatteringVector()
 
     @property
@@ -219,12 +222,12 @@ class DLSData(DataObj):
         return self.anglesFmt()
 
     def anglesFmt(self, fmt = None):
-        unit = Angle(u"°")
+        unit = self.anglesUnit
         if fmt is None:
             fmt = u"{0:.0f}{1}"
-        return u";".join((unicode(fmt).format(unit.toDisplay(a),
-                                               unit.displayMagnitudeName)
-                           for a in self.angles))
+        return u";".join((
+            unicode(fmt).format(unit.toDisplay(a), unit.displayMagnitudeName)
+                    for a in self.angles))
 
     # temperature, viscosity, refractiveIndex, wavelength including std.err
 
@@ -322,10 +325,12 @@ class DLSData(DataObj):
         lst = []
         for i in range(self.numAngles):
             another = copy.copy(self)
-            another.setAngles(self.angles[i, newaxis])
+            another.setAngles(self.anglesUnit, self.angles[i, newaxis])
             another.setTau(self.tau.unit, self.tau.rawSrcShape)
-            another.setCorrelation(self.correlation.rawSrcShape[:, i, newaxis])
-            another.setCorrelationError(self.correlationError.rawSrcShape[:, i, newaxis])
+            another.setCorrelation(
+                    self.correlation.rawSrcShape[:, i, newaxis])
+            another.setCorrelationError(
+                    self.correlationError.rawSrcShape[:, i, newaxis])
             # reset config in order to fix callbacks
             another.setConfig(another.configType())
             lst.append(another)
