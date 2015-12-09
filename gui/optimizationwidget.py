@@ -31,6 +31,10 @@ class AdvancedSettings(SettingsGroup, QGroupBox):
     def __init__(self, *args, **kwargs):
         super(AdvancedSettings, self).__init__(*args, **kwargs)
         self.setTitle("Advanced Settings")
+        # self.setFlat(True)
+        # removes the border on windows and
+        # content overlaps at the top on Linux
+        self.setStyleSheet("QGroupBox { border: 0px; padding-top: 10px; }")
 #        set by AlgorithmWidget._makeEntry()
 #        self.setCheckable(True)
 #        self.setChecked(False)
