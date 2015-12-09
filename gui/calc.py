@@ -102,6 +102,25 @@ class OutputFilename(object):
                                        QUrl.fromLocalFile(fn).toEncoded()))
         return fn
 
+def plotStats(stats):
+    """Simple 1D plotting of series statistics."""
+    # need a simple (generic) plotting method in mcsas.plotting
+    # kind of a dirty hack for now ...
+    from matplotlib.pyplot import (figure, show, subplot, plot,
+                                   errorbar, axes, legend)
+    fig = figure(figsize = (7, 7), dpi = 80,
+                 facecolor = 'w', edgecolor = 'k')
+    fig.canvas.set_window_title("series statistics plot")
+    a = subplot()
+    plot(stats["angle"], stats["mean"], 'r-', label = "mean")
+    errorbar(stats["angle"], stats["mean"], stats["meanStd"],
+             marker = '.', linestyle = "None")
+    axes(a)
+    legend(loc = 1, fancybox = True)
+    fig.canvas.draw()
+    fig.show()
+    show()
+
 class Calculator(object):
     _algo = None  # McSAS algorithm instance
     _outFn = None # handles output file names, creates directories
@@ -221,24 +240,6 @@ class Calculator(object):
     def postProcess(self):
         if not self.algo.seriesStats():
             return
-        def plotStats(stats):
-            """Simple 1D plotting of series statistics."""
-            # need a simple (generic) plotting method in mcsas.plotting
-            # kind of a dirty hack for now ...
-            from matplotlib.pyplot import (figure, show, subplot, plot,
-                                           errorbar, axes, legend)
-            fig = figure(figsize = (7, 7), dpi = 80,
-                         facecolor = 'w', edgecolor = 'k')
-            fig.canvas.set_window_title("series statistics plot")
-            a = subplot()
-            plot(stats["angle"], stats["mean"], 'r-', label = "mean")
-            errorbar(stats["angle"], stats["mean"], stats["meanStd"],
-                     marker = '.', linestyle = "None")
-            axes(a)
-            legend(loc = 1, fancybox = True)
-            fig.canvas.draw()
-            fig.show()
-            show()
         def processSeriesStats(sampleName, histCfg, valuePairs):
             # similar to _writeStatistics() but not using parameters
             stats = dict()
