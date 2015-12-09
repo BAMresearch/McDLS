@@ -353,6 +353,7 @@ if __name__ == "__main__":
                     "PySide.QtSvg", "PySide.QtXml",
                     "multiprocessing",
                     "scipy.sparse.csgraph._validation",
+                    "scipy.special._ufuncs_cxx",
                     "scipy.sparse.linalg.dsolve.umfpack", "scipy.integrate.vode",
                     "scipy.integrate.lsoda", "matplotlib",
                     "matplotlib.backends.backend_qt4agg",
