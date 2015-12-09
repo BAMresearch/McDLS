@@ -39,13 +39,6 @@ def testParam4():
     atype = DummyAlgo.factory("testalgo", "dummy")
     t = atype()
 
-@raises(AlgorithmParameterError)
-def testParam5():
-    """Attribute with a parameters name already set"""
-    class AnotherAlgo(AlgorithmBase):
-        testPar = None
-    atype = AnotherAlgo.factory("testalgo", TestPar)
-
 def testTypeVsInstance():
     class DummyAlgo(AlgorithmBase):
         pass
