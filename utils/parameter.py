@@ -642,9 +642,12 @@ class FitParameterBase(ParameterBase):
     def displayActiveRange(selforcls):
         """value bounds in display units used for parameter generator"""
         vRange = selforcls.activeRange()
-        newRange = (selforcls.toDisplay(min(vRange)),
-                    selforcls.toDisplay(max(vRange)))
-        return newRange
+        try:
+            vRange = (selforcls.toDisplay(min(vRange)),
+                      selforcls.toDisplay(max(vRange)))
+        except AttributeError:
+            pass # toDisplay() only in ParameterFloat
+        return vRange
 
     @mixedmethod
     def setDisplayActiveRange(selforcls, newRange):
