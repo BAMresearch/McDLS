@@ -188,7 +188,7 @@ class PlotResults(object):
                     None, "plot PDF", extension = '.pdf'))
         except AttributeError: pass
         if queue is not None:
-            queue.put(True) # quene not empty means: plotting done here
+            queue.put(True) # queue not empty means: plotting done here
         # show() seems to be nescessary otherwise the plot window is
         # unresponsive/hangs on Ubuntu or the whole program crashes on windows
         # 'python stopped working'
