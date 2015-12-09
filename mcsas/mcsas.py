@@ -620,17 +620,22 @@ class McSAS(AlgorithmBase):
         # arguments for plotting process below
         modelData = dict(activeParamCount = self.model.activeParamCount(),
                          histograms = histograms)
-        plotArgs = [self.result, self.data, axisMargin,
-                    outputFilename, modelData, autoClose]
+        pargs = [self.result, self.data]
+        pkwargs = dict(axisMargin = axisMargin, outputFilename = outputFilename,
+                       modelData = dict(
+                           activeParamCount = self.model.activeParamCount(),
+                           histograms = histograms),
+                       autoClose = autoClose, logToFile = False)
         if isMac():
-            plotArgs.append(False) # logToFile, for multithreaded plotting below only
-            PlotResults(*plotArgs)
+            PlotResults(*pargs, **kwargs)
         else:
             from multiprocessing import Process, Queue
-            q = Queue()
-            plotArgs.append(True) # logToFile
-            proc = Process(target = PlotResults, args = plotArgs,
-                           kwargs = dict(queue = q))
+            # multithreaded plotting also logs to file
+            pkwargs["logToFile"] = True
+            q = Queue() # allow communication between processes
+            pkwargs["queue"] = q
+            proc = Process(target = PlotResults,
+                           args = pargs, kwargs = pkwargs)
             proc.start()
             if not autoClose:
                 return # keeps the plot window open
