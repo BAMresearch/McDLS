@@ -245,6 +245,7 @@ class Calculator(object):
             columnNames = (("lower", "upper", "weighting", "angle")
                             + Moments.fieldNames())
             pname, lo, hi, weight = histCfg
+            valuePairs.sort(key = lambda x: x[0])
             for angles, moments in valuePairs:
                 values = (lo, hi, weight, angles,) + moments
                 for name, value in zip(columnNames, values):
