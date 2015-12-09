@@ -165,7 +165,7 @@ class Calculator(object):
         try:
             # show last lines about pdf output from separate thread
             widgetHandler.widget.addWatchDir(self._outFn.outDir)
-        except:
+        except AttributeError:
             pass
 
         self._writeSettings(dict(), dataset)
