@@ -170,10 +170,10 @@ def sanitizeVersionNumber(number):
     """Removes non-digits to be compatible with pywin32"""
     if not isWindows():
         return number
-    match = re.match(r'[\d.]+', number)
+    match = re.match(r'(\d+)[^\d](\d+)[^\d](\d+)', number)
     if match is None:
         return ""
-    number = match.group(0)
+    number = ".".join(match.groups())
     try:
         bits = [int(i) for i in number.split(".")]
         assert(len(bits))
@@ -300,13 +300,13 @@ if __name__ == "__main__":
     else:
         archiver = ArchiverZip()
 
-    PACKAGENAME = "{name}-{ver}".format(
+    PACKAGENAME = "{name} {ver}".format(
                     name = version.name(),
                     ver = version.number())
     # target (temp) dir for mcsas package
-    TARGETDIR = "{pckg}_{plat}".format(
+    TARGETDIR = "{pckg} for {plat}".format(
                     pckg = PACKAGENAME,
-                    plat = platform.system().lower())
+                    plat = platform.system().title())
 
     BASE = None
     EXEC_SUFFIX = ""
