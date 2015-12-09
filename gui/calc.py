@@ -212,8 +212,8 @@ class Calculator(object):
 
         for p in model.activeParams():
             for h in p.histograms():
-                angles = ";".join((str(Angle(u"°").toDisplay(a))
-                                   for a in data.angles))
+                angles = tuple((Angle(u"°").toDisplay(a)
+                                for a in data.angles))
                 addSeriesData(makeKey(data, h), h, angles)
 
     def postProcess(self):
@@ -228,11 +228,8 @@ class Calculator(object):
                          facecolor = 'w', edgecolor = 'k')
             fig.canvas.set_window_title("series statistics plot")
             a = subplot()
-            angle = [float(v) for v in stats["angle"]]
-            mean = [float(v) for v in stats["mean"]]
-            meanStd = [float(v) for v in stats["meanStd"]]
-            plot(angle, mean, 'r-', label = "mean")
-            errorbar(angle, mean, meanStd)
+            plot(stats["angle"], stats["mean"], 'r-', label = "mean")
+            errorbar(stats["angle"], stats["mean"], stats["meanStd"])
             axes(a)
             legend(loc = 1, fancybox = True)
             fig.canvas.draw()
