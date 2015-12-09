@@ -242,7 +242,6 @@ class Calculator(object):
             show()
         def processSeriesStats(sampleName, histCfg, valuePairs):
             # similar to _writeStatistics() but not using parameters
-            angles, moments = valuePairs[0]
             stats = dict()
             columnNames = (("lower", "upper", "weighting", "angle")
                             + Moments.fieldNames())
