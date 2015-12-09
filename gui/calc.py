@@ -209,14 +209,17 @@ class Calculator(object):
             if key not in self._series:
                 self._series[key] = []
             self._series[key].append((angles, hist.moments.fields))
+        def makeKey(data, hist):
+            """Derive a unique key for each pair of sample and histogram."""
+            key = (data.sampleName,
+                   (hist.param.name(),) + h.xrange + (h.yweight,))
+            return key
 
-        key = data.sampleName
         for p in model.activeParams():
             for h in p.histograms():
-                # derive a unique key for each pair of sample and histogram
-                key = (data.sampleName, h.xrange + (h.yweight,))
-                angles = ";".join((str(Angle(u"°").toDisplay(a)) for a in data.angles))
-                addSeriesData(key, h, angles)
+                angles = ";".join((str(Angle(u"°").toDisplay(a))
+                                   for a in data.angles))
+                addSeriesData(makeKey(data, h), h, angles)
 
     def postProcess(self):
         if not self.algo.seriesStats():
@@ -246,20 +249,25 @@ class Calculator(object):
             stats = dict()
             columnNames = (("lower", "upper", "weighting", "angle")
                             + Moments.fieldNames())
+            pname, lo, hi, weight = histCfg
             for angles, moments in valuePairs:
-                values = histCfg + (angles,) + moments
+                values = (lo, hi, weight, angles,) + moments
                 for name, value in zip(columnNames, values):
                     if name not in stats:
                         stats[name] = []
+                    # for plotting below, no float-str conversion here
                     stats[name].append(value)
             class fakeDataSet(object):
-                title = u"{name} [{lo},{hi}] {w}".format(name = sampleName,
-                        lo = histCfg[0], hi = histCfg[1], w = histCfg[2])
+                # file name formatting
+                title = u"{name} {param} [{lo},{hi}] {w}".format(
+                        name = sampleName, param = pname,
+                        lo = lo, hi = hi, w = weight)
             self._outFn = OutputFilename(fakeDataSet)
             self._outFn.outDirUp()
             # convert numerical stats to proper formatted text
             statsStr = dict()
             for key, values in stats.iteritems():
+                # proper float-str formatting for text file output
                 statsStr[key] = [AsciiFile.formatValue(v) for v in values]
             self._writeResultHelper(statsStr, "seriesStats",
                                     "series statistics",
