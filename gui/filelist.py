@@ -62,12 +62,18 @@ class FileList(DataList):
         if not isList(newData) or not len(newData):
             return # nothing to do
         samples = OrderedDict()
+        def makeKey(data):
+            key = (data.title,)
+            if hasattr(data, "angles"):
+                key += tuple(data.angles)
+            return key
         for d in newData: # group data objects by their title
-            if d.title not in samples:
-                samples[d.title] = []
-            samples[d.title].append(d)
+            key = makeKey(d)
+            if key not in samples:
+                samples[key] = []
+            samples[key].append(d)
         newData = [] # accumulate data objects if possible
-        for title, lst in samples.iteritems():
+        for dummy, lst in samples.iteritems():
             avg = lst[0].accumulate(lst)
             if avg is None:
                 newData.extend(lst)
