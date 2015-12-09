@@ -262,7 +262,12 @@ class Calculator(object):
             statsStr = dict()
             for key, values in stats.iteritems():
                 # proper float-str formatting for text file output
-                statsStr[key] = [AsciiFile.formatValue(v) for v in values]
+                statsStr[key] = []
+                for value in values:
+                    if isList(value):
+                        value = ";".join([AsciiFile.formatValue(v)
+                                          for v in value])
+                    statsStr[key].append(AsciiFile.formatValue(value))
             self._writeResultHelper(statsStr, "seriesStats",
                                     "series statistics",
                                     columnNames, extension = '.dat')
