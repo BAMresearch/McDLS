@@ -61,12 +61,7 @@ class OutputFilename(object):
     def outDir(self):
         return self._outDir
 
-    def outDirUp(self):
-        """Sets the output directory one level up relative to the current
-        output directory."""
-        self._outDir = os.path.dirname(self._outDir)
-
-    def __init__(self, dataset):
+    def __init__(self, dataset, createDir = True):
         self._outDir = LastPath.get()
         if not os.path.isdir(self._outDir):
             logging.warning("Output path '{}' does not exist!"
@@ -76,6 +71,8 @@ class OutputFilename(object):
                 title = dataset.title, ts = log.timestamp())
         if hasattr(dataset, "anglesToStr"):
             self._basename += u" [{}]".format(dataset.anglesToStr)
+        if not createDir:
+            return
         # create a directory for all output files
         newDir = os.path.join(self._outDir, self._basename)
         try:
@@ -262,8 +259,8 @@ class Calculator(object):
                 title = u"{name} {param} [{lo},{hi}] {w}".format(
                         name = sampleName, param = pname,
                         lo = lo, hi = hi, w = weight)
-            self._outFn = OutputFilename(fakeDataSet)
-            self._outFn.outDirUp()
+            # since we are the last writer, changing outFn doesn't hurt
+            self._outFn = OutputFilename(fakeDataSet, createDir = False)
             # convert numerical stats to proper formatted text
             statsStr = dict()
             for key, values in stats.iteritems():
