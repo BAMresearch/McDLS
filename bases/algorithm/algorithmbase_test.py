@@ -77,5 +77,18 @@ class DummyAlgo(AlgorithmBase):
     def dummy(self, v):
         pass
 
+def testSerialize():
+    import pickle
+    DummyAlgo.factory()
+    da = DummyAlgo()
+    data = pickle.dumps(da)
+    db = pickle.loads(data)
+    assert da == db
+    assert id(da) != id(db)
+    # make sure the parameter instances are the same
+    # in different places of the class
+    for p0, p1 in zip(db.params(), (db.testPar, db.test)):
+        assert id(p0) == id(p1), \
+                "Ids do not match for '{}'!".format(p0.name())
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
