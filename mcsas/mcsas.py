@@ -627,7 +627,7 @@ class McSAS(AlgorithmBase):
                            histograms = histograms),
                        autoClose = autoClose, logToFile = False)
         if isMac():
-            PlotResults(*pargs, **kwargs)
+            PlotResults(*pargs, **pkwargs)
         else:
             from multiprocessing import Process, Queue
             # multithreaded plotting also logs to file
