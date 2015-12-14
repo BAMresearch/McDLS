@@ -25,7 +25,7 @@ class DLSSphere(DLSModel):
         self.radius.setActive(True)
 
     def volume(self):
-        return sqrt((pi*4./3.) * self.radius()**3.)
+        return sqrt((pi*4./3.) * self.radius()**(3. * self.compensationExponent))
 
     def formfactor(self, data):
         return (exp( data.tauGamma.sanitized / self.radius() ))
