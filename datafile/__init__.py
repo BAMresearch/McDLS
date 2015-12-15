@@ -34,10 +34,10 @@ def loaddatafile(filename):
     or parts of the file contents."""
 
     if not isString(filename) or not os.path.isfile(filename):
-        logging.warning("File '{0}' is not a file or does not exist!"
+        logging.warning(u"File '{0}' is not a file or does not exist!"
                         .format(filename))
         return
-    logging.info("Loading '{0}' ...".format(filename))
+    logging.info(u"Loading '{0}' ...".format(filename))
     path, ext = os.path.splitext(filename)
     ext = ext[1:].lower()
     datafile = None
