@@ -8,49 +8,8 @@ from QtCore import Qt
 from QtGui import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.algorithmwidget import AlgorithmWidget, rearrangeWidgets
+from gui.settingsgroup import DefaultSettings, AdvancedSettings
 
-class SettingsGroup(object):
-    _widgets = None # preconfigured widgets to show in this group
-
-    def __init__(self, *args, **kwargs):
-        self._widgets = kwargs.pop("widgets", None)
-        super(SettingsGroup, self).__init__(*args, **kwargs)
-        layout = QGridLayout(self)
-        layout.setObjectName(self.objectName() + "Layout")
-        topMargin = 10
-        layout.setContentsMargins(0, topMargin, 0, 0)
-
-    def rearrangeWidgets(self, targetWidth):
-        rearrangeWidgets(self.layout(), self._widgets, targetWidth)
-
-class DefaultSettings(SettingsGroup, QWidget):
-    def __init__(self, *args, **kwargs):
-        super(DefaultSettings, self).__init__(*args, **kwargs)
-
-class AdvancedSettings(SettingsGroup, QGroupBox):
-    def __init__(self, *args, **kwargs):
-        super(AdvancedSettings, self).__init__(*args, **kwargs)
-        self.setTitle("Advanced Settings")
-        # self.setFlat(True)
-        # removes the border on windows and
-        # content overlaps at the top on Linux
-        self.setStyleSheet("QGroupBox { border: 0px; padding-top: 10px; }")
-#        set by AlgorithmWidget._makeEntry()
-#        self.setCheckable(True)
-#        self.setChecked(False)
-        self.clicked[bool].connect(self.showAdvanced)
-        self.updateWidgets()
-
-    def updateWidgets(self, widget = None):
-        if widget is None or id(widget) == id(self):
-            self.showAdvanced(self.isChecked())
-
-    def showAdvanced(self, show = False):
-        func = QWidget.hide
-        if show:
-            func = QWidget.show
-        for w in self._widgets:
-            func(w)
 
 class OptimizationWidget(AlgorithmWidget):
 
