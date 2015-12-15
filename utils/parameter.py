@@ -389,7 +389,10 @@ class Histogram(DataSet, DisplayMixin):
         for bi in range(self.binCount):
             # for observabilities over all repetitions select the largest
             obs = allObservability[bi, :]
-            self._observability[bi] = obs[obs < np.inf].max()
+            try:
+                self._observability[bi] = obs[obs < np.inf].max()
+            except ValueError: # obs[obs < np.inf] can be empty
+                pass
 
     @property
     def moments(self):
