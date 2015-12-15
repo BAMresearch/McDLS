@@ -2,7 +2,7 @@
 # models/dlssphere.py
 
 import numpy
-from numpy import pi, exp, sqrt
+from numpy import pi, exp, sqrt, sin, cos
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter
 from scatteringmodel import DLSModel
@@ -28,7 +28,12 @@ class DLSSphere(DLSModel):
         return sqrt((pi*4./3.) * self.radius()**(3. * self.compensationExponent))
 
     def formfactor(self, data):
-        return (exp( data.tauGamma.sanitized / self.radius() ))
+        qr = data.angles * self.radius()
+        ff = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.) # usual sphere ff
+        res = (exp( data.tauGamma.sanitized / self.radius() ))
+        res = data.tauGamma.unflatten(res) * ff
+        res = data.tauGamma.flatten(res)
+        return res
 
 DLSSphere.factory()
 

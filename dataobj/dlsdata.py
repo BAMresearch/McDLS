@@ -49,13 +49,14 @@ class MultiDataVector(DataVector):
 
     # http://stackoverflow.com/a/7020271
     def flatten(self, a, count = None):
-        if isInteger(count) and (a.ndim == 1 or min(a.shape) == 1):
-            # repeat one-dimensional data <count> times
-            a = a.reshape((1, -1))
-            a = repeat(a, count, axis = 0).T
-            self._wasRepeated = True
+        if (a.ndim == 1 or min(a.shape) == 1):
+            a = a.reshape((-1, 1))
+            if isInteger(count):
+                # repeat one-dimensional data by <count> columns
+                a = repeat(a, count, axis = 1)
+                self._wasRepeated = True
         self._count = a.shape[1]
-        a = self.concat(a)
+        a = self.concat(a) # concat the columns behind each other
         return a
 
     @property
