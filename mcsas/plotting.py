@@ -422,6 +422,7 @@ class PlotResults(object):
         HistYMean = parHist.bins.mean
         HistMinReq = parHist.observability
         HistYStd = parHist.bins.std
+        HistCDF = parHist.cdf.mean # plot cumulative distribution function
 
         # get information for labels:
         plotTitle = plotPar.displayName()
@@ -459,25 +460,35 @@ class PlotResults(object):
         #plot grid
         self.plotGrid(hAxis)
 
+        # duplicate:
+        suppAx = hAxis.twinx()
+        suppAx.set_ylim(0, 1.2)
+
+
         # fill axes
         # plot active histogram:
         validi = ( (histXLowerEdge >= plotPar.toDisplay(parHist.lower)) * 
                    (histXLowerEdge <= plotPar.toDisplay(parHist.upper)) )
         validi[-1] = 0
         if not (validi.sum()==0):
-            bar(histXLowerEdge[validi], HistYMean[validi[0:-1]], 
+            hAxis.bar(histXLowerEdge[validi], HistYMean[validi[0:-1]], 
                     width = histXWidth[validi[0:-1]], color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
                     label = 'MC size histogram')
+        cPlot, = suppAx.plot(
+                histXMean, 
+                HistCDF, '-', color = 'grey',
+                linewidth = 2, zorder = 5)
+        # suppAx["right"].label.set_color(cPlot.get_color())
         # plot observability limit
-        plot(histXMean, HistMinReq, 'ro', 
+        hAxis.plot(histXMean, HistMinReq, 'ro', 
                 ms = 5, markeredgecolor = 'r',
                 label = 'Minimum visibility limit', zorder = 3)
         # plot active uncertainties
-        errorbar(histXMean[validi[0:-1]], HistYMean[validi[0:-1]], 
+        hAxis.errorbar(histXMean[validi[0:-1]], HistYMean[validi[0:-1]], 
             HistYStd[validi[0:-1]],
                 zorder = 4, **self._errorBarOpts)
-        legend(loc = 1, fancybox = True, prop = self._textfont)
+        hAxis.legend(loc = 1, fancybox = True, prop = self._textfont)
         title(plotTitle, fontproperties = self._textfont,
               size = 'large')
         xlim(xLim)
