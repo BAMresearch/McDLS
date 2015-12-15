@@ -283,22 +283,21 @@ class PlotResults(object):
                 height_ratios = np.tile([1,6],nR ) )
         # update margins
         gs.update(left = 0.12, bottom = 0.10,
-                  right = 0.96, top = 0.95,
+                  right = 0.90, top = 0.95,
                   wspace = 0.23, hspace = 0.13)
 
+        textAxDict = {
+                'frame_on' : False,
+                'yticks' : [],
+                'xticks' : [],
+                'ylim' : [0., 1.],
+                'xlim' : [0., 1.],
+                }
         for ai in range((nHists + 1) * nR * 2 ):
             # initialise axes
             ah.append(subplot(gs[ai]))
             if ai%((nHists + 1) * 2) < (nHists + 1) : 
-                # text box settings:
-                textAxDict = {
-                        'frame_on' : False,
-                        'yticks' : [],
-                        'xticks' : [],
-                        'ylim' : [0., 1.],
-                        'xlim' : [0., 1.],
-                        }
-                ah[-1].update(textAxDict)
+                ah[-1].update(textAxDict) # text box settings:
         return fig, ah
 
     ## 2D plotting needs to be refactored after re-implementation
