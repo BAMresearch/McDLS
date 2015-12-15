@@ -81,19 +81,15 @@ class FileList(DataList):
                 newData.append(avg)
         # remove the single data sets which where just loaded
         self.removeItems(range(firstIdx, len(self)))
-        # add the new combined data set (again)
-#        [self.add(d) for d in newData]
-#        return
-
         # add the combined dls data split up per angle
         def splitUp(d):
             try: # perhaps test for isinstance(d, DLSData) instead
                 return d.splitPerAngle()
             except AttributeError:
                 return (d,)
-        dataLst = [s for dl in (splitUp(d) for d in newData) for s in dl]
+        newData = [s for dl in (splitUp(d) for d in newData) for s in dl]
         # use loadData() to communicate new data finally via signal
-        DataList.loadData(self, sourceList = dataLst,
+        DataList.loadData(self, sourceList = newData,
                           showProgress = False,
                           processSourceFunc = lambda x: x)
 
