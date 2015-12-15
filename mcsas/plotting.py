@@ -463,7 +463,8 @@ class PlotResults(object):
         # duplicate:
         suppAx = hAxis.twinx()
         suppAx.set_ylim(0, 1.2)
-
+        suppAx.set_ylabel('Cumulative distribution function')
+        suppAx = self.setAxis(suppAx)
 
         # fill axes
         # plot active histogram:
@@ -478,7 +479,8 @@ class PlotResults(object):
         cPlot, = suppAx.plot(
                 histXMean, 
                 HistCDF, '-', color = 'grey',
-                linewidth = 2, zorder = 5)
+                linewidth = 2, zorder = 5, 
+                label = 'Cumulative distribution function')
         # suppAx["right"].label.set_color(cPlot.get_color())
         # plot observability limit
         hAxis.plot(histXMean, HistMinReq, 'ro', 
