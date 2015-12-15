@@ -50,10 +50,11 @@ class FileList(DataList):
                           processSourceFunc = loaddataobj)
 
     def itemDoubleClicked(self, item, column):
-        if hasattr(item.data(), "sphericalSizeEst"):
-            valueRange = item.data().sphericalSizeEst()
-            self.sigSphericalSizeRange.emit(min(valueRange), max(valueRange))
-            # self.sigShannonChannels.emit(item.data().shannonChannelEst()
+        if not hasattr(item.data(), "sphericalSizeEst"):
+            return
+        valueRange = item.data().sphericalSizeEst()
+        self.sigSphericalSizeRange.emit(min(valueRange), max(valueRange))
+        # self.sigShannonChannels.emit(item.data().shannonChannelEst()
 
     def setupUi(self):
         self.listWidget.setAlternatingRowColors(True)
