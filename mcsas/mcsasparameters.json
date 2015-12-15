@@ -28,7 +28,7 @@
     },
     "compensationExponent" : {
         "displayName" : "weighting compensation",
-        "valueRange" : [0.01,1.0],
+        "valueRange" : [-Infinity,Infinity],
 	    "default" : 0.6666666,
         "description" : "Compensates the weighting of contributions, default volume-weighted (2/3).",
         "unitClass" : "NoUnit",
