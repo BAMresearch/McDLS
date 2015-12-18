@@ -27,11 +27,11 @@ class DataVector(object):
     _validIndices = None # valid indices. 
     _editable = False # whether raw can be written or not
     
-    def __init__(self, name, raw, unit = None, limit = None, editable = False):
+    def __init__(self, name, raw, unit = None, editable = False):
         self._name = name
         self._raw = raw
         self.unit = unit
-        self.limit = limit
+        self.validIndices = np.arange(self.raw.size) # sets limits as well
         assert(isinstance(editable, bool))
         self._editable = editable
 
@@ -41,15 +41,14 @@ class DataVector(object):
 
     @property
     def validIndices(self):
-        if self._validIndices is None:
-            return np.arange(self.raw.size)
-        else:
-            return self._validIndices
+        return self._validIndices
 
     @validIndices.setter
-    def validIndices(self, value):
-        # assert (value.max() <= self.raw.size)
-        self._validIndices = value
+    def validIndices(self, indices):
+        assert indices.min() >= 0
+        assert indices.max() <= self.siData.size
+        self._validIndices = indices
+        self._limit = [self.sanitized.min(), self.sanitized.max()]
 
     @property
     def sanitized(self):
@@ -93,18 +92,21 @@ class DataVector(object):
     def limit(self):
         return self._limit
 
-    @limit.setter
-    def limit(self, value):
-        self.setLimit(value)
-
-    def setLimit(self, newLimit): # override&referencable
-#        print('Limit value: {}'.format(value))
-        if newLimit is None:
-            self._limit = [self.siData.min(), self.siData.max()]
-        else:
-            self._limit = [np.maximum(np.min(newLimit), self.siData.min()),
-                           np.minimum(np.max(newLimit), self.siData.max())]
-
+# not used externally, not synchronized with validIndices
+# see validIndices.setter
+#
+#    @limit.setter
+#    def limit(self, value):
+#        self.setLimit(value)
+#
+#    def setLimit(self, newLimit): # override&referencable
+##        print('Limit value: {}'.format(value))
+#        if newLimit is None:
+#            self._limit = [self.siData.min(), self.siData.max()]
+#        else:
+#            self._limit = [np.maximum(np.min(newLimit), self.siData.min()),
+#                           np.minimum(np.max(newLimit), self.siData.max())]
+#
     # TODO: define min/max properties for convenience?
 
     @property
@@ -157,6 +159,7 @@ class DataObj(DataSet, DisplayMixin):
     @property
     def validIndices(self): # global valid indices
         if self._validIndices is None:
+#            raise RuntimeError # for testing, isn't called at all atm
             # valid indices not set yet
             self.prepareValidIndices()
         return self._validIndices
@@ -216,7 +219,8 @@ class DataObj(DataSet, DisplayMixin):
         """Updates the config object based on this data set. All callbacks are
         run right after this method in setConfig()."""
         self.config.is2d = self.is2d # forward if we are 2d or not
-        self.config.register("x0limits", self.prepareValidIndices, self.x0.setLimit)
+#        self.config.register("x0limits", self.prepareValidIndices, self.x0.setLimit)
+        self.config.register("x0limits", self.prepareValidIndices)
         self.config.register("fMasks", self.prepareValidIndices)
         descr = self.config.x0Low.displayName().format(x0 = self.x0.name)
         self.config.x0Low.setDisplayName(descr)
@@ -233,7 +237,8 @@ class DataObj(DataSet, DisplayMixin):
                 (self.x0.siData.min(), self.x0.siData.max()))
         if not self.is2d:
             return # self.x1 will be None
-        self.config.register("x1limits", self.prepareValidIndices, self.x1.setLimit)
+#        self.config.register("x1limits", self.prepareValidIndices, self.x1.setLimit)
+        self.config.register("x1limits", self.prepareValidIndices)
         descr = self.config.x1Low.displayName().format(x1 = self.x1.name)
         self.config.x1Low.setDisplayName(descr)
         descr = self.config.x1High.displayName().format(x1 = self.x1.name)
