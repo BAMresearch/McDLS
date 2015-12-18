@@ -172,7 +172,7 @@ def sanitizeVersionNumber(number):
         return number
     match = re.match(r'(\d+)[^\d](\d+)[^\d](\d+)', number)
     if match is None:
-        return ""
+        return "0"
     number = ".".join(match.groups())
     try:
         bits = [int(i) for i in number.split(".")]
