@@ -163,12 +163,12 @@ class SASData(DataObj):
                 unit = self._i.unit) # raw uncertainty
         self._u = DataVector(u'σI', rawArray[:, -1], # we should use self._e.copy
                 unit = self._i.unit, editable = True) # sanitized uncertainty
-        self._q.limit = [self._q.sanitized.min(), self._q.sanitized.max()]
+#        self._q.limit = [self._q.sanitized.min(), self._q.sanitized.max()]
         logging.info("Init SASData: " + self.qLimsString)
         self._p = None
         if rawArray.shape[1] > 3: # psi column is present
             self._p = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
-            self._p.limit = [self._p.sanitized.min(), self._p.sanitized.max()]
+#            self._p.limit = [self._p.sanitized.min(), self._p.sanitized.max()]
             logging.info(self.pLimsString)
 
         #set unit definitions for display and internal units
