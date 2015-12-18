@@ -210,10 +210,6 @@ class DataObj(DataSet, DisplayMixin):
         # always replacing the config if it's valid, it originates from here
         self._config = config
         self.updateConfig()
-        # not sure yet, if it's necessary to run all callbacks afterwards
-#        self.config.updateX0Limits()
-#        self.config.updateX1Limits()
-#        self.config.updateFMasks()
         return True
 
     def updateConfig(self):
@@ -222,6 +218,7 @@ class DataObj(DataSet, DisplayMixin):
         self.config.is2d = self.is2d # forward if we are 2d or not
         self.config.register("x0limits", self.prepareValidIndices, self.x0.setLimit)
         self.config.register("fMasks", self.prepareValidIndices)
+        # not sure yet, if it's necessary to run all callbacks afterwards
         descr = self.config.x0Low.displayName().format(x0 = self.x0.name)
         self.config.x0Low.setDisplayName(descr)
         descr = self.config.x0High.displayName().format(x0 = self.x0.name)
