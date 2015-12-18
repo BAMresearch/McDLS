@@ -37,6 +37,14 @@ from gui.filelist import FileList
 from main import makeAbsolutePath
 
 INFOTEXT = (u"""
+<strong>major changes in Mk.III:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>weighting compensation used in volume function</li>
+<li>cumulative distribution plot overlay in histogram</li>
+<li>DLS sphere model includes scattering angle dependent form factor</li>
+<li>UI setting for ignoring leading N data points</li>
+</ul>
+
 <strong>Notes on DLS data handling:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>The program expects *.ASC data files, containing "ALV-7004 CGS-8F Data" in the first line of the file. It shows a warning otherwise.</li>
