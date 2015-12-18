@@ -536,6 +536,7 @@ class McSAS(AlgorithmBase):
                 # again, partial intensities for this size only required
                 fr, dummy = self.model.calc(data, rset[c].reshape((1, -1)), 
                         self.compensationExponent())
+                # FIXME: mcsas.py:542: RuntimeWarning: divide by zero encountered in divide
                 minReqVol[c, ri] = (
                         data.fu.sanitized * volumeFraction[c, ri]
                                 / (sc[0] * fr)).min()
