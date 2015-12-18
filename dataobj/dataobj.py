@@ -221,9 +221,12 @@ class DataObj(DataSet, DisplayMixin):
         self.config.is2d = self.is2d # forward if we are 2d or not
 #        self.config.register("x0limits", self.prepareValidIndices, self.x0.setLimit)
         self.config.register("x0limits", self.prepareValidIndices)
+        self.config.register("x0Clipping", self.prepareValidIndices)
         self.config.register("fMasks", self.prepareValidIndices)
         descr = self.config.x0Low.displayName().format(x0 = self.x0.name)
         self.config.x0Low.setDisplayName(descr)
+        descr = self.config.x0LowClip.displayName().format(x0 = self.x0.name)
+        self.config.x0LowClip.setDisplayName(descr)
         descr = self.config.x0High.displayName().format(x0 = self.x0.name)
         self.config.x0High.setDisplayName(descr)
         descr = self.config.fMaskZero.displayName().format(f = self.f.name)
@@ -271,6 +274,9 @@ class DataObj(DataSet, DisplayMixin):
         if self.config.fMaskNeg():
             mask &= (self.f.siData > 0.0)
 
+        # apply explicit clipping first
+        end = max(0, self.config.x0LowClip())
+        mask[0:end] = False
         # clip to q bounds
         mask &= (self.x0.siData >= self.config.x0Low())
         mask &= (self.x0.siData <= self.config.x0High())
@@ -287,6 +293,12 @@ class DataObj(DataSet, DisplayMixin):
         self.x0.validIndices = self._validIndices
         if self.is2d:
             self.x1.validIndices = self._validIndices
+        # update values in config
+        # Parameter.setValue() does not call back if the value did not change
+#        self.config.x0Low.setValue(self.x0.sanitized.min())
+#        self.config.x0High.setValue(self.x0.sanitized.max())
+#        if len(self.x0.validIndices):
+#            self.config.x0LowClip.setValue(self.x0.validIndices.min())
 
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)

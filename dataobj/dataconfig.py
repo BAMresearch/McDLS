@@ -77,6 +77,9 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         Parameter("x0Low", 0., unit = NoUnit(),
             displayName = "lower {x0} cut-off",
             valueRange = (0., numpy.inf), decimals = 1),
+        Parameter("x0LowClip", 2, unit = NoUnit(),
+            displayName = "ignore leading {x0} points",
+            valueRange = (0, 2**30)),
         Parameter("x0High", numpy.inf, unit = NoUnit(),
             displayName = "upper {x0} cut-off",
             valueRange = (0., numpy.inf), decimals = 1),
@@ -104,7 +107,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
 
     @property
     def callbackSlots(self):
-        return set(("x0limits", "x1limits", "fMasks"))
+        return set(("x0limits", "x1limits", "x0Clipping", "fMasks"))
 
     @property
     def is2d(self):
@@ -117,6 +120,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def __init__(self):
         super(DataConfig, self).__init__()
         self.x0Low.setOnValueUpdate(self.updateX0Limits)
+        self.x0LowClip.setOnValueUpdate(self.updateX0Clipping)
         self.x0High.setOnValueUpdate(self.updateX0Limits)
         self.x1Low.setOnValueUpdate(self.updateX1Limits)
         self.x1High.setOnValueUpdate(self.updateX1Limits)
@@ -135,6 +139,9 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
             pLow.setValue(pHigh())
             pHigh.setValue(temp)
         self.callback(callbackName, (pLow(), pHigh()))
+
+    def updateX0Clipping(self):
+        self.callback("x0Clipping", self.x0LowClip())
 
     def updateFMasks(self):
         self.callback("fMasks", (self.fMaskZero(), self.fMaskNeg()))
