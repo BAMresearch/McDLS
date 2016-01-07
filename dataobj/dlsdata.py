@@ -35,6 +35,7 @@ def _propSetterName(propName):
 class DLSConfig(DataConfig):
     def __init__(self):
         super(DLSConfig, self).__init__()
+        self.x0LowClip.setValue(2) # clip preceding 2 points by default
 
 DLSConfig.factory()
 
