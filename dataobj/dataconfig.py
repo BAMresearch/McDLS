@@ -77,7 +77,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         Parameter("x0Low", 0., unit = NoUnit(),
             displayName = "lower {x0} cut-off",
             valueRange = (0., numpy.inf), decimals = 1),
-        Parameter("x0LowClip", 2, unit = NoUnit(),
+        Parameter("x0LowClip", 0, unit = NoUnit(),
             displayName = "ignore leading {x0} points",
             valueRange = (0, 2**30)),
         Parameter("x0High", numpy.inf, unit = NoUnit(),
