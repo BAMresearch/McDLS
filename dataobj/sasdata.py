@@ -202,11 +202,8 @@ class SASData(DataObj):
         invInd = (True - np.isfinite(self.fu.siData))
         self.fu.siData[invInd] = np.inf
 
-    def prepareValidIndices(self, *args):
-        super(SASData, self).prepareValidIndices()
-        self._prepareSizeEst()
-
-    def _prepareSizeEst(self):
+    def _propagateMask(self, *args):
+        super(SASData, self)._propagateMask(*args)
         self._sizeEst = np.pi / np.array([self.x0.limit[1],
                                           abs(self.x0.limit[0])])
 
