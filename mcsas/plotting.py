@@ -272,7 +272,7 @@ class PlotResults(object):
         the top row axes are for placing text objects: settings and stats.
         The bottom row axes are for plotting the fits and the histograms
         TODO: add settings to window title? (next to figure_xy)"""
-        ah = list() #list of axes handles from top left to bottom right.
+        ahl = list() #list of axes handles from top left to bottom right.
 
         fig = figure(figsize = (7 * (nHists + 1), 7 * nR), dpi = 80,
                      facecolor = 'w', edgecolor = 'k')
@@ -295,10 +295,12 @@ class PlotResults(object):
                 }
         for ai in range((nHists + 1) * nR * 2 ):
             # initialise axes
-            ah.append(subplot(gs[ai]))
-            if ai%((nHists + 1) * 2) < (nHists + 1) : 
-                ah[-1].update(textAxDict) # text box settings:
-        return fig, ah
+            ah = subplot(gs[ai])
+            ah.format_coord = None
+            if ai%((nHists + 1) * 2) < (nHists + 1):
+                ah.update(textAxDict) # text box settings:
+            ahl.append(ah)
+        return fig, ahl
 
     ## 2D plotting needs to be refactored after re-implementation
     # def plot2D(self, q, psi, measVal, measVal2d, qAxis):
