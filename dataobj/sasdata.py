@@ -29,28 +29,12 @@ from models import SASModel
 class SASData(DataObj):
     """Represents one set of data from a unique source (a file, for example).
     """
-    _q, _i, _e, _u, _p = None, None, None, None, None # internal DataVectors
+    _e = None # internal DataVector
     _sizeEst = None
     _shannonChannelEst = None
     _rUnit = None # defines units for r used in sizeest
 
     # define DataObj interface
-
-    @property
-    def x0(self):
-        return self._q
-
-    @property
-    def x1(self):
-        return self._p
-
-    @property
-    def f(self):
-        return self._i
-
-    @property
-    def fu(self):
-        return self._u
 
     @classproperty
     @classmethod
@@ -61,7 +45,7 @@ class SASData(DataObj):
     @property
     def qLimsString(self):
         """Properly formatted q-limits for UI label text."""
-        return self._q.limsString
+        return self.x0.limsString
 
     @property
     def q(self):
@@ -88,7 +72,7 @@ class SASData(DataObj):
 
     @property
     def count(self):
-        return len(self._q.sanitized)
+        return len(self.x0.sanitized)
 
     @property
     def hasError(self):
@@ -141,7 +125,7 @@ class SASData(DataObj):
         return int(self._shannonChannelEst)
 
     def _prepareShannonChannelEst(self, *args):
-        self._shannonChannelEst = self._q.limit[1] / self._q.limit[0]
+        self._shannonChannelEst = self.x0.limit[1] / self.x0.limit[0]
 
     @property
     def shannonChannelEstText(self):
@@ -155,20 +139,18 @@ class SASData(DataObj):
         if rawArray is None:
             logging.error('SASData must be called with a rawArray provided')
 
-        self._q = DataVector(u'q', rawArray[:, 0], 
-                unit = ScatteringVector(u"nm⁻¹"))
-        self._i = DataVector(u'I', rawArray[:, 1], 
-                unit = ScatteringIntensity(u"(m sr)⁻¹"))
+        self.x0 = DataVector(u'q', rawArray[:, 0],
+                             unit = ScatteringVector(u"nm⁻¹"))
+        self.f  = DataVector(u'I', rawArray[:, 1],
+                             unit = ScatteringIntensity(u"(m sr)⁻¹"))
         self._e = DataVector(u'∆I', rawArray[:, 2],
-                unit = self._i.unit) # raw uncertainty
-        self._u = DataVector(u'σI', rawArray[:, -1], # we should use self._e.copy
-                unit = self._i.unit, editable = True) # sanitized uncertainty
-#        self._q.limit = [self._q.sanitized.min(), self._q.sanitized.max()]
+                             unit = self.f.unit) # raw uncertainty
+        # sanitized uncertainty, we should use self._e.copy
+        self.fu = DataVector(u'σI', rawArray[:, -1],
+                             unit = self.f.unit, editable = True)
         logging.info("Init SASData: " + self.qLimsString)
-        self._p = None
         if rawArray.shape[1] > 3: # psi column is present
-            self._p = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
-#            self._p.limit = [self._p.sanitized.min(), self._p.sanitized.max()]
+            self.x1 = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
             logging.info(self.pLimsString)
 
         #set unit definitions for display and internal units
@@ -183,10 +165,10 @@ class SASData(DataObj):
             return # no update, nothing todo
         # self.config.updateEMin()
         # prepare
-        self.locs = self.config.prepareSmearing(self._q.siData)
+        self.locs = self.config.prepareSmearing(self.x0.siData)
         # suggested upgrade for 2d smearing:
         # self.locs = self.config.prepareSmearing(
-        #                           self._q.siData, self._p.siData)
+        #                           self.x0.siData, self.x1.siData)
 
     def updateConfig(self):
         super(SASData, self).updateConfig()
@@ -204,29 +186,29 @@ class SASData(DataObj):
     def _prepareUncertainty(self, *dummy):
         """Modifies the uncertainty of the whole range of measured data to be
         above a previously set minimum threshold *eMin*."""
-        self._u.siData = self.config.eMin() * self.f.siData
+        self.fu.siData = self.config.eMin() * self.f.siData
         minUncertaintyPercent = self.config.eMin() * 100.
         if not self.hasError:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
         else:
-            count = sum(self._u.siData > self._e.siData)
+            count = sum(self.fu.siData > self._e.siData)
             if count > 0:
                 logging.warning("Minimum uncertainty ({}% of intensity) set "
                                 "for {} datapoints.".format(
                                 minUncertaintyPercent, count))
-            self._u.siData = np.maximum(self._u.siData, self._e.siData)
+            self.fu.siData = np.maximum(self.fu.siData, self._e.siData)
         # reset invalid uncertainties to np.inf
-        invInd = (True - np.isfinite(self._u.siData))
-        self._u.siData[invInd] = np.inf
+        invInd = (True - np.isfinite(self.fu.siData))
+        self.fu.siData[invInd] = np.inf
 
     def prepareValidIndices(self, *args):
         super(SASData, self).prepareValidIndices()
         self._prepareSizeEst()
 
     def _prepareSizeEst(self):
-        self._sizeEst = np.pi / np.array([self._q.limit[1],
-                                          abs(self._q.limit[0])])
+        self._sizeEst = np.pi / np.array([self.x0.limit[1],
+                                          abs(self.x0.limit[0])])
 
 if __name__ == "__main__":
     import doctest

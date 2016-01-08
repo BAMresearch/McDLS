@@ -109,36 +109,68 @@ class DataObj(DataSet, DisplayMixin):
     _filename = None
     _config = None
     _validIndices = None # based on masks to filter certain values
+    _validMask = None
+    _x0 = None
+    _x1 = None
+    _x2 = None
+    _f  = None
+    _fu = None
 
     # interface for basic DataVectors
 
     # These are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
+    # derived classes may have an alias getter for (x0, f, …)
     @property
     def x0(self):
         """First sampling vector."""
-        raise NotImplementedError
+        return self._x0
+
+    @x0.setter
+    def x0(self, vec):
+        assert vec is None or isinstance(vec, DataVector)
+        self._x0 = vec
 
     @property
     def x1(self):
         """Second sampling vector."""
-        raise NotImplementedError
+        return self._x1
+
+    @x1.setter
+    def x1(self, vec):
+        assert vec is None or isinstance(vec, DataVector)
+        self._x1 = vec
 
     @property
     def x2(self):
         """Third sampling vector."""
-        raise NotImplementedError
+        return self._x2
+
+    @x2.setter
+    def x2(self, vec):
+        assert vec is None or isinstance(vec, DataVector)
+        self._x2 = vec
 
     @property
     def f(self):
         """The measurement vector."""
-        raise NotImplementedError
+        return self._f
+
+    @f.setter
+    def f(self, vec):
+        assert vec is None or isinstance(vec, DataVector)
+        self._f = vec
 
     @property
     def fu(self):
         """The measurement uncertainty regarding the measurement vector *f*.
         """
-        raise NotImplementedError
+        return self._fu
+
+    @fu.setter
+    def fu(self, vec):
+        assert vec is None or isinstance(vec, DataVector)
+        self._fu = vec
 
     @property
     def validIndices(self): # global valid indices
