@@ -283,9 +283,9 @@ class DLSData(DataObj):
         self._tauGammaMat = outer(self.tau.siDataSrcShape, self.gammaDivR)
         self._tauGamma = MultiDataVector(u"tauGamma", self._tauGammaMat)
 
-    def prepareValidIndices(self, *args):
-        super(DLSData, self).prepareValidIndices()
-        self._tauGamma.validIndices = self._validIndices
+    def _propagateMask(self, *args):
+        super(DLSData, self)._propagateMask(*args)
+        self._tauGamma.validIndices = self.tau.validIndices
 
     def accumulate(self, others):
         """Combines several measured data of the same sample into a single
