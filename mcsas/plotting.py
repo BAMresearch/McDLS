@@ -10,6 +10,7 @@ import os.path
 import numpy as np # For arrays
 import matplotlib
 from utils import isList, isString, isMac
+from utils.units import Unit, NoUnit
 import log
 from main import makeAbsolutePath
 from dataobj import SASData
@@ -32,6 +33,30 @@ from matplotlib import gridspec
 from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
         text, plot, grid, legend, title, xlim, ylim, gca, axis,
         close, colorbar, imshow, subplot, axes, show, savefig)
+
+class CoordinateFormat(object):
+    """A Function object which sets up the particular formatting with axis
+    name and associated unit at initialization time and formats plot
+    coordinates given as (x,y) pair."""
+    _xunit, _yunit = None, None
+    _fmt = u"{name} = {value}{unit}"
+    _valueFmt = u"1.4g"
+
+    def __init__(self, xname, xunit, yname, yunit):
+        xu = u""
+        if isinstance(xunit, Unit) and not isinstance(xunit, NoUnit):
+            xu = xunit.displayMagnitudeName
+        yu = u""
+        if isinstance(yunit, Unit) and not isinstance(yunit, NoUnit):
+            yu = yunit.displayMagnitudeName
+        self._fmt = ", ".join((
+            self._fmt.format(name = xname, unit = xu,
+                             value = u"{x:" + self._valueFmt + "}"),
+            self._fmt.format(name = yname, unit = yu,
+                             value = u"{y:" + self._valueFmt + "}")))
+
+    def __call__(self, x, y):
+        return self._fmt.format(x = x, y = y)
 
 class PlotResults(object):
     """
@@ -387,6 +412,9 @@ class PlotResults(object):
         # reapply limits, necessary for some reason:
         xlim(xLim)
         ylim(yLim)
+        qAxis.format_coord = CoordinateFormat(
+                dataset.x0.name, dataset.x0.unit,
+                dataset.f.name, dataset.f.unit)
 
     def plotInfo(self, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
@@ -495,5 +523,7 @@ class PlotResults(object):
         title(plotTitle, fontproperties = self._textfont,
               size = 'large')
         xlim(xLim)
+        suppAx.format_coord = CoordinateFormat(plotPar.name(), plotPar.unit(),
+                                               "y", None)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
