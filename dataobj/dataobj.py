@@ -88,26 +88,10 @@ class DataVector(object):
             self._unit = newUnit
             self._siData = self.unit.toSi(self.raw)
 
+    # TODO: define min/max properties for convenience?
     @property
     def limit(self):
         return self._limit
-
-# not used externally, not synchronized with validIndices
-# see validIndices.setter
-#
-#    @limit.setter
-#    def limit(self, value):
-#        self.setLimit(value)
-#
-#    def setLimit(self, newLimit): # override&referencable
-##        print('Limit value: {}'.format(value))
-#        if newLimit is None:
-#            self._limit = [self.siData.min(), self.siData.max()]
-#        else:
-#            self._limit = [np.maximum(np.min(newLimit), self.siData.min()),
-#                           np.minimum(np.max(newLimit), self.siData.max())]
-#
-    # TODO: define min/max properties for convenience?
 
     @property
     def limsString(self):
