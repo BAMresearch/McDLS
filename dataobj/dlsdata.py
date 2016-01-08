@@ -99,8 +99,7 @@ class MultiDataVector(DataVector):
 class DLSData(DataObj):
     """Represents one data set.
     """
-    _properties = ("sampleName", "description", "tau",
-                   "correlation", "correlationError",
+    _properties = ("sampleName", "description",
                    "angles", "anglesUnit", "temperature", "viscosity",
                    "refractiveIndex", "wavelength",
                    "measIndices",
@@ -171,20 +170,20 @@ class DLSData(DataObj):
     # define DataObj interface
 
     @property
-    def x0(self):
-        return self._tau
+    def tau(self):
+        return self.x0
 
     @property
-    def f(self):
-        return self._correlation
+    def correlation(self):
+        return self.f
 
     @property
-    def fu(self):
-        return self._correlationError
+    def correlationError(self):
+        return self.fu
 
     def setTau(self, tauUnit, rawArray):
-        self._tau = MultiDataVector(u"τ", rawArray.flatten(), unit = tauUnit,
-                                    count = self.numAngles)
+        self.x0 = MultiDataVector(u"τ", rawArray.flatten(), unit = tauUnit,
+                                  count = self.numAngles)
         self._calcTauGamma()
 
     def setCorrelation(self, rawArray):
@@ -192,13 +191,13 @@ class DLSData(DataObj):
         assert rawArray.shape[1] == self.numAngles, (
             "Correlation intensity: {} columns != {} scattering angles"
             .format(rawArray.shape[1], self.numAngles))
-        self._correlation = MultiDataVector(u"G_2(τ)-1", rawArray)
+        self.f = MultiDataVector(u"G_2(τ)-1", rawArray)
 
     def setCorrelationError(self, rawArray):
         assert self.isValidInput(rawArray), "Invalid data from file!"
         assert rawArray.shape[1] == self.numAngles, \
             "Correlation stddev: #columns differs from #scattering angles"
-        self._correlationError = MultiDataVector(u"σ[G_2(τ)-1]", rawArray)
+        self.fu = MultiDataVector(u"σ[G_2(τ)-1]", rawArray)
 
     @property
     def count(self):
