@@ -174,14 +174,6 @@ class DataObj(DataSet, DisplayMixin):
         assert vec is None or isinstance(vec, DataVector)
         self._fu = vec
 
-    @property
-    def validIndices(self): # global valid indices
-        if self._validIndices is None:
-#            raise RuntimeError # for testing, isn't called at all atm
-            # valid indices not set yet
-            self.prepareValidIndices()
-        return self._validIndices
-
     # other common meta data
 
     @classproperty
@@ -344,47 +336,6 @@ class DataObj(DataSet, DisplayMixin):
         #  value does not change further (no update needed)
         # -> vice versa at the end of _onLimitsUpdate() above
         self.config.x0Low.setValue(self.x0.sanitized.min())
-
-    def prepareValidIndices(self, *dummy):
-        """
-        If x0 and/or x1 limits are provided, it prepares a set of allowed
-        indices for the full dataset.
-        """
-        # init indices: index array is more flexible than boolean masks
-        mask = np.isfinite(self.f.siData)
-
-        # Optional masking of negative intensity
-        if self.config.fMaskZero():
-            # FIXME: compare with machine precision (EPS)?
-            mask &= (self.f.siData != 0.0)
-        if self.config.fMaskNeg():
-            mask &= (self.f.siData > 0.0)
-
-        # apply explicit clipping first
-        end = max(0, self.config.x0LowClip())
-        mask[0:end] = False
-        # clip to q bounds
-        mask &= (self.x0.siData >= self.config.x0Low())
-        mask &= (self.x0.siData <= self.config.x0High())
-        # clip to psi bounds
-        if self.is2d:
-            mask &= (self.x1.siData > self.config.x1Low())
-            mask &= (self.x1.siData <= self.config.x1High())
-        # store
-        self._validIndices = np.argwhere(mask)[:,0]
-        # a quick, temporary implementation to pass on all valid indices to the parameters:
-        self.f.validIndices = self._validIndices
-        if isinstance(self.fu, DataVector):
-            self.fu.validIndices = self._validIndices
-        self.x0.validIndices = self._validIndices
-        if self.is2d:
-            self.x1.validIndices = self._validIndices
-        # update values in config
-        # Parameter.setValue() does not call back if the value did not change
-#        self.config.x0Low.setValue(self.x0.sanitized.min())
-#        self.config.x0High.setValue(self.x0.sanitized.max())
-#        if len(self.x0.validIndices):
-#            self.config.x0LowClip.setValue(self.x0.validIndices.min())
 
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)

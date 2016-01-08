@@ -584,8 +584,7 @@ class McSAS(AlgorithmBase):
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
-        validIndices = data.validIndices
-        intAvg = intAvg[validIndices]
+        intAvg = intAvg[data.x0.validIndices]
         # shape back to imageform
         self.result[0]['measVal2d'] = reshape(intAvg, kansas)
 
