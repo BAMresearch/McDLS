@@ -228,7 +228,7 @@ class SASModel(ScatteringModel):
 #            print >>sys.__stderr__, "prepared"
 #            print >>sys.__stderr__, unicode(data.config.smearing)
             it = 2 * np.trapz(ff**2 * v**2 * 
-                    (0 * ff + weightFunc), x = qOffset, axis = 1) 
+                    (weightFunc), x = qOffset, axis = 1) 
         else:
             # calculate their form factors
             ff = self.ff(data)

@@ -139,7 +139,7 @@ class TrapezoidSmearing(SmearingConfig):
         # prepare integration steps qOffset:
         qOffset = np.logspace(np.log10(q.min() / 10.),
                 np.log10(xb / 2.), num = n)
-        qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
+        qOffset = np.concatenate(([0,], qOffset)) #  [np.newaxis, :]
 
         if xb == xt:
             y = 1. - (qOffset * 0.)
