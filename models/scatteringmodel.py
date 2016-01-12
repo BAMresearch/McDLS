@@ -64,7 +64,7 @@ class ScatteringModel(AlgorithmBase):
         """
         # remember parameter values
         params = self.activeParams()
-        oldValues = [p() for p in params] # this sucks. But we dont want to loose the user provided value
+        oldValues = [p() for p in params] # this sucks. But we dont want to lose the user provided value
         cumInt = zeros(data.f.sanitized.shape) # cumulated intensities
         vset = zeros(pset.shape[0])
         # call the model for each parameter set explicitly
@@ -219,15 +219,15 @@ class SASModel(ScatteringModel):
 
         if data.config.smearing is not None:
             locs = data.locs[data.x0.validIndices] # apply xlimits
-            kansas = locs.shape
             # the ff functions might only accept one-dimensional q arrays
-            locs = locs.reshape((locs.size))
-            ff = self.ff(locs).reshape(kansas)
+            # kansas = locs.shape
+            # locs = locs.reshape((locs.size))
+            ff = self.ff(locs)# .reshape(kansas)
             qOffset, weightFunc = data.config.smearing.prepared
 #            import sys
 #            print >>sys.__stderr__, "prepared"
 #            print >>sys.__stderr__, unicode(data.config.smearing)
-            it = 2 * np.trapz(ff**2 * v**2 * # outer() ?
+            it = 2 * np.trapz(ff**2 * v**2 * 
                     (0 * ff + weightFunc), x = qOffset, axis = 1) 
         else:
             # calculate their form factors
