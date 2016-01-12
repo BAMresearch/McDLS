@@ -122,6 +122,21 @@ class TrapezoidSmearing(SmearingConfig):
         else:
             raise NotImplementedError
 
+    def halfTrapzPDF(x, c, d):
+        # this trapezoidal PDF is only defined from X >= 0, and is assumed
+        # to be mirrored around that point. 
+        # Note that the integral of this PDF from X>0 will be 0.5. 
+        # source: van Dorp and Kotz, Metrika 2003, eq (1) 
+        # using a = -d, b = -c
+        x = abs(x)
+        pdf = x * 0.
+        pdf[x < c] = 1.
+        if d > c:
+            pdf[(c <= x) & (x < d)] = (1./(d - c)) * (d - x[(c <= x) & (x < d)])
+        norm = 1./(d + c)
+        pdf *= norm
+        return pdf
+
     def setIntPoints(self, q):
         """ sets smearing profile integration points for trapezoidal slit. 
         Top (umbra) of trapezoid has full width xt, bottom of trapezoid 
@@ -137,19 +152,12 @@ class TrapezoidSmearing(SmearingConfig):
             xb = xt # should use square profile in this case.
 
         # prepare integration steps qOffset:
-        qOffset = np.logspace(np.log10(q.min() / 10.),
+        qOffset = np.logspace(np.log10(q.min() / 5.),
                 np.log10(xb / 2.), num = n)
-        qOffset = np.concatenate(([0,], qOffset)) #  [np.newaxis, :]
+        qOffset = np.concatenate(([0,], qOffset)) 
 
-        if xb == xt:
-            y = 1. - (qOffset * 0.)
-        else:
-            y = 1. - (qOffset - xt) / (xb - xt)
-
-        y = np.clip(y, 0., 1.)
-        y[qOffset < xt] = 1.
-        Area = (xt + 0.5 * (xb - xt))
-        self._qOffset, self._weights = qOffset, (y / Area)
+        y = halfTrapzPDF(qOffset, xt, xb)
+        self._qOffset, self._weights = qOffset, y 
 
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)

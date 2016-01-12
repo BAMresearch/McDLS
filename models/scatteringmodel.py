@@ -14,7 +14,6 @@ from utils.parameter import isActiveParam
 
 class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta
-    # compensationExponent = 1./2 # default, overridden with that from JSON dict
 
     @abstractmethod
     def volume(self):
@@ -227,8 +226,8 @@ class SASModel(ScatteringModel):
 #            import sys
 #            print >>sys.__stderr__, "prepared"
 #            print >>sys.__stderr__, unicode(data.config.smearing)
-            it = 2 * np.trapz(ff**2 * v**2 * 
-                    (weightFunc), x = qOffset, axis = 1) 
+            it = 2 * np.trapz(ff**2 * v**2 * weightFunc, 
+                    x = qOffset, axis = 1) 
         else:
             # calculate their form factors
             ff = self.ff(data)
