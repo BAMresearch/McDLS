@@ -128,6 +128,7 @@ class TrapezoidSmearing(SmearingConfig):
         # Note that the integral of this PDF from X>0 will be 0.5. 
         # source: van Dorp and Kotz, Metrika 2003, eq (1) 
         # using a = -d, b = -c
+        assert(c > 0.)
         x = abs(x)
         pdf = x * 0.
         pdf[x < c] = 1.
@@ -135,7 +136,7 @@ class TrapezoidSmearing(SmearingConfig):
             pdf[(c <= x) & (x < d)] = (1./(d - c)) * (d - x[(c <= x) & (x < d)])
         norm = 1./(d + c)
         pdf *= norm
-        return pdf
+        return pdf, norm
 
     def setIntPoints(self, q):
         """ sets smearing profile integration points for trapezoidal slit. 
@@ -145,18 +146,29 @@ class TrapezoidSmearing(SmearingConfig):
         integration parameters are calculated in the interval [0, xb/2]
         """
         xt, xb = self.hUmbra, self.hPenumbra
+        yt, yb = self.vUmbra, self.vPenumbra # only for 2D smearing, not slit
 
-        # ensure things are what they are supposed to be
-        assert (xt >= 0.)
-        if xb < xt:
-            xb = xt # should use square profile in this case.
-
-        # prepare integration steps qOffset:
+        # following qOffset is used for Pinhole and Rectangular
+        maxdim = np.maximum(xb, yb)
         qOffset = np.logspace(np.log10(q.min() / 5.),
-                np.log10(xb / 2.), num = n)
-        qOffset = np.concatenate(([0,], qOffset)) 
+                np.log10(maxdim / 2.), num = ceil(n / 2.))
+        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
+        if self.collType == u"Pinhole":
 
-        y = halfTrapzPDF(qOffset, xt, xb)
+            pass
+        elif self.collType == u"Rectangular":
+            pass
+        elif self.collType == u"Slit":
+            # overwrite prepared integration steps qOffset:
+            qOffset = np.logspace(np.log10(q.min() / 5.),
+                    np.log10(xb / 2.), num = n)
+            # tack on a zero at the beginning
+            qOffset = np.concatenate(([0,], qOffset)) 
+            y, dummy = halfTrapzPDF(qOffset, xt, xb)
+        else:
+            qOffset = np.array([0.,])
+            y = np.array([1.])
+
         self._qOffset, self._weights = qOffset, y 
 
     def updateQUnit(self, newUnit):
