@@ -74,27 +74,19 @@ class SmearingConfig(AlgorithmBase):
 
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
-        Parameter("hUmbra", 2e9, unit = NoUnit(), # unit set outside
-            displayName = "top width of horiz. <br />trapezoidal beam profile",
-            description = "full top width of the trapezoidal beam profile (horizontal)",
+        Parameter("Umbra", 2e9, unit = NoUnit(), # unit set outside
+            displayName = "top width of <br />trapezoidal beam profile",
+            description = "full top width of the trapezoidal beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., numpy.inf), decimals = 1),
-        Parameter("hPenumbra", 4e9, unit = NoUnit(), # unit set outside
-            displayName = "bottom width of horiz. <br />trapezoidal beam profile",
-            description = "full bottom width of the trapezoidal beam profile (horizontal)",
-            valueRange = (0., numpy.inf), decimals = 1),
-        Parameter("vUmbra", .01e9, unit = NoUnit(), # unit set outside
-            displayName = "top height of vert. <br />trapezoidal beam profile",
-            description = "full top height of the trapezoidal beam profile (vertical)",
-            valueRange = (0., numpy.inf), decimals = 1),
-        Parameter("vPenumbra", .01e9, unit = NoUnit(), # unit set outside
-            displayName = "bottom width of vert. <br />trapezoidal beam profile",
-            description = "full bottom height of the trapezoidal beam profile (vertical)",
+        Parameter("Penumbra", 4e9, unit = NoUnit(), # unit set outside
+            displayName = "bottom width of <br />trapezoidal beam profile",
+            description = "full bottom width of the trapezoidal beam profile horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., numpy.inf), decimals = 1),
     )
 
     @property
     def showParams(self):
-        lst = ["vUmbra", "vPenumbra"]
+        lst = ["Umbra", "Penumbra"]
         return lst + [name
                 for name in super(TrapezoidSmearing, self).showParams
                     if name not in lst]
@@ -115,7 +107,7 @@ class TrapezoidSmearing(SmearingConfig):
         elif ((self.collType == u"Pinhole") or 
                 (self.collType == u"Rectangular")): 
             # Non-slit-smeared instruments, using azimuthally averaged
-            # 2D-pattern over full azimuthal range (assumed!)
+            # 2D-pattern (assumed!) with equally averaged beam profile.
             self.locs = np.add.outer(q, self.qOffset[0,:])
         elif self.collType == u"None":
             pass
@@ -145,16 +137,13 @@ class TrapezoidSmearing(SmearingConfig):
         Since the smearing function is assumed to be symmetrical, the 
         integration parameters are calculated in the interval [0, xb/2]
         """
-        xt, xb = self.hUmbra, self.hPenumbra
-        yt, yb = self.vUmbra, self.vPenumbra # only for 2D smearing, not slit
+        xt, xb = self.Umbra, self.Penumbra
 
         # following qOffset is used for Pinhole and Rectangular
-        maxdim = np.maximum(xb, yb)
         qOffset = np.logspace(np.log10(q.min() / 5.),
-                np.log10(maxdim / 2.), num = ceil(n / 2.))
+                np.log10(xb / 2.), num = ceil(n / 2.))
         qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
         if self.collType == u"Pinhole":
-
             pass
         elif self.collType == u"Rectangular":
             pass
@@ -173,10 +162,8 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
-        self.hUmbra.setUnit(newUnit)
-        self.hPenumbra.setUnit(newUnit)
-        self.vUmbra.setUnit(newUnit)
-        self.vPenumbra.setUnit(newUnit)
+        self.Umbra.setUnit(newUnit)
+        self.Penumbra.setUnit(newUnit)
 
     def updatePUnit(self, newUnit):
         assert isinstance(newUnit, Angle)
@@ -184,10 +171,8 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.hUmbra.setValueRange((0., qHigh))
-        self.hPenumbra.setValueRange((0., qHigh))
-        self.vUmbra.setValueRange((0., qHigh))
-        self.vPenumbra.setValueRange((0., qHigh))
+        self.Umbra.setValueRange((0., qHigh))
+        self.Penumbra.setValueRange((0., qHigh))
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
@@ -195,20 +180,18 @@ class TrapezoidSmearing(SmearingConfig):
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
-        self.hUmbra.setOnValueUpdate(self.onUmbraUpdate)
-        self.vUmbra.setOnValueUpdate(self.onUmbraUpdate)
+        self.Umbra.setOnValueUpdate(self.onUmbraUpdate)
 
     def onUmbraUpdate(self):
         """Value in umbra will not exceed available q."""
         # value in Penumbra must not be smaller than Umbra
-        self.hPenumbra.setValueRange((self.hUmbra(), self.hPenumbra.max()))
-        self.vPenumbra.setValueRange((self.vUmbra(), self.vPenumbra.max()))
+        self.Penumbra.setValueRange((self.Umbra(), self.Penumbra.max()))
 
     def integrate(self, q):
         """ defines integration over trapezoidal slit. Top of trapezoid 
         has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
         super(TrapezoidSmearing, self).integrate(q)
-        n, xt, xb = self.nSteps(), self.hUmbra(), self.hPenumbra()
+        n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
         #print >>sys.__stderr__, "integrate", xb, xt
 
         # ensure things are what they are supposed to be
