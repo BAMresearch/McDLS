@@ -25,6 +25,10 @@ class SmearingConfig(AlgorithmBase):
         Parameter("nSteps", 25, unit = NoUnit(),
             displayName = "number of smearing points around each q",
             valueRange = (0, 1000)),
+        # 2-d collimated systems require a different smearing than slit-collimated data
+        Parameter("TwoDColl", False, unit = NoUnit(),
+            displayName = "Slit-smeared data (unchecked), or 2D-averaged data (checked)",
+            ),
 #        Parameter("collType", u"Slit", unit = NoUnit(),
 #            displayName = "Type of collimation leading to smearing",
 #            valueRange = [u"Slit", u"Pinhole", u"Rectangular", u"None"])
