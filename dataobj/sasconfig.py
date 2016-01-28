@@ -43,12 +43,6 @@ class SmearingConfig(AlgorithmBase):
     def updateQLimits(self, qLimit):
         pass
 
-    @abstractmethod
-    def integrate(self, q):
-        # now we do the actual smearing preparation
-        assert isinstance(q, np.ndarray)
-        assert (q.ndim == 1)
-
     @property
     def qOffset(self):
         return self._qOffset
@@ -166,34 +160,6 @@ class TrapezoidSmearing(SmearingConfig):
         # value in Penumbra must not be smaller than Umbra
         self.Penumbra.setValueRange((self.Umbra(), self.Penumbra.max()))
 
-    def integrate(self, q):
-        """ defines integration over trapezoidal slit. Top of trapezoid 
-        has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
-        logging.debug("dataobj.sasfit.integrate called")
-        super(TrapezoidSmearing, self).integrate(q)
-        n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
-        #print >>sys.__stderr__, "integrate", xb, xt
-
-        # ensure things are what they are supposed to be
-        assert (xt >= 0.)
-        if xb < xt:
-            xb = xt # should use square profile in this case.
-
-        # prepare integration steps qOffset; selection somewhat arbitrary
-        qOffset = np.logspace(np.log10(q.min() / 10.),
-                            np.log10(xb / 2.), num = n)
-        qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
-
-        if xb == xt: 
-            y = 1. - (qOffset * 0.)
-        else:
-            y = 1. - (qOffset - xt) / (xb - xt)
-
-        y = np.clip(y, 0., 1.)
-        y[qOffset < xt] = 1.
-        area = (xt + 0.5 * (xb - xt))
-        self._qOffset, self._weights = qOffset, y / area
-
 TrapezoidSmearing.factory()
 
 class SASConfig(DataConfig):
@@ -278,7 +244,6 @@ class SASConfig(DataConfig):
         if self.smearing is None:
             return
         self.smearing.setIntPoints(q)
-        # self.smearing.integrate(q)
         qOffset, weights = self.smearing.prepared
         #print >>sys.__stderr__, "prepareSmearing"
         #print >>sys.__stderr__, unicode(self)
