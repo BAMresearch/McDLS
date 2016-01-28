@@ -4,13 +4,14 @@
 from __future__ import absolute_import # PEP328
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-import numpy
+import numpy as np
 from bases.algorithm import AlgorithmBase
 from utils.parameter import Parameter
 from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
                          Fraction, NoUnit)
 from utils import clip
 from dataobj import DataConfig
+import logging
 
 class SmearingConfig(AlgorithmBase):
     """Abstract base class, can't be instantiated."""
@@ -26,7 +27,7 @@ class SmearingConfig(AlgorithmBase):
             displayName = "number of smearing points around each q",
             valueRange = (0, 1000)),
         # 2-d collimated systems require a different smearing than slit-collimated data
-        Parameter("TwoDColl", False, unit = NoUnit(),
+        Parameter("twoDColl", False, unit = NoUnit(),
             displayName = "Slit-smeared data (unchecked), or 2D-averaged data (checked)",
             ),
 #        Parameter("collType", u"Slit", unit = NoUnit(),
@@ -45,7 +46,7 @@ class SmearingConfig(AlgorithmBase):
     @abstractmethod
     def integrate(self, q):
         # now we do the actual smearing preparation
-        assert isinstance(q, numpy.ndarray)
+        assert isinstance(q, np.ndarray)
         assert (q.ndim == 1)
 
     @property
@@ -81,11 +82,11 @@ class TrapezoidSmearing(SmearingConfig):
         Parameter("Umbra", 2e9, unit = NoUnit(), # unit set outside
             displayName = "top width of <br />trapezoidal beam profile",
             description = "full top width of the trapezoidal beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
-            valueRange = (0., numpy.inf), decimals = 1),
+            valueRange = (0., np.inf), decimals = 1),
         Parameter("Penumbra", 4e9, unit = NoUnit(), # unit set outside
             displayName = "bottom width of <br />trapezoidal beam profile",
             description = "full bottom width of the trapezoidal beam profile horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
-            valueRange = (0., numpy.inf), decimals = 1),
+            valueRange = (0., np.inf), decimals = 1),
     )
 
     @property
@@ -95,35 +96,13 @@ class TrapezoidSmearing(SmearingConfig):
                 for name in super(TrapezoidSmearing, self).showParams
                     if name not in lst]
 
-    def _prepSmear(self, q):
-        """ prepares the smearing profile for a given collimation configuration. 
-        This is supposed to be in the SmearingConfig class """
-
-        # make sure we're getting a valid dataset:
-        assert( isinstance(q, np.ndarray))
-        assert( q.ndim == 1)
-
-        # prepare the smearing profile
-        self.setIntPoints(q)
-
-        if self.collType == u"Slit":
-            self.locs = np.sqrt(np.add.outer(q **2, self.qOffset[0,:] **2))
-        elif ((self.collType == u"Pinhole") or 
-                (self.collType == u"Rectangular")): 
-            # Non-slit-smeared instruments, using azimuthally averaged
-            # 2D-pattern (assumed!) with equally averaged beam profile.
-            self.locs = np.add.outer(q, self.qOffset[0,:])
-        elif self.collType == u"None":
-            pass
-        else:
-            raise NotImplementedError
-
-    def halfTrapzPDF(x, c, d):
+    def halfTrapzPDF(self, x, c, d):
         # this trapezoidal PDF is only defined from X >= 0, and is assumed
         # to be mirrored around that point. 
         # Note that the integral of this PDF from X>0 will be 0.5. 
         # source: van Dorp and Kotz, Metrika 2003, eq (1) 
         # using a = -d, b = -c
+        logging.debug("halfTrapzPDF called")
         assert(c > 0.)
         x = abs(x)
         pdf = x * 0.
@@ -141,26 +120,22 @@ class TrapezoidSmearing(SmearingConfig):
         Since the smearing function is assumed to be symmetrical, the 
         integration parameters are calculated in the interval [0, xb/2]
         """
-        xt, xb = self.Umbra, self.Penumbra
+        # this function is not called!!!:
+        n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
+        logging.debug("setIntPoints called with n = {}".format(n))
 
         # following qOffset is used for Pinhole and Rectangular
         qOffset = np.logspace(np.log10(q.min() / 5.),
-                np.log10(xb / 2.), num = ceil(n / 2.))
+                np.log10(xb / 2.), num = np.ceil(n / 2.))
         qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
-        if self.collType == u"Pinhole":
-            pass
-        elif self.collType == u"Rectangular":
-            pass
-        elif self.collType == u"Slit":
+        if not self.twoDColl():
             # overwrite prepared integration steps qOffset:
             qOffset = np.logspace(np.log10(q.min() / 5.),
                     np.log10(xb / 2.), num = n)
             # tack on a zero at the beginning
             qOffset = np.concatenate(([0,], qOffset)) 
-            y, dummy = halfTrapzPDF(qOffset, xt, xb)
-        else:
-            qOffset = np.array([0.,])
-            y = np.array([1.])
+
+        y, dummy = self.halfTrapzPDF(qOffset, xt, xb)
 
         self._qOffset, self._weights = qOffset, y 
 
@@ -194,6 +169,7 @@ class TrapezoidSmearing(SmearingConfig):
     def integrate(self, q):
         """ defines integration over trapezoidal slit. Top of trapezoid 
         has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
+        logging.debug("dataobj.sasfit.integrate called")
         super(TrapezoidSmearing, self).integrate(q)
         n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
         #print >>sys.__stderr__, "integrate", xb, xt
@@ -204,16 +180,16 @@ class TrapezoidSmearing(SmearingConfig):
             xb = xt # should use square profile in this case.
 
         # prepare integration steps qOffset; selection somewhat arbitrary
-        qOffset = numpy.logspace(numpy.log10(q.min() / 10.),
-                            numpy.log10(xb / 2.), num = n)
-        qOffset = numpy.concatenate(([0,], qOffset)) [numpy.newaxis, :]
+        qOffset = np.logspace(np.log10(q.min() / 10.),
+                            np.log10(xb / 2.), num = n)
+        qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
 
         if xb == xt: 
             y = 1. - (qOffset * 0.)
         else:
             y = 1. - (qOffset - xt) / (xb - xt)
 
-        y = numpy.clip(y, 0., 1.)
+        y = np.clip(y, 0., 1.)
         y[qOffset < xt] = 1.
         area = (xt + 0.5 * (xb - xt))
         self._qOffset, self._weights = qOffset, y / area
@@ -294,14 +270,26 @@ class SASConfig(DataConfig):
         self._smearing = newSmearing
 
     def prepareSmearing(self, q):
+        logging.debug("prepareSmearing called")
+
+        assert( isinstance(q, np.ndarray))
+        assert( q.ndim == 1)
+
         if self.smearing is None:
             return
-        self.smearing.integrate(q)
+        self.smearing.setIntPoints(q)
+        # self.smearing.integrate(q)
         qOffset, weights = self.smearing.prepared
         #print >>sys.__stderr__, "prepareSmearing"
         #print >>sys.__stderr__, unicode(self)
         # calculate the intensities at sqrt(q**2 + qOffset **2)
-        return numpy.sqrt(numpy.add.outer(q**2, qOffset[0,:]**2))
+        if not self.smearing.twoDColl(): # slit collimation
+            logging.debug("q.shape: {}, qOffset.shape: {}".format(q.shape, qOffset.shape))
+            return np.sqrt(np.add.outer(q **2, qOffset **2))
+        else: 
+            # Non-slit-smeared instruments, using azimuthally averaged
+            # 2D-pattern (assumed!) with equally averaged beam profile.
+            return np.add.outer(q, qOffset)
 
     def copy(self):
         other = super(SASConfig, self).copy(smearing = self.smearing.copy())
