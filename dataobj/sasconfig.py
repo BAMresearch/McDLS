@@ -131,7 +131,9 @@ class TrapezoidSmearing(SmearingConfig):
 
         y, dummy = self.halfTrapzPDF(qOffset, xt, xb)
 
-        self._qOffset, self._weights = qOffset, y 
+        # volume fraction still off by a factor of two (I think). Can be 
+        # fixed by multiplying y with 0.5, but need to find it first in eqns. 
+        self._qOffset, self._weights = qOffset, y
 
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
