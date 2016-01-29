@@ -19,7 +19,7 @@ class LMADenseSphere(SASModel):
     ("interaction radius") used in the structure factor, R is the radius of
     the sphere, and mf is the multiplication factor.
     """
-
+    canSmear = True
     shortName = "LMADenseSphere"
     parameters = (
             FitParameter("radius", 
@@ -66,6 +66,7 @@ class LMADenseSphere(SASModel):
 
     def formfactor(self, dataset):
         
+        q = self.getQ(dataset)
         SFmu = self.volFrac()
         SFmf = self.mf()
         if SFmf == -1:
@@ -84,10 +85,10 @@ class LMADenseSphere(SASModel):
             return G
 
 
-        qr = dataset.q * self.radius()
+        qr = q * self.radius()
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         #now we introduce the structure factor
-        rhsq = 2. * dataset.q * (SFmf * self.radius()) 
+        rhsq = 2. * q * (SFmf * self.radius()) 
         G = SFG(rhsq, SFmu)
         S = (( 1. + 24. * SFmu * G / rhsq ))**(-1)
         #print (S < 0).sum()

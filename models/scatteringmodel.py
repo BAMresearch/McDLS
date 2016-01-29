@@ -210,13 +210,34 @@ class ScatteringModel(AlgorithmBase):
 
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
+    canSmear = False # Indicates a model function which supports smearing...
 
+    def __init__(self):
+        # just checking:
+        super(SASModel, self).__init__()
+        logging.debug("SASData init method called")
+
+    def getQ(self, dataset):
+        """ This is a function that returns Q. In case of smearing, dataset itself
+        is a 2D matrix of Q-values. When smearing is not enabled, dataset.q contains
+        a 1D vector of q. 
+
+        I do realize that this is not a good way of doing things. This should be 
+        replaced at a given point in time by a better solution
+        """
+
+        if isinstance(dataset, np.ndarray):
+            q = dataset
+        else:
+            q = dataset.q
+        return q
+    
     def calcIntensity(self, data, compensationExponent = None, 
             useSLD = False):
         v = self.vol(compensationExponent = compensationExponent,
                      useSLD = useSLD)
 
-        if data.config.smearing is not None:
+        if (data.config.smearing is not None) and self.canSmear:
             locs = data.locs[data.x0.validIndices] # apply xlimits
             # the ff functions might only accept one-dimensional q arrays
             # kansas = locs.shape
