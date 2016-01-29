@@ -97,7 +97,7 @@ class TrapezoidSmearing(SmearingConfig):
         # source: van Dorp and Kotz, Metrika 2003, eq (1) 
         # using a = -d, b = -c
         logging.debug("halfTrapzPDF called")
-        assert(c > 0.)
+        assert(d > 0.)
         x = abs(x)
         pdf = x * 0.
         pdf[x < c] = 1.
@@ -133,6 +133,8 @@ class TrapezoidSmearing(SmearingConfig):
 
         # volume fraction still off by a factor of two (I think). Can be 
         # fixed by multiplying y with 0.5, but need to find it first in eqns. 
+                # volume fraction still off by a factor of two (I think). Can be 
+                # fixed by multiplying y with 0.5, but need to find it first in eqns. 
         self._qOffset, self._weights = qOffset, y
 
     def updateQUnit(self, newUnit):
@@ -146,8 +148,8 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.Umbra.setValueRange((0., qHigh))
-        self.Penumbra.setValueRange((0., qHigh))
+        self.Umbra.setValueRange((0., 2. * qHigh))
+        self.Penumbra.setValueRange((0., 2. * qHigh))
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
@@ -238,24 +240,30 @@ class SASConfig(DataConfig):
         self._smearing = newSmearing
 
     def prepareSmearing(self, q):
-        logging.debug("prepareSmearing called")
 
         assert( isinstance(q, np.ndarray))
         assert( q.ndim == 1)
 
         if self.smearing is None:
-            return
+            return q
+        if self.smearing.Penumbra() == 0.:
+            return q
         self.smearing.setIntPoints(q)
         qOffset, weights = self.smearing.prepared
         #print >>sys.__stderr__, "prepareSmearing"
         #print >>sys.__stderr__, unicode(self)
         # calculate the intensities at sqrt(q**2 + qOffset **2)
         if not self.smearing.twoDColl(): # slit collimation
+            logging.debug("prepareSmearing called for slit collimation")
             logging.debug("q.shape: {}, qOffset.shape: {}".format(q.shape, qOffset.shape))
             return np.sqrt(np.add.outer(q **2, qOffset **2))
         else: 
+            logging.debug("prepareSmearing called for pinhole collimation")
             # Non-slit-smeared instruments, using azimuthally averaged
             # 2D-pattern (assumed!) with equally averaged beam profile.
+            logging.debug("q.shape: {}, qOffset.shape: {}".format(q.shape, qOffset.shape))
+            logging.debug("qOffset.min: {}, qOffset.max: {}"
+                    .format(qOffset.min(), qOffset.max()))
             return np.add.outer(q, qOffset)
 
     def copy(self):
