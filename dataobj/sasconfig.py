@@ -73,11 +73,11 @@ class SmearingConfig(AlgorithmBase):
 
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
-        Parameter("Umbra", 2e9, unit = NoUnit(), # unit set outside
+        Parameter("Umbra", 0., unit = NoUnit(), # unit set outside
             displayName = "top width of <br />trapezoidal beam profile",
             description = "full top width of the trapezoidal beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
-        Parameter("Penumbra", 4e9, unit = NoUnit(), # unit set outside
+        Parameter("Penumbra", 0., unit = NoUnit(), # unit set outside
             displayName = "bottom width of <br />trapezoidal beam profile",
             description = "full bottom width of the trapezoidal beam profile horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
