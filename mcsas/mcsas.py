@@ -507,11 +507,9 @@ class McSAS(AlgorithmBase):
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
-            # compensated volume for each sphere in the set
+            # compensated volume for each sphere vset:
             ft, vset = self.model.calc(data, rset, self.compensationExponent())
-            
-            # Now for each sphere, its volume fraction (compensated): is vset
-            # And the real particle volume vpa:
+            # and the real particle volume vpa:
             dummy, vpa = self.model.calc(data, rset, 
                     compensationExponent = 1.0, useSLD = True)
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
