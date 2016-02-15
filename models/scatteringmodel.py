@@ -22,7 +22,8 @@ class ScatteringModel(AlgorithmBase):
         Reimplement this for new models."""
         raise NotImplemented
 
-    def vol(self, compensationExponent = None, useSLD = False):
+    def _volume(self, compensationExponent = None, useSLD = False):
+        """Wrapper around the user-defined function."""
         self.compensationExponent = compensationExponent
         # calling user provided custom model
         if useSLD and hasattr(self, "absVolume"):
@@ -40,11 +41,10 @@ class ScatteringModel(AlgorithmBase):
         Reimplement this for new models."""
         raise NotImplemented
 
-    def ff(self, dataset):
+    def _formfactor(self, dataset):
+        """Wrapper around the user-defined function."""
         # calling user provided custom model
         i = self.formfactor(dataset)
-        # there has to be one intensity value for each q-vector
-        # assert i.size == dataset.q.size
         return i
 
     @abstractmethod
@@ -189,7 +189,7 @@ class ScatteringModel(AlgorithmBase):
         # intensity how it's calculated in SASfit
         intensity = (model.vol(None,
                                compensationExponent = volumeExponent)
-                     * model.ff(dataset, None))**2.
+                     * model._formfactor(dataset, None))**2.
         # computing the relative error to reference data
         delta = abs((dataset.f.sanitized - intensity) / dataset.f.sanitized)
         dmax = argmax(delta)
@@ -234,15 +234,15 @@ class SASModel(ScatteringModel):
     
     def calcIntensity(self, data, compensationExponent = None, 
             useSLD = False):
-        v = self.vol(compensationExponent = compensationExponent,
-                     useSLD = useSLD)
+        v = self._volume(compensationExponent = compensationExponent,
+                         useSLD = useSLD)
 
         if (data.config.smearing is not None) and self.canSmear:
             locs = data.locs[data.x0.validIndices] # apply xlimits
             # the ff functions might only accept one-dimensional q arrays
             # kansas = locs.shape
             # locs = locs.reshape((locs.size))
-            ff = self.ff(locs)# .reshape(kansas)
+            ff = self._formfactor(locs) # .reshape(kansas)
             qOffset, weightFunc = data.config.smearing.prepared
 #            import sys
 #            print >>sys.__stderr__, "prepared"
@@ -251,7 +251,7 @@ class SASModel(ScatteringModel):
                     x = qOffset, axis = 1) 
         else:
             # calculate their form factors
-            ff = self.ff(data)
+            ff = self._formfactor(data)
             # a set of intensities
             it = ff**2 * v**2
 
