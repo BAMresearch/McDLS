@@ -37,6 +37,15 @@ class ScatteringModel(AlgorithmBase):
         return v
 
     @abstractmethod
+    def weight(self):
+        """A weighting function for the form factor.
+        With SAXS, it is usually the volume squared."""
+        raise NotImplemented
+
+    def _weight(self):
+        return self.weight()
+
+    @abstractmethod
     def formfactor(self, dataset):
         """Calculates the Rayleigh function of this model.
         Reimplement this for new models."""
@@ -212,6 +221,9 @@ class ScatteringModel(AlgorithmBase):
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
+    def weight(self):
+        return self.volume()**2
+
     def calcIntensity(self, data, compensationExponent = None,
             useSLD = False):
         v = self._volume(compensationExponent = compensationExponent,
@@ -238,6 +250,9 @@ class SASModel(ScatteringModel):
 
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
+
+    def weight(self):
+        return self.volume()**2
 
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
         v = self._volume(compensationExponent = compensationExponent,
