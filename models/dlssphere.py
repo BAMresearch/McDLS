@@ -25,6 +25,8 @@ class DLSSphere(DLSModel):
         self.radius.setActive(True)
 
     def volume(self):
+        # square root of the volume to be compatible with SAS-style volume
+        # normalization (individual volumes are squared before summing up)
         return sqrt((pi*4./3.) * self.radius()**(3. * self.compensationExponent))
 
     def formfactor(self, data):
