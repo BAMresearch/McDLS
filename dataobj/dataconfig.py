@@ -168,6 +168,4 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def __setstate__(self, state):
         super(DataConfig, self).__setstate__(state)
 
-DataConfig.factory()
-
 # vim: set ts=4 sts=4 sw=4 tw=0:
