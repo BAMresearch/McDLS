@@ -72,7 +72,7 @@ class CylindersIsotropic(SASModel):
         else:
             halfLength = self.length() / 2.
         v = pi * self.radius()**2 * (halfLength * 2.)
-        return v**self.compensationExponent
+        return v
 
     def absVolume(self):
         return self.volume() * self.sld()**2

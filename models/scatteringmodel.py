@@ -23,18 +23,16 @@ class ScatteringModel(AlgorithmBase):
         Reimplement this for new models."""
         raise NotImplemented
 
+    def absVolume(self):
+        """Forwarding to usual volume() by default.
+        Can be overridden to include SLD."""
+        return self.volume()
+
     def _volume(self, compensationExponent = None, useSLD = False):
         """Wrapper around the user-defined function."""
         self.compensationExponent = compensationExponent
         # calling user provided custom model
-        if useSLD and hasattr(self, "absVolume"):
-            # FIXME: perhaps, adding a default ScatteringModel.absVolume() forwarding volume()?
-            v = self.absVolume()
-        else:
-            v = self.volume()
-        # volume always returns a single value
-        assert isNumber(v)
-        return v
+        return self.absVolume()
 
     @abstractmethod
     def weight(self):
@@ -42,7 +40,9 @@ class ScatteringModel(AlgorithmBase):
         With SAXS, it is usually the volume squared."""
         raise NotImplemented
 
-    def _weight(self):
+    def _weight(self, compensationExponent = None):
+        """Wrapper around the user-defined function."""
+        self.compensationExponent = compensationExponent
         return self.weight()
 
     @abstractmethod
@@ -76,13 +76,14 @@ class ScatteringModel(AlgorithmBase):
         oldValues = [p() for p in params] # this sucks. But we dont want to loose the user provided value
         cumInt = zeros(data.f.sanitized.shape) # cumulated intensities
         vset = zeros(pset.shape[0])
+        wset = zeros(pset.shape[0])
         # call the model for each parameter set explicitly
         # otherwise the model gets complex for multiple params incl. fitting
         for i in arange(pset.shape[0]): # for each contribution
             for p, v in izip(params, pset[i]): # for each fit param within
                 p.setValue(v)
             # result squared or not is model type dependent
-            it, vset[i] = self.calcIntensity(data,
+            it, vset[i], wset[i] = self.calcIntensity(data,
                     compensationExponent = compensationExponent,
                     useSLD = useSLD)
             # a set of intensities
@@ -90,7 +91,7 @@ class ScatteringModel(AlgorithmBase):
         # restore previous parameter values
         for p, v in izip(params, oldValues):
             p.setValue(v)
-        return cumInt.flatten(), vset
+        return cumInt.flatten(), vset, wset
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
@@ -222,12 +223,14 @@ class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
     def weight(self):
-        return self.volume()**2
+        # compensationExponent is supposed to adjust the whole volume,
+        # -> not just the r³ part(?)
+        return self.volume()**(2 * self.compensationExponent)
 
-    def calcIntensity(self, data, compensationExponent = None,
-            useSLD = False):
+    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
         v = self._volume(compensationExponent = compensationExponent,
                          useSLD = useSLD)
+        w = self._weight(compensationExponent = compensationExponent)
 
         if data.config.smearing is not None:
             locs = data.locs[data.x0.validIndices] # apply xlimits
@@ -239,28 +242,32 @@ class SASModel(ScatteringModel):
 #            import sys
 #            print >>sys.__stderr__, "prepared"
 #            print >>sys.__stderr__, unicode(data.config.smearing)
-            it = 2 * np.trapz(ff**2 * v**2 * # outer() ?
+            it = 2 * np.trapz(ff**2 * w * # outer() ?
                     (0 * ff + weightFunc), x = qOffset, axis = 1)
         else:
             # calculate their form factors
             ff = self._formfactor(data)
             # a set of intensities
-            it = ff**2 * v**2
-        return it, v
+            it = ff**2 * w
+        return it, v, w
 
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
+    _angles = None
 
-    def weight(self):
-        return self.volume()**2
+    @property
+    def angles(self):
+        return self._angles
 
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+        self._angles = data.angles
         v = self._volume(compensationExponent = compensationExponent,
                          useSLD = useSLD)
+        w = self._weight(compensationExponent = compensationExponent)
         # calculate their form factors
         ff = self._formfactor(data)
         # a set of intensities
-        it = v**2 * ff
-        return it, v
+        it = ff * w
+        return it, v, w
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

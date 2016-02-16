@@ -25,16 +25,24 @@ class DLSSphere(DLSModel):
         self.radius.setActive(True)
 
     def volume(self):
-        # square root of the volume to be compatible with SAS-style volume
-        # normalization (individual volumes are squared before summing up)
-        return sqrt((pi*4./3.) * self.radius()**(3. * self.compensationExponent))
+        return (pi*4./3.) * self.radius()**3
+
+    def _ffSphere(self):
+        qr = self.angles * self.radius()
+        ff = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.) # usual sphere ff
+        #return 1.0
+        return ff
+
+    def weight(self):
+        # a compExp. < 1 reduces the volume contribution to the amplitude
+        # compExp. << 1 (e.g. 1e-4): equal volume contrib. for all radii
+        return self._ffSphere() * self.volume()**self.compensationExponent
 
     def formfactor(self, data):
-        qr = data.angles * self.radius()
-        ff = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.) # usual sphere ff
-        res = (exp( data.tauGamma.sanitized / self.radius() ))
-        res = data.tauGamma.unflatten(res) * ff
-        res = data.tauGamma.flatten(res)
+        res = exp( data.tauGamma.sanitized / self.radius() )
+        # in case of multi-angles, helpers from MultiDataVector
+        # res = data.tauGamma.unflatten(res) * ff
+        # res = data.tauGamma.flatten(res)
         return res
 
 DLSSphere.factory()

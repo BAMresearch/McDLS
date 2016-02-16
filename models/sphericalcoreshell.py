@@ -71,7 +71,7 @@ class SphericalCoreShell(SASModel):
 
     def volume(self):
         v = 4./3 * pi * (self.radius() + self.t())**3
-        return v**self.compensationExponent
+        return v
 
     def absVolume(self):
         return self.volume() #TODO: check how to do this.

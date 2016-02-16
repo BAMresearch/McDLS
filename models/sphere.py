@@ -29,7 +29,7 @@ class Sphere(SASModel):
         self.radius.setActive(True)
 
     def volume(self):
-        result = (pi*4./3.) * self.radius()**(3. * self.compensationExponent)
+        result = (pi*4./3.) * self.radius()**3
         return result
 
     def absVolume(self):

@@ -90,7 +90,7 @@ class EllipsoidalCoreShell(SASModel):
 
     def volume(self):
         v = 4./3 * pi * (self.a() + self.t()) * (self.b() + self.t())**2
-        return v**self.compensationExponent
+        return v
 
     def absVolume(self):
         return self.volume() #TODO: check how to do this.

@@ -71,7 +71,7 @@ class CylindersIsotropic(SASModel):
 
     def volume(self):
         v = pi * self.radius()**2 * (2. * self.radius() * self.aspect())
-        return v**self.compensationExponent
+        return v
 
 CylindersIsotropic.factory()
 

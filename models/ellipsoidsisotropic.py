@@ -77,7 +77,7 @@ class EllipsoidsIsotropic(SASModel):
             Rc = self.c()
 
         v = 4./3. * pi * Ra**2. * Rc
-        return v**self.compensationExponent
+        return v
 
     def absVolume(self):
         return self.volume() * self.sld()**2

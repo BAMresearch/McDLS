@@ -61,7 +61,7 @@ class GaussianChain(SASModel):
 
     def volume(self):
         v = self.k() * self.rg()**2
-        return v**self.compensationExponent
+        return v
 
     @mixedmethod
     def fixTestParams(self, params):
