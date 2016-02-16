@@ -90,7 +90,7 @@ class Kholodenko(SASModel):
 
     def volume(self):
         volume = numpy.pi * self.lenContour() * self.radius()**2
-        return volume**self.compensationExponent
+        return volume
 
 Kholodenko.factory()
 
