@@ -247,6 +247,7 @@ class DataObj(DataSet, DisplayMixin):
         #           Atm, the smallest common range wins. [ingo]
         self.config.setX0ValueRange(
                 (self.x0.siData.min(), self.x0.siData.max()))
+        self._excludeInvalidX0()
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
@@ -256,6 +257,13 @@ class DataObj(DataSet, DisplayMixin):
         self.config.x1High.setDisplayName(descr)
         self.config.setX1ValueRange(
                 (self.x1.siData.min(), self.x1.siData.max()))
+
+    def _excludeInvalidX0(self):
+        validX0Idx = 0 # get the first data point index above 0
+        while self.x0.siData[validX0Idx] <= 0.0:
+            validX0Idx += 1
+        if self.config.x0LowClip() < validX0Idx:
+            self.config.x0LowClip.setValue(validX0Idx)
 
     @abstractproperty
     def configType(self):
