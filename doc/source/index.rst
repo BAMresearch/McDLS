@@ -12,7 +12,7 @@ Welcome to McSAS's documentation!
 
    quickstart
    code
-   generate
+   generate_doc
 
 .. Tried to include the quickstart guide to have it on the first page directly
 .. But it doesn't work with the latex/pdf output then
