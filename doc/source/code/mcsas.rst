@@ -1,28 +1,16 @@
-mcsas package
-=============
-
-Subpackages
------------
-
-.. toctree::
-
-    mcsas.bases
-    mcsas.gui
-    mcsas.log
-    mcsas.mcsas
-    mcsas.models
-    mcsas.utils
+mcsas.mcsas package
+===================
 
 Submodules
 ----------
 
 .. toctree::
 
-   mcsas.autobuild
-   mcsas.cxfreeze
-   mcsas.main
-   mcsas.mcsas_test
-   mcsas.sasdata
+   mcsas.backgroundscalingfit
+   mcsas.mcsas
+   mcsas.mcsasdefaultcfg
+   mcsas.mcsasparameters
+   mcsas.plotting
 
 Module contents
 ---------------

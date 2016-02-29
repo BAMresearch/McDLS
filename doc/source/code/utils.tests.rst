@@ -1,7 +1,7 @@
-mcsas.mcsas.mcsas module
+mcsas.utils.tests module
 ========================
 
-.. automodule:: mcsas.mcsas
+.. automodule:: utils.tests
     :members:
     :undoc-members:
     :show-inheritance:

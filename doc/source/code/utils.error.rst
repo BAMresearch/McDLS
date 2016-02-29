@@ -1,7 +1,7 @@
-mcsas.mcsas.mcsas module
+mcsas.utils.error module
 ========================
 
-.. automodule:: mcsas.mcsas
+.. automodule:: utils.error
     :members:
     :undoc-members:
     :show-inheritance:

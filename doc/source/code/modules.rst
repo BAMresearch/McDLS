@@ -1,4 +1,4 @@
-MCSAS
+McSAS
 =====
 
 .. toctree::
