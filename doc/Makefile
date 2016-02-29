@@ -6,7 +6,7 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXAPIDOC  = sphinx-apidoc
 PAPER         =
-BUILDDIR      = build
+BUILDDIR      = _build
 APIDIR	      = source/code
 
 # Internal variables.

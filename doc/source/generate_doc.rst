@@ -33,7 +33,9 @@ Update Source Code Documentation
 ================================
 ::
 
-    sphinx-apidoc --separate --force --doc-project=McSAS --output-dir=doc/source/code .
+    cd <mcsas>/doc
+    make clean
+    make apidoc
 
 This command automatically generates sphinx documentation files for all
 source code files in the directory. It assumes the current working
