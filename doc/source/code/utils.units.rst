@@ -1,7 +1,7 @@
-mcsas.mcsas.mcsas module
+mcsas.utils.units module
 ========================
 
-.. automodule:: mcsas.mcsas
+.. automodule:: utils.units
     :members:
     :undoc-members:
     :show-inheritance:

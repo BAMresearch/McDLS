@@ -10,6 +10,19 @@ Contents:
    :maxdepth: 4
 
    code/mcsas
+   code/models
+   code/gui
+   code/log
+   code/utils
+   code/datafile
+   code/dataobj
+   code/bases
+   code/main
+   code/modules
+   code/cxfreeze
+   code/autobuild
+   code/compare
+   code/mcsas_test
 
 
 Indices and tables

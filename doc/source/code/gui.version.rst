@@ -1,7 +1,7 @@
-mcsas.mcsas.mcsas module
+mcsas.gui.version module
 ========================
 
-.. automodule:: mcsas.mcsas
+.. automodule:: gui.version
     :members:
     :undoc-members:
     :show-inheritance:
