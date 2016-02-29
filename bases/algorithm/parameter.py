@@ -58,7 +58,7 @@ import sys
 import logging
 from utils import isString, isNumber, isList, isMap, isSet, testfor, assertName
 from utils.mixedmethod import mixedmethod
-from utils.classproperty import classproperty
+from utils import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
 from utils.units import NoUnit
 from utils import clip, isCallable

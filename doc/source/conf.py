@@ -42,6 +42,7 @@ class Mock(object):
     pi = 3.14
     rcParams = dict()
     __version__ = "2.2.1"
+    __all__ = [] # required by mocked gui.qt, autodoc breaks otherwise
     Question = None
     Information = None
     Warning = None
@@ -125,13 +126,36 @@ if os.path.basename(rootpath) != "mcsas":
     os.symlink(rootpath, os.path.basename(newpath))
 
 sys.path.insert(0, rootpath)
-sys.path.insert(0, os.path.dirname(rootpath))
+#sys.path.insert(0, os.path.dirname(rootpath))
 
 # patch problematic methods which may raise NotImplementedError
-import mcsas.utils.units
-mcsas.utils.units.Unit.siMagnitudeName = lambda cls: ""
-mcsas.utils.units.Unit.siMagnitude = lambda cls: ""
-mcsas.utils.units.Unit.magnitudeMapping = lambda cls: {}
+import utils.units
+utils.units.Unit.siMagnitude = ""
+utils.units.Unit.siMagnitudeName = ""
+class DummyDict(dict):
+    def __getitem__(*args, **kwargs):
+        return 1
+    def __contains__(*args, **kwargs):
+        return True
+
+utils.units.Unit.magnitudeMapping = DummyDict()
+
+def dummy(func):
+    return func
+
+import utils
+utils.classproperty = dummy
+
+def dummy2(*args, **kwargs):
+    return None
+
+import bases.algorithm
+bases.algorithm.Parameter = dummy2
+
+def dummy3(self, *args, **kwargs):
+    return None
+
+bases.algorithm.AlgorithmBase.factory = dummy3.__get__(bases.algorithm.AlgorithmBase, type)
 
 # -- General configuration -----------------------------------------------------
 

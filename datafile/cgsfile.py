@@ -74,6 +74,8 @@ class CGSFile(AsciiFile):
 
     @classmethod
     def setPropertyGetters(cls):
+        if not hasattr(cls.knownProperties, "iteritems"):
+            return
         for inName, memName in cls.knownProperties.iteritems():
             if memName is None or not len(memName):
                 memName = inName

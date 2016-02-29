@@ -39,7 +39,7 @@ import logging
 import collections
 import numpy as np # For arrays
 from numpy import pi
-from utils.classproperty import classproperty
+from utils import classproperty
 
 class Unit(object):
     _magnitudeMap = None

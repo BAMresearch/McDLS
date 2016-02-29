@@ -3,6 +3,8 @@
 
 from __future__ import absolute_import # PEP328
 
+__all__ = []
+
 import sys
 import os
 import importlib
