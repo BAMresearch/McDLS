@@ -12,7 +12,7 @@ Required keyword arguments:
                        unicode strings.
     - *simagnitudename*: the si magnitude name.
 
-Example usage: 
+Example usage:
 
 >>> rUnit = Length("nm")
 >>> rUnit.siMagnitudeName
@@ -23,10 +23,12 @@ u'nm'
 1e-09
 
 or:
+
 >>> rUnit.toSi(32)
 3.2e-08
 
-Selecting a default: 
+Selecting a default:
+
 >>> qUnit = ScatteringVector(u"cm⁻¹")
 >>> qUnit.magnitudeConversion
 100.0
