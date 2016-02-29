@@ -157,6 +157,9 @@ def dummy3(self, *args, **kwargs):
 
 bases.algorithm.AlgorithmBase.factory = dummy3.__get__(bases.algorithm.AlgorithmBase, type)
 
+import datetime
+from gui.version import version as appversion
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -187,16 +190,16 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'McSAS'
-copyright = u'2015, Brian R. Pauw'
+project = appversion.name()
+author = u'Brian R. Pauw'
+copyright = u'2014-{y}, {a}'.format(y = datetime.date.today().year, a = author)
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-import gui.version
 # The full version, including alpha/beta/rc tags.
-release = gui.version.version.number()
+release = appversion.number()
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
 
@@ -314,7 +317,7 @@ html_show_sourcelink = False
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'McSASdoc'
+htmlhelp_basename = project + 'doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -328,8 +331,8 @@ htmlhelp_basename = 'McSASdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'McSAS.tex', u'McSAS Documentation',
-   u'Brian R. Pauw', 'manual'),
+  ('index', project+'.tex', project + u' Documentation',
+   author, 'manual'),
 ]
 
 # removes obsolete empty pages in pdf
@@ -369,8 +372,8 @@ latex_elements = {
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'mcsas', u'McSAS Documentation',
-     [u'Brian R. Pauw'], 1)
+    ('index', 'mcsas', project + u' Documentation',
+     [author,], 1)
 ]
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
