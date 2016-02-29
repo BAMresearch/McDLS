@@ -42,6 +42,7 @@ from numpy import pi
 from utils.classproperty import classproperty
 from utils.hdf5base import h5w, HDF5Mixin
 import h5py
+from utils import classproperty
 
 class Unit(HDF5Mixin, object):
     _magnitudeMap = None

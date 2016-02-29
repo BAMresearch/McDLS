@@ -4,7 +4,7 @@
 from __future__ import absolute_import # PEP328
 from utils import isString, isList, testfor, assertName
 from utils.mixedmethod import mixedmethod
-from utils.classproperty import classproperty
+from utils import classproperty
 from bases.algorithm.parameter import ParameterBase, ParameterError
 
 class AlgorithmError(StandardError):

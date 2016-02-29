@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from numpy import ndarray as np_ndarray
 from utils.error import FileError
 from utils.lastpath import LastPath
-from utils.classproperty import classproperty
+from utils import classproperty
 
 class DataFile(object):
     """
