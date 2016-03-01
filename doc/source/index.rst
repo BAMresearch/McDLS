@@ -11,6 +11,7 @@ Welcome to McSAS's documentation!
    :maxdepth: 2
 
    quickstart
+   math
    code
    generate_doc
 
