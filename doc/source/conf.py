@@ -171,10 +171,12 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.pngmath',
+#    'sphinx.ext.pngmath',
+    'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'sphinx.ext.inheritance_diagram'
+    'sphinx.ext.inheritance_diagram',
+#    'sphinx.ext.napoleon', # http://www.sphinx-doc.org/en/stable/ext/napoleon.html#google-vs-numpy
 ]
 
 # Add any paths that contain templates here, relative to this directory.
