@@ -151,6 +151,12 @@ class TrapezoidSmearing(SmearingConfig):
         self.Umbra.setValueRange((0., 2. * qHigh))
         self.Penumbra.setValueRange((0., 2. * qHigh))
 
+    def updateSmearingLimits(self, q):
+        qHigh = q.max()
+        lowLim = diff(q).min()
+        self.Umbra.setValueRange((lowLim, 2. * qHigh))
+        self.Penumbra.setValueRange((lowLim, 2. * qHigh))
+
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
         # TODO
@@ -195,6 +201,7 @@ class SASConfig(DataConfig):
         if self.smearing is None:
             return
         self.smearing.updateQLimits((self.x0Low(), self.x0High())) # correct?
+        # self.smearing.updateSmearingLimits(self.q) # correct?
 
     def setX1ValueRange(self, limit):
         super(SASConfig, self).setX1ValueRange(limit)
@@ -290,6 +297,7 @@ class SASConfig(DataConfig):
             self.register("qunit", self.smearing.updateQUnit)
             self.register("punit", self.smearing.updatePUnit)
             self.register("x0limits", self.smearing.updateQLimits)
+            # self.register("x0limits", self.smearing.updateSmearingLimits)
             self.register("x1limits", self.smearing.updatePLimits)
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")
