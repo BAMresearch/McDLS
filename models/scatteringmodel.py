@@ -233,7 +233,7 @@ class SASModel(ScatteringModel):
         a 1D vector of q. 
 
         I do realize that this is not a good way of doing things. This should be 
-        replaced at a given point in time by a better solution
+        replaced at a given point in time by a better solution within sasdata. 
         """
 
         if isinstance(dataset, np.ndarray):
@@ -252,7 +252,8 @@ class SASModel(ScatteringModel):
                          useSLD = useSLD)
         w = self._weight(compensationExponent = compensationExponent)
 
-        if (data.config.smearing is not None) and self.canSmear:
+        if (data.config.smearing is not None) and self.canSmear and (
+                data.config.smearing.doSmear()): # first and last conditions serve same purpose
             locs = data.locs[data.x0.validIndices] # apply xlimits
             # the ff functions might only accept one-dimensional q arrays
             # kansas = locs.shape

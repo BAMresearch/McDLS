@@ -21,8 +21,9 @@ class SmearingConfig(AlgorithmBase):
     locs = None # integration location matrix, depends on collType
     shortName = "SAS smearing configuration"
     parameters = (
-        # not sure if this is the right place: is the nsteps parameter useful
-        # for all possible smearing settings? BRP: yes, I think so... 
+        Parameter("doSmear", False, unit = NoUnit(),
+            displayName = "Apply smearing correction",
+            ),
         Parameter("nSteps", 25, unit = NoUnit(),
             displayName = "number of smearing points around each q",
             valueRange = (0, 1000)),
@@ -114,7 +115,6 @@ class TrapezoidSmearing(SmearingConfig):
         Since the smearing function is assumed to be symmetrical, the 
         integration parameters are calculated in the interval [0, xb/2]
         """
-        # this function is not called!!!:
         n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
         logging.debug("setIntPoints called with n = {}".format(n))
 
@@ -247,6 +247,9 @@ class SASConfig(DataConfig):
         if self.smearing is None:
             return q
         if self.smearing.Penumbra() == 0.:
+            return q
+        if not self.smearing.doSmear():
+            logging.debug("smearing disabled")
             return q
         self.smearing.setIntPoints(q)
         qOffset, weights = self.smearing.prepared
