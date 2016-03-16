@@ -256,6 +256,7 @@ class SASModel(ScatteringModel):
                 self.canSmear and 
                 data.config.smearing.doSmear() and # serves same purpose as first
                 data.config.smearing.inputValid()):
+            # inputValid can be removed once more appropriate limits are set in GUI
 
             locs = data.locs[data.x0.validIndices] # apply xlimits
             # the ff functions might only accept one-dimensional q arrays

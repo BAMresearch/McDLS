@@ -5,6 +5,7 @@ from __future__ import absolute_import # PEP328
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import numpy as np
+from scipy import stats
 from bases.algorithm import AlgorithmBase
 from utils.parameter import Parameter
 from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
@@ -176,6 +177,82 @@ class TrapezoidSmearing(SmearingConfig):
 
 TrapezoidSmearing.factory()
 
+class GaussianSmearing(SmearingConfig):
+    parameters = (
+        Parameter("Variance", 0., unit = NoUnit(), # unit set outside
+            displayName = u"Variance (σ²) of <br /> Gaussian beam profile",
+            description = "full width at half maximum of the Gaussian beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            valueRange = (0., np.inf), decimals = 1),
+    )
+
+    def inputValid(self):
+        # returns True if the input values are valid
+        return (self.Variance() > 0.) 
+
+    @property
+    def showParams(self):
+        lst = ["Variance"]
+        return lst + [name
+                for name in super(GaussianSmearing, self).showParams
+                    if name not in lst]
+
+    def setIntPoints(self, q):
+        """ sets smearing profile integration points for trapezoidal slit. 
+        Top (umbra) of trapezoid has full width xt, bottom of trapezoid 
+        (penumbra) has full width.
+        Since the smearing function is assumed to be symmetrical, the 
+        integration parameters are calculated in the interval [0, xb/2]
+        """
+        n, GVar = self.nSteps(), self.Variance()
+        logging.debug("setIntPoints called with n = {}".format(n))
+
+        # following qOffset is used for Pinhole and Rectangular
+        qOffset = np.logspace(np.log10(q.min() / 3.),
+                np.log10(2.5 * GVar), num = np.ceil(n / 2.))
+        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
+        if not self.twoDColl():
+            # overwrite prepared integration steps qOffset:
+            qOffset = np.logspace(np.log10(q.min() / 3.),
+                    np.log10(2.5 * GVar), num = n)
+            # tack on a zero at the beginning
+            qOffset = np.concatenate(([0,], qOffset)) 
+
+        y = stats.norm.pdf(qOffset, scale = GVar)
+
+        logging.debug("qOffset: {}, y: {}".format(qOffset, y))
+        self._qOffset, self._weights = qOffset, y
+
+    def updateQUnit(self, newUnit):
+        assert isinstance(newUnit, ScatteringVector)
+        self.Variance.setUnit(newUnit)
+
+    def updatePUnit(self, newUnit):
+        assert isinstance(newUnit, Angle)
+        # TODO
+
+    def updateQLimits(self, qLimit):
+        qLow, qHigh = qLimit
+        self.Variance.setValueRange((0., 2. * qHigh))
+
+    def updateSmearingLimits(self, q):
+        qHigh = q.max()
+        lowLim = diff(q).min()
+        self.Variance.setValueRange((lowLim, 2. * qHigh))
+
+    def updatePLimits(self, pLimit):
+        pLow, pHigh = pLimit
+        # TODO
+
+    def __init__(self):
+        super(GaussianSmearing, self).__init__()
+        self.Variance.setOnValueUpdate(self.onVarianceUpdate)
+
+    def onVarianceUpdate(self):
+        """Value in Variance will not exceed available q."""
+        self.Variance.setValueRange((0., np.inf))
+
+GaussianSmearing.factory()
+
 class SASConfig(DataConfig):
     # TODO: fix UI elsewhere for unit selection along to each input and forward
     #       that to the DataVector
@@ -254,13 +331,16 @@ class SASConfig(DataConfig):
 
         assert( isinstance(q, np.ndarray))
         assert( q.ndim == 1)
+        logging.debug("PrepareSmearing called!")
 
         if self.smearing is None:
+            logging.warning("not smearing: self.smearing is None")
             return q
-        if self.smearing.Penumbra() == 0.:
+        if not self.smearing.inputValid():
+            logging.warning("not smearing: Smearing parameters not valid")
             return q
         if not self.smearing.doSmear():
-            logging.debug("smearing disabled")
+            logging.warning("not smearing: Smearing disabled")
             return q
         self.smearing.setIntPoints(q)
         qOffset, weights = self.smearing.prepared
@@ -291,7 +371,8 @@ class SASConfig(DataConfig):
         super(SASConfig, self).__init__()
         smearing = kwargs.pop("smearing", None)
         if smearing is None:
-            smearing = TrapezoidSmearing()
+            # smearing = TrapezoidSmearing()
+            smearing = GaussianSmearing()
         self.smearing = smearing
         self.register("qunit", self.x0Low.setUnit)
         self.register("qunit", self.x0High.setUnit)
