@@ -92,9 +92,9 @@ class TrapezoidSmearing(SmearingConfig):
     @property
     def showParams(self):
         lst = ["Umbra", "Penumbra"]
-        return lst + [name
+        return [name
                 for name in super(TrapezoidSmearing, self).showParams
-                    if name not in lst]
+                    if name not in lst] + lst
 
     def halfTrapzPDF(self, x, c, d):
         # this trapezoidal PDF is only defined from X >= 0, and is assumed
@@ -192,9 +192,9 @@ class GaussianSmearing(SmearingConfig):
     @property
     def showParams(self):
         lst = ["Variance"]
-        return lst + [name
+        return [name
                 for name in super(GaussianSmearing, self).showParams
-                    if name not in lst]
+                    if name not in lst] + lst
 
     def setIntPoints(self, q):
         """ sets smearing profile integration points for trapezoidal slit. 
