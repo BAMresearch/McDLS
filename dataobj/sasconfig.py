@@ -245,11 +245,6 @@ class GaussianSmearing(SmearingConfig):
 
     def __init__(self):
         super(GaussianSmearing, self).__init__()
-        self.Variance.setOnValueUpdate(self.onVarianceUpdate)
-
-    def onVarianceUpdate(self):
-        """Value in Variance will not exceed available q."""
-        self.Variance.setValueRange((0., np.inf))
 
 GaussianSmearing.factory()
 
