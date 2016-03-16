@@ -252,8 +252,11 @@ class SASModel(ScatteringModel):
                          useSLD = useSLD)
         w = self._weight(compensationExponent = compensationExponent)
 
-        if (data.config.smearing is not None) and self.canSmear and (
-                data.config.smearing.doSmear()): # first and last conditions serve same purpose
+        if ((data.config.smearing is not None) and 
+                self.canSmear and 
+                data.config.smearing.doSmear() and # serves same purpose as first
+                data.config.smearing.inputValid()):
+
             locs = data.locs[data.x0.validIndices] # apply xlimits
             # the ff functions might only accept one-dimensional q arrays
             # kansas = locs.shape

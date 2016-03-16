@@ -84,6 +84,10 @@ class TrapezoidSmearing(SmearingConfig):
             valueRange = (0., np.inf), decimals = 1),
     )
 
+    def inputValid(self):
+        # returns True if the input values are valid
+        return (self.Umbra() > 0.) and (self.Penumbra > self.Umbra())
+
     @property
     def showParams(self):
         lst = ["Umbra", "Penumbra"]
