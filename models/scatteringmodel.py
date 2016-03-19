@@ -12,9 +12,44 @@ from utils import isList, isNumber, mixedmethod, testfor
 from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveParam
 
+class ModelData(object):
+    _int = None
+    _vset = None
+    _wset = None
+
+    @property
+    def cumInt(self):
+        """Returns the cumulated model intensity or signal."""
+        return self._int
+
+    @property
+    def vset(self):
+        """Returns the associated set of volumes."""
+        return self._vset
+
+    @property
+    def wset(self):
+        """Returns the associated set of weights."""
+        return self._wset
+
+    def __init__(self, cumInt, vset, wset):
+        assert cumInt is not None
+        assert vset is not None
+        assert wset is not None
+        self._int = cumInt
+        self._vset = vset
+        self._wset = wset
+
+class SASModelData(ModelData):
+    def __init__(self, *args, **kwargs):
+        super(SASModelData, self).__init__(*args, **kwargs)
+
+class DLSModelData(ModelData):
+    def __init__(self, *args, **kwargs):
+        super(DLSModelData, self).__init__(*args, **kwargs)
+
 class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta
-    # compensationExponent = 1./2 # default, overridden with that from JSON dict
 
     @abstractmethod
     def volume(self):
@@ -63,6 +98,8 @@ class ScatteringModel(AlgorithmBase):
         Returns a tuple containing an array of the calculated intensities for
         the grid provided with the data and the volume of a single particle
         based on the model parameters.
+        Has to be implemented in derived classes specific to a certain type of
+        measurement.
         """
         raise NotImplementedError
 
@@ -70,6 +107,7 @@ class ScatteringModel(AlgorithmBase):
         """Calculates the total intensity and scatterer volume contributions
         using the current model.
         *pset* number columns equals the number of active parameters.
+        Returns a ModelData object for a certain type of measurement.
         """
         # remember parameter values
         params = self.activeParams()
@@ -91,7 +129,13 @@ class ScatteringModel(AlgorithmBase):
         # restore previous parameter values
         for p, v in izip(params, oldValues):
             p.setValue(v)
-        return cumInt.flatten(), vset, wset
+        return self.modelDataType()(cumInt.flatten(), vset, wset)
+
+    @abstractmethod
+    def modelDataType(self):
+        """Returns the appropriate ModelData class for this type of model.
+        """
+        raise NotImplementedError
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
@@ -222,6 +266,9 @@ class ScatteringModel(AlgorithmBase):
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
 
+    def modelDataType(self):
+        return SASModelData
+
     def weight(self):
         # compensationExponent is supposed to adjust the whole volume,
         # -> not just the r³ part(?)
@@ -254,6 +301,9 @@ class SASModel(ScatteringModel):
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
     _angles = None
+
+    def modelDataType(self):
+        return DLSModelData
 
     @property
     def angles(self):
