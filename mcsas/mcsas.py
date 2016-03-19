@@ -302,7 +302,8 @@ class McSAS(AlgorithmBase):
         else:
             rset = self.model.generateParameters(numContribs)
 
-        ft, vset, wset = self.model.calc(data, rset, compensationExponent)
+        modelData = self.model.calc(data, rset, compensationExponent)
+        ft, vset, wset = modelData.cumInt, modelData.vset, modelData.wset
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
@@ -338,15 +339,15 @@ class McSAS(AlgorithmBase):
                not self.stop):
             rt = self.model.generateParameters()
             # calculate contribution measVal:
-            ftt, vtt, wtt = self.model.calc(data, rt, compensationExponent)
+            newModelData = self.model.calc(data, rt, compensationExponent)
             # Calculate new total measVal, subtract old measVal, add new:
-            fo, dummy, dummy = self.model.calc(data, rset[ri].reshape((1, -1)),
+            oldModelData = self.model.calc(data, rset[ri].reshape((1, -1)),
                                                compensationExponent)
-            ftest = (ft - fo + ftt) # is this numerically stable?
+            ftest = (ft - oldModelData.cumInt + newModelData.cumInt)
             # is numerically stable (so far). Can calculate final uncertainty
             # based on number of valid "moves" and sys.float_info.epsilon
 
-            wtest = wset.sum() - wset[ri] + wtt
+            wtest = wset.sum() - wset[ri] + newModelData.wset
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt, dummy = bgScalingFit.calc(
@@ -355,7 +356,7 @@ class McSAS(AlgorithmBase):
             if convalt < conval: # it's better
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
-                ft, wset[ri] = ftest, wtt
+                ft, wset[ri] = ftest, newModelData.wset
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
@@ -515,24 +516,23 @@ class McSAS(AlgorithmBase):
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere vset:
-            ft, vset, wset = self.model.calc(data, rset,
-                                             self.compensationExponent())
+            modelData = self.model.calc(data, rset, self.compensationExponent())
 #            dummy, vpa, dummy = self.model.calc(data, rset,
 #                    compensationExponent = 1.0, useSLD = True) # TODO: useSLD!
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            sc = numpy.array([data.f.limit[1] / ft.max(), data.f.limit[0]])
+            sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
             # optimize scaling and background for this repetition
             sc, conval, dummy = bgScalingFit.calc(
-                    data.f.binnedData, data.f.binnedDataU, ft, sc)
+                    data.f.binnedData, data.f.binnedDataU, modelData.cumInt/sum(modelData.wset), sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # calculate individual volume fractions:
             # here, the weight reverts intensity normalization effecting the
             # scaling sc[0] during optimization, it does not influence
             # the resulting volFrac
-            volumeFraction[:, ri] = (wset * sc[0]/vset).flatten()
+            volumeFraction[:, ri] = (modelData.wset * math.sqrt(sc[0])/modelData.vset).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
-            numberFraction[:, ri] = volumeFraction[:, ri]/vset.flatten()
+            numberFraction[:, ri] = volumeFraction[:, ri]/modelData.vset.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
 
             # calc observability for each sphere/contribution
@@ -543,13 +543,13 @@ class McSAS(AlgorithmBase):
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
                 # again, partial intensities for this size only required
-                fr, dummy, dummy = self.model.calc(data,
-                        rset[c].reshape((1, -1)), self.compensationExponent())
+                partialModelData = self.model.calc(data, rset[c].reshape((1, -1)),
+                                                   self.compensationExponent())
                 # FIXME: mcsas.py:542: RuntimeWarning: divide by zero encountered in divide
                 minReqVol[c, ri] = (
                         data.f.binnedDataU * volumeFraction[c, ri]
-                                / (sc[0] * fr)).min()
-                minReqNum[c, ri] = minReqVol[c, ri] / vset[c]
+                                / (sc[0] * partialModelData.cumInt)).min()
+                minReqNum[c, ri] = minReqVol[c, ri] / modelData.vset[c]
 
             numberFraction[:, ri] /= totalNumberFraction[ri]
             minReqNum[:, ri] /= totalNumberFraction[ri]
@@ -587,9 +587,11 @@ class McSAS(AlgorithmBase):
             logging.info('regenerating set {} of {}'.format(ri, numReps-1))
             rset = contribs[:, :, ri]
             # calculate their form factors
-            ft, vset, wset = self.model.calc(data, rset, compensationExponent)
+            # ft, vset, wset = self.model.calc(data, rset, compensationExponent)
+            modelData = self.model.calc(data, rset, compensationExponent)
             # Optimize the intensities and calculate convergence criterium
-            intAvg = intAvg + ft*scalingFactors[0, ri] + scalingFactors[1, ri]
+            intAvg = (intAvg + modelData.cumInt*scalingFactors[0, ri]
+                             + scalingFactors[1, ri])
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
