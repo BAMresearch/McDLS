@@ -20,7 +20,7 @@ class ScatteringModel(AlgorithmBase):
         """Calculates the volume of this model, taking compensationExponent
         into account from input or preset parameters.
         Reimplement this for new models."""
-        raise NotImplemented
+        raise NotImplementedError
 
     def absVolume(self):
         """Forwarding to usual volume() by default.
@@ -37,7 +37,7 @@ class ScatteringModel(AlgorithmBase):
     def weight(self):
         """A weighting function for the form factor.
         With SAXS, it is usually the volume squared."""
-        raise NotImplemented
+        raise NotImplementedError
 
     def _weight(self, compensationExponent = None):
         """Wrapper around the user-defined function."""
@@ -48,7 +48,7 @@ class ScatteringModel(AlgorithmBase):
     def formfactor(self, dataset):
         """Calculates the Rayleigh function of this model.
         Reimplement this for new models."""
-        raise NotImplemented
+        raise NotImplementedError
 
     def _formfactor(self, dataset):
         """Wrapper around the user-defined function."""
@@ -63,7 +63,7 @@ class ScatteringModel(AlgorithmBase):
         the grid provided with the data and the volume of a single particle
         based on the model parameters.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def calc(self, data, pset, compensationExponent = None):
         """Calculates the total intensity and scatterer volume contributions
