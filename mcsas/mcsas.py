@@ -310,6 +310,10 @@ class McSAS(AlgorithmBase):
         sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
                                             self.model)
+        # for the least squares fit, normalize the intensity by the sum of
+        # weights which is << 1 (for SAXS, usually it's the sum
+        # of the scatterers volumes), though increasing ft and reducing the
+        # scaling sc[0]; when histogramming, this gets reverted
         sc, conval, dummy = bgScalingFit.calc(
                 data.f.sanitized, data.fu.sanitized,
                 ft / sum(wset), sc, ver = 1)
@@ -522,8 +526,11 @@ class McSAS(AlgorithmBase):
             sc, conval, dummy = bgScalingFit.calc(
                     data.f.sanitized, data.fu.sanitized, ft, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
-            # is the volume fraction scaled to the weight or volume?
-            volumeFraction[:, ri] = (sc[0] * wset/vset).flatten()
+            # calculate individual volume fractions:
+            # here, the weight reverts intensity normalization effecting the
+            # scaling sc[0] during optimization, it does not influence
+            # the resulting volFrac
+            volumeFraction[:, ri] = (wset * sc[0]/vset).flatten()
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/vset.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])

@@ -33,6 +33,10 @@ class DLSSphere(DLSModel):
         #return 1.0
         return ff
 
+    # how to get adjustable size sensitivity by compensationEXponent?
+    # -> the SAXS way is by default not possible due to the normalized model == 1
+    # idea: using a weight w/o compExp for normalization but with compExp in the model
+    #   -> violates the specs but may lead to desired result ...
     def weight(self):
         # a compExp. < 1 reduces the volume contribution to the amplitude
         # compExp. << 1 (e.g. 1e-4): equal volume contrib. for all radii
