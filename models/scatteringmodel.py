@@ -23,6 +23,13 @@ class ModelData(object):
         return self._int
 
     @property
+    def chisqrInt(self):
+        """Make the model intensity comparable to the measured intensity. The
+        difference of both will be calculated in BackgroundScalingFit in order
+        to perform the chi-square test."""
+        return self.cumInt
+
+    @property
     def vset(self):
         """Returns the associated set of volumes."""
         return self._vset
@@ -36,9 +43,9 @@ class ModelData(object):
         assert cumInt is not None
         assert vset is not None
         assert wset is not None
-        self._int = cumInt
-        self._vset = vset
-        self._wset = wset
+        self._int = cumInt.flatten()
+        self._vset = vset.flatten()
+        self._wset = wset.flatten()
 
 class SASModelData(ModelData):
     def __init__(self, *args, **kwargs):
@@ -47,6 +54,10 @@ class SASModelData(ModelData):
 class DLSModelData(ModelData):
     def __init__(self, *args, **kwargs):
         super(DLSModelData, self).__init__(*args, **kwargs)
+
+    @property
+    def chisqrInt(self):
+        return (self.cumInt / sum(self.wset))**2
 
 class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta

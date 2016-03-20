@@ -307,8 +307,8 @@ class McSAS(AlgorithmBase):
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sc = numpy.array([data.f.limit[1] / ft.max(), data.f.limit[0]])
-        sc *= sum(wset)
+        sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
+#        sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
                                             self.model)
         # for the least squares fit, normalize the intensity by the sum of
@@ -317,12 +317,12 @@ class McSAS(AlgorithmBase):
         # scaling sc[0]; when histogramming, this gets reverted
         sc, conval, dummy = bgScalingFit.calc(
                 data.f.binnedData, data.f.binnedDataU,
-                ft / sum(wset), sc, ver = 1)
+                modelData, sc, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         sc, conval, dummy = bgScalingFit.calc(
                 data.f.binnedData, data.f.binnedDataU,
-                ft / sum(wset), sc)
+                modelData, sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -343,20 +343,24 @@ class McSAS(AlgorithmBase):
             # Calculate new total measVal, subtract old measVal, add new:
             oldModelData = self.model.calc(data, rset[ri].reshape((1, -1)),
                                                compensationExponent)
-            ftest = (ft - oldModelData.cumInt + newModelData.cumInt)
-            # is numerically stable (so far). Can calculate final uncertainty
-            # based on number of valid "moves" and sys.float_info.epsilon
-
-            wtest = wset.sum() - wset[ri] + newModelData.wset
+            testModelData = self.model.modelDataType()(
+                # is numerically stable (so far). Can calculate final uncertainty
+                # based on number of valid "moves" and sys.float_info.epsilon
+                ft - oldModelData.cumInt + newModelData.cumInt,
+                vset,
+                # not as intended but sufficient for now
+                wset.sum() - wset[ri] + newModelData.wset)
+#            ftest = (ft - oldModelData.cumInt + newModelData.cumInt)
+#            wtest = wset.sum() - wset[ri] + newModelData.wset
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt, dummy = bgScalingFit.calc(
-                    data.f.binnedData, data.f.binnedDataU, ftest / wtest, sc)
+                    data.f.binnedData, data.f.binnedDataU, testModelData, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
-                ft, wset[ri] = ftest, newModelData.wset
+                ft, wset[ri] = testModelData.cumInt, newModelData.wset
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
@@ -394,9 +398,10 @@ class McSAS(AlgorithmBase):
             'numMoves': numMoves,
             'elapsed': elapsed})
 
+        modelData = self.model.modelDataType()(ft, vset, wset)
         sc, conval, ifinal = bgScalingFit.calc(
                 data.f.binnedData, data.f.binnedDataU,
-                ft / sum(wset), sc)
+                modelData, sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -524,7 +529,7 @@ class McSAS(AlgorithmBase):
             sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
             # optimize scaling and background for this repetition
             sc, conval, dummy = bgScalingFit.calc(
-                    data.f.binnedData, data.f.binnedDataU, modelData.cumInt/sum(modelData.wset), sc)
+                    data.f.binnedData, data.f.binnedDataU, modelData, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # calculate individual volume fractions:
             # here, the weight reverts intensity normalization effecting the
