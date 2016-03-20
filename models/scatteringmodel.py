@@ -4,6 +4,7 @@
 import os.path
 import logging
 import inspect
+from math import sqrt
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from itertools import izip
@@ -47,9 +48,13 @@ class ModelData(object):
         self._vset = vset.flatten()
         self._wset = wset.flatten()
 
+    def volumeFraction(self, scaling):
+        """Returns the volume fraction based on the provided scaling factor to
+        match this model data to the measured data."""
+        return (self.wset * scaling / self.vset).flatten()
+
 class SASModelData(ModelData):
-    def __init__(self, *args, **kwargs):
-        super(SASModelData, self).__init__(*args, **kwargs)
+    pass
 
 class DLSModelData(ModelData):
     def __init__(self, *args, **kwargs):
@@ -57,7 +62,15 @@ class DLSModelData(ModelData):
 
     @property
     def chisqrInt(self):
+        """Normalize and square the cumulated model intensities before passing
+        them to the chi-square test."""
         return (self.cumInt / sum(self.wset))**2
+
+    def volumeFraction(self, scaling):
+        """Using the square root of the scaling factor to determine the volume
+        fraction because the model intensities is squared after cumulation and
+        normalization during post-processing."""
+        return super(DLSModelData, self).volumeFraction(sqrt(scaling))
 
 class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta

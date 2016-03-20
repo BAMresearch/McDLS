@@ -535,7 +535,7 @@ class McSAS(AlgorithmBase):
             # here, the weight reverts intensity normalization effecting the
             # scaling sc[0] during optimization, it does not influence
             # the resulting volFrac
-            volumeFraction[:, ri] = (modelData.wset * math.sqrt(sc[0])/modelData.vset).flatten()
+            volumeFraction[:, ri] = modelData.volumeFraction(sc[0])
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/modelData.vset.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
