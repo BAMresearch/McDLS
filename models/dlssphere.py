@@ -4,7 +4,7 @@
 import numpy
 from numpy import pi, exp, sqrt, sin, cos
 from bases.algorithm import RandomUniform
-from utils.parameter import FitParameter
+from utils.parameter import FitParameter, Parameter
 from scatteringmodel import DLSModel
 from utils.units import NM
 
@@ -18,6 +18,8 @@ class DLSSphere(DLSModel):
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
                     decimals = 1), 
+                  Parameter("withFF", False,
+                    displayName = "Include the SAS sphere form factor?"),
                   )
 
     def __init__(self):
@@ -28,26 +30,21 @@ class DLSSphere(DLSModel):
         return (pi*4./3.) * self.radius()**3
 
     def _ffSphere(self):
+        if not self.withFF():
+            return 1.
         qr = self.angles * self.radius()
-        ff = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.) # usual sphere ff
-        #return 1.0
-        return ff
+        return 3. * (sin(qr) - qr * cos(qr)) / (qr**3.) # usual sphere ff
 
     # how to get adjustable size sensitivity by compensationEXponent?
     # -> the SAXS way is by default not possible due to the normalized model == 1
     # idea: using a weight w/o compExp for normalization but with compExp in the model
     #   -> violates the specs but may lead to desired result ...
     def weight(self):
-        # a compExp. < 1 reduces the volume contribution to the amplitude
-        # compExp. << 1 (e.g. 1e-4): equal volume contrib. for all radii
+        # a compExp. != 1 just changes the volume of a scatterer
         return self._ffSphere() * self.volume()**self.compensationExponent
 
     def formfactor(self, data):
-        res = exp( data.tauGamma.sanitized / self.radius() )
-        # in case of multi-angles, helpers from MultiDataVector
-        # res = data.tauGamma.unflatten(res) * ff
-        # res = data.tauGamma.flatten(res)
-        return res
+        return exp( data.tauGamma.sanitized / self.radius() )
 
 DLSSphere.factory()
 
