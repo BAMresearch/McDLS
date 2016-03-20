@@ -33,10 +33,6 @@ class FileList(DataList):
                 LastPath.get(), multiple = True,
                 filefilter = getFileFilter()
             )
-        lastConfig = None
-        if not self.isEmpty():
-            # get the data config of the last item in the list
-            lastConfig = self.data(len(self)-1)[0].config
         # populates to data list widget with items based on the return of
         # processSourceFunc(filename)
         def loaddataobj(fn):
@@ -45,13 +41,21 @@ class FileList(DataList):
                 return None
             dataobj = datafile.getDataObj()
             # set the config of the last item by default
-            dataobj.setConfig(lastConfig)
+            dataobj.setConfig(self.configFromLast())
             return dataobj
 
         nextIdx = len(self) # index of the next data set added
         DataList.loadData(self, sourceList = fileList, showProgress = False,
                           processSourceFunc = loaddataobj)
         self.postProcess(nextIdx)
+        # put the config of the last to all recently loaded
+        self.setDataConfig(self.configFromLast())
+
+    def configFromLast(self):
+        """Get the data config of the last item in the list."""
+        if self.isEmpty():
+            return None
+        return self.data(len(self)-1)[0].config
 
     def postProcess(self, firstIdx):
         """Starts accumulation of related data sets among the currently loaded
