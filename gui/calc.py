@@ -105,12 +105,16 @@ def plotStats(stats):
     # need a simple (generic) plotting method in mcsas.plotting
     # kind of a dirty hack for now ...
     from matplotlib.pyplot import (figure, show, subplot, plot,
-                                   errorbar, axes, legend)
+                                   errorbar, axes, legend, title,
+                                   xlabel, ylabel)
     fig = figure(figsize = (7, 7), dpi = 80,
                  facecolor = 'w', edgecolor = 'k')
-    fig.canvas.set_window_title("series statistics plot")
+    fig.canvas.set_window_title("series: " + stats["title"])
     a = subplot()
-    plot(stats["angle"], stats["mean"], 'r-', label = "mean")
+    plot(stats["angle"], stats["mean"], 'r-', label = stats["cfg"])
+    xlabel("angle")
+    ylabel("mean")
+    title(stats["title"])
     errorbar(stats["angle"], stats["mean"], stats["meanStd"],
              marker = '.', linestyle = "None")
     axes(a)
@@ -226,7 +230,9 @@ class Calculator(object):
         def makeKey(data, hist):
             """Derive a unique key for each pair of sample and histogram."""
             key = (data.sampleName,
-                   (hist.param.name(),) + h.xrange + (h.yweight,))
+                   (hist.param.name(),)
+                   + tuple(hist.param.unit().toDisplay(x) for x in h.xrange)
+                   + (h.yweight,))
             return key
 
         for p in model.activeParams():
@@ -273,6 +279,9 @@ class Calculator(object):
                                     "series statistics",
                                     columnNames, extension = '.dat')
             # simple statistics plotting, kind of a prototype for now ...
+            stats["cfg"] = u"{param} [{lo},{hi}] {w}".format(param = pname,
+                                                lo = lo, hi = hi, w = weight)
+            stats["title"] = sampleName
             if isMac():
                 plotStats(stats)
             else:
