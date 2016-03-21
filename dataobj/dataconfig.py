@@ -73,6 +73,7 @@ class CallbackRegistry(object):
 
 class DataConfig(AlgorithmBase, CallbackRegistry):
     _is2d = False
+    _sampleName = None
     parameters = (
         Parameter("x0Low", 0., unit = NoUnit(),
             displayName = "lower {x0} cut-off",
@@ -116,6 +117,14 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     @is2d.setter
     def is2d(self, isit):
         self._is2d = isit
+
+    @property
+    def sampleName(self):
+        return self._sampleName
+
+    @sampleName.setter
+    def sampleName(self, newName):
+        self._sampleName = newName
 
     def __init__(self):
         super(DataConfig, self).__init__()

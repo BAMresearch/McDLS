@@ -91,8 +91,11 @@ class AlgorithmWidget(SettingsWidget):
                 p.isActive() # fails for non-FitParameters
                 query = QRegExp("^" + p.name() + ".*")
             except: pass
-            for w in self.findChildren(QWidget, query):
-                yield w
+            try:
+                for w in self.findChildren(QWidget, query):
+                    yield w
+            # RuntimeError: Internal C++ object (SettingsGridWidget) already deleted.
+            except: pass
         for w in self.uiWidgets:
             yield w
 
