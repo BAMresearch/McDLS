@@ -36,6 +36,10 @@ class DLSConfig(DataConfig):
     def __init__(self):
         super(DLSConfig, self).__init__()
 
+    def overrideDefaults(self):
+        # clip preceding 2 points by default
+        self.x0LowClip.setValue(2)
+
 DLSConfig.factory()
 
 class MultiDataVector(DataVector):

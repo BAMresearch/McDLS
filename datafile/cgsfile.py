@@ -296,7 +296,6 @@ class CGSFile(AsciiFile):
         dlsData.setTau(self._tauUnit, self.correlation[:, 0])
         dlsData.setCorrelation(self.correlation[:, 1:])
         dlsData.setConfig(dlsData.configType()) # FIXME: move this to constructor
-        dlsData.config.x0LowClip.setValue(2) # clip preceding 2 points by default
         return dlsData
 
 CGSFile.setPropertyGetters()

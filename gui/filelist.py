@@ -50,6 +50,8 @@ class FileList(DataList):
         self.postProcess(nextIdx)
         # put the config of the last to all recently loaded
         self.setDataConfig(self.configFromLast())
+        self.configFromLast().overrideDefaults()
+        self.selectionChanged()
 
     def configFromLast(self):
         """Get the data config of the last item in the list."""
@@ -121,5 +123,6 @@ class FileList(DataList):
             data.setConfig(config)
         self.updateData(updateFunc = setConfigToData, config = dataConfig,
                         showProgress = False)
+        self.selectionChanged()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
