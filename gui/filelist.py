@@ -38,8 +38,6 @@ class FileList(DataList):
             if datafile is None:
                 return None
             dataobj = datafile.getDataObj()
-            # set the config of the last item by default
-            dataobj.setConfig(self.configFromLast())
             return dataobj
 
         DataList.loadData(self, sourceList = fileList, showProgress = False,
@@ -72,6 +70,8 @@ class FileList(DataList):
         def setConfigToData(data, config = None):
             """Helper to call the appropriate method in the class hierarchy of
             the dataset."""
+            if data.sampleName != config.sampleName:
+                return
             data.setConfig(config)
         self.updateData(updateFunc = setConfigToData, config = dataConfig,
                         showProgress = False)
