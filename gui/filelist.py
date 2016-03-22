@@ -47,7 +47,8 @@ class FileList(DataList):
         self.postProcess(nextIdx)
         # put the config of the last to all recently loaded
         self.setDataConfig(self.configFromLast())
-        self.configFromLast().overrideDefaults()
+        if self.configFromLast() is not None:
+            self.configFromLast().overrideDefaults()
         self.selectionChanged()
 
     def configFromLast(self):
