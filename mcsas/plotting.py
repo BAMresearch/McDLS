@@ -321,6 +321,8 @@ class PlotResults(object):
         for ai in range((nHists + 1) * nR * 2 ):
             # initialise axes
             ah = subplot(gs[ai])
+            # disable mouse coordinates while avoiding Tkinter error
+            # about None not being callable
             ah.format_coord = lambda x, y: ""
             if ai%((nHists + 1) * 2) < (nHists + 1):
                 ah.update(textAxDict) # text box settings:
