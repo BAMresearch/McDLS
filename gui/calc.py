@@ -223,7 +223,7 @@ class Calculator(object):
     def _updateSeries(self, data, model):
         if not self.algo.seriesStats():
             return
-        if not hasattr(data, 'sampleName'):
+        if not hasattr(data, 'angles'):
             return
         def addSeriesData(key, hist, angles):
             if key not in self._series:
