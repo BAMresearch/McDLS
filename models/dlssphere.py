@@ -32,7 +32,7 @@ class DLSSphere(DLSModel):
     def _ffSphere(self):
         if not self.withFF():
             return 1.
-        qr = self.angles * self.radius()
+        qr = self.scatteringVector * self.radius()
         return 3. * (sin(qr) - qr * cos(qr)) / (qr**3.) # usual sphere ff
 
     # how to get adjustable size sensitivity by compensationEXponent?

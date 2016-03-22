@@ -324,17 +324,17 @@ class SASModel(ScatteringModel):
 
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
-    _angles = None
+    _scatteringVector = None
 
     def modelDataType(self):
         return DLSModelData
 
     @property
-    def angles(self):
-        return self._angles
+    def scatteringVector(self):
+        return self._scatteringVector
 
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
-        self._angles = data.angles
+        self._scatteringVector = data.scatteringVector
         v = self._volume(compensationExponent = compensationExponent,
                          useSLD = useSLD)
         w = self._weight(compensationExponent = compensationExponent)
