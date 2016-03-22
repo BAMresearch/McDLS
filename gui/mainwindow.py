@@ -37,12 +37,13 @@ from gui.filelist import FileList
 from main import makeAbsolutePath
 
 INFOTEXT = (u"""
-<strong>major changes in Mk.III:</strong><ul>
+<strong>major changes in McDLS Mk.IV:</strong><ul>
 <style>li { margin: .5em; }</style>
-<li>weighting compensation used in volume function</li>
-<li>cumulative distribution plot overlay in histogram</li>
-<li>DLS sphere model includes scattering angle dependent form factor</li>
-<li>UI setting for ignoring leading N data points</li>
+<li>fixed volume fraction calculus in histogramming for DLS</li>
+<li>weighting compensation has to be == 1! (still adjustable for testing)</li>
+<li>fixed scattering angle dependent form factor in DLSSphere model</li>
+<li>Skips the first 2 data points by default</li>
+<li>more informative plot labels in series analysis</li>
 </ul>
 
 <strong>Notes on DLS data handling:</strong><ul>
