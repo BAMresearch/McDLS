@@ -29,16 +29,26 @@ class Sphere(SASModel):
         self.radius.setActive(True)
 
     def volume(self):
+        r"""Calculates the volume of a sphere defined by:
+
+        :math:`v(r) = {4\pi \over 3} r^3`
+        """
         result = (pi*4./3.) * self.radius()**3
         return result
 
     def absVolume(self):
-        """
-        Volume calculation taking the scattering length density into account
+        r"""Calculates the volume of a sphere taking the scattering length
+        density difference :math:`\Delta\rho` into account:
+
+        :math:`v_{abs}(r, \Delta\rho) = v_{sph}(r) \cdot \Delta\rho^2`
         """
         return self.volume() * self.sld()**2
 
     def formfactor(self, dataset):
+        r"""Calculates the form factor of a sphere defined by:
+
+        :math:`F(q, r) = { 3 ~ sin(qr) - qr \cdot cos(qr) \over (qr)^3 }`
+        """
         if isinstance(dataset, SASData):
             q = dataset.q
         else:

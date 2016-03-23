@@ -294,11 +294,20 @@ class SASModel(ScatteringModel):
         return SASModelData
 
     def weight(self):
-        # compensationExponent is supposed to adjust the whole volume,
-        # -> not just the r³ part(?)
+        r"""Calculates an intensity weighting used during fitting. It is based
+        on the scatterers volume. It can be modified by a user-defined
+        compensation exponent *c*. The default value is :math:`c={2 \over 3}`
+
+        :math:`w(r) = v(r)^{2c}`
+        """
         return self.volume()**(2 * self.compensationExponent)
 
     def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+        r"""Returns the intensity *I*, the volume :math:`v_{abs}` and the
+        intensity weights *w* for a single parameter contribution over all *q*:
+
+        :math:`I(q,r) = F^2(q,r) \cdot w(r)`
+        """
         v = self._volume(compensationExponent = compensationExponent,
                          useSLD = useSLD)
         w = self._weight(compensationExponent = compensationExponent)
