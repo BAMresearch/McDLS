@@ -381,7 +381,10 @@ class Calculator(object):
     def _writeResultHelper(self, mcResult, fileKey, descr, columnNames,
                            extension = '.txt'):
         if not all(cn in mcResult for cn in columnNames):
-            logging.warning('Result does not contain the requested data')
+            logging.warning(
+                'Writing results: some of the requested {d} not found!'
+                .format(d = descr))
+            logging.warning(str(columnNames))
             return
         fn = self._outFn.filenameVerbose(fileKey, descr, extension = extension)
         logging.info("Containing the following columns:")
