@@ -18,7 +18,7 @@ class DLSSphere(DLSModel):
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
                     decimals = 1), 
-                  Parameter("withFF", False,
+                  Parameter("withFF", True,
                     displayName = "Include the SAS sphere form factor?"),
                   )
 
