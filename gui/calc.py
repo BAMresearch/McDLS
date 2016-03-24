@@ -390,12 +390,13 @@ class Calculator(object):
         for cn in columnNames:
             msg = fmt.format(self.indent, cn)
             peek = np.ravel(mcResult[cn])
-            if len(peek) < 3:
-                for value in peek[0:2]:
-                    try:
-                        msg += " {0: .4e}".format(value)
-                    except ValueError:
-                        msg += " {0: >14s}".format(value)
+            if len(peek) > 2:
+                continue
+            for value in peek[0:2]:
+                try:
+                    msg += " {0: .4e}".format(value)
+                except ValueError:
+                    msg += " {0: >14s}".format(value)
             logging.info(msg)
         # write header:
         AsciiFile.writeHeaderLine(fn, columnNames)
