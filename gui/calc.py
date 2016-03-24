@@ -312,8 +312,12 @@ class Calculator(object):
                                 columnNames, extension = '.dat')
 
     def _writeFit(self, mcResult):
+        columnNames = ('fitX0', 'dataMean', 'dataStd',
+                       'fitMeasValMean', 'fitMeasValStd')
+        if isinstance(self.algo.data, SASData):
+            columnNames = ('fitX0', 'fitMeasValMean', 'fitMeasValStd')
         self._writeResultHelper(mcResult, "fit", "fit data",
-            ('fitX0', 'fitMeasValMean', 'fitMeasValStd'),
+            columnNames,
             extension = '.dat'
         )
 
