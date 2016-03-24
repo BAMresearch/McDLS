@@ -260,9 +260,14 @@ class McSAS(AlgorithmBase):
         # store in output dict
         self.result.append(dict(
             contribs = contributions, # Rrep
+            # what about modelDataMean? ...
             fitMeasValMean = contribMeasVal.mean(axis = 2),
             fitMeasValStd = contribMeasVal.std(axis = 2),
             fitX0 = self.data.x0.binnedData,
+            # ... and dataMean
+            dataX0 = self.data.x0.binnedData,
+            dataMean = self.data.f.binnedData,
+            dataStd = self.data.f.binnedDataU,
             # background details:
             scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
