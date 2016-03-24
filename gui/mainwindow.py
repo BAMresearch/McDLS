@@ -39,6 +39,7 @@ from main import makeAbsolutePath
 INFOTEXT = (u"""
 <strong>major changes in McDLS Mk.IV:</strong><ul>
 <style>li { margin: .5em; }</style>
+<li>stores also the averaged DLS data along with fit results</li>
 <li>fixed volume fraction calculus in histogramming for DLS</li>
 <li>weighting compensation has to be == 1! (still adjustable for testing)</li>
 <li>fixed scattering angle dependent form factor in DLSSphere model</li>
