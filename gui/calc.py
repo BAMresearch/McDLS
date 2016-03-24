@@ -311,7 +311,7 @@ class Calculator(object):
 
     def _writeFit(self, mcResult):
         self._writeResultHelper(mcResult, "fit", "fit data",
-            ('fitQ', 'fitIntensityMean', 'fitIntensityStd'),
+            ('fitX0', 'fitMeasValMean', 'fitMeasValStd'),
             extension = '.dat'
         )
 
