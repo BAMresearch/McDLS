@@ -90,8 +90,8 @@ class SASData(DataObj):
             content.append(self.x0.name)
         if self.f is not None:
             content.append(self.f.name)
-        if self.fu is not None:
-            content.append(self.fu.name)
+        if self.fu is not None: # cannot be none
+            content.append(u"σI")
         if self.is2d:
             content.append('Psi')
         return ", ".join(content)
@@ -143,8 +143,7 @@ class SASData(DataObj):
                              unit = ScatteringVector(u"nm⁻¹"))
         self.f  = DataVector(u'I', rawArray[:, 1],
                              unit = ScatteringIntensity(u"(m sr)⁻¹"))
-        self._e = DataVector(u'∆I', rawArray[:, 2],
-                             unit = self.f.unit) # raw uncertainty
+        self.f.rawU = rawArray[:, 2] # raw uncertainty
         # sanitized uncertainty, we should use self._e.copy
         self.fu = DataVector(u'σI', rawArray[:, -1],
                              unit = self.f.unit, editable = True)
