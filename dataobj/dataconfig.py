@@ -95,6 +95,10 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         Parameter("fMaskNeg", False, unit = NoUnit(),
             displayName = "Mask negative {f} values", description =
             "Renders negative intensity values invalid for fitting"),
+        Parameter("nBin", 100, unit = NoUnit(),
+            displayName = "target number of bins \n (0 = no rebin)",
+            description = "Sets the number of bins to rebin the data into", 
+            valueRange = (0., 1000)),
     )
 
     @property

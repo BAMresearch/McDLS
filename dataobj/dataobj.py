@@ -115,12 +115,63 @@ class DataObj(DataSet, DisplayMixin):
     _x2 = None
     _f  = None
     _fu = None
+    _binned = None # Binned dataset, of class DataObj (if possible)
+    # _x0Bin = None # at the moment, we can only bin over one x..
+    # _x1Bin = None # at the moment, we can only bin over one x..
+    # _x2Bin = None # at the moment, we can only bin over one x..
+    # _fBin = None # (re-)binned f
+    # _fuBin = None # (re-)binned f uncertainties
 
     # interface for basic DataVectors
+    @property
+    def binned(self):
+        """binned dataset."""
+        return self._binned
+
+    @binned.setter
+    def binned(self, vec):
+        logging.error("Binned data can only be set through the 'reBin' method")
+        return False
+
+    def reBin(self):
+        """ 
+        rebinning method, to be run (f.ex.) upon every "Start" buttonpress. 
+        For now, this will rebin using the x0 vector as a base, although the 
+        binning vector can theoretically be chosen freely.
+        """
+        nBin = self.config.nBin.value()
+        self._reBin = DataObj()
+        self._reBin.filename = "reBinned:" + self.filename
+        self._reBin.config = self.config
+        sanX = self.x0.sanitized()
+        self._reBin.validMask = np.ones(numBins, dtype = bool)
+
+        if not(nBin > 0):
+            # self._binned = self.copy() # hmm... I foresee problems
+            self._reBin.x0 = self.x0
+            self._reBin.x1 = self.x1
+            self._reBin.x2 = self.x2
+            self._reBin.f  = self.f
+            self._reBin.fu = self.fu
+            self._reBin.validIndices = self.validIndices
+            self._reBin.validMask = self.validMask
+            return # no need to do the actual rebinning
+
+            xEdges = np.logspace(
+                    log10(sanX.min()),
+                    log10(sanX.max() + np.diff(sanX)[-1]/100.), #include last point
+                    self.nBins + 1)
+            # loop over bins:
+            for bini in range(nBin):
+                fMask = ((sanX >= xEdges[bini]) & (sanX < xEdges[bini + 1]))
+                fInBin = self.f.sanitized()[fMask]
+        
+        pass
 
     # These are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
     # derived classes may have an alias getter for (x0, f, …)
+
     @property
     def x0(self):
         """First sampling vector."""
