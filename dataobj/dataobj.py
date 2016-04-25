@@ -159,6 +159,8 @@ class DataObj(DataSet, DisplayMixin):
         validMask = np.zeros(nBin, dtype = bool) #default false
 
         if not(nBin > 0):
+            self._x0Bin = None # reset to none if set
+            self._fBin = None
             return # no need to do the actual rebinning. values stay None.
 
         # prepare bin edges, log-spaced

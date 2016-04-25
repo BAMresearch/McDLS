@@ -45,13 +45,13 @@ class SASData(DataObj):
     @property
     def qLimsString(self):
         """Properly formatted q-limits for UI label text."""
-        return self.x0.limsString
+        return self.x0Fit.limsString
 
     @property
     def q(self):
         """Q-Vector at which the intensities are measured.
         Provided for convenience use within models."""
-        return self.x0.sanitized
+        return self.x0Fit.sanitized
 
     @property
     def pLimsString(self):
@@ -72,7 +72,7 @@ class SASData(DataObj):
 
     @property
     def count(self):
-        return len(self.x0.sanitized)
+        return len(self.x0Fit.sanitized)
 
     @property
     def hasError(self):

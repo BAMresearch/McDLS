@@ -73,7 +73,7 @@ class ScatteringModel(AlgorithmBase):
         # remember parameter values
         params = self.activeParams()
         oldValues = [p() for p in params] # this sucks. But we dont want to lose the user provided value
-        cumInt = zeros(data.f.sanitized.shape) # cumulated intensities
+        cumInt = zeros(data.fFit.sanitized.shape) # cumulated intensities
         vset = zeros(pset.shape[0])
         wset = zeros(pset.shape[0])
         # call the model for each parameter set explicitly
@@ -201,7 +201,7 @@ class ScatteringModel(AlgorithmBase):
                                compensationExponent = volumeExponent)
                      * model._formfactor(dataset, None))**2.
         # computing the relative error to reference data
-        delta = abs((dataset.f.sanitized - intensity) / dataset.f.sanitized)
+        delta = abs((dataset.fFit.sanitized - intensity) / dataset.fFit.sanitized)
         dmax = argmax(delta)
         testfor(delta.mean() < relerr, AssertionError,
                 "Could not verify {model} intensity against\n'{fn}',"
@@ -211,8 +211,8 @@ class ScatteringModel(AlgorithmBase):
                 .format(model = cls.name(), fn = filename,
                         mean = delta.mean(), relerr = relerr,
                         dmax = dmax, data = hstack((
-                            dataset.x0.sanitized.reshape(-1, 1),
-                            dataset.f.sanitized.reshape(-1, 1),
+                            dataset.x0Fit.sanitized.reshape(-1, 1),
+                            dataset.fFit.sanitized.reshape(-1, 1),
                             intensity.reshape(-1, 1),
                             delta.reshape(-1, 1)))[max(0, dmax-4):dmax+5]
                         )
@@ -258,7 +258,7 @@ class SASModel(ScatteringModel):
                 data.config.smearing.inputValid()):
             # inputValid can be removed once more appropriate limits are set in GUI
 
-            locs = data.locs[data.x0.validIndices] # apply xlimits
+            locs = data.locs[data.x0Fit.validIndices] # apply xlimits
             # the ff functions might only accept one-dimensional q arrays
             # kansas = locs.shape
             # locs = locs.reshape((locs.size))
