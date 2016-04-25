@@ -367,7 +367,7 @@ class PlotResults(object):
         #settings for Q-axes (override previous settings where appropriate):
         xOrigin = dataset.x0.unit.toDisplay(dataset.x0.siData)
         yOrigin = dataset.f.unit.toDisplay(dataset.f.siData)
-        uOrigin = dataset.fu.unit.toDisplay(dataset.fu.siData)
+        uOrigin = dataset.f.unit.toDisplay(dataset.f.siDataU)
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
                 xOrigin.max() * (1 + self._axisMargin))
