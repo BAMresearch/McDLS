@@ -245,22 +245,31 @@ class DataObj(DataSet, DisplayMixin):
         self._propagateMask()
 
     @property
-    def x0Bin(self):
-        """Binned variant of First sampling vector."""
-        return self._x0Bin
+    def x0Fit(self):
+        """
+        returns Binned variant of first sampling vector if exists, 
+        otherwise unbinned.
+        """
+        if self._x0Bin is not None:
+            return self._x0Bin
+        else:
+            return self.x0
 
-    @x0Bin.setter
-    def x0Bin(self, vec):
-        logging.error("x0Bin can only be set by the (re-)binning method")
+    @x0Fit.setter
+    def x0Fit(self, vec):
+        logging.error("x0Fit can not be set")
 
     @property
-    def fBin(self):
+    def fFit(self):
         """Binned variant of measurement vector."""
-        return self._fBin
+        if self._fBin is not None:
+            return self._fBin
+        else:
+            return self.f
 
-    @fBin.setter
-    def fBin(self, vec):
-        logging.error("fBin can only be set by the (re-)binning method")
+    @fFit.setter
+    def fFit(self, vec):
+        logging.error("fFit can not be set")
     # other common meta data
 
     @classproperty
