@@ -264,6 +264,13 @@ class SASConfig(DataConfig):
     )
 
     @property
+    def showParams(self):
+        lst = super(SASConfig, self).showParams
+        lst.remove("fMaskZero")
+        lst.remove("fMaskNeg")
+        return lst
+
+    @property
     def callbackSlots(self):
         return super(SASConfig, self).callbackSlots | set((
             "qunit", "punit", "iunit", "eMin"))
