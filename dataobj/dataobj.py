@@ -14,6 +14,7 @@ from abc import ABCMeta, abstractproperty, abstractmethod
 from bases.dataset import DataSet, DisplayMixin
 from utils.units import Unit, NoUnit
 from utils import classproperty
+import logging
 
 class DataVector(object):
     """ a class for combining aspects of a particular vector of data.
@@ -21,11 +22,15 @@ class DataVector(object):
     """
     _name = None # descriptor for axes and labels, unicode string at init.
     _raw = None # Relevant data directly from input file, non-SI units, unsanitized
+    _rawU = None # raw uncertainties, unsanitized
     _siData = None # copy raw data in si units, often accessed
+    _siDataU = None # uncertainties in si units, sanitized, with eMin taken into account
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
     _editable = False # whether raw can be written or not
+    _siBin = None # (re-)binned variant of SI data
+    _siBinU = None # (re-)binned variant of uncertainties on SI data
     
     def __init__(self, name, raw, unit = None, editable = False):
         self._name = name
@@ -60,6 +65,16 @@ class DataVector(object):
         self.siData[self.validIndices] = val
 
     @property
+    def sanitizedU(self):
+        return self.siDataU.copy()[self.validIndices]
+
+    @sanitizedU.setter
+    def sanitizedU(self, val):
+        assert(val.size == self.validIndices.size)
+        self.siDataU[self.validIndices] = val
+
+    # siData
+    @property
     def siData(self):
         return self._siData
 
@@ -67,9 +82,42 @@ class DataVector(object):
     def siData(self, vec):
         self._siData = vec
 
+    # siDataU, uncertainties on siData
+    @property
+    def siDataU(self):
+        return self._siDataU
+    
+    @siDataU.setter
+    def siDataU(self, vec):
+        self._siDataU = vec
+
+    # siBin, binned sanitized values of siData[validIndices]
+    @property
+    def siBin(self):
+        return self._siBin
+
+    @siBin.setter
+    def siBin(self, vec):
+        self._siBin = vec
+
+    # siBinU, binned uncertainty of siData[validIndices]
+    @property
+    def siBinU(self):
+        return self._siBinU
+
+    @siBinU.setter
+    def siBinU(self, vec):
+        self._siBinU = vec
+
+    # raw data values
     @property
     def raw(self):
         return self._raw
+
+    # raw uncertainties
+    @property
+    def rawU(self):
+        return self._rawU
 
     @property
     def editable(self):
@@ -114,24 +162,7 @@ class DataObj(DataSet, DisplayMixin):
     _x1 = None
     _x2 = None
     _f  = None
-    _fu = None
-    _binned = None # Binned dataset, of class DataObj (if possible)
-    # _x0Bin = None # at the moment, we can only bin over one x..
-    # _x1Bin = None # at the moment, we can only bin over one x..
-    # _x2Bin = None # at the moment, we can only bin over one x..
-    # _fBin = None # (re-)binned f
-    # _fuBin = None # (re-)binned f uncertainties
-
-    # interface for basic DataVectors
-    @property
-    def binned(self):
-        """binned dataset."""
-        return self._binned
-
-    @binned.setter
-    def binned(self, vec):
-        logging.error("Binned data can only be set through the 'reBin' method")
-        return False
+    _fu = None # to be depreciated.
 
     def reBin(self):
         """ 
@@ -139,34 +170,79 @@ class DataObj(DataSet, DisplayMixin):
         For now, this will rebin using the x0 vector as a base, although the 
         binning vector can theoretically be chosen freely.
         """
+        logging.info("Initiating binning procedure")
         nBin = self.config.nBin.value()
-        self._reBin = DataObj()
-        self._reBin.filename = "reBinned:" + self.filename
-        self._reBin.config = self.config
+        self._binned = DataObj()
+        self._binned.filename = "reBinned:" + self.filename
+        self._binned.config = self.config
         sanX = self.x0.sanitized()
-        self._reBin.validMask = np.ones(numBins, dtype = bool)
+        self._binned.x0 = np.zeros(nBin)
+        self._binned.x1 = np.zeros(nBin)
+        self._binned.x2 = np.zeros(nBin)
+        self._binned.f  = np.zeros(nBin)
+        self._binned.fu = np.zeros(nBin)
+        self._binned.validIndices = np.zeros(nBin, dtype = int)
+        self._binned.validMask = np.ones(numBins, dtype = bool)
 
         if not(nBin > 0):
+            # re-set binned values.
             # self._binned = self.copy() # hmm... I foresee problems
-            self._reBin.x0 = self.x0
-            self._reBin.x1 = self.x1
-            self._reBin.x2 = self.x2
-            self._reBin.f  = self.f
-            self._reBin.fu = self.fu
-            self._reBin.validIndices = self.validIndices
-            self._reBin.validMask = self.validMask
+            self._binned.x0 = self.x0
+            self._binned.x1 = self.x1
+            self._binned.x2 = self.x2
+            self._binned.f  = self.f
+            self._binned.fu = self.fu
+            self._binned.validIndices = self.validIndices
+            self._binned.validMask = self.validMask
             return # no need to do the actual rebinning
 
-            xEdges = np.logspace(
-                    log10(sanX.min()),
-                    log10(sanX.max() + np.diff(sanX)[-1]/100.), #include last point
-                    self.nBins + 1)
-            # loop over bins:
-            for bini in range(nBin):
-                fMask = ((sanX >= xEdges[bini]) & (sanX < xEdges[bini + 1]))
-                fInBin = self.f.sanitized()[fMask]
-        
-        pass
+        xEdges = np.logspace(
+                log10(sanX.min()),
+                log10(sanX.max() + np.diff(sanX)[-1]/100.), #include last point
+                self.nBins + 1)
+        # loop over bins:
+        for bini in range(nBin):
+            fMask = ((sanX >= xEdges[bini]) & (sanX < xEdges[bini + 1]))
+            fInBin, fuInBin = self.f.sanitized()[fMask], self.fu.sanitized()[fMask]
+            x0InBin = self.x0.sanitized()[fMask]
+            x1InBin = self.x1.sanitized()[fMask] # will probably break for empty x1..
+            x2InBin = self.x2.sanitized()[fMask] # x2
+            if fMask.sum() == 0:
+                self._binned.f[bini], self._binned.fu[bini] = None, None
+                self._binned.x0[bini], self._binned.x1[bini] = None, None
+                self._binned.x2[bini], self._binned.validMask[bini] = None, False
+            elif fMask.sum() == 1:
+                self._binned.f[bini], self._binned.fu[bini] = fInBin, fuInBin
+                self._binned.x0[bini], self._binned.x1[bini] = x0InBin, x1InBin
+                self._binned.x2[bini], self._binned.validMask[bini] = x2InBin, True
+            elif fMask.sum() > 1:
+                self._binned.f[bini] = fInBin.mean()
+                self._binned.x0[bini] = x0InBin.mean()
+                self._binned.x1[bini] = x1InBin.mean()
+                self._binned.x2[bini] = x2InBin.mean()
+                self._binned.validMask[bini] = True
+                # uncertainties are a bit more elaborate:
+                self._binned.fu[bini] = np.maximum(
+                        fInBin.std(ddof = 1) / sqrt(1. * iToBin.size), # SEM
+                        np.sqrt( (fuInBin**2).sum() / fMask.sum() ) #prop. unc.
+                        )
+            else:
+                logging.error("fMask not understood: {}".format(fMask))
+
+        # remove empty bins:
+        validi = (True - np.isnan(self._binned.f))
+        validi[np.argwhere(self._binned.validMask != True)] = False
+        # reset values:
+        self._binned.f = self._binned.f[validi]
+        self._binned.fu = self._binned.fu[validi]
+        self._binned.x0 = self._binned.x0[validi]
+        self._binned.x1 = self._binned.x1[validi]
+        self._binned.x2 = self._binned.x2[validi]
+        self._binned.validMask = self._binned.validMask[validi]
+
+        # update validIndices:
+        self._binned._onFMasksUpdate()
+        logging.info("Rebinning procedure completed.")
 
     # These are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
@@ -214,16 +290,16 @@ class DataObj(DataSet, DisplayMixin):
         self._initMask()
         self._propagateMask()
 
-    @property
-    def fu(self):
-        """The measurement uncertainty regarding the measurement vector *f*.
-        """
-        return self._fu
+    # @property
+    # def fu(self):
+    #     """The measurement uncertainty regarding the measurement vector *f*.
+    #     """
+    #     return self.f
 
-    @fu.setter
-    def fu(self, vec):
-        assert vec is None or isinstance(vec, DataVector)
-        self._fu = vec
+    # @fu.setter
+    # def fu(self, vec):
+    #     assert vec is None or isinstance(vec, DataVector)
+    #    self._fu = vec
 
     # other common meta data
 
@@ -299,6 +375,7 @@ class DataObj(DataSet, DisplayMixin):
         self.config.setX0ValueRange(
                 (self.x0.siData.min(), self.x0.siData.max()))
         self._excludeInvalidX0()
+        # self.reBin()
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
