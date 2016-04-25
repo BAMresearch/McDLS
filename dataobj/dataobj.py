@@ -132,10 +132,14 @@ class DataVector(object):
     def unit(self, newUnit):
         if not isinstance(newUnit, Unit):
             self._unit = NoUnit()
-            self._siData = self.raw.copy()
+            self.siData = self.raw.copy()
+            if self.rawU is not None:
+                self.siDataU = self.rawU.copy()
         else:
             self._unit = newUnit
-            self._siData = self.unit.toSi(self.raw)
+            self.siData = self.unit.toSi(self.raw)
+            if self.rawU is not None:
+                self.siDataU = self.unit.toSi(self.rawU)
 
     # TODO: define min/max properties for convenience?
     @property

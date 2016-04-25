@@ -311,12 +311,12 @@ class McSAS(AlgorithmBase):
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
                                             self.model)
         sc, conval, dummy = bgScalingFit.calc(
-                data.f.sanitized, data.fu.sanitized,
+                data.f.sanitized, data.f.sanitizedU,
                 ft / sum(wset), sc, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         sc, conval, dummy = bgScalingFit.calc(
-                data.f.sanitized, data.fu.sanitized,
+                data.f.sanitized, data.f.sanitizedU,
                 ft / sum(wset), sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
@@ -346,7 +346,7 @@ class McSAS(AlgorithmBase):
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt, dummy = bgScalingFit.calc(
-                    data.f.sanitized, data.fu.sanitized, ftest / wtest, sc)
+                    data.f.sanitized, data.f.sanitizedU, ftest / wtest, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -390,7 +390,7 @@ class McSAS(AlgorithmBase):
             'elapsed': elapsed})
 
         sc, conval, ifinal = bgScalingFit.calc(
-                data.f.sanitized, data.fu.sanitized,
+                data.f.sanitized, data.f.sanitizedU,
                 ft / sum(wset), sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
@@ -520,7 +520,7 @@ class McSAS(AlgorithmBase):
             sc = numpy.array([data.f.limit[1] / ft.max(), data.f.limit[0]])
             # optimize scaling and background for this repetition
             sc, conval, dummy = bgScalingFit.calc(
-                    data.f.sanitized, data.fu.sanitized, ft, sc)
+                    data.f.sanitized, data.f.sanitizedU, ft, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # is the volume fraction scaled to the weight or volume?
             volumeFraction[:, ri] = (sc[0] * wset/vset).flatten()
@@ -540,7 +540,7 @@ class McSAS(AlgorithmBase):
                         rset[c].reshape((1, -1)), self.compensationExponent())
                 # FIXME: mcsas.py:542: RuntimeWarning: divide by zero encountered in divide
                 minReqVol[c, ri] = (
-                        data.fu.sanitized * volumeFraction[c, ri]
+                        data.f.sanitizedU * volumeFraction[c, ri]
                                 / (sc[0] * fr)).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / vset[c]
 
