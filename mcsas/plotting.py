@@ -372,7 +372,6 @@ class PlotResults(object):
             # binned data available:
             xOrigin = dataset.x0Bin.unit.toDisplay(dataset.x0Bin.siData)
             yOrigin = dataset.fBin.unit.toDisplay(dataset.fBin.siData)
-            logging.info("_fBin.siDataU: {}".format(dataset._fBin.siDataU))
             uOrigin = dataset.fBin.unit.toDisplay(dataset._fBin.siDataU)
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
