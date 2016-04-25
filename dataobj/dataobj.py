@@ -32,9 +32,10 @@ class DataVector(object):
     _siBin = None # (re-)binned variant of SI data
     _siBinU = None # (re-)binned variant of uncertainties on SI data
     
-    def __init__(self, name, raw, unit = None, editable = False):
+    def __init__(self, name, raw, rawU = None, unit = None, editable = False):
         self._name = name
         self._raw = raw
+        self._rawU = rawU
         self.unit = unit
         self.validIndices = np.arange(self.raw.size) # sets limits as well
         assert(isinstance(editable, bool))
@@ -414,8 +415,6 @@ class DataObj(DataSet, DisplayMixin):
         validIndices = np.argwhere(self._validMask)[:,0]
         # pass on all valid indices to the parameters
         self.f.validIndices = validIndices
-        if isinstance(self.fu, DataVector):
-            self.fu.validIndices = validIndices
         self.x0.validIndices = validIndices
         if isinstance(self.x1, DataVector):
             self.x1.validIndices = validIndices

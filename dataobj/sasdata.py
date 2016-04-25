@@ -90,8 +90,8 @@ class SASData(DataObj):
             content.append(self.x0.name)
         if self.f is not None:
             content.append(self.f.name)
-        if self.fu is not None: # cannot be none
-            content.append(u"σI")
+        # if self.fu is not None: # cannot be none
+        #     content.append(u"σI")
         if self.is2d:
             content.append('Psi')
         return ", ".join(content)
@@ -141,12 +141,10 @@ class SASData(DataObj):
 
         self.x0 = DataVector(u'q', rawArray[:, 0],
                              unit = ScatteringVector(u"nm⁻¹"))
-        self.f  = DataVector(u'I', rawArray[:, 1],
-                             unit = ScatteringIntensity(u"(m sr)⁻¹"))
-        self.f.rawU = rawArray[:, 2] # raw uncertainty
+        self.f  = DataVector(u'I', rawArray[:, 1], rawU = rawArray[:, 2],
+                             unit = ScatteringIntensity(u"(m sr)⁻¹"))# , editable = True)
+        # self.f.rawU = rawArray[:, 2] # raw uncertainty
         # sanitized uncertainty, we should use self._e.copy
-        self.fu = DataVector(u'σI', rawArray[:, -1],
-                             unit = self.f.unit, editable = True)
         logging.info("Init SASData: " + self.qLimsString)
         if rawArray.shape[1] > 3: # psi column is present
             self.x1 = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
@@ -185,21 +183,23 @@ class SASData(DataObj):
     def _prepareUncertainty(self, *dummy):
         """Modifies the uncertainty of the whole range of measured data to be
         above a previously set minimum threshold *eMin*."""
-        self.fu.siData = self.config.eMin() * self.f.siData
         minUncertaintyPercent = self.config.eMin() * 100.
         if not self.hasError:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
+            self.f.siDataU = self.config.eMin() * self.f.siData
         else:
-            count = sum(self.fu.siData > self._e.siData)
+            upd = np.maximum(self.f.siDataU, 
+                    self.config.eMin() * self.f.siData)
+            count = sum(self.f.siData < upd )
             if count > 0:
                 logging.warning("Minimum uncertainty ({}% of intensity) set "
                                 "for {} datapoints.".format(
                                 minUncertaintyPercent, count))
-            self.fu.siData = np.maximum(self.fu.siData, self._e.siData)
+            self.f.siDataU = upd
         # reset invalid uncertainties to np.inf
-        invInd = (True - np.isfinite(self.fu.siData))
-        self.fu.siData[invInd] = np.inf
+        invInd = (True - np.isfinite(self.f.siDataU))
+        self.f.siDataU[invInd] = np.inf
 
     def _propagateMask(self, *args):
         super(SASData, self)._propagateMask(*args)
