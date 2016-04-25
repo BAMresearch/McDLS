@@ -28,7 +28,6 @@ class DataVector(object):
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
-    _editable = False # whether raw can be written or not
     _siBin = None # (re-)binned variant of SI data
     _siBinU = None # (re-)binned variant of uncertainties on SI data
     
@@ -38,8 +37,6 @@ class DataVector(object):
         self._rawU = rawU
         self.unit = unit
         self.validIndices = np.arange(self.raw.size) # sets limits as well
-        assert(isinstance(editable, bool))
-        self._editable = editable
 
     @property
     def name(self):
@@ -119,10 +116,6 @@ class DataVector(object):
     @property
     def rawU(self):
         return self._rawU
-
-    @property
-    def editable(self):
-        return self._editable
 
     @property
     def unit(self):
