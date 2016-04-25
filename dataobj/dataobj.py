@@ -31,7 +31,7 @@ class DataVector(object):
     _siBin = None # (re-)binned variant of SI data
     _siBinU = None # (re-)binned variant of uncertainties on SI data
     
-    def __init__(self, name, raw, rawU = None, unit = None, editable = False):
+    def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name
         self._raw = raw
         self._rawU = rawU

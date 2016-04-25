@@ -142,7 +142,7 @@ class SASData(DataObj):
         self.x0 = DataVector(u'q', rawArray[:, 0],
                              unit = ScatteringVector(u"nm⁻¹"))
         self.f  = DataVector(u'I', rawArray[:, 1], rawU = rawArray[:, 2],
-                             unit = ScatteringIntensity(u"(m sr)⁻¹"))# , editable = True)
+                             unit = ScatteringIntensity(u"(m sr)⁻¹"))
         # self.f.rawU = rawArray[:, 2] # raw uncertainty
         # sanitized uncertainty, we should use self._e.copy
         logging.info("Init SASData: " + self.qLimsString)
