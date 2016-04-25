@@ -160,7 +160,6 @@ class DataObj(DataSet, DisplayMixin):
     _x1 = None
     _x2 = None
     _f  = None
-    _fu = None # to be depreciated.
 
     def reBin(self):
         """ 
@@ -287,17 +286,6 @@ class DataObj(DataSet, DisplayMixin):
         self._f = vec
         self._initMask()
         self._propagateMask()
-
-    # @property
-    # def fu(self):
-    #     """The measurement uncertainty regarding the measurement vector *f*.
-    #     """
-    #     return self.f
-
-    # @fu.setter
-    # def fu(self, vec):
-    #     assert vec is None or isinstance(vec, DataVector)
-    #    self._fu = vec
 
     # other common meta data
 
