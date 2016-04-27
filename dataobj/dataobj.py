@@ -258,6 +258,31 @@ class BinnedDataObj(DataObj):
     _fBin = None # let's try to do it this way. 
     _x0Bin = None
 
+    # Can't get this redefinition of x0 to work..
+    # def _propagateMask(self):
+    #     super(BinnedDataObj, self)._propagateMask()
+
+    # def _applyLimits(self):
+    #     super(BinnedDataObj, self)._applyLimits()
+
+    # @property
+    # def x0(self):
+    #     """
+    #     returns Binned variant of first sampling vector if exists, 
+    #     otherwise unbinned.
+    #     """
+    #     if self._x0Bin is not None:
+    #         return self._x0Bin
+    #     else:
+    #         return DataObj.x0
+
+    # @x0.setter
+    # def x0(self, vec):
+    #     # if DataObj.x0.shape != vec.shape:
+    #     #     logging.error("only the unbinned x0 vector can be set")
+    #     # else:
+    #     DataObj.x0 = vec
+
     @property
     def x0Fit(self):
         """
