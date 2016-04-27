@@ -7,6 +7,7 @@ A class describing a vector with limits, units, mask and uncertainties
 
 from __future__ import absolute_import # PEP328
 import numpy as np
+import h5py
 
 from utils.units import Unit, NoUnit
 
@@ -22,7 +23,27 @@ class DataVector(object):
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
+    # specify which values are to be stored in a HDF5 file. 
+    _h5Fields = ["raw", "rawU", "siData", "siDataU", "validIndices", "limit"]
+    _h5Attrs = ["unit"] # can we get a callable string returned by unit?
     
+    def writeHDF(self, filename, loc):
+        """ 
+        Writes the vector to an HDF5 output file *filename*, at location *loc*. 
+        This location should be e.g. "/mcentry01/[ sas | dls ]data01/". The 
+        name of the vector (self.name) is appended to this path in this method.
+        """
+        with h5py.File(filename) as h5f:
+            wloc = h5f.require_group(loc + self.name) # unicode's no problem
+            for field in self._h5Fields:
+                hDat = getattr(self, field, None)
+                if hDat is not None:
+                    wloc.create_dataset(field, data = hDat, compression = "gzip")
+            for attribute in self._h5Attrs:
+                hAttr = getattr(self, attribute, None)
+                if hAttr is not None:
+                    wloc[attribute] = hAttr
+
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name
         self._raw = raw
