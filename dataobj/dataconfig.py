@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractproperty
 from types import MethodType
 import numpy
 from bases.algorithm import AlgorithmBase
-from utils.parameter import Parameter
+from bases.algorithm import Parameter # not defined in utils.parameter
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
 from utils import isCallable
