@@ -29,66 +29,6 @@ class DataObj(DataSet, DisplayMixin):
     _x1 = None
     _x2 = None
     _f  = None
-    _fBin = None # let's try to do it this way. 
-    _x0Bin = None
-
-    def reBin(self):
-        """ 
-        rebinning method, to be run (f.ex.) upon every "Start" buttonpress. 
-        For now, this will rebin using the x0 vector as a base, although the 
-        binning vector can theoretically be chosen freely.
-        """
-        logging.info("Initiating binning procedure")
-        nBin = self.config.nBin.value()
-        # self._binned = DataVector() once binning finishes.. dataVector can be set once.
-        sanX = self.x0.sanitized
-        x0Bin = np.zeros(nBin)
-        fBin  = np.zeros(nBin)
-        fuBin  = np.zeros(nBin)
-        validMask = np.zeros(nBin, dtype = bool) #default false
-
-        if not(nBin > 0):
-            self._x0Bin = None # reset to none if set
-            self._fBin = None
-            return # no need to do the actual rebinning. values stay None.
-
-        # prepare bin edges, log-spaced
-        xEdges = np.logspace(
-                np.log10(sanX.min()),
-                np.log10(sanX.max() + np.diff(sanX)[-1]/100.), #include last point
-                nBin + 1)
-
-        # loop over bins:
-        for bini in range(nBin):
-            fBin[bini], fuBin[bini], x0Bin[bini] = None, None, None # default
-            fMask = ((sanX >= xEdges[bini]) & (sanX < xEdges[bini + 1]))
-            fInBin, fuInBin = self.f.sanitized[fMask], self.f.sanitizedU[fMask]
-            x0InBin = self.x0.sanitized[fMask]
-            if fMask.sum() == 1:
-                fBin[bini], fuBin[bini], x0Bin[bini] = fInBin, fuInBin, x0InBin
-                validMask[bini] = True
-            elif fMask.sum() > 1:
-                fBin[bini], x0Bin[bini] = fInBin.mean(), x0InBin.mean()
-                validMask[bini] = True
-                # uncertainties are a bit more elaborate:
-                fuBin[bini] = np.maximum(
-                        fInBin.std(ddof = 1) / np.sqrt(1. * fMask.sum()), # SEM
-                        np.sqrt( (fuInBin**2).sum() / fMask.sum() ) #propagated. unc.
-                        )
-
-        # remove empty bins:
-        validi = (True - np.isnan(fBin))
-        validi[np.argwhere(validMask != True)] = False
-        # store values:
-        self._fBin = DataVector(u'Ib', fBin[validi], rawU = fuBin[validi], 
-                unit = self.f.unit
-                ) 
-        self._x0Bin = DataVector(u'qb', 
-                self.x0.unit.toDisplay(x0Bin[validi]), 
-                unit = self.x0.unit
-                )
-        logging.info("Rebinning procedure completed: {} bins.".format(validi.sum()))
-
     # These are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
     # derived classes may have an alias getter for (x0, f, …)
@@ -134,34 +74,6 @@ class DataObj(DataSet, DisplayMixin):
         self._f = vec
         self._initMask()
         self._propagateMask()
-
-    @property
-    def x0Fit(self):
-        """
-        returns Binned variant of first sampling vector if exists, 
-        otherwise unbinned.
-        """
-        if self._x0Bin is not None:
-            return self._x0Bin
-        else:
-            return self.x0
-
-    @x0Fit.setter
-    def x0Fit(self, vec):
-        logging.error("x0Fit can not be set")
-
-    @property
-    def fFit(self):
-        """Binned variant of measurement vector."""
-        if self._fBin is not None:
-            return self._fBin
-        else:
-            return self.f
-
-    @fFit.setter
-    def fFit(self, vec):
-        logging.error("fFit can not be set")
-    # other common meta data
 
     @classproperty
     @classmethod
@@ -235,7 +147,6 @@ class DataObj(DataSet, DisplayMixin):
         self.config.setX0ValueRange(
                 (self.x0.siData.min(), self.x0.siData.max()))
         self._excludeInvalidX0()
-        self.reBin()
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
@@ -341,6 +252,104 @@ class DataObj(DataSet, DisplayMixin):
 
     def __neq__(self, other):
         return not self.__eq__(other)
+
+class BinnedDataObj(DataObj):
+    """ adds binning functionality to DataObj """
+    _fBin = None # let's try to do it this way. 
+    _x0Bin = None
+
+    @property
+    def x0Fit(self):
+        """
+        returns Binned variant of first sampling vector if exists, 
+        otherwise unbinned.
+        """
+        if self._x0Bin is not None:
+            return self._x0Bin
+        else:
+            return self.x0
+
+    @x0Fit.setter
+    def x0Fit(self, vec):
+        logging.error("x0Fit can not be set")
+
+    @property
+    def fFit(self):
+        """Binned variant of measurement vector."""
+        if self._fBin is not None:
+            return self._fBin
+        else:
+            return self.f
+
+    @fFit.setter
+    def fFit(self, vec):
+        logging.error("fFit can not be set")
+    # other common meta data
+
+    def reBin(self):
+        """ 
+        rebinning method, to be run (f.ex.) upon every "Start" buttonpress. 
+        For now, this will rebin using the x0 vector as a base, although the 
+        binning vector can theoretically be chosen freely.
+        """
+        logging.info("Initiating binning procedure")
+        nBin = self.config.nBin.value()
+        # self._binned = DataVector() once binning finishes.. dataVector can be set once.
+        sanX = self.x0.sanitized
+        x0Bin = np.zeros(nBin)
+        fBin  = np.zeros(nBin)
+        fuBin  = np.zeros(nBin)
+        validMask = np.zeros(nBin, dtype = bool) #default false
+
+        if not(nBin > 0):
+            self._x0Bin = None # reset to none if set
+            self._fBin = None
+            return # no need to do the actual rebinning. values stay None.
+
+        # prepare bin edges, log-spaced
+        xEdges = np.logspace(
+                np.log10(sanX.min()),
+                np.log10(sanX.max() + np.diff(sanX)[-1]/100.), #include last point
+                nBin + 1)
+
+        # loop over bins:
+        for bini in range(nBin):
+            fBin[bini], fuBin[bini], x0Bin[bini] = None, None, None # default
+            fMask = ((sanX >= xEdges[bini]) & (sanX < xEdges[bini + 1]))
+            fInBin, fuInBin = self.f.sanitized[fMask], self.f.sanitizedU[fMask]
+            x0InBin = self.x0.sanitized[fMask]
+            if fMask.sum() == 1:
+                fBin[bini], fuBin[bini], x0Bin[bini] = fInBin, fuInBin, x0InBin
+                validMask[bini] = True
+            elif fMask.sum() > 1:
+                fBin[bini], x0Bin[bini] = fInBin.mean(), x0InBin.mean()
+                validMask[bini] = True
+                # uncertainties are a bit more elaborate:
+                fuBin[bini] = np.maximum(
+                        fInBin.std(ddof = 1) / np.sqrt(1. * fMask.sum()), # SEM
+                        np.sqrt( (fuInBin**2).sum() / fMask.sum() ) #propagated. unc.
+                        )
+
+        # remove empty bins:
+        validi = (True - np.isnan(fBin))
+        validi[np.argwhere(validMask != True)] = False
+        # store values:
+        self._fBin = DataVector(u'Ib', fBin[validi], rawU = fuBin[validi], 
+                unit = self.f.unit
+                ) 
+        self._x0Bin = DataVector(u'qb', 
+                self.x0.unit.toDisplay(x0Bin[validi]), 
+                unit = self.x0.unit
+                )
+        logging.info("Rebinning procedure completed: {} bins.".format(validi.sum()))
+
+    def updateConfig(self):
+        # I wonder if this works...
+        super(BinnedDataObj, self).updateConfig()
+        self.reBin()
+
+    def __init__(self, **kwargs):
+        super(BinnedDataObj, self).__init__(**kwargs)
 
 if __name__ == "__main__":
     import doctest
