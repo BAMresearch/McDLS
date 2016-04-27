@@ -29,6 +29,28 @@ class DataObj(DataSet, DisplayMixin):
     _x1 = None
     _x2 = None
     _f  = None
+    # config doesn't have a "writeHDF5" yet. 
+    _toH5 = ["f", "x0", "x1", "x2", "validIndices", "config"]
+    _h5LocAdd = "data01/" # should be overridden by subclasses
+
+    def writeHDF5(self, filename, loc):
+        """ 
+        tells the individual DataVector instances to write to *filename*
+        *loc* should be "/mcentry01/". Data type gets added here as 
+        "[ sas | dls ] data01/"
+        """
+        loc = loc + self._h5LocAdd
+        for item in self._toH5:
+            iRef = getattr(self, item, None)
+            assert iRef is not None
+            iWriter = getattr(iRef, "writeHDF5", None)
+            if iWriter is not None:
+                iWriter(filename, loc)
+            else:
+                logging.warning("item {} does not have writeHDF5 functionality"
+                        .format(item))
+
+
     # These are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
     # derived classes may have an alias getter for (x0, f, …)
