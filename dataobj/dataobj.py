@@ -32,7 +32,7 @@ class DataObj(DataSet, DisplayMixin):
     # config doesn't have a "writeHDF" yet. 
     _toH5 = ["f", "x0", "x1", "x2", "validIndices", "config"]
     _h5LocAdd = "data01/" # should be overridden by subclasses
-    _h5test = False
+    _h5test = False # True
 
     def writeHDF(self, filename, loc):
         """ 
@@ -42,25 +42,20 @@ class DataObj(DataSet, DisplayMixin):
         """
         loc = loc + self._h5LocAdd
         for item in self._toH5:
-            logging.debug("self: {}, item: {}, filename: {}"
-                    .format(type(self), item, filename))
             iRef = getattr(self, item, None)
             if iRef is None:
-                logging.debug("iRef is none, skipping...")
                 # skip it
                 continue
             iWriter = getattr(iRef, "writeHDF", None)
             if iWriter is not None:
-                logging.debug("calling writeHDF")
+                logging.debug("calling writeHDF for iten {}".format(item))
                 iWriter(filename, loc)
             else:
-                logging.debug("item.iRef {} is DataVector instance: {}"
-                        .format(item, isinstance(iRef, DataVector)))
                 logging.warning("item {} does not have writeHDF functionality"
                         .format(item))
 
 
-    # These are to be set by the particular application dataset: 
+    # The following are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
     # derived classes may have an alias getter for (x0, f, …)
 

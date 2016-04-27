@@ -11,6 +11,21 @@ import h5py
 
 from utils.units import Unit, NoUnit
 
+def h5w(wloc, field, hDat, hType = "dataset"):
+    """ 
+        writes dataset *hDat* to HDF5 location *wloc*, deleting if exists 
+        htype can be "dataset" or "attribute"
+    """
+    # remove old field, only removes link, does not reclaim!
+    # ideally, new h5py file should be generated on end:
+    # http://stackoverflow.com/questions/11194927/deleting-information-from-an-hdf5-file
+    if field in wloc:
+        del wloc[field]
+    if "dataset" in hType:
+        wloc.create_dataset(field, data = hDat, compression = "gzip")
+    else:
+        wloc[field] = hDat
+
 class DataVector(object):
     """ a class for combining aspects of a particular vector of data.
     This is intended only as a storage container without additional functionality.
@@ -25,7 +40,7 @@ class DataVector(object):
     _validIndices = None # valid indices. 
     # specify which values are to be stored in a HDF5 file. 
     _h5Fields = ["raw", "rawU", "siData", "siDataU", "validIndices", "limit"]
-    _h5Attrs = ["unit"] # can we get a callable string returned by unit?
+    _h5Callers = ["unit"] # writeHDF will be called. 
     
     def writeHDF(self, filename, loc):
         """ 
@@ -38,24 +53,11 @@ class DataVector(object):
             for field in self._h5Fields:
                 hDat = getattr(self, field, None)
                 if hDat is not None:
-                    if field in wloc:
-                        # remove old field, NOTE: only removes link, does not reclaim!
-                        # ideally, new h5py file should be generated on end:
-                        # http://stackoverflow.com/questions/11194927/deleting-information-from-an-hdf5-file
-                        del wloc[field]
-                    wloc.create_dataset(field, data = hDat, compression = "gzip")
+                    h5w(wloc, field, hDat, hType = "dataset")
 
-                    # this solution does not work for lists:
-                    # wloc.require_dataset(
-                    #         field, 
-                    #         hDat.shape, 
-                    #         hDat.dtype, 
-                    #         compression = "gzip", 
-                    #         data = hDat)
+                    # the require_dataset solution does not work for lists
             # write unit:
-            if "unit" in wloc:
-                del wloc["unit"]
-            wloc["unit"] = self.unit.name()
+            h5w(wloc, "unit", self.unit.name(), hType = "attribute")
             # for attribute in self._h5Attrs:
             #     hAttr = getattr(self, attribute, None)
             #     if hAttr is not None:
