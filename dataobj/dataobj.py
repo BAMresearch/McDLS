@@ -397,6 +397,7 @@ class BinnedDataObj(DataObj):
 
     def __init__(self, **kwargs):
         super(BinnedDataObj, self).__init__(**kwargs)
+        [self._toH5.append(k) for k in ["fBin", "x0Bin"]]
 
 if __name__ == "__main__":
     import doctest
