@@ -66,6 +66,12 @@ class Unit(object):
             logging.warning(u"no matching magnitude to name {} found"
                     .format(name))
 
+    # @classmethod
+    # def writeHDF(cls, filename, loc):
+    #     """Writes the unit to an HDF5 file *filename*. The location in the 
+    #     hierarchy is indicated by the "loc" parameter. To this is added a
+    #     dataset with the name of the unit. 
+
     @classproperty
     @classmethod
     # see _siMagnitudeName and thus cls.siMagnitudeName is defined for each subclass

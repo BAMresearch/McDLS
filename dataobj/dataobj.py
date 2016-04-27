@@ -29,11 +29,11 @@ class DataObj(DataSet, DisplayMixin):
     _x1 = None
     _x2 = None
     _f  = None
-    # config doesn't have a "writeHDF5" yet. 
+    # config doesn't have a "writeHDF" yet. 
     _toH5 = ["f", "x0", "x1", "x2", "validIndices", "config"]
     _h5LocAdd = "data01/" # should be overridden by subclasses
 
-    def writeHDF5(self, filename, loc):
+    def writeHDF(self, filename, loc):
         """ 
         tells the individual DataVector instances to write to *filename*
         *loc* should be "/mcentry01/". Data type gets added here as 
@@ -41,13 +41,21 @@ class DataObj(DataSet, DisplayMixin):
         """
         loc = loc + self._h5LocAdd
         for item in self._toH5:
+            logging.debug("self: {}, item: {}, filename: {}"
+                    .format(type(self), item, filename))
             iRef = getattr(self, item, None)
-            assert iRef is not None
-            iWriter = getattr(iRef, "writeHDF5", None)
+            if iRef is None:
+                logging.debug("iRef is none, skipping...")
+                # skip it
+                continue
+            iWriter = getattr(iRef, "writeHDF", None)
             if iWriter is not None:
+                logging.debug("calling writeHDF")
                 iWriter(filename, loc)
             else:
-                logging.warning("item {} does not have writeHDF5 functionality"
+                logging.debug("item.iRef {} is DataVector instance: {}"
+                        .format(item, isinstance(iRef, DataVector)))
+                logging.warning("item {} does not have writeHDF functionality"
                         .format(item))
 
 
@@ -169,6 +177,8 @@ class DataObj(DataSet, DisplayMixin):
         self.config.setX0ValueRange(
                 (self.x0.siData.min(), self.x0.siData.max()))
         self._excludeInvalidX0()
+        # for HDF5 testing purposes:
+        # self.writeHDF("test.h5", "/mcentry01/")
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)

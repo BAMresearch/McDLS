@@ -38,11 +38,19 @@ class DataVector(object):
             for field in self._h5Fields:
                 hDat = getattr(self, field, None)
                 if hDat is not None:
-                    wloc.create_dataset(field, data = hDat, compression = "gzip")
-            for attribute in self._h5Attrs:
-                hAttr = getattr(self, attribute, None)
-                if hAttr is not None:
-                    wloc[attribute] = hAttr
+                    wloc.require_dataset(
+                            field, 
+                            hDat.shape, 
+                            hDat.dtype, 
+                            compression = "gzip", 
+                            data = hDat)
+                    # wloc.create_dataset(field, data = hDat, compression = "gzip")
+            # write unit:
+            wloc["unit"] = self.unit.name
+            # for attribute in self._h5Attrs:
+            #     hAttr = getattr(self, attribute, None)
+            #     if hAttr is not None:
+            #         wloc[attribute] = hAttr
 
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name

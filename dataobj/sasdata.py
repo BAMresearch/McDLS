@@ -133,7 +133,7 @@ class SASData(BinnedDataObj):
 
     def __init__(self, **kwargs):
         super(SASData, self).__init__(**kwargs)
-        self._h5LocAdd = "sasdata01" # overwriting DataObj default
+        self._h5LocAdd = "sasdata01/" # overwriting DataObj default
         
         # process rawArray for new DataVector instances:
         rawArray = kwargs.pop('rawArray', None)

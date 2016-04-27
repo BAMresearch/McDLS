@@ -199,7 +199,7 @@ class ParameterBase(object):
         return res
 
     @mixedmethod
-    def writeHDF5(selforcls, filename, loc):
+    def writeHDF(selforcls, filename, loc):
         """ Writer method to output the <key, value> pairs to *filename*. 
         "loc" is the internal HDF5 location, to which will be added a dataset
         with name stored in the Parameter "name" attribute. All other Parameter
