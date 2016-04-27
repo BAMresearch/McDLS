@@ -38,15 +38,24 @@ class DataVector(object):
             for field in self._h5Fields:
                 hDat = getattr(self, field, None)
                 if hDat is not None:
-                    wloc.require_dataset(
-                            field, 
-                            hDat.shape, 
-                            hDat.dtype, 
-                            compression = "gzip", 
-                            data = hDat)
-                    # wloc.create_dataset(field, data = hDat, compression = "gzip")
+                    if field in wloc:
+                        # remove old field, NOTE: only removes link, does not reclaim!
+                        # ideally, new h5py file should be generated on end:
+                        # http://stackoverflow.com/questions/11194927/deleting-information-from-an-hdf5-file
+                        del wloc[field]
+                    wloc.create_dataset(field, data = hDat, compression = "gzip")
+
+                    # this solution does not work for lists:
+                    # wloc.require_dataset(
+                    #         field, 
+                    #         hDat.shape, 
+                    #         hDat.dtype, 
+                    #         compression = "gzip", 
+                    #         data = hDat)
             # write unit:
-            wloc["unit"] = self.unit.name
+            if "unit" in wloc:
+                del wloc["unit"]
+            wloc["unit"] = self.unit.name()
             # for attribute in self._h5Attrs:
             #     hAttr = getattr(self, attribute, None)
             #     if hAttr is not None:

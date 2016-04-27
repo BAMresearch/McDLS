@@ -32,6 +32,7 @@ class DataObj(DataSet, DisplayMixin):
     # config doesn't have a "writeHDF" yet. 
     _toH5 = ["f", "x0", "x1", "x2", "validIndices", "config"]
     _h5LocAdd = "data01/" # should be overridden by subclasses
+    _h5test = False
 
     def writeHDF(self, filename, loc):
         """ 
@@ -178,7 +179,8 @@ class DataObj(DataSet, DisplayMixin):
                 (self.x0.siData.min(), self.x0.siData.max()))
         self._excludeInvalidX0()
         # for HDF5 testing purposes:
-        # self.writeHDF("test.h5", "/mcentry01/")
+        if self._h5test:
+            self.writeHDF("test.h5", "/mcentry01/")
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
