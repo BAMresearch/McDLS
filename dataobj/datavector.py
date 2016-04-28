@@ -49,12 +49,6 @@ class DataVector(object):
             if callFunc is not None:
                 callFunc(filename, loc + self.name)
 
-            # h5w(wloc, "unit", self.unit.name(), hType = "attribute")
-            # for attribute in self._h5Attrs:
-            #     hAttr = getattr(self, attribute, None)
-            #     if hAttr is not None:
-            #         wloc[attribute] = hAttr
-
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name
         self._raw = raw
