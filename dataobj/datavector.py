@@ -10,21 +10,8 @@ import numpy as np
 import h5py
 
 from utils.units import Unit, NoUnit
+from utils.hdf5base import h5w
 
-def h5w(wloc, field, hDat, hType = "dataset"):
-    """ 
-        writes dataset *hDat* to HDF5 location *wloc*, deleting if exists 
-        htype can be "dataset" or "attribute"
-    """
-    # remove old field, only removes link, does not reclaim!
-    # ideally, new h5py file should be generated on end:
-    # http://stackoverflow.com/questions/11194927/deleting-information-from-an-hdf5-file
-    if field in wloc:
-        del wloc[field]
-    if "dataset" in hType:
-        wloc.create_dataset(field, data = hDat, compression = "gzip")
-    else:
-        wloc[field] = hDat
 
 class DataVector(object):
     """ a class for combining aspects of a particular vector of data.
@@ -56,8 +43,13 @@ class DataVector(object):
                     h5w(wloc, field, hDat, hType = "dataset")
 
                     # the require_dataset solution does not work for lists
-            # write unit:
-            h5w(wloc, "unit", self.unit.name(), hType = "attribute")
+        # write unit:
+        for call in self._h5Callers:
+            callFunc = getattr(self.unit, "writeHDF", None)
+            if callFunc is not None:
+                callFunc(filename, loc + self.name)
+
+            # h5w(wloc, "unit", self.unit.name(), hType = "attribute")
             # for attribute in self._h5Attrs:
             #     hAttr = getattr(self, attribute, None)
             #     if hAttr is not None:

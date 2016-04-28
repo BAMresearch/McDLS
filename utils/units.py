@@ -38,6 +38,8 @@ import collections
 import numpy as np # For arrays
 from numpy import pi
 from utils.classproperty import classproperty
+from utils.hdf5base import h5w
+import h5py
 
 class Unit(object):
     _magnitudeMap = None
@@ -66,11 +68,23 @@ class Unit(object):
             logging.warning(u"no matching magnitude to name {} found"
                     .format(name))
 
-    # @classmethod
-    # def writeHDF(cls, filename, loc):
-    #     """Writes the unit to an HDF5 file *filename*. The location in the 
-    #     hierarchy is indicated by the "loc" parameter. To this is added a
-    #     dataset with the name of the unit. 
+    @classmethod
+    def writeHDF(cls, filename, loc):
+        """
+        Writes the unit to an HDF5 file *filename*. The location in the 
+        hierarchy is indicated by the "loc" parameter. To this is added a
+        dataset with the name "unit".
+        """
+        with h5py.File(filename) as h5f:
+            wloc = h5f[loc]
+            logging.debug("writing to loc: {}, unit name: {}"
+                    .format(loc, cls.name()))
+            h5w(wloc, "unit", cls.name(), hType = "dataset")
+            # write the displayMagnitudeName as attribute:
+            h5w(h5f[loc + "/unit"], 
+                    "displayMagnitudeName", 
+                    unicode(cls.displayMagnitudeName), 
+                    hType = "attribute")
 
     @classproperty
     @classmethod
