@@ -43,7 +43,7 @@ class DataVector(object):
                 if hDat is not None:
                     h5w(wloc, field, hDat, hType = "dataset")
             for att in self._h5Attrs:
-                h5w(wloc, "name", self.name, hType = "attribute")
+                h5w(wloc, att, self.name, hType = "attribute")
 
         # write unit:
         for call in self._h5Callers:
