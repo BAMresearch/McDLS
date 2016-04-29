@@ -28,6 +28,7 @@ class DataVector(object):
     # specify which values are to be stored in a HDF5 file. 
     _h5Fields = ["raw", "rawU", "siData", "siDataU", "validIndices", "limit"]
     _h5Callers = ["unit"] # writeHDF will be called. 
+    _h5Attrs = ["name"]
     
     def writeHDF(self, filename, loc):
         """ 
@@ -36,18 +37,19 @@ class DataVector(object):
         name of the vector (self.name) is appended to this path in this method.
         """
         with h5py.File(filename) as h5f:
-            wloc = h5f.require_group(loc + self.name) # unicode's no problem
+            wloc = h5f.require_group(loc) # unicode's no problem
             for field in self._h5Fields:
                 hDat = getattr(self, field, None)
                 if hDat is not None:
                     h5w(wloc, field, hDat, hType = "dataset")
+            for att in self._h5Attrs:
+                h5w(wloc, "name", self.name, hType = "attribute")
 
-                    # the require_dataset solution does not work for lists
         # write unit:
         for call in self._h5Callers:
             callFunc = getattr(self.unit, "writeHDF", None)
             if callFunc is not None:
-                callFunc(filename, loc + self.name)
+                callFunc(filename, loc)
 
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name

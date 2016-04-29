@@ -48,12 +48,11 @@ class DataObj(DataSet, DisplayMixin):
                 continue
             iWriter = getattr(iRef, "writeHDF", None)
             if iWriter is not None:
-                logging.debug("calling writeHDF for iten {}".format(item))
-                iWriter(filename, loc)
+                logging.debug("calling writeHDF for item {}".format(item))
+                iWriter(filename, loc + "/" + item)
             else:
                 logging.warning("item {} does not have writeHDF functionality"
                         .format(item))
-
 
     # The following are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
@@ -404,7 +403,7 @@ class BinnedDataObj(DataObj):
 
     def __init__(self, **kwargs):
         super(BinnedDataObj, self).__init__(**kwargs)
-        [self._toH5.append(k) for k in ["fBin", "x0Bin"]]
+        [self._toH5.append(k) for k in ["fFit", "x0Fit"]]
 
 if __name__ == "__main__":
     import doctest
