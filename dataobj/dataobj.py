@@ -15,8 +15,10 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
+from utils.hdf5base import h5w, HDF5Mixin
 
-class DataObj(DataSet, DisplayMixin):
+
+class DataObj(DataSet, DisplayMixin, HDF5Mixin):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
     """
@@ -30,29 +32,9 @@ class DataObj(DataSet, DisplayMixin):
     _x2 = None
     _f  = None
     # config doesn't have a "writeHDF" yet. 
-    _toH5 = ["f", "x0", "x1", "x2", "validIndices", "config"]
-    _h5LocAdd = "data01/" # should be overridden by subclasses
-    _h5test = False # True
-
-    def writeHDF(self, filename, loc):
-        """ 
-        tells the individual DataVector instances to write to *filename*
-        *loc* should be "/mcentry01/". Data type gets added here as 
-        "[ sas | dls ] data01/"
-        """
-        loc = loc + self._h5LocAdd
-        for item in self._toH5:
-            iRef = getattr(self, item, None)
-            if iRef is None:
-                # skip it
-                continue
-            iWriter = getattr(iRef, "writeHDF", None)
-            if iWriter is not None:
-                logging.debug("calling writeHDF for item {}".format(item))
-                iWriter(filename, loc + "/" + item)
-            else:
-                logging.warning("item {} does not have writeHDF functionality"
-                        .format(item))
+    _h5Callers = ["f", "x0", "x1", "x2", "validIndices", "config"]
+    _h5LocAdd = "data01" # should be overridden by subclasses
+    _h5test = True #False # True
 
     # The following are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
@@ -403,7 +385,7 @@ class BinnedDataObj(DataObj):
 
     def __init__(self, **kwargs):
         super(BinnedDataObj, self).__init__(**kwargs)
-        [self._toH5.append(k) for k in ["fFit", "x0Fit"]]
+        [self._h5Callers.append(k) for k in ["fFit", "x0Fit"]]
 
 if __name__ == "__main__":
     import doctest

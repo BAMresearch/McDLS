@@ -10,10 +10,10 @@ import numpy as np
 import h5py
 
 from utils.units import Unit, NoUnit
-from utils.hdf5base import h5w
+from utils.hdf5base import h5w, HDF5Mixin
 
 
-class DataVector(object):
+class DataVector(HDF5Mixin):
     """ a class for combining aspects of a particular vector of data.
     This is intended only as a storage container without additional functionality.
     """
@@ -26,31 +26,10 @@ class DataVector(object):
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
     # specify which values are to be stored in a HDF5 file. 
-    _h5Fields = ["raw", "rawU", "siData", "siDataU", "validIndices", "limit"]
+    _h5Datasets = ["raw", "rawU", "siData", "siDataU", "validIndices", "limit"]
     _h5Callers = ["unit"] # writeHDF will be called. 
     _h5Attrs = ["name"]
     
-    def writeHDF(self, filename, loc):
-        """ 
-        Writes the vector to an HDF5 output file *filename*, at location *loc*. 
-        This location should be e.g. "/mcentry01/[ sas | dls ]data01/". The 
-        name of the vector (self.name) is appended to this path in this method.
-        """
-        with h5py.File(filename) as h5f:
-            wloc = h5f.require_group(loc) # unicode's no problem
-            for field in self._h5Fields:
-                hDat = getattr(self, field, None)
-                if hDat is not None:
-                    h5w(wloc, field, hDat, hType = "dataset")
-            for att in self._h5Attrs:
-                h5w(wloc, att, self.name, hType = "attribute")
-
-        # write unit:
-        for call in self._h5Callers:
-            callFunc = getattr(self.unit, "writeHDF", None)
-            if callFunc is not None:
-                callFunc(filename, loc)
-
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name
         self._raw = raw
