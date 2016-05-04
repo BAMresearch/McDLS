@@ -53,15 +53,13 @@ class HDF5Mixin(object):
             loc += "/" + item
         # process datasets and attribute calls
         logging.debug("Writing at loc: {}".format(loc))
-        logging.debug("_h5Datasets: {}, _h5Attrs: {}"
-                .format(self._h5Datasets, self._h5Attrs))
         with h5py.File(filename) as h5f:
             wloc = h5f.require_group(loc) # unicode's no problem
             for field in self._h5Datasets:
                 hDat = getattr(self, field, None)
                 if hDat is not None:
-                    logging.debug("*** dataset name: {}, data: {}"
-                            .format(field, hDat))
+                    logging.debug("*** dataset name: {}"
+                            .format(field))
                     h5w(wloc, field, hDat, hType = "dataset")
             for att in self._h5Attrs:
                 logging.debug("*** attribute field: {}, data: {}"

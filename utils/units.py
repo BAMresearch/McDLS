@@ -38,13 +38,15 @@ import collections
 import numpy as np # For arrays
 from numpy import pi
 from utils.classproperty import classproperty
-from utils.hdf5base import h5w
+from utils.hdf5base import h5w, HDF5Mixin
 import h5py
 
-class Unit(object):
+class Unit(HDF5Mixin, object):
     _magnitudeMap = None
     _siMagnitudeName = None
     _displayMagnitudeName = None
+    # _h5Datasets = ["name"]
+    # _h5Attrs = ["displayMagnitudeName"]
 
     def __init__(self, magnitudeName = None):
         """Set up a unit of measurement. The provided magnitude name is used
@@ -69,11 +71,9 @@ class Unit(object):
                     .format(name))
 
     @classmethod
-    def writeHDF(cls, filename, loc):
+    def writeHDF(cls, filename, loc, item = None):
         """
-        Writes the unit to an HDF5 file *filename*. The location in the 
-        hierarchy is indicated by the "loc" parameter. To this is added a
-        dataset with the name "unit".
+        overridden mixin class method to accommodate the peculiarities of the unit class
         """
         with h5py.File(filename) as h5f:
             wloc = h5f[loc]
@@ -81,7 +81,7 @@ class Unit(object):
                     .format(loc, cls.name()))
             h5w(wloc, "unit", cls.name(), hType = "dataset")
             # write the displayMagnitudeName as attribute:
-            h5w(h5f[loc + "/unit"], 
+            h5w(h5f[loc], 
                     "displayMagnitudeName", 
                     unicode(cls.displayMagnitudeName), 
                     hType = "attribute")
