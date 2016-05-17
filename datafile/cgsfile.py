@@ -8,10 +8,9 @@ import re
 import os.path
 from numpy import array as np_array
 from collections import OrderedDict
-from utils import isList
 from utils.units import Angle, Temperature, DynamicViscosity, Length, MSec
 from datafile import AsciiFile
-from utils import classproperty
+from utils import classproperty, isList
 from dataobj import DLSData
 
 def text2num(valueText, dtype = float):
@@ -90,11 +89,12 @@ class CGSFile(AsciiFile):
 
     @classmethod
     def signatures(cls):
-        return ("ALV-7004 CGS-8F Data, Single Run Data",)
+        return ("ALV-7004 CGS-8F Data, Single Run Data",
+                "Simulation Data")
 
     @classmethod
     def verifySignatures(cls, fileSignature):
-        if fileSignature in cls.signatures():
+        if any((sig in fileSignature) for sig in cls.signatures()):
             return True
         msg = ("Found unknown file signature:",
                "    '{0}'! ".format(fileSignature),
@@ -107,7 +107,9 @@ class CGSFile(AsciiFile):
     def parseLines(self, asciiLines, **kwargs):
         """Will be called by the base class' readFile() method."""
         i = 0
-        self.verifySignatures(asciiLines[i].strip())
+        # use the file signature as fallback replacement for the sample name
+        self._sampleName = asciiLines[i].strip()
+        self.verifySignatures(self.sampleName)
         while i < len(asciiLines) - 1:
             i += 1
             line = asciiLines[i].strip()
@@ -200,6 +202,8 @@ class CGSFile(AsciiFile):
     def setListValue(self, propName, value, idx):
         propName = "_"+propName
         if idx is None:
+            if not isList(value):
+                value = [value,]
             setattr(self, propName, value)
         else:
             if not isList(getattr(self, propName)):
@@ -278,10 +282,14 @@ class CGSFile(AsciiFile):
     def getDataObj(self):
         dlsData = DLSData(title = self.sampleName)
         dlsData.setFilename(self.filename)
-        dlsData.setMeasIndices((self.measIndex,))
+        if any([idx is not None for idx in self.measIndex]):
+            dlsData.setMeasIndices((self.measIndex,))
+        else:
+            dlsData.setMeasIndices(())
         dlsData.setSampleName(self.sampleName)
-        dlsData.setSampleDescription(
-                " ".join([s for s in self.sampleMemo if len(s)]))
+        if isList(self.sampleMemo):
+            dlsData.setSampleDescription(
+                    " ".join([s for s in self.sampleMemo if len(s)]))
         dlsData.setTemperature(Temperature(self.units['temperature'])
                     .toSi(self.temperature))
         dlsData.setViscosity(DynamicViscosity(self.units['viscosity'])
@@ -291,7 +299,8 @@ class CGSFile(AsciiFile):
                 .toSi(self.wavelength))
         # scattering angles
         aunit = Angle(self.units['angles'])
-        dlsData.setAngles(aunit, aunit.toSi(np_array(self.angles)))
+        if self.angles is not None:
+            dlsData.setAngles(aunit, aunit.toSi(np_array(self.angles)))
         # correlation array
         dlsData.setTau(self._tauUnit, self.correlation[:, 0])
         dlsData.setCorrelation(self.correlation[:, 1:])

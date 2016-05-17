@@ -73,7 +73,7 @@ class MultiDataVector(DataVector):
 
     def unflatten(self, a):
         if self._count == 1:
-            return a # nothing to do
+            return a.reshape((-1, 1)) # nothing to do
         rowCount = len(a) / self._count
         if self._wasRepeated: # just take the first non-duplicates
             result = a[:rowCount]
@@ -300,6 +300,8 @@ class DLSData(DataObj):
                     o.sampleName == self.sampleName]
         if not len(others):
             return None
+        if len(others) == 1:
+            return self
         # average basic properties
         for prop in ("temperature", "viscosity",
                      "refractiveIndex", "wavelength"):
@@ -327,6 +329,8 @@ class DLSData(DataObj):
 
     def splitPerAngle(self):
         lst = []
+        if self.numAngles == 1:
+            return [self]
         for i in range(self.numAngles):
             another = copy.copy(self)
             another.setAngles(self.anglesUnit, self.angles[i, newaxis])
