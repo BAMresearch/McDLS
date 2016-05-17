@@ -499,12 +499,15 @@ class McSAS(AlgorithmBase):
         volumeFraction = zeros((numContribs, numReps))
         # number fraction for each contribution
         numberFraction = zeros((numContribs, numReps))
+        volSqrFraction = zeros((numContribs, numReps))
         # volume frac. for each histogram bin
         minReqVol = zeros((numContribs, numReps)) 
         # number frac. for each histogram bin
         minReqNum = zeros((numContribs, numReps))
+        minReqVolSqr = zeros((numContribs, numReps))
         totalVolumeFraction = zeros((numReps))
         totalNumberFraction = zeros((numReps))
+        totalVolSqrFraction = zeros((numReps))
         # MeasVal scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
@@ -536,6 +539,9 @@ class McSAS(AlgorithmBase):
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/modelData.vset.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
+            volSqrFraction[:, ri] = (numberFraction[:, ri]
+                    * volumeFraction[:, ri] * volumeFraction[:, ri])
+            totalVolSqrFraction[ri] = sum(volSqrFraction[:, ri])
 
             # calc observability for each sphere/contribution
             for c in range(numContribs):
@@ -552,12 +558,21 @@ class McSAS(AlgorithmBase):
                         data.f.binnedDataU * volumeFraction[c, ri]
                                 / (sc[0] * partialModelData.cumInt)).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / modelData.vset[c]
+                minReqVolSqr[c, ri] = (minReqNum[c, ri]
+                        * minReqVol[c, ri] * minReqVol[c, ri])
 
             numberFraction[:, ri] /= totalNumberFraction[ri]
-            minReqNum[:, ri] /= totalNumberFraction[ri]
+            minReqNum[:, ri]      /= totalNumberFraction[ri]
+            volSqrFraction[:, ri] /= totalVolSqrFraction[ri]
+            minReqVolSqr[:, ri]   /= totalVolSqrFraction[ri]
+#            print >>sys.__stderr__, "numberFraction ", numberFraction[:, ri]
+#            print >>sys.__stderr__, "volSqrFraction ", volSqrFraction[:, ri]
+#            print >>sys.__stderr__, "test ", volumeFraction[:, ri]
+#            print >>sys.__stderr__, "rset ", (rset.flatten()*1e9).sort()
 
         fractions = dict(vol = (volumeFraction, minReqVol),
-                         num = (numberFraction, minReqNum))
+                         num = (numberFraction, minReqNum),
+                         volsqr = (volSqrFraction, minReqVolSqr))
 
         # now we histogram over each variable
         # for each variable parameter we define,
