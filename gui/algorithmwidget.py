@@ -229,7 +229,10 @@ class AlgorithmWidget(SettingsWidget):
             self.updateParam(w, emitBackendUpdated = False)
         # emit sigBackendUpdated after updating all widgets,
         # because they may be removed in the meantime
-        self.sigBackendUpdated.emit()
+        try:
+            self.sigBackendUpdated.emit()
+        # RuntimeError: Internal C++ object (SettingsGridWidget) already
+        except RuntimeError: pass
 
     def onBackendUpdate(self):
         self.updateUi()
