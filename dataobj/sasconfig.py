@@ -287,7 +287,7 @@ class SASConfig(DataConfig):
         smearing = kwargs.pop("smearing", None)
         if smearing is None:
             smearing = TrapezoidSmearing()
-        self.smearing = smearing
+        #self.smearing = smearing
         self.register("qunit", self.x0Low.setUnit)
         self.register("qunit", self.x0High.setUnit)
         self.register("punit", self.x1Low.setUnit)
