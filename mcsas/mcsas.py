@@ -539,8 +539,7 @@ class McSAS(AlgorithmBase):
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
             numberFraction[:, ri] = volumeFraction[:, ri]/modelData.vset.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
-            volSqrFraction[:, ri] = (numberFraction[:, ri]
-                    * volumeFraction[:, ri] * volumeFraction[:, ri])
+            volSqrFraction[:, ri] = volumeFraction[:, ri]*modelData.vset.flatten()
             totalVolSqrFraction[ri] = sum(volSqrFraction[:, ri])
 
             # calc observability for each sphere/contribution
@@ -565,10 +564,6 @@ class McSAS(AlgorithmBase):
             minReqNum[:, ri]      /= totalNumberFraction[ri]
             volSqrFraction[:, ri] /= totalVolSqrFraction[ri]
             minReqVolSqr[:, ri]   /= totalVolSqrFraction[ri]
-#            print >>sys.__stderr__, "numberFraction ", numberFraction[:, ri]
-#            print >>sys.__stderr__, "volSqrFraction ", volSqrFraction[:, ri]
-#            print >>sys.__stderr__, "test ", volumeFraction[:, ri]
-#            print >>sys.__stderr__, "rset ", (rset.flatten()*1e9).sort()
 
         fractions = dict(vol = (volumeFraction, minReqVol),
                          num = (numberFraction, minReqNum),
