@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # utils/pickleinstancemethods.py
 
-from utils.devtools import DBG
 from types import MethodType
 import copy_reg
 
