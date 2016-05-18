@@ -15,7 +15,7 @@ import pickle
 from gui.qt import QtCore
 from QtCore import QUrl
 from bases.dataset import DataSet
-from utils import isList, isString, testfor, isMac
+from utils import isList, isString, testfor, isMac, fixFilename, mcopen
 from utils.lastpath import LastPath
 from utils.units import Angle
 from datafile import PDHFile, AsciiFile
@@ -89,7 +89,8 @@ class OutputFilename(object):
             fn += ["_", kind]
         if isString(extension):
             fn += extension
-        return os.path.join(self._outDir, "".join(fn))
+        fn = os.path.join(self._outDir, "".join(fn))
+        return fixFilename(fn)
 
     def filenameVerbose(self, kind, descr, extension = '.txt'):
         """Returns the file name as in filename() and logs a descriptive
@@ -340,7 +341,7 @@ class Calculator(object):
         fn = self._outFn.filenameVerbose("contributions",
                                          "Model contribution parameters",
                                          extension = '.pickle')
-        with open(fn,'w') as fh:
+        with mcopen(fn, 'w') as fh:
             pickle.dump(mcResult['contribs'], fh)
 
     def _writeSettings(self, mcargs, dataset):
@@ -377,7 +378,7 @@ class Calculator(object):
                 config.set(sectionName, p.name()+"_max", p.max())
             else:
                 config.set(sectionName, p.name(), p.value())
-        with codecs.open(fn, 'w', encoding = 'utf8') as configfile:
+        with mcopen(fn, 'w') as configfile:
             config.write(configfile)
 
     def _writeResultHelper(self, mcResult, fileKey, descr, columnNames,
