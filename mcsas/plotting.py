@@ -480,7 +480,9 @@ class PlotResults(object):
             'xscale' : xScale,
             'yscale' : 'linear',
             'ylabel' : '[Rel.] Fraction' })
-        if "vol" in parHist.yweight:
+        if "volsqr" in parHist.yweight:
+            hAxDict['ylabel'] = u'[Rel.] Volume² Fraction'
+        elif "vol" in parHist.yweight:
             hAxDict['ylabel'] = '[Rel.] Volume Fraction'
         elif "num" in parHist.yweight:
             hAxDict['ylabel'] = '[Rel.] Number Fraction'
