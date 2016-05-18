@@ -11,12 +11,13 @@ import sys
 import inspect
 import os.path
 import tempfile
+import codecs
 
 _logfd, _logfn = tempfile.mkstemp()
 print("DBGF() to: '{}'".format(_logfn), file = sys.__stderr__)
 
 def DBGF(*args):
-    with open(_logfn, 'a') as fd:
+    with codecs.open(_logfn, 'a', encoding = 'utf8') as fd:
         DBG(_file = fd, *args)
 
 def DBG(*args, **kwargs):
