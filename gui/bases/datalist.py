@@ -6,6 +6,8 @@ import os.path
 import logging
 import collections
 import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 from time import time as timestamp
 from gui.utils.signal import Signal
