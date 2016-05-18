@@ -18,24 +18,29 @@ class DataVector(HDF5Mixin):
     This is intended only as a storage container without additional functionality.
     """
     _name = None # descriptor for axes and labels, unicode string at init.
-    _raw = None # Relevant data directly from input file, non-SI units, unsanitized
-    _rawU = None # raw uncertainties, unsanitized
-    _siData = None # copy raw data in si units, often accessed
+    _rawData = None # Relevant data directly from input file, non-SI units, unsanitized
+    _rawDataU = None # raw uncertainties, unsanitized
+    _siData = None # copy raw data in si units, sanitized, often accessed
     _siDataU = None # uncertainties in si units, sanitized, with eMin taken into account
+    _binnedData = None # binned, sanitized data
+    _binnedDataU = None # binned, sanitized data
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
     _validIndices = None # valid indices. 
     # specify which values are to be stored in a HDF5 file. 
-    _h5Datasets = ["raw", "rawU", "siData", "siDataU", "validIndices", "limit"]
+    _h5Datasets = ["rawData", "rawDataU", 
+            "siData", "siDataU", 
+            "binnedData", "binnedDataU", 
+            "validIndices", "limit"]
     _h5Callers = ["unit"] # writeHDF will be called. 
     _h5Attrs = ["name"]
     
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name
-        self._raw = raw
-        self._rawU = rawU
+        self._rawData = raw
+        self._rawDataU = rawU
         self.unit = unit
-        self.validIndices = np.arange(self.raw.size) # sets limits as well
+        self.validIndices = np.arange(self.rawData.size) # sets limits as well
 
     @property
     def name(self):
@@ -88,15 +93,39 @@ class DataVector(HDF5Mixin):
     def siDataU(self, vec):
         self._siDataU = vec
 
+    # binnedDataU, uncertainties on siData
+    @property
+    def binnedData(self):
+        if self._binnedData is not None:
+            return self._binnedData
+        else:
+            return self.sanitized
+    
+    @binnedData.setter
+    def binnedData(self, vec):
+        self._binnedData = vec
+
+    # binnedDataU, uncertainties on siData
+    @property
+    def binnedDataU(self):
+        if self._binnedDataU is not None:
+            return self._binnedDataU
+        else:
+            return self.sanitizedU
+    
+    @binnedDataU.setter
+    def binnedDataU(self, vec):
+        self._binnedDataU = vec
+
     # raw data values
     @property
-    def raw(self):
-        return self._raw
+    def rawData(self):
+        return self._rawData
 
     # raw uncertainties
     @property
-    def rawU(self):
-        return self._rawU
+    def rawDataU(self):
+        return self._rawDataU
 
     @property
     def unit(self):
@@ -106,14 +135,14 @@ class DataVector(HDF5Mixin):
     def unit(self, newUnit):
         if not isinstance(newUnit, Unit):
             self._unit = NoUnit()
-            self.siData = self.raw.copy()
-            if self.rawU is not None:
-                self.siDataU = self.rawU.copy()
+            self.siData = self.rawData.copy()
+            if self.rawDataU is not None:
+                self.siDataU = self.rawDataU.copy()
         else:
             self._unit = newUnit
-            self.siData = self.unit.toSi(self.raw)
-            if self.rawU is not None:
-                self.siDataU = self.unit.toSi(self.rawU)
+            self.siData = self.unit.toSi(self.rawData)
+            if self.rawDataU is not None:
+                self.siDataU = self.unit.toSi(self.rawDataU)
 
     # TODO: define min/max properties for convenience?
     @property

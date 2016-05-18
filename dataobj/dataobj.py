@@ -154,6 +154,7 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self.config.setX0ValueRange(
                 (self.x0.siData.min(), self.x0.siData.max()))
         self._excludeInvalidX0()
+        self._reBin()
         # for HDF5 testing purposes:
         if self._h5test:
             self.writeHDF("test.h5", "/mcentry01/")
@@ -252,76 +253,7 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         # -> vice versa at the end of _onLimitsUpdate() above
         self.config.x0Low.setValue(self.x0.sanitized.min())
 
-    def __init__(self, **kwargs):
-        super(DataObj, self).__init__(**kwargs)
-
-    def __eq__(self, other):
-        return (np_all(self.rawArray == other.rawArray)
-                and self.title == other.title
-                and self.filename == other.filename)
-
-    def __neq__(self, other):
-        return not self.__eq__(other)
-
-class BinnedDataObj(DataObj):
-    """ adds binning functionality to DataObj """
-    _fBin = None # let's try to do it this way. 
-    _x0Bin = None
-
-    # Can't get this redefinition of x0 to work..
-    # def _propagateMask(self):
-    #     super(BinnedDataObj, self)._propagateMask()
-
-    # def _applyLimits(self):
-    #     super(BinnedDataObj, self)._applyLimits()
-
-    # @property
-    # def x0(self):
-    #     """
-    #     returns Binned variant of first sampling vector if exists, 
-    #     otherwise unbinned.
-    #     """
-    #     if self._x0Bin is not None:
-    #         return self._x0Bin
-    #     else:
-    #         return DataObj.x0
-
-    # @x0.setter
-    # def x0(self, vec):
-    #     # if DataObj.x0.shape != vec.shape:
-    #     #     logging.error("only the unbinned x0 vector can be set")
-    #     # else:
-    #     DataObj.x0 = vec
-
-    @property
-    def x0Fit(self):
-        """
-        returns Binned variant of first sampling vector if exists, 
-        otherwise unbinned.
-        """
-        if self._x0Bin is not None:
-            return self._x0Bin
-        else:
-            return self.x0
-
-    @x0Fit.setter
-    def x0Fit(self, vec):
-        logging.error("x0Fit can not be set")
-
-    @property
-    def fFit(self):
-        """Binned variant of measurement vector."""
-        if self._fBin is not None:
-            return self._fBin
-        else:
-            return self.f
-
-    @fFit.setter
-    def fFit(self, vec):
-        logging.error("fFit can not be set")
-    # other common meta data
-
-    def reBin(self):
+    def _reBin(self):
         """ 
         rebinning method, to be run (f.ex.) upon every "Start" buttonpress. 
         For now, this will rebin using the x0 vector as a base, although the 
@@ -337,8 +269,8 @@ class BinnedDataObj(DataObj):
         validMask = np.zeros(nBin, dtype = bool) #default false
 
         if not(nBin > 0):
-            self._x0Bin = None # reset to none if set
-            self._fBin = None
+            self.x0.binnedData = None # reset to none if set
+            self.f.binnedData = None
             return # no need to do the actual rebinning. values stay None.
 
         # prepare bin edges, log-spaced
@@ -369,23 +301,21 @@ class BinnedDataObj(DataObj):
         validi = (True - np.isnan(fBin))
         validi[np.argwhere(validMask != True)] = False
         # store values:
-        self._fBin = DataVector(u'Ib', fBin[validi], rawU = fuBin[validi], 
-                unit = self.f.unit
-                ) 
-        self._x0Bin = DataVector(u'qb', 
-                self.x0.unit.toDisplay(x0Bin[validi]), 
-                unit = self.x0.unit
-                )
+        self.f.binnedData, self.f.binnedDataU = fBin[validi], fuBin[validi]
+        self.x0.binnedData = x0Bin[validi] # self.x0.unit.toDisplay(x0Bin[validi])
         logging.info("Rebinning procedure completed: {} bins.".format(validi.sum()))
 
-    def updateConfig(self):
-        # I wonder if this works...
-        super(BinnedDataObj, self).updateConfig()
-        self.reBin()
 
     def __init__(self, **kwargs):
-        super(BinnedDataObj, self).__init__(**kwargs)
-        [self._h5Callers.append(k) for k in ["fFit", "x0Fit"]]
+        super(DataObj, self).__init__(**kwargs)
+
+    def __eq__(self, other):
+        return (np_all(self.rawArray == other.rawArray)
+                and self.title == other.title
+                and self.filename == other.filename)
+
+    def __neq__(self, other):
+        return not self.__eq__(other)
 
 if __name__ == "__main__":
     import doctest

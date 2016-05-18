@@ -23,10 +23,10 @@ import logging
 import numpy as np # For arrays
 from utils import classproperty
 from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
-from dataobj import BinnedDataObj, SASConfig, DataVector
+from dataobj import DataObj, SASConfig, DataVector
 from models import SASModel
 
-class SASData(BinnedDataObj):
+class SASData(DataObj):
     """Represents one set of data from a unique source (a file, for example).
     """
     _e = None # internal DataVector
@@ -45,13 +45,13 @@ class SASData(BinnedDataObj):
     @property
     def qLimsString(self):
         """Properly formatted q-limits for UI label text."""
-        return self.x0Fit.limsString
+        return self.x0.limsString
 
     @property
     def q(self):
         """Q-Vector at which the intensities are measured.
         Provided for convenience use within models."""
-        return self.x0Fit.sanitized
+        return self.x0.binnedData # reverts to sanitized if not binned
 
     @property
     def pLimsString(self):
@@ -72,7 +72,7 @@ class SASData(BinnedDataObj):
 
     @property
     def count(self):
-        return len(self.x0Fit.sanitized)
+        return len(self.x0.binnedData) # used to be sanitized
 
     @property
     def hasError(self):
@@ -144,7 +144,6 @@ class SASData(BinnedDataObj):
                              unit = ScatteringVector(u"nm⁻¹"))
         self.f  = DataVector(u'I', rawArray[:, 1], rawU = rawArray[:, 2],
                              unit = ScatteringIntensity(u"(m sr)⁻¹"))
-        # self.f.rawU = rawArray[:, 2] # raw uncertainty
         # sanitized uncertainty, we should use self._e.copy
         logging.info("Init SASData: " + self.qLimsString)
         if rawArray.shape[1] > 3: # psi column is present
@@ -163,7 +162,7 @@ class SASData(BinnedDataObj):
             return # no update, nothing todo
         # self.config.updateEMin()
         # prepare
-        self.locs = self.config.prepareSmearing(self.x0.siData)
+        self.locs = self.config.prepareSmearing(self.x0.binnedData)
         # suggested upgrade for 2d smearing:
         # self.locs = self.config.prepareSmearing(
         #                           self.x0.siData, self.x1.siData)

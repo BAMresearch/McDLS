@@ -365,9 +365,9 @@ class PlotResults(object):
 
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
-        xOrigin = dataset.x0Fit.unit.toDisplay(dataset.x0Fit.siData)
-        yOrigin = dataset.fFit.unit.toDisplay(dataset.fFit.siData)
-        uOrigin = dataset.fFit.unit.toDisplay(dataset.fFit.siDataU)
+        xOrigin = dataset.x0.unit.toDisplay(dataset.x0.binnedData)
+        yOrigin = dataset.f.unit.toDisplay(dataset.f.binnedData)
+        uOrigin = dataset.f.unit.toDisplay(dataset.f.binnedDataU)
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
                 xOrigin.max() * (1 + self._axisMargin))
@@ -376,10 +376,10 @@ class PlotResults(object):
         qAxDict = self._AxDict.copy()
         qAxDict.update({
                 'xlim' : xLim, 'ylim' : yLim,
-                'xlabel' : u'{name} ({mag})'.format(name = dataset.x0Fit.name,
-                mag = dataset.x0Fit.unit.displayMagnitudeName),
-                'ylabel' : u'{name} ({mag})'.format(name = dataset.fFit.name,
-                mag = dataset.fFit.unit.displayMagnitudeName)
+                'xlabel' : u'{name} ({mag})'.format(name = dataset.x0.name,
+                mag = dataset.x0.unit.displayMagnitudeName),
+                'ylabel' : u'{name} ({mag})'.format(name = dataset.f.name,
+                mag = dataset.f.unit.displayMagnitudeName)
                 })
 
         """plots 1D data and fit"""
@@ -393,13 +393,13 @@ class PlotResults(object):
                  **self._errorBarOpts)
         self.plotGrid(qAxis)
         # plot fit data
-        plot(dataset.x0Fit.unit.toDisplay(fitX0),
-             dataset.fFit.unit.toDisplay(fitMeasVal), 'r-',
-                lw = 3, label = u"MC Fit {name}".format(name = dataset.fFit.name),
+        plot(dataset.x0.unit.toDisplay(fitX0),
+             dataset.f.unit.toDisplay(fitMeasVal), 'r-',
+                lw = 3, label = u"MC Fit {name}".format(name = dataset.f.name),
                 zorder = 4)
         try: # try to plot the background level
-            plot(dataset.x0Fit.unit.toDisplay(fitX0),
-                 dataset.fFit.unit.toDisplay(self._BG[0] + 0*fitX0),
+            plot(dataset.x0.unit.toDisplay(fitX0),
+                 dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
                  'g-', linewidth = 3,
                  label = "MC Background level:\n"
                          "        ({0:03.3g})".format(
@@ -407,13 +407,13 @@ class PlotResults(object):
         except:
             logging.error("could not plot background")
             pass
-        title(u"Measured vs. Fitted {name}".format(name = dataset.fFit.name),
+        title(u"Measured vs. Fitted {name}".format(name = dataset.f.name),
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
         xlim(xLim)
         ylim(yLim)
         qAxis.format_coord = CoordinateFormat(
-                dataset.x0Fit.name, dataset.x0Fit.unit,
+                dataset.x0.name, dataset.x0.unit,
                 dataset.f.name, dataset.f.unit)
 
     def plotInfo(self, InfoAxis):

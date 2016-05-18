@@ -175,7 +175,7 @@ class McSAS(AlgorithmBase):
         self.histogram()
 
         ## Fix 2D mode
-        # if self.data.fFit.values2d:
+        # if self.data.f.values2d:
         #     # 2D mode, regenerate measVal
         #     # TODO: test 2D mode
         #     self.gen2DMeasVal()
@@ -262,7 +262,7 @@ class McSAS(AlgorithmBase):
             contribs = contributions, # Rrep
             fitMeasValMean = contribMeasVal.mean(axis = 2),
             fitMeasValStd = contribMeasVal.std(axis = 2),
-            fitX0 = self.data.x0Fit.sanitized,
+            fitX0 = self.data.x0.binnedData,
             # background details:
             scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
@@ -297,7 +297,7 @@ class McSAS(AlgorithmBase):
             for idx, param in enumerate(self.model.activeParams()):
                 mb = min(param.activeRange())
                 if mb == 0: # FIXME: compare with EPS eventually?
-                    mb = pi / (data.x0Fit.limit[1])
+                    mb = pi / (data.x0.limit[1])
                 rset[:, idx] = numpy.ones(numContribs) * mb * .5
         else:
             rset = self.model.generateParameters(numContribs)
@@ -306,17 +306,17 @@ class McSAS(AlgorithmBase):
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sc = numpy.array([data.fFit.limit[1] / ft.max(), data.fFit.limit[0]])
+        sc = numpy.array([data.f.limit[1] / ft.max(), data.f.limit[0]])
         sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
                                             self.model)
         sc, conval, dummy = bgScalingFit.calc(
-                data.fFit.sanitized, data.fFit.sanitizedU,
+                data.f.binnedData, data.f.binnedDataU,
                 ft / sum(wset), sc, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
         sc, conval, dummy = bgScalingFit.calc(
-                data.fFit.sanitized, data.fFit.sanitizedU,
+                data.f.binnedData, data.f.binnedDataU,
                 ft / sum(wset), sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
@@ -346,7 +346,7 @@ class McSAS(AlgorithmBase):
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt, dummy = bgScalingFit.calc(
-                    data.fFit.sanitized, data.fFit.sanitizedU, ftest / wtest, sc)
+                    data.f.binnedData, data.f.binnedDataU, ftest / wtest, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -390,7 +390,7 @@ class McSAS(AlgorithmBase):
             'elapsed': elapsed})
 
         sc, conval, ifinal = bgScalingFit.calc(
-                data.fFit.sanitized, data.fFit.sanitizedU,
+                data.f.binnedData, data.f.binnedDataU,
                 ft / sum(wset), sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
@@ -517,10 +517,10 @@ class McSAS(AlgorithmBase):
 #                    compensationExponent = 1.0, useSLD = True) # TODO: useSLD!
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            sc = numpy.array([data.fFit.limit[1] / ft.max(), data.fFit.limit[0]])
+            sc = numpy.array([data.f.limit[1] / ft.max(), data.f.limit[0]])
             # optimize scaling and background for this repetition
             sc, conval, dummy = bgScalingFit.calc(
-                    data.fFit.sanitized, data.fFit.sanitizedU, ft, sc)
+                    data.f.binnedData, data.f.binnedDataU, ft, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # is the volume fraction scaled to the weight or volume?
             volumeFraction[:, ri] = (sc[0] * wset/vset).flatten()
@@ -540,7 +540,7 @@ class McSAS(AlgorithmBase):
                         rset[c].reshape((1, -1)), self.compensationExponent())
                 # FIXME: mcsas.py:542: RuntimeWarning: divide by zero encountered in divide
                 minReqVol[c, ri] = (
-                        data.fFit.sanitizedU * volumeFraction[c, ri]
+                        data.f.binnedDataU * volumeFraction[c, ri]
                                 / (sc[0] * fr)).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / vset[c]
 
@@ -566,7 +566,7 @@ class McSAS(AlgorithmBase):
         numContribs, dummy, numReps = contribs.shape
 
         # load original Dataset
-        x0 = data.x0Fit.siData
+        x0 = data.x0.binnedData
         # we need to recalculate the result in two dimensions
         kansas = shape(q) # we will return to this shape
         x0 = x0.sanitized.flatten()
@@ -586,7 +586,7 @@ class McSAS(AlgorithmBase):
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)
-        intAvg = intAvg[data.x0Fit.validIndices]
+        intAvg = intAvg[data.x0.validIndices]
         # shape back to imageform
         self.result[0]['measVal2d'] = reshape(intAvg, kansas)
 
