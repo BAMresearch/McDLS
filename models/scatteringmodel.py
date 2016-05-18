@@ -27,7 +27,7 @@ class ScatteringModel(AlgorithmBase):
         Can be overridden to include SLD."""
         return self.volume()
 
-    def _volume(self, compensationExponent = None, useSLD = False):
+    def _volume(self, compensationExponent = None):
         """Wrapper around the user-defined function."""
         self.compensationExponent = compensationExponent
         # calling user provided custom model
@@ -57,7 +57,7 @@ class ScatteringModel(AlgorithmBase):
         return i
 
     @abstractmethod
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+    def calcIntensity(self, data, compensationExponent = None):
         """Calculates the model intensity which is later compared to the data.
         Returns a tuple containing an array of the calculated intensities for
         the grid provided with the data and the volume of a single particle
@@ -65,7 +65,7 @@ class ScatteringModel(AlgorithmBase):
         """
         raise NotImplemented
 
-    def calc(self, data, pset, compensationExponent = None, useSLD = False):
+    def calc(self, data, pset, compensationExponent = None):
         """Calculates the total intensity and scatterer volume contributions
         using the current model.
         *pset* number columns equals the number of active parameters.
@@ -83,8 +83,7 @@ class ScatteringModel(AlgorithmBase):
                 p.setValue(v)
             # result squared or not is model type dependent
             it, vset[i], wset[i] = self.calcIntensity(data,
-                    compensationExponent = compensationExponent,
-                    useSLD = useSLD)
+                    compensationExponent = compensationExponent)
             # a set of intensities
             cumInt += it
         # restore previous parameter values
@@ -247,9 +246,8 @@ class SASModel(ScatteringModel):
         # -> not just the r³ part(?)
         return self.volume()**(2 * self.compensationExponent)
 
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
-        v = self._volume(compensationExponent = compensationExponent,
-                         useSLD = useSLD)
+    def calcIntensity(self, data, compensationExponent = None):
+        v = self._volume(compensationExponent = compensationExponent)
         w = self._weight(compensationExponent = compensationExponent)
 
         if ((data.config.smearing is not None) and 
