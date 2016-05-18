@@ -85,26 +85,24 @@ class AlgorithmWidget(SettingsWidget):
         """Returns all existing input names (for store/restore)."""
         if self.algorithm is None:
             return
+        children = []
         for p in self.algorithm.params():
             query = p.name()
             try:
                 p.isActive() # fails for non-FitParameters
                 query = QRegExp("^" + p.name() + ".*")
-            except: pass
-            try:
-                for w in self.findChildren(QWidget, query):
-                    yield w
-            # RuntimeError: Internal C++ object (SettingsGridWidget) already deleted.
-            except: pass
-        for w in self.uiWidgets:
-            yield w
+            except AttributeError:
+                pass
+            children.extend(self.findChildren(QWidget, query))
+        children.extend(self.uiWidgets)
+        return children
 
     @property
     def uiWidgets(self):
         """May return a list of input widgets compatible but not associated to
         a parameter, e.g. for UI configuration. To be overridden in subclasses.
         """
-        return ()
+        return []
 
     @property
     def keys(self):
