@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 from numpy import array as np_array
 from datafile import DataFile
 from utils.error import FileError
-from utils import isString
+from utils import isString, isWindows, mcopen
 
 class AsciiFile(DataFile):
     """A generic ascii data file."""
@@ -36,7 +36,7 @@ class AsciiFile(DataFile):
 
     @staticmethod
     def _write(filename, mode, asciiData):
-        with open(filename, mode) as fd:
+        with mcopen(filename, mode) as fd:
             fd.write(asciiData)
 
     @classmethod
@@ -82,10 +82,10 @@ class AsciiFile(DataFile):
     def readFile(self, **kwargs):
         asciiLines = None
         try:
-            with codecs.open(self.filename, 'r', encoding = 'utf8') as fd:
+            with mcopen(self.filename, 'r') as fd:
                 asciiLines = fd.readlines()
         except UnicodeDecodeError:
-            with codecs.open(self.filename, 'r', encoding = 'latin1') as fd:
+            with mcopen(self.filename, 'r', encoding = 'latin1') as fd:
                 asciiLines = fd.readlines()
         self.parseLines(asciiLines, **kwargs)
 
