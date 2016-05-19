@@ -37,6 +37,16 @@ from gui.filelist import FileList
 from main import makeAbsolutePath
 
 INFOTEXT = (u"""
+<strong>major changes in McDLS Mk.VII:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>fix for long path names on Windows, supposed to work with >260 characters now</li>
+<li>fixed one possible source for crashes in the UI</li>
+<ul><li><span style="text-decoration: underline;">Feel free to report any crashes!</span> At best with a short description of the last action done with the program:</li>
+<li>What triggered a crash?</li>
+<li>What was clicked last?</li>
+<li>Which program version on which Operating System?</li>
+</ul>
+</ul>
 <strong>major changes in McDLS Mk.VI:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>volume squared distribution, aka. intensity weighted</li>
