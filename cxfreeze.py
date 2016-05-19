@@ -245,10 +245,11 @@ class Archiver7z(Archiver):
         return path
 
     def archive(self, targetPath):
+        targetPath = os.path.abspath(targetPath)
         if not os.path.isdir(targetPath):
             return None
         fnPackage = targetPath + "." + self._ext
-        fnLog = self.getLogFilename()
+        fnLog = os.path.abspath(self.getLogFilename())
         with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call(
                 [self._path, "a", "-t" + self._type, "-mx=9",
@@ -277,10 +278,11 @@ class ArchiverZip(Archiver):
 
     def archive(self, targetPath):
         """Expects an absolute target directory path"""
+        targetPath = os.path.abspath(targetPath)
         if not os.path.isdir(targetPath):
             return None
         fnPackage = targetPath + ".zip"
-        fnLog = self.getLogFilename()
+        fnLog = os.path.abspath(self.getLogFilename())
         with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call([self._path, "-r9",
                                        fnPackage, targetPath],
@@ -429,6 +431,7 @@ if __name__ == "__main__":
 
     # calc a checksum of the package
     def hashFile(filename, hasher, blocksize = 65536):
+        os.path.abspath(filename)
         with mcopen(filename, 'rb') as fd:
             buf = fd.read(blocksize)
             while len(buf) > 0:
@@ -438,7 +441,7 @@ if __name__ == "__main__":
     hashValue = hashFile(PACKAGEFN, hashlib.sha256())
 
     # write the checksum to file
-    with mcopen(version.name() + ".sha", 'w') as fd:
+    with mcopen(os.path.abspath(version.name() + ".sha"), 'w') as fd:
         fd.write(" *".join(hashValue))
 
     # restore initially modified version
