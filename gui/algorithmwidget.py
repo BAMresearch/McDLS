@@ -369,7 +369,8 @@ class AlgorithmWidget(SettingsWidget):
             # store the parameter name
             w.parameterName = param.name()
         # configure UI accordingly (hide/show widgets)
-        self.updateParam(widgets[-1])
+        # no backend update, ui was just built, data is still in sync
+        self.updateParam(widgets[-1], emitBackendUpdated = False)
         return widget
 
     @staticmethod
