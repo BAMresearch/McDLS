@@ -44,6 +44,9 @@ def fixFilename(filename):
     return _winFilenamePrefix + unicode(filename)
 
 def mcopen(fn, mode, encoding = "utf8"):
-    return codecs.open(fixFilename(fn), mode, encoding = encoding)
+    if 'b' in mode:
+        return open(fixFilename(fn), mode)
+    else:
+        return codecs.open(fixFilename(fn), mode, encoding = encoding)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
