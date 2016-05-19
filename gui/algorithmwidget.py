@@ -227,10 +227,7 @@ class AlgorithmWidget(SettingsWidget):
             self.updateParam(w, emitBackendUpdated = False)
         # emit sigBackendUpdated after updating all widgets,
         # because they may be removed in the meantime
-        try:
-            self.sigBackendUpdated.emit()
-        # RuntimeError: Internal C++ object (SettingsGridWidget) already
-        except RuntimeError: pass
+        self.sigBackendUpdated.emit()
 
     def onBackendUpdate(self):
         self.updateUi()
@@ -383,12 +380,12 @@ class AlgorithmWidget(SettingsWidget):
         if not isinstance(newParent, QWidget):
             newParent = None
         for i in reversed(range(layout.count())):
-            # reversed removal avoids renumbering eventually
+            # reversed removal avoids renumbering possibly
             item = layout.takeAt(i)
-            if newParent is not None:
-                try:
-                    item.widget().setParent(newParent)
-                except: pass
+            if newParent is None or item.widget() is None:
+                continue
+            item.widget().setParent(newParent)
+            item.widget().deleteLater()
 
     @staticmethod
     def removeWidgets(widget):
