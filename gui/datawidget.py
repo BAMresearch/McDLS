@@ -47,6 +47,9 @@ class DataWidget(QWidget):
             return []
         # create a new layout
         w = SettingsGridWidget(self, algorithm = config)
+        # first, disable the call to AlgorithmWidget.onBackendUpdate
+        w.sigBackendUpdated.disconnect()
+        # use this onBackendUpdate() instead which updates all subwidgets
         w.sigBackendUpdated.connect(self.onBackendUpdate)
         self.layout().addWidget(w)
         lst = [w]
@@ -58,7 +61,9 @@ class DataWidget(QWidget):
         if not isList(self._widgets) or not len(self._widgets):
             return
         [w.onBackendUpdate() for w in self._widgets]
-        # emit the first which contains the other
+        # emit the first which contains the other(s)
+        # this must not trigger onDataSelected,
+        # fileWidget.sigUpdatedData disabled in MainWindow
         self.sigConfig.emit(self._widgets[0].algorithm)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
