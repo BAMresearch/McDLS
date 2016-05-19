@@ -6,12 +6,18 @@ from QtGui import QLineEdit, QDoubleValidator, QValidator
 from QtCore import Qt
 from utils import clip
 
+#from utils.devtools import DBG
+
 class SciEntryValidator(QDoubleValidator):
     """Assumes the associated QLineEdit is provided as parent object
     in the constructor."""
 
-    def __init__(self, parent):
+    def __init__(self, parent = None):
+#        DBG(10, self, id(self), parent, id(parent))
+        # FIXME: On Windows, python crashes here, sometimes ...
+        # everything looks ok, except that it 'stops working'
         super(SciEntryValidator, self).__init__(parent)
+#        DBG(11, id(parent))
         self.setNotation(QDoubleValidator.ScientificNotation)
         self.setRange(-1e200, 1e200)
         self.setDecimals(9)
@@ -50,8 +56,8 @@ class SciEntryValidator(QDoubleValidator):
 class SciEntryBox(QLineEdit):
     toolTipFmt = "A value between {lo} and {hi} (including)."
 
-    def __init__(self, parent):
-        QLineEdit.__init__(self, parent)
+    def __init__(self, parent = None):
+        super(SciEntryBox, self).__init__(parent)
 
         val = SciEntryValidator(self)
         self.setValidator(val)
