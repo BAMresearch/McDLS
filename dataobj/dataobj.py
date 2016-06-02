@@ -10,98 +10,15 @@ import os # Miscellaneous operating system interfaces
 from numpy import all as np_all
 import numpy as np
 
-from abc import ABCMeta, abstractproperty, abstractmethod
+from abc import ABCMeta, abstractproperty
 from bases.dataset import DataSet, DisplayMixin
-from utils.units import Unit, NoUnit
+from dataobj.datavector import DataVector
 from utils import classproperty
+import logging
+from utils.hdf5base import h5w, HDF5Mixin
 
-class DataVector(object):
-    """ a class for combining aspects of a particular vector of data.
-    This is intended only as a storage container without additional functionality.
-    """
-    _name = None # descriptor for axes and labels, unicode string at init.
-    _raw = None # Relevant data directly from input file, non-SI units, unsanitized
-    _siData = None # copy raw data in si units, often accessed
-    _unit = None # instance of unit
-    _limit = None # two-element vector with min-max
-    _validIndices = None # valid indices. 
-    _editable = False # whether raw can be written or not
-    
-    def __init__(self, name, raw, unit = None, editable = False):
-        self._name = name
-        self._raw = raw
-        self.unit = unit
-        self.validIndices = np.arange(self.raw.size) # sets limits as well
-        assert(isinstance(editable, bool))
-        self._editable = editable
 
-    @property
-    def name(self):
-        return unicode(self._name)
-
-    @property
-    def validIndices(self):
-        return self._validIndices
-
-    @validIndices.setter
-    def validIndices(self, indices):
-        assert indices.min() >= 0
-        assert indices.max() <= self.siData.size
-        self._validIndices = indices
-        self._limit = [self.sanitized.min(), self.sanitized.max()]
-
-    @property
-    def sanitized(self):
-        return self.siData.copy()[self.validIndices]
-
-    @sanitized.setter
-    def sanitized(self, val):
-        assert(val.size == self.validIndices.size)
-        self.siData[self.validIndices] = val
-
-    @property
-    def siData(self):
-        return self._siData
-
-    @siData.setter
-    def siData(self, vec):
-        self._siData = vec
-
-    @property
-    def raw(self):
-        return self._raw
-
-    @property
-    def editable(self):
-        return self._editable
-
-    @property
-    def unit(self):
-        return self._unit
-
-    @unit.setter
-    def unit(self, newUnit):
-        if not isinstance(newUnit, Unit):
-            self._unit = NoUnit()
-            self._siData = self.raw.copy()
-        else:
-            self._unit = newUnit
-            self._siData = self.unit.toSi(self.raw)
-
-    # TODO: define min/max properties for convenience?
-    @property
-    def limit(self):
-        return self._limit
-
-    @property
-    def limsString(self):
-        return u"{0:.3g} ≤ {valName} ({magnitudeName}) ≤ {1:.3g}".format(
-                self.unit.toDisplay(self.limit[0]),
-                self.unit.toDisplay(self.limit[1]),
-                magnitudeName = self.unit.displayMagnitudeName,
-                valName = self.name)
-
-class DataObj(DataSet, DisplayMixin):
+class DataObj(DataSet, DisplayMixin, HDF5Mixin):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
     """
@@ -114,13 +31,15 @@ class DataObj(DataSet, DisplayMixin):
     _x1 = None
     _x2 = None
     _f  = None
-    _fu = None
+    # config doesn't have a "writeHDF" yet. 
+    _h5Callers = ["f", "x0", "x1", "x2", "validIndices", "config"]
+    _h5LocAdd = "data01" # should be overridden by subclasses
+    _h5test = True #False # True
 
-    # interface for basic DataVectors
-
-    # These are to be set by the particular application dataset: 
+    # The following are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
     # derived classes may have an alias getter for (x0, f, …)
+
     @property
     def x0(self):
         """First sampling vector."""
@@ -162,19 +81,6 @@ class DataObj(DataSet, DisplayMixin):
         self._f = vec
         self._initMask()
         self._propagateMask()
-
-    @property
-    def fu(self):
-        """The measurement uncertainty regarding the measurement vector *f*.
-        """
-        return self._fu
-
-    @fu.setter
-    def fu(self, vec):
-        assert vec is None or isinstance(vec, DataVector)
-        self._fu = vec
-
-    # other common meta data
 
     @classproperty
     @classmethod
@@ -252,6 +158,11 @@ class DataObj(DataSet, DisplayMixin):
         #           Atm, the smallest common range wins. [ingo]
         self.config.setX0ValueRange(
                 (self.x0.siData.min(), self.x0.siData.max()))
+        self._excludeInvalidX0()
+        self._reBin()
+        # for HDF5 testing purposes:
+        if self._h5test:
+            self.writeHDF("test.h5", "/mcentry01/")
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
@@ -261,6 +172,13 @@ class DataObj(DataSet, DisplayMixin):
         self.config.x1High.setDisplayName(descr)
         self.config.setX1ValueRange(
                 (self.x1.siData.min(), self.x1.siData.max()))
+
+    def _excludeInvalidX0(self):
+        validX0Idx = 0 # get the first data point index above 0
+        while self.x0.siData[validX0Idx] <= 0.0:
+            validX0Idx += 1
+        if self.config.x0LowClip() < validX0Idx:
+            self.config.x0LowClip.setValue(validX0Idx)
 
     @abstractproperty
     def configType(self):
@@ -283,8 +201,6 @@ class DataObj(DataSet, DisplayMixin):
         validIndices = np.argwhere(self._validMask)[:,0]
         # pass on all valid indices to the parameters
         self.f.validIndices = validIndices
-        if isinstance(self.fu, DataVector):
-            self.fu.validIndices = validIndices
         self.x0.validIndices = validIndices
         if isinstance(self.x1, DataVector):
             self.x1.validIndices = validIndices
@@ -341,6 +257,60 @@ class DataObj(DataSet, DisplayMixin):
         #  value does not change further (no update needed)
         # -> vice versa at the end of _onLimitsUpdate() above
         self.config.x0Low.setValue(self.x0.sanitized.min())
+
+    def _reBin(self):
+        """ 
+        rebinning method, to be run (f.ex.) upon every "Start" buttonpress. 
+        For now, this will rebin using the x0 vector as a base, although the 
+        binning vector can theoretically be chosen freely.
+        """
+        logging.info("Initiating binning procedure")
+        nBin = self.config.nBin.value()
+        # self._binned = DataVector() once binning finishes.. dataVector can be set once.
+        sanX = self.x0.sanitized
+        x0Bin = np.zeros(nBin)
+        fBin  = np.zeros(nBin)
+        fuBin  = np.zeros(nBin)
+        validMask = np.zeros(nBin, dtype = bool) #default false
+
+        if not(nBin > 0):
+            self.x0.binnedData = None # reset to none if set
+            self.f.binnedData = None
+            self.f.binnedDataU = None
+            return # no need to do the actual rebinning. values stay None.
+
+        # prepare bin edges, log-spaced
+        xEdges = np.logspace(
+                np.log10(sanX.min()),
+                np.log10(sanX.max() + np.diff(sanX)[-1]/100.), #include last point
+                nBin + 1)
+
+        # loop over bins:
+        for bini in range(nBin):
+            fBin[bini], fuBin[bini], x0Bin[bini] = None, None, None # default
+            fMask = ((sanX >= xEdges[bini]) & (sanX < xEdges[bini + 1]))
+            fInBin, fuInBin = self.f.sanitized[fMask], self.f.sanitizedU[fMask]
+            x0InBin = self.x0.sanitized[fMask]
+            if fMask.sum() == 1:
+                fBin[bini], fuBin[bini], x0Bin[bini] = fInBin, fuInBin, x0InBin
+                validMask[bini] = True
+            elif fMask.sum() > 1:
+                fBin[bini], x0Bin[bini] = fInBin.mean(), x0InBin.mean()
+                validMask[bini] = True
+                # uncertainties are a bit more elaborate:
+                fuBin[bini] = np.maximum(
+                        fInBin.std(ddof = 1) / np.sqrt(1. * fMask.sum()), # SEM
+                        np.sqrt( (fuInBin**2).sum() / fMask.sum() ) #propagated. unc.
+                        )
+
+        # remove empty bins:
+        validi = (True - np.isnan(fBin))
+        validi[np.argwhere(validMask != True)] = False
+        # store values:
+        self.f.binnedData, self.f.binnedDataU = fBin[validi], fuBin[validi]
+        self.x0.binnedData = x0Bin[validi] # self.x0.unit.toDisplay(x0Bin[validi])
+        logging.info("Rebinning procedure completed: {} bins.".format(validi.sum()))
+
 
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)

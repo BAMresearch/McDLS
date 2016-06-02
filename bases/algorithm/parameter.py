@@ -56,6 +56,7 @@ from inspect import getmembers
 import numpy as np
 import sys
 import logging
+import h5py
 from utils import isString, isNumber, isList, isMap, isSet, testfor, assertName
 from utils.mixedmethod import mixedmethod
 from utils import classproperty
@@ -196,6 +197,28 @@ class ParameterBase(object):
             if value != defValue:
                 res[name] = value
         return res
+
+    @mixedmethod
+    def writeHDF(selforcls, filename, loc):
+        """ Writer method to output the <key, value> pairs to *filename*. 
+        "loc" is the internal HDF5 location, to which will be added a dataset
+        with name stored in the Parameter "name" attribute. All other Parameter
+        attributes are stored as dataset attributes therewith.
+        """
+        parName = selforcls.get(name, None)
+        if parName is None:
+            logging.error("Parameter has no name")
+            return
+        with h5py.File(filename) as h5f:
+            if not (loc + parName) in h5f:
+                ds = h5f.create_dataset(loc + parName, data = selforcls.value())
+            else:
+                ds = h5f[loc + parName]
+                ds.values = selforcls.value()
+
+            for key, value in selforcls.attributes():
+                ds[key] = value
+
 
     @classmethod
     def factory(cls, **kwargs):

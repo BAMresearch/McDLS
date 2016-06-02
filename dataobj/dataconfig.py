@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractproperty
 from types import MethodType
 import numpy
 from bases.algorithm import AlgorithmBase
-from utils.parameter import Parameter
+from bases.algorithm import Parameter # not defined in utils.parameter
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
 from utils import isCallable
@@ -96,6 +96,10 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         Parameter("fMaskNeg", False, unit = NoUnit(),
             displayName = "Mask negative {f} values", description =
             "Renders negative intensity values invalid for fitting"),
+        Parameter("nBin", 100, unit = NoUnit(),
+            displayName = "target number of bins \n (0 = no re-binning)",
+            description = "Sets the number of bins to rebin the data into. \n May be smaller than target value.", 
+            valueRange = (0., 1000)),
     )
 
     @property

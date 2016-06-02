@@ -84,8 +84,8 @@ class BackgroundScalingFit(object):
         return sc
 
     def calc(self, data, modelData, sc, ver = 2):
-        dataMeas = data.f.sanitized.flatten()
-        dataErr  = data.fu.sanitized.flatten()
+        dataMeas = data.f.binnedData.flatten()
+        dataErr  = data.f.binnedDataU.flatten()
         dataCalc = modelData.chisqrInt
 
         # different data fit approaches: speed vs. stability (?)

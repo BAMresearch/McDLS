@@ -87,7 +87,7 @@ class ScatteringModel(AlgorithmBase):
         Can be overridden to include SLD."""
         return self.volume()
 
-    def _volume(self, compensationExponent = None, useSLD = False):
+    def _volume(self, compensationExponent = None):
         """Wrapper around the user-defined function."""
         self.compensationExponent = compensationExponent
         # calling user provided custom model
@@ -117,7 +117,7 @@ class ScatteringModel(AlgorithmBase):
         return i
 
     @abstractmethod
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+    def calcIntensity(self, data, compensationExponent = None):
         """Calculates the model intensity which is later compared to the data.
         Returns a tuple containing an array of the calculated intensities for
         the grid provided with the data and the volume of a single particle
@@ -127,7 +127,7 @@ class ScatteringModel(AlgorithmBase):
         """
         raise NotImplementedError
 
-    def calc(self, data, pset, compensationExponent = None, useSLD = False):
+    def calc(self, data, pset, compensationExponent = None):
         """Calculates the total intensity and scatterer volume contributions
         using the current model.
         *pset* number columns equals the number of active parameters.
@@ -135,8 +135,8 @@ class ScatteringModel(AlgorithmBase):
         """
         # remember parameter values
         params = self.activeParams()
-        oldValues = [p() for p in params] # this sucks. But we dont want to loose the user provided value
-        cumInt = zeros(data.f.sanitized.shape) # cumulated intensities
+        oldValues = [p() for p in params] # this sucks. But we dont want to lose the user provided value
+        cumInt = zeros(data.f.binnedData.shape) # cumulated intensities
         vset = zeros(pset.shape[0])
         wset = zeros(pset.shape[0])
         # call the model for each parameter set explicitly
@@ -146,8 +146,7 @@ class ScatteringModel(AlgorithmBase):
                 p.setValue(v)
             # result squared or not is model type dependent
             it, vset[i], wset[i] = self.calcIntensity(data,
-                    compensationExponent = compensationExponent,
-                    useSLD = useSLD)
+                    compensationExponent = compensationExponent)
             # a set of intensities
             cumInt += it
         # restore previous parameter values
@@ -270,7 +269,7 @@ class ScatteringModel(AlgorithmBase):
                                compensationExponent = volumeExponent)
                      * model._formfactor(dataset, None))**2.
         # computing the relative error to reference data
-        delta = abs((dataset.f.sanitized - intensity) / dataset.f.sanitized)
+        delta = abs((dataset.f.binnedData - intensity) / dataset.f.binnedData)
         dmax = argmax(delta)
         testfor(delta.mean() < relerr, AssertionError,
                 "Could not verify {model} intensity against\n'{fn}',"
@@ -280,8 +279,8 @@ class ScatteringModel(AlgorithmBase):
                 .format(model = cls.name(), fn = filename,
                         mean = delta.mean(), relerr = relerr,
                         dmax = dmax, data = hstack((
-                            dataset.x0.sanitized.reshape(-1, 1),
-                            dataset.f.sanitized.reshape(-1, 1),
+                            dataset.x0.binnedData.reshape(-1, 1),
+                            dataset.f.binnedData.reshape(-1, 1),
                             intensity.reshape(-1, 1),
                             delta.reshape(-1, 1)))[max(0, dmax-4):dmax+5]
                         )
@@ -289,9 +288,30 @@ class ScatteringModel(AlgorithmBase):
 
 class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
+    canSmear = False # Indicates a model function which supports smearing...
 
     def modelDataType(self):
         return SASModelData
+
+    def __init__(self):
+        # just checking:
+        super(SASModel, self).__init__()
+        logging.debug("SASData init method called")
+
+    def getQ(self, dataset):
+        """ This is a function that returns Q. In case of smearing, dataset itself
+        is a 2D matrix of Q-values. When smearing is not enabled, dataset.q contains
+        a 1D vector of q.
+
+        I do realize that this is not a good way of doing things. This should be
+        replaced at a given point in time by a better solution within sasdata.
+        """
+
+        if isinstance(dataset, np.ndarray):
+            q = dataset
+        else:
+            q = dataset.q
+        return q
 
     def weight(self):
         r"""Calculates an intensity weighting used during fitting. It is based
@@ -302,28 +322,33 @@ class SASModel(ScatteringModel):
         """
         return self.volume()**(2 * self.compensationExponent)
 
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+    def calcIntensity(self, data, compensationExponent = None):
         r"""Returns the intensity *I*, the volume :math:`v_{abs}` and the
         intensity weights *w* for a single parameter contribution over all *q*:
 
         :math:`I(q,r) = F^2(q,r) \cdot w(r)`
         """
-        v = self._volume(compensationExponent = compensationExponent,
-                         useSLD = useSLD)
+        v = self._volume(compensationExponent = compensationExponent)
         w = self._weight(compensationExponent = compensationExponent)
 
-        if data.config.smearing is not None:
-            locs = data.locs[data.x0.validIndices] # apply xlimits
-            kansas = locs.shape
+        if ((data.config.smearing is not None) and
+                self.canSmear and
+                data.config.smearing.doSmear() and # serves same purpose as first
+                data.config.smearing.inputValid()):
+            # inputValid can be removed once more appropriate limits are set in GUI
+
+            # TODO: fix after change from x0Fit to x0:
+            locs = data.locs # [data.x0.validIndices] # apply xlimits
             # the ff functions might only accept one-dimensional q arrays
-            locs = locs.reshape((locs.size))
-            ff = self._formfactor(locs).reshape(kansas)
+            # kansas = locs.shape
+            # locs = locs.reshape((locs.size))
+            ff = self._formfactor(locs) # .reshape(kansas)
             qOffset, weightFunc = data.config.smearing.prepared
 #            import sys
 #            print >>sys.__stderr__, "prepared"
 #            print >>sys.__stderr__, unicode(data.config.smearing)
-            it = 2 * np.trapz(ff**2 * w * # outer() ?
-                    (0 * ff + weightFunc), x = qOffset, axis = 1)
+            it = 2 * np.trapz(ff**2 * w * weightFunc,
+                    x = qOffset, axis = 1)
         else:
             # calculate their form factors
             ff = self._formfactor(data)

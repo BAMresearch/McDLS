@@ -6,12 +6,12 @@ from numpy import pi, sin, cos
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
 from scatteringmodel import SASModel
-from dataobj import SASData
 from utils.units import Length, NM, SLD
 
 class Sphere(SASModel):
     """Form factor of a sphere"""
     shortName = "Sphere"
+    canSmear = True
     parameters = (FitParameter("radius",
                     NM.toSi(10.), unit = NM,
                     displayName = "Sphere radius",
@@ -49,10 +49,7 @@ class Sphere(SASModel):
 
         :math:`F(q, r) = { 3 ~ sin(qr) - qr \cdot cos(qr) \over (qr)^3 }`
         """
-        if isinstance(dataset, SASData):
-            q = dataset.q
-        else:
-            q = dataset
+        q = self.getQ(dataset)
         qr = q * self.radius() 
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         return result

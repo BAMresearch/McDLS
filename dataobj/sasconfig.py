@@ -4,13 +4,15 @@
 from __future__ import absolute_import # PEP328
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-import numpy
+import numpy as np
+from scipy import stats
 from bases.algorithm import AlgorithmBase
 from utils.parameter import Parameter
 from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
                          Fraction, NoUnit)
 from utils import clip
 from dataobj import DataConfig
+import logging
 
 class SmearingConfig(AlgorithmBase):
     """Abstract base class, can't be instantiated."""
@@ -20,11 +22,16 @@ class SmearingConfig(AlgorithmBase):
     locs = None # integration location matrix, depends on collType
     shortName = "SAS smearing configuration"
     parameters = (
-        # not sure if this is the right place: is the nsteps parameter useful
-        # for all possible smearing settings? BRP: yes, I think so... 
+        Parameter("doSmear", False, unit = NoUnit(),
+            displayName = "Apply smearing correction",
+            ),
         Parameter("nSteps", 25, unit = NoUnit(),
             displayName = "number of smearing points around each q",
             valueRange = (0, 1000)),
+        # 2-d collimated systems require a different smearing than slit-collimated data
+        Parameter("twoDColl", False, unit = NoUnit(),
+            displayName = "Slit-smeared data (unchecked), or 2D-averaged data (checked)",
+            ),
 #        Parameter("collType", u"Slit", unit = NoUnit(),
 #            displayName = "Type of collimation leading to smearing",
 #            valueRange = [u"Slit", u"Pinhole", u"Rectangular", u"None"])
@@ -37,12 +44,6 @@ class SmearingConfig(AlgorithmBase):
     @abstractmethod
     def updateQLimits(self, qLimit):
         pass
-
-    @abstractmethod
-    def integrate(self, q):
-        # now we do the actual smearing preparation
-        assert isinstance(q, numpy.ndarray)
-        assert (q.ndim == 1)
 
     @property
     def qOffset(self):
@@ -74,38 +75,43 @@ class SmearingConfig(AlgorithmBase):
 
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
-        Parameter("umbra", 1e9, unit = NoUnit(), # unit set outside
-            displayName = "top width of the trapezoidal <br />beam length profile",
-            valueRange = (0., numpy.inf), decimals = 1),
-        Parameter("penumbra", 2e9, unit = NoUnit(), # unit set outside
-            displayName = "bottom width of the <br />trapezoidal beam length profile",
-            valueRange = (0., numpy.inf), decimals = 1),
+        Parameter("Umbra", 0., unit = NoUnit(), # unit set outside
+            displayName = "top width of <br />trapezoidal beam profile",
+            description = "full top width of the trapezoidal beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            valueRange = (0., np.inf), decimals = 1),
+        Parameter("Penumbra", 0., unit = NoUnit(), # unit set outside
+            displayName = "bottom width of <br />trapezoidal beam profile",
+            description = "full bottom width of the trapezoidal beam profile horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            valueRange = (0., np.inf), decimals = 1),
     )
+
+    def inputValid(self):
+        # returns True if the input values are valid
+        return (self.Umbra() > 0.) and (self.Penumbra > self.Umbra())
 
     @property
     def showParams(self):
-        lst = ["umbra", "penumbra"]
-        return lst + [name
+        lst = ["Umbra", "Penumbra"]
+        return [name
                 for name in super(TrapezoidSmearing, self).showParams
-                    if name not in lst]
+                    if name not in lst] + lst
 
-    def _prepSmear(self, q):
-        """ prepares the smearing profile for a given collimation configuration. 
-        This is supposed to be in the SmearingConfig class """
-
-        # make sure we're getting a valid dataset:
-        assert( isinstance(q, np.ndarray))
-        assert( q.ndim == 1)
-
-        # prepare the smearing profile
-        self.setIntPoints(q)
-
-        if self.collType == u"Slit":
-            self.locs = np.sqrt(np.add.outer(q **2, self.qOffset[0,:] **2))
-        elif self.collType == u"None":
-            pass
-        else:
-            raise NotImplementedError
+    def halfTrapzPDF(self, x, c, d):
+        # this trapezoidal PDF is only defined from X >= 0, and is assumed
+        # to be mirrored around that point. 
+        # Note that the integral of this PDF from X>0 will be 0.5. 
+        # source: van Dorp and Kotz, Metrika 2003, eq (1) 
+        # using a = -d, b = -c
+        logging.debug("halfTrapzPDF called")
+        assert(d > 0.)
+        x = abs(x)
+        pdf = x * 0.
+        pdf[x < c] = 1.
+        if d > c:
+            pdf[(c <= x) & (x < d)] = (1./(d - c)) * (d - x[(c <= x) & (x < d)])
+        norm = 1./(d + c)
+        pdf *= norm
+        return pdf, norm
 
     def setIntPoints(self, q):
         """ sets smearing profile integration points for trapezoidal slit. 
@@ -114,32 +120,32 @@ class TrapezoidSmearing(SmearingConfig):
         Since the smearing function is assumed to be symmetrical, the 
         integration parameters are calculated in the interval [0, xb/2]
         """
-        xt, xb = self.umbra, self.penumbra
+        n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
+        logging.debug("setIntPoints called with n = {}".format(n))
 
-        # ensure things are what they are supposed to be
-        assert (xt >= 0.)
-        if xb < xt:
-            xb = xt # should use square profile in this case.
+        # following qOffset is used for Pinhole and Rectangular
+        qOffset = np.logspace(np.log10(q.min() / 5.),
+                np.log10(xb / 2.), num = np.ceil(n / 2.))
+        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
+        if not self.twoDColl():
+            # overwrite prepared integration steps qOffset:
+            qOffset = np.logspace(np.log10(q.min() / 5.),
+                    np.log10(xb / 2.), num = n)
+            # tack on a zero at the beginning
+            qOffset = np.concatenate(([0,], qOffset)) 
 
-        # prepare integration steps qOffset:
-        qOffset = np.logspace(np.log10(q.min() / 10.),
-                np.log10(xb / 2.), num = n)
-        qOffset = np.concatenate(([0,], qOffset)) [np.newaxis, :]
+        y, dummy = self.halfTrapzPDF(qOffset, xt, xb)
 
-        if xb == xt:
-            y = 1. - (qOffset * 0.)
-        else:
-            y = 1. - (qOffset - xt) / (xb - xt)
+        # volume fraction still off by a factor of two (I think). Can be 
+        # fixed by multiplying y with 0.5, but need to find it first in eqns. 
+                # volume fraction still off by a factor of two (I think). Can be 
+                # fixed by multiplying y with 0.5, but need to find it first in eqns. 
+        self._qOffset, self._weights = qOffset, y
 
-        y = np.clip(y, 0., 1.)
-        y[qOffset < xt] = 1.
-        Area = (xt + 0.5 * (xb - xt))
-        self._qOffset, self._weights = qOffset, (y / Area)
-    
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
-        self.umbra.setUnit(newUnit)
-        self.penumbra.setUnit(newUnit)
+        self.Umbra.setUnit(newUnit)
+        self.Penumbra.setUnit(newUnit)
 
     def updatePUnit(self, newUnit):
         assert isinstance(newUnit, Angle)
@@ -147,8 +153,14 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.umbra.setValueRange((0., qHigh))
-        self.penumbra.setValueRange((0., qHigh))
+        self.Umbra.setValueRange((0., 2. * qHigh))
+        self.Penumbra.setValueRange((0., 2. * qHigh))
+
+    def updateSmearingLimits(self, q):
+        qHigh = q.max()
+        lowLim = diff(q).min()
+        self.Umbra.setValueRange((lowLim, 2. * qHigh))
+        self.Penumbra.setValueRange((lowLim, 2. * qHigh))
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
@@ -156,41 +168,85 @@ class TrapezoidSmearing(SmearingConfig):
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
-        self.umbra.setOnValueUpdate(self.onUmbraUpdate)
+        self.Umbra.setOnValueUpdate(self.onUmbraUpdate)
 
     def onUmbraUpdate(self):
         """Value in umbra will not exceed available q."""
         # value in Penumbra must not be smaller than Umbra
-        self.penumbra.setValueRange((self.umbra(), self.penumbra.max()))
-
-    def integrate(self, q):
-        """ defines integration over trapezoidal slit. Top of trapezoid 
-        has width xt, bottom of trapezoid has width xb. Note that xb > xt"""
-        super(TrapezoidSmearing, self).integrate(q)
-        n, xt, xb = self.nSteps(), self.umbra(), self.penumbra()
-        #print >>sys.__stderr__, "integrate", xb, xt
-
-        # ensure things are what they are supposed to be
-        assert (xt >= 0.)
-        if xb < xt:
-            xb = xt # should use square profile in this case.
-
-        # prepare integration steps qOffset:
-        qOffset = numpy.logspace(numpy.log10(q.min() / 10.),
-                            numpy.log10(xb / 2.), num = n)
-        qOffset = numpy.concatenate(([0,], qOffset)) [numpy.newaxis, :]
-
-        if xb == xt: 
-            y = 1. - (qOffset * 0.)
-        else:
-            y = 1. - (qOffset - xt) / (xb - xt)
-
-        y = numpy.clip(y, 0., 1.)
-        y[qOffset < xt] = 1.
-        area = (xt + 0.5 * (xb - xt))
-        self._qOffset, self._weights = qOffset, y / area
+        self.Penumbra.setValueRange((self.Umbra(), self.Penumbra.max()))
 
 TrapezoidSmearing.factory()
+
+class GaussianSmearing(SmearingConfig):
+    parameters = (
+        Parameter("Variance", 0., unit = NoUnit(), # unit set outside
+            displayName = u"Variance (σ²) of <br /> Gaussian beam profile",
+            description = "full width at half maximum of the Gaussian beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            valueRange = (0., np.inf), decimals = 1),
+    )
+
+    def inputValid(self):
+        # returns True if the input values are valid
+        return (self.Variance() > 0.) 
+
+    @property
+    def showParams(self):
+        lst = ["Variance"]
+        return [name
+                for name in super(GaussianSmearing, self).showParams
+                    if name not in lst] + lst
+
+    def setIntPoints(self, q):
+        """ sets smearing profile integration points for trapezoidal slit. 
+        Top (umbra) of trapezoid has full width xt, bottom of trapezoid 
+        (penumbra) has full width.
+        Since the smearing function is assumed to be symmetrical, the 
+        integration parameters are calculated in the interval [0, xb/2]
+        """
+        n, GVar = self.nSteps(), self.Variance()
+        logging.debug("setIntPoints called with n = {}".format(n))
+
+        # following qOffset is used for Pinhole and Rectangular
+        qOffset = np.logspace(np.log10(q.min() / 3.),
+                np.log10(2.5 * GVar), num = np.ceil(n / 2.))
+        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
+        if not self.twoDColl():
+            # overwrite prepared integration steps qOffset:
+            qOffset = np.logspace(np.log10(q.min() / 3.),
+                    np.log10(2.5 * GVar), num = n)
+            # tack on a zero at the beginning
+            qOffset = np.concatenate(([0,], qOffset)) 
+
+        y = stats.norm.pdf(qOffset, scale = GVar)
+
+        logging.debug("qOffset: {}, y: {}".format(qOffset, y))
+        self._qOffset, self._weights = qOffset, y
+
+    def updateQUnit(self, newUnit):
+        assert isinstance(newUnit, ScatteringVector)
+        self.Variance.setUnit(newUnit)
+
+    def updatePUnit(self, newUnit):
+        assert isinstance(newUnit, Angle)
+        # TODO
+
+    def updateQLimits(self, qLimit):
+        qLow, qHigh = qLimit
+        self.Variance.setValueRange((0., 2. * qHigh))
+
+    def updateSmearingLimits(self, q):
+        qHigh = q.max()
+        lowLim = diff(q).min()
+        self.Variance.setValueRange((lowLim, 2. * qHigh))
+
+    def updatePLimits(self, pLimit):
+        pLow, pHigh = pLimit
+        # TODO
+
+    def __init__(self):
+        super(GaussianSmearing, self).__init__()
+
+GaussianSmearing.factory()
 
 class SASConfig(DataConfig):
     # TODO: fix UI elsewhere for unit selection along to each input and forward
@@ -208,6 +264,13 @@ class SASConfig(DataConfig):
     )
 
     @property
+    def showParams(self):
+        lst = super(SASConfig, self).showParams
+        lst.remove("fMaskZero")
+        lst.remove("fMaskNeg")
+        return lst
+
+    @property
     def callbackSlots(self):
         return super(SASConfig, self).callbackSlots | set((
             "qunit", "punit", "iunit", "eMin"))
@@ -221,6 +284,7 @@ class SASConfig(DataConfig):
         if self.smearing is None:
             return
         self.smearing.updateQLimits((self.x0Low(), self.x0High())) # correct?
+        # self.smearing.updateSmearingLimits(self.q) # correct?
 
     def setX1ValueRange(self, limit):
         super(SASConfig, self).setX1ValueRange(limit)
@@ -266,14 +330,37 @@ class SASConfig(DataConfig):
         self._smearing = newSmearing
 
     def prepareSmearing(self, q):
+
+        assert( isinstance(q, np.ndarray))
+        assert( q.ndim == 1)
+        logging.debug("PrepareSmearing called!")
+
         if self.smearing is None:
-            return
-        self.smearing.integrate(q)
+            logging.warning("not smearing: self.smearing is None")
+            return q
+        if not self.smearing.inputValid():
+            logging.warning("not smearing: Smearing parameters not valid")
+            return q
+        if not self.smearing.doSmear():
+            logging.warning("not smearing: Smearing disabled")
+            return q
+        self.smearing.setIntPoints(q)
         qOffset, weights = self.smearing.prepared
         #print >>sys.__stderr__, "prepareSmearing"
         #print >>sys.__stderr__, unicode(self)
         # calculate the intensities at sqrt(q**2 + qOffset **2)
-        return numpy.sqrt(numpy.add.outer(q**2, qOffset[0,:]**2))
+        if not self.smearing.twoDColl(): # slit collimation
+            logging.debug("prepareSmearing called for slit collimation")
+            logging.debug("q.shape: {}, qOffset.shape: {}".format(q.shape, qOffset.shape))
+            return np.sqrt(np.add.outer(q **2, qOffset **2))
+        else: 
+            logging.debug("prepareSmearing called for pinhole collimation")
+            # Non-slit-smeared instruments, using azimuthally averaged
+            # 2D-pattern (assumed!) with equally averaged beam profile.
+            logging.debug("q.shape: {}, qOffset.shape: {}".format(q.shape, qOffset.shape))
+            logging.debug("qOffset.min: {}, qOffset.max: {}"
+                    .format(qOffset.min(), qOffset.max()))
+            return np.add.outer(q, qOffset)
 
     def copy(self):
         other = super(SASConfig, self).copy(smearing = self.smearing.copy())
@@ -286,8 +373,8 @@ class SASConfig(DataConfig):
         super(SASConfig, self).__init__()
         smearing = kwargs.pop("smearing", None)
         if smearing is None:
-            smearing = TrapezoidSmearing()
-        #self.smearing = smearing
+            smearing = GaussianSmearing()
+        self.smearing = smearing
         self.register("qunit", self.x0Low.setUnit)
         self.register("qunit", self.x0High.setUnit)
         self.register("punit", self.x1Low.setUnit)
@@ -296,6 +383,7 @@ class SASConfig(DataConfig):
             self.register("qunit", self.smearing.updateQUnit)
             self.register("punit", self.smearing.updatePUnit)
             self.register("x0limits", self.smearing.updateQLimits)
+            # self.register("x0limits", self.smearing.updateSmearingLimits)
             self.register("x1limits", self.smearing.updatePLimits)
         self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
         self.qUnit = ScatteringVector(u"nm⁻¹")

@@ -323,7 +323,7 @@ class PlotResults(object):
             ah = subplot(gs[ai])
             # disable mouse coordinates while avoiding Tkinter error
             # about None not being callable
-            ah.format_coord = lambda x,y: ""
+            ah.format_coord = lambda x, y: ""
             if ai%((nHists + 1) * 2) < (nHists + 1):
                 ah.update(textAxDict) # text box settings:
             ahl.append(ah)
@@ -367,9 +367,9 @@ class PlotResults(object):
 
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
         #settings for Q-axes (override previous settings where appropriate):
-        xOrigin = dataset.x0.unit.toDisplay(dataset.x0.siData)
-        yOrigin = dataset.f.unit.toDisplay(dataset.f.siData)
-        uOrigin = dataset.fu.unit.toDisplay(dataset.fu.siData)
+        xOrigin = dataset.x0.unit.toDisplay(dataset.x0.binnedData)
+        yOrigin = dataset.f.unit.toDisplay(dataset.f.binnedData)
+        uOrigin = dataset.f.unit.toDisplay(dataset.f.binnedDataU)
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
                 xOrigin.max() * (1 + self._axisMargin))

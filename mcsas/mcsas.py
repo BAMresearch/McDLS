@@ -263,11 +263,11 @@ class McSAS(AlgorithmBase):
             # what about modelDataMean? ...
             fitMeasValMean = contribMeasVal.mean(axis = 2),
             fitMeasValStd = contribMeasVal.std(axis = 2),
-            fitX0 = self.data.x0.sanitized,
+            fitX0 = self.data.x0.binnedData,
             # ... and dataMean
-            dataX0 = self.data.x0.sanitized,
-            dataMean = self.data.f.sanitized,
-            dataStd = self.data.fu.sanitized,
+            dataX0 = self.data.x0.binnedData,
+            dataMean = self.data.f.binnedData,
+            dataStd = self.data.f.binnedDataU,
             # background details:
             scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
@@ -356,7 +356,6 @@ class McSAS(AlgorithmBase):
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
             sct, convalt, dummy = bgScalingFit.calc(data, testModelData, sc)
-#                    data.f.sanitized, data.fu.sanitized, ftest / wtest, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -555,7 +554,7 @@ class McSAS(AlgorithmBase):
                                                    self.compensationExponent())
                 # FIXME: mcsas.py:542: RuntimeWarning: divide by zero encountered in divide
                 minReqVol[c, ri] = (
-                        data.fu.sanitized * volumeFraction[c, ri]
+                        data.f.binnedDataU * volumeFraction[c, ri]
                                 / (sc[0] * partialModelData.cumInt)).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / modelData.vset[c]
                 minReqVolSqr[c, ri] = (minReqNum[c, ri]
@@ -586,7 +585,7 @@ class McSAS(AlgorithmBase):
         numContribs, dummy, numReps = contribs.shape
 
         # load original Dataset
-        x0 = data.x0.siData
+        x0 = data.x0.binnedData
         # we need to recalculate the result in two dimensions
         kansas = shape(q) # we will return to this shape
         x0 = x0.sanitized.flatten()
