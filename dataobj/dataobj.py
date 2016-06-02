@@ -259,9 +259,8 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self.config.x0Low.setValue(self.x0.sanitized.min())
 
     def _reBin(self):
-        """ 
-        rebinning method, to be run (f.ex.) upon every "Start" buttonpress. 
-        For now, this will rebin using the x0 vector as a base, although the 
+        """Rebinning method, to be run (f.ex.) upon every "Start" buttonpress.
+        For now, this will rebin using the x0 vector as a base, although the
         binning vector can theoretically be chosen freely.
         """
         logging.info("Initiating binning procedure")

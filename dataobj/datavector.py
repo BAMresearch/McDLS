@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# scattering/datavector.py
+# dataobj/datavector.py
 
 """
 A class describing a vector with limits, units, mask and uncertainties
@@ -26,15 +26,15 @@ class DataVector(HDF5Mixin):
     _binnedDataU = None # binned, sanitized data
     _unit = None # instance of unit
     _limit = None # two-element vector with min-max
-    _validIndices = None # valid indices. 
-    # specify which values are to be stored in a HDF5 file. 
-    _h5Datasets = ["rawData", "rawDataU", 
-            "siData", "siDataU", 
-            "binnedData", "binnedDataU", 
+    _validIndices = None # valid indices.
+    # specify which values are to be stored in a HDF5 file.
+    _h5Datasets = ["rawData", "rawDataU",
+            "siData", "siDataU",
+            "binnedData", "binnedDataU",
             "validIndices", "limit"]
-    _h5Callers = ["unit"] # writeHDF will be called. 
+    _h5Callers = ["unit"] # writeHDF will be called.
     _h5Attrs = ["name"]
-    
+
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name
         self._rawData = raw
@@ -88,7 +88,7 @@ class DataVector(HDF5Mixin):
     @property
     def siDataU(self):
         return self._siDataU
-    
+
     @siDataU.setter
     def siDataU(self, vec):
         self._siDataU = vec
@@ -100,7 +100,7 @@ class DataVector(HDF5Mixin):
             return self._binnedData
         else:
             return self.sanitized
-    
+
     @binnedData.setter
     def binnedData(self, vec):
         self._binnedData = vec
@@ -112,7 +112,7 @@ class DataVector(HDF5Mixin):
             return self._binnedDataU
         else:
             return self.sanitizedU
-    
+
     @binnedDataU.setter
     def binnedDataU(self, vec):
         self._binnedDataU = vec
