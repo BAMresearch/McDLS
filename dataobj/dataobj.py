@@ -276,6 +276,7 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         if not(nBin > 0):
             self.x0.binnedData = None # reset to none if set
             self.f.binnedData = None
+            self.f.binnedDataU = None
             return # no need to do the actual rebinning. values stay None.
 
         # prepare bin edges, log-spaced
