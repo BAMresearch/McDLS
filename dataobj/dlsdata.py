@@ -53,13 +53,16 @@ class MultiDataVector(DataVector):
     _count = None
     _wasRepeated = False
 
-    def __init__(self, name, raw, count = None, **kwargs):
+    def __init__(self, name, raw, rawU = None, count = None, **kwargs):
         # not beautiful but the easiest for now ...
         super(MultiDataVector, self).__init__(name,
-                self.flatten(raw, count), **kwargs)
+                self.flatten(raw, count),
+                self.flatten(rawU, count), **kwargs)
 
     # http://stackoverflow.com/a/7020271
     def flatten(self, a, count = None):
+        if a is None:
+            return a
         if (a.ndim == 1 or min(a.shape) == 1):
             a = a.reshape((-1, 1))
             if isInteger(count):
@@ -71,14 +74,20 @@ class MultiDataVector(DataVector):
         return a
 
     @property
+    def rawDataSrcShape(self):
+        return self.unflatten(self.rawData)
+
+    @property
+    def rawDataUSrcShape(self):
+        return self.unflatten(self.rawDataU)
+
+    @property
     def siDataSrcShape(self):
         return self.unflatten(self.siData)
 
-    @property
-    def rawSrcShape(self):
-        return self.unflatten(self.raw)
-
     def unflatten(self, a):
+        if a is None:
+            return a
         if self._count == 1:
             return a.reshape((-1, 1)) # nothing to do
         rowCount = len(a) / self._count
@@ -187,27 +196,21 @@ class DLSData(DataObj):
     def correlation(self):
         return self.f
 
-    @property
-    def correlationError(self):
-        return self.fu
-
     def setTau(self, tauUnit, rawArray):
         self.x0 = MultiDataVector(u"τ", rawArray.flatten(), unit = tauUnit,
                                   count = self.numAngles)
         self._calcTauGamma()
 
-    def setCorrelation(self, rawArray):
+    def setCorrelation(self, rawArray, rawArrayU = None):
         assert self.isValidInput(rawArray), "Invalid data from file!"
         assert rawArray.shape[1] == self.numAngles, (
             "Correlation intensity: {} columns != {} scattering angles"
             .format(rawArray.shape[1], self.numAngles))
-        self.f = MultiDataVector(u"G_2(τ)-1", rawArray)
-
-    def setCorrelationError(self, rawArray):
-        assert self.isValidInput(rawArray), "Invalid data from file!"
-        assert rawArray.shape[1] == self.numAngles, \
-            "Correlation stddev: #columns differs from #scattering angles"
-        self.fu = MultiDataVector(u"σ[G_2(τ)-1]", rawArray)
+        if rawArrayU is not None:
+            assert self.isValidInput(rawArrayU), "Invalid data from file!"
+            assert rawArray.shape == rawArrayU.shape, \
+                "Shapes of the provided data and its uncertainties do not match!"
+        self.f = MultiDataVector(u"G_2(τ)-1", rawArray, rawU = rawArrayU)
 
     @property
     def count(self):
@@ -322,13 +325,11 @@ class DLSData(DataObj):
         assert array([self.angles == o.angles for o in others]).all(), \
                "Scattering angles differ between all DLS data to be combined!"
         # calculate average correlation values and their standard deviation
-        stacked = dstack((o.correlation.rawSrcShape for o in others))
+        stacked = dstack((o.correlation.rawDataSrcShape for o in others))
         # combine the mean across all data sets with the existing tau
-        self.setCorrelation(stacked.mean(-1))
         # combine the std. deviation with the existing tau
-        self.setCorrelationError(stacked.std(-1))
-        assert len(self.x0.siData) == len(self.f.siData) and \
-               len(self.x0.siData) == len(self.fu.siData), \
+        self.setCorrelation(stacked.mean(-1), stacked.std(-1))
+        assert len(self.x0.siData) == len(self.f.siData), \
             "Dimensions of flattened data arrays do not match!"
         # reset config in order to fix callbacks
         self.setConfig(self.configType())
@@ -341,11 +342,10 @@ class DLSData(DataObj):
         for i in range(self.numAngles):
             another = copy.copy(self)
             another.setAngles(self.anglesUnit, self.angles[i, newaxis])
-            another.setTau(self.tau.unit, self.tau.rawSrcShape)
+            another.setTau(self.tau.unit, self.tau.rawDataSrcShape)
             another.setCorrelation(
-                    self.correlation.rawSrcShape[:, i, newaxis])
-            another.setCorrelationError(
-                    self.correlationError.rawSrcShape[:, i, newaxis])
+                    self.correlation.rawDataSrcShape[:, i, newaxis],
+                    self.correlation.rawDataUSrcShape[:, i, newaxis])
             # reset config in order to fix callbacks
             another.setConfig(another.configType())
             lst.append(another)
