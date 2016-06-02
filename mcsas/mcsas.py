@@ -523,8 +523,6 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere vset:
             modelData = self.model.calc(data, rset, self.compensationExponent())
-#            dummy, vpa, dummy = self.model.calc(data, rset,
-#                    compensationExponent = 1.0, useSLD = True) # TODO: useSLD!
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
             sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
