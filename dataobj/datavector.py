@@ -12,7 +12,6 @@ import h5py
 from utils.units import Unit, NoUnit
 from utils.hdf5base import h5w, HDF5Mixin
 
-
 class DataVector(HDF5Mixin):
     """ a class for combining aspects of a particular vector of data.
     This is intended only as a storage container without additional functionality.
@@ -29,9 +28,9 @@ class DataVector(HDF5Mixin):
     _validIndices = None # valid indices.
     # specify which values are to be stored in a HDF5 file.
     _h5Datasets = ["rawData", "rawDataU",
-            "siData", "siDataU",
-            "binnedData", "binnedDataU",
-            "validIndices", "limit"]
+                   "siData", "siDataU",
+                   "binnedData", "binnedDataU",
+                   "validIndices", "limit"]
     _h5Callers = ["unit"] # writeHDF will be called.
     _h5Attrs = ["name"]
 
@@ -68,6 +67,8 @@ class DataVector(HDF5Mixin):
 
     @property
     def sanitizedU(self):
+        if self.siDataU is None:
+            return None
         return self.siDataU.copy()[self.validIndices]
 
     @sanitizedU.setter
