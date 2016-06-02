@@ -88,7 +88,7 @@ class LMADenseSphere(SASModel):
         qr = q * self.radius()
         result = 3. * (sin(qr) - qr * cos(qr)) / (qr**3.)
         #now we introduce the structure factor
-        rhsq = 2. * q * (SFmf * self.radius()) 
+        rhsq = 2. * q * (SFmf * self.radius())
         G = SFG(rhsq, SFmu)
         S = (( 1. + 24. * SFmu * G / rhsq ))**(-1)
         #print (S < 0).sum()

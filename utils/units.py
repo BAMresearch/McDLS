@@ -84,9 +84,9 @@ class Unit(HDF5Mixin, object):
                     .format(loc, cls.name()))
             h5w(wloc, "unit", cls.name(), hType = "dataset")
             # write the displayMagnitudeName as attribute:
-            h5w(h5f[loc], 
-                    "displayMagnitudeName", 
-                    unicode(cls.displayMagnitudeName), 
+            h5w(h5f[loc],
+                    "displayMagnitudeName",
+                    unicode(cls.displayMagnitudeName),
                     hType = "attribute")
 
     @classproperty

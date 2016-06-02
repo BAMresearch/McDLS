@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # utils/hdf5base.py
 
-""" 
+"""
 Helper functions for HDF5 functionality
 """
 
@@ -10,8 +10,8 @@ import h5py
 from abc import ABCMeta
 
 def h5w(wloc, field, hDat, hType = "dataset"):
-    """ 
-        writes dataset *hDat* to HDF5 location *wloc*, deleting if exists 
+    """
+        writes dataset *hDat* to HDF5 location *wloc*, deleting if exists
         htype can be "dataset" or "attribute"
     """
     # remove old field, only removes link, does not reclaim!
@@ -44,9 +44,9 @@ class HDF5Mixin(object):
     # @mixedmethod
     # @classmethod
     def writeHDF(self, filename, loc, item = None):
-        """ 
-        Writes the vector to an HDF5 output file *filename*, at location *loc*. 
-        This location should be e.g. "/mcentry01/[ sas | dls ]data01/x0". 
+        """
+        Writes the vector to an HDF5 output file *filename*, at location *loc*.
+        This location should be e.g. "/mcentry01/[ sas | dls ]data01/x0".
         """
         loc += self._h5LocAdd
         if item is not None:
@@ -81,4 +81,4 @@ class HDF5Mixin(object):
                 logging.warning("item {} does not have writeHDF functionality"
                         .format(call))
 
-
+# vim: set ts=4 sts=4 sw=4 tw=0:
