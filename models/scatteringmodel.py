@@ -367,10 +367,9 @@ class DLSModel(ScatteringModel):
     def scatteringVector(self):
         return self._scatteringVector
 
-    def calcIntensity(self, data, compensationExponent = None, useSLD = False):
+    def calcIntensity(self, data, compensationExponent = None):
         self._scatteringVector = data.scatteringVector
-        v = self._volume(compensationExponent = compensationExponent,
-                         useSLD = useSLD)
+        v = self._volume(compensationExponent = compensationExponent)
         w = self._weight(compensationExponent = compensationExponent)
         # calculate their form factors
         ff = self._formfactor(data)
