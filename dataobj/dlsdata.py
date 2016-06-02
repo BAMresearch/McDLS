@@ -35,10 +35,17 @@ def _propSetterName(propName):
 class DLSConfig(DataConfig):
     def __init__(self):
         super(DLSConfig, self).__init__()
+        self.nBin.setValue(0)
 
     def overrideDefaults(self):
         # clip preceding 2 points by default
         self.x0LowClip.setValue(2)
+
+    @property
+    def showParams(self):
+        lst = super(DLSConfig, self).showParams
+        lst.remove("nBin")
+        return lst
 
 DLSConfig.factory()
 
