@@ -9,17 +9,18 @@
 """
 
 import pickle
+from utils import mcopen
 
 def pickleLoad(filename):
     """Loads data from a pickle file"""
-    fh = open(filename)
+    fh = mcopen(filename)
     output = pickle.load(fh)
     fh.close()
     return output
 
 def pickleStore(filename, somedata):
     """Writes python object to a file."""
-    fh = open(filename, 'w')
+    fh = mcopen(filename, 'w')
     pickle.dump(somedata, fh)
     fh.close()
     return

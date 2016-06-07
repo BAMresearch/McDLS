@@ -89,6 +89,10 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         raise NotImplementedError
 
     @property
+    def sampleName(self):
+        return None
+
+    @property
     def filename(self):
         return self._filename
 
@@ -134,6 +138,7 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
     def updateConfig(self):
         """Updates the config object based on this data set. All callbacks are
         run right after this method in setConfig()."""
+        self.config.sampleName = self.sampleName
         self.config.is2d = self.is2d # forward if we are 2d or not
         self.config.register("x0limits", self._onLimitsUpdate)
         self.config.register("x0Clipping", self._onClippingUpdate)
@@ -254,9 +259,8 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self.config.x0Low.setValue(self.x0.sanitized.min())
 
     def _reBin(self):
-        """ 
-        rebinning method, to be run (f.ex.) upon every "Start" buttonpress. 
-        For now, this will rebin using the x0 vector as a base, although the 
+        """Rebinning method, to be run (f.ex.) upon every "Start" buttonpress.
+        For now, this will rebin using the x0 vector as a base, although the
         binning vector can theoretically be chosen freely.
         """
         logging.info("Initiating binning procedure")
@@ -271,6 +275,7 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         if not(nBin > 0):
             self.x0.binnedData = None # reset to none if set
             self.f.binnedData = None
+            self.f.binnedDataU = None
             return # no need to do the actual rebinning. values stay None.
 
         # prepare bin edges, log-spaced

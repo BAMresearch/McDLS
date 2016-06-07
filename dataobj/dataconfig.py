@@ -73,6 +73,7 @@ class CallbackRegistry(object):
 
 class DataConfig(AlgorithmBase, CallbackRegistry):
     _is2d = False
+    _sampleName = None
     parameters = (
         Parameter("x0Low", 0., unit = NoUnit(),
             displayName = "lower {x0} cut-off",
@@ -121,6 +122,14 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def is2d(self, isit):
         self._is2d = isit
 
+    @property
+    def sampleName(self):
+        return self._sampleName
+
+    @sampleName.setter
+    def sampleName(self, newName):
+        self._sampleName = newName
+
     def __init__(self):
         super(DataConfig, self).__init__()
         self.x0Low.setOnValueUpdate(self.updateX0Limits)
@@ -156,6 +165,12 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         self.x0High.setValueRange(limits)
 
     def setX1ValueRange(self, limits):
+        pass
+
+    def overrideDefaults(self):
+        """Override the default settings of a DataConfig type.
+        It is called at the right time after a data object was loaded and it
+        got its callbacks configured. To be overridden in sub classes."""
         pass
 
     def __getstate__(self):

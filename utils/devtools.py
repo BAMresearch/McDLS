@@ -10,8 +10,18 @@ from __future__ import print_function
 import sys
 import inspect
 import os.path
+import tempfile
+import codecs
 
-def DBG(*args):
+_logfd, _logfn = tempfile.mkstemp()
+print("DBGF() to: '{}'".format(_logfn), file = sys.__stderr__)
+
+def DBGF(*args):
+    with codecs.open(_logfn, 'a', encoding = 'utf8') as fd:
+        DBG(_file = fd, *args)
+
+def DBG(*args, **kwargs):
+    _file = kwargs.pop('_file', sys.__stderr__)
     stack = inspect.stack()
     prefix = ""
     if len(stack) > 1:
@@ -22,6 +32,6 @@ def DBG(*args):
         func = inspect.getframeinfo(frame).function
         prefix = u"[{0:04d}|{1}]".format(frame.f_lineno, '.'.join((mod, fn)))
     print(u" ".join([prefix, func]
-        + [unicode(a) for a in args]), file = sys.__stderr__)
+        + [unicode(a) for a in args]), file = _file)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

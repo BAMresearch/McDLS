@@ -4,6 +4,7 @@
 import os.path
 import logging
 import inspect
+from math import sqrt
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from itertools import izip
@@ -11,6 +12,65 @@ from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor
 from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveParam
+
+class ModelData(object):
+    _int = None
+    _vset = None
+    _wset = None
+
+    @property
+    def cumInt(self):
+        """Returns the cumulated model intensity or signal."""
+        return self._int
+
+    @property
+    def chisqrInt(self):
+        """Make the model intensity comparable to the measured intensity. The
+        difference of both will be calculated in BackgroundScalingFit in order
+        to perform the chi-square test."""
+        return self.cumInt
+
+    @property
+    def vset(self):
+        """Returns the associated set of volumes."""
+        return self._vset
+
+    @property
+    def wset(self):
+        """Returns the associated set of weights."""
+        return self._wset
+
+    def __init__(self, cumInt, vset, wset):
+        assert cumInt is not None
+        assert vset is not None
+        assert wset is not None
+        self._int = cumInt.flatten()
+        self._vset = vset.flatten()
+        self._wset = wset.flatten()
+
+    def volumeFraction(self, scaling):
+        """Returns the volume fraction based on the provided scaling factor to
+        match this model data to the measured data."""
+        return (self.wset * scaling / self.vset).flatten()
+
+class SASModelData(ModelData):
+    pass
+
+class DLSModelData(ModelData):
+    def __init__(self, *args, **kwargs):
+        super(DLSModelData, self).__init__(*args, **kwargs)
+
+    @property
+    def chisqrInt(self):
+        """Normalize and square the cumulated model intensities before passing
+        them to the chi-square test."""
+        return (self.cumInt / sum(self.wset))**2
+
+    def volumeFraction(self, scaling):
+        """Using the square root of the scaling factor to determine the volume
+        fraction because the model intensities is squared after cumulation and
+        normalization during post-processing."""
+        return super(DLSModelData, self).volumeFraction(sqrt(scaling))
 
 class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta
@@ -20,7 +80,7 @@ class ScatteringModel(AlgorithmBase):
         """Calculates the volume of this model, taking compensationExponent
         into account from input or preset parameters.
         Reimplement this for new models."""
-        raise NotImplemented
+        raise NotImplementedError
 
     def absVolume(self):
         """Forwarding to usual volume() by default.
@@ -37,7 +97,7 @@ class ScatteringModel(AlgorithmBase):
     def weight(self):
         """A weighting function for the form factor.
         With SAXS, it is usually the volume squared."""
-        raise NotImplemented
+        raise NotImplementedError
 
     def _weight(self, compensationExponent = None):
         """Wrapper around the user-defined function."""
@@ -48,7 +108,7 @@ class ScatteringModel(AlgorithmBase):
     def formfactor(self, dataset):
         """Calculates the Rayleigh function of this model.
         Reimplement this for new models."""
-        raise NotImplemented
+        raise NotImplementedError
 
     def _formfactor(self, dataset):
         """Wrapper around the user-defined function."""
@@ -62,13 +122,16 @@ class ScatteringModel(AlgorithmBase):
         Returns a tuple containing an array of the calculated intensities for
         the grid provided with the data and the volume of a single particle
         based on the model parameters.
+        Has to be implemented in derived classes specific to a certain type of
+        measurement.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def calc(self, data, pset, compensationExponent = None):
         """Calculates the total intensity and scatterer volume contributions
         using the current model.
         *pset* number columns equals the number of active parameters.
+        Returns a ModelData object for a certain type of measurement.
         """
         # remember parameter values
         params = self.activeParams()
@@ -89,7 +152,13 @@ class ScatteringModel(AlgorithmBase):
         # restore previous parameter values
         for p, v in izip(params, oldValues):
             p.setValue(v)
-        return cumInt.flatten(), vset, wset
+        return self.modelDataType()(cumInt.flatten(), vset, wset)
+
+    @abstractmethod
+    def modelDataType(self):
+        """Returns the appropriate ModelData class for this type of model.
+        """
+        raise NotImplementedError
 
     def generateParameters(self, count = 1):
         """Generates a set of parameters for this model using the predefined
@@ -221,6 +290,9 @@ class SASModel(ScatteringModel):
     __metaclass__ = ABCMeta
     canSmear = False # Indicates a model function which supports smearing...
 
+    def modelDataType(self):
+        return SASModelData
+
     def __init__(self):
         # just checking:
         super(SASModel, self).__init__()
@@ -242,11 +314,20 @@ class SASModel(ScatteringModel):
         return q
     
     def weight(self):
-        # compensationExponent is supposed to adjust the whole volume,
-        # -> not just the r³ part(?)
+        r"""Calculates an intensity weighting used during fitting. It is based
+        on the scatterers volume. It can be modified by a user-defined
+        compensation exponent *c*. The default value is :math:`c={2 \over 3}`
+
+        :math:`w(r) = v(r)^{2c}`
+        """
         return self.volume()**(2 * self.compensationExponent)
 
     def calcIntensity(self, data, compensationExponent = None):
+        r"""Returns the intensity *I*, the volume :math:`v_{abs}` and the
+        intensity weights *w* for a single parameter contribution over all *q*:
+
+        :math:`I(q,r) = F^2(q,r) \cdot w(r)`
+        """
         v = self._volume(compensationExponent = compensationExponent)
         w = self._weight(compensationExponent = compensationExponent)
 

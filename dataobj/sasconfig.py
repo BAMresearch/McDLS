@@ -98,9 +98,9 @@ class TrapezoidSmearing(SmearingConfig):
 
     def halfTrapzPDF(self, x, c, d):
         # this trapezoidal PDF is only defined from X >= 0, and is assumed
-        # to be mirrored around that point. 
-        # Note that the integral of this PDF from X>0 will be 0.5. 
-        # source: van Dorp and Kotz, Metrika 2003, eq (1) 
+        # to be mirrored around that point.
+        # Note that the integral of this PDF from X>0 will be 0.5.
+        # source: van Dorp and Kotz, Metrika 2003, eq (1)
         # using a = -d, b = -c
         logging.debug("halfTrapzPDF called")
         assert(d > 0.)
@@ -126,20 +126,20 @@ class TrapezoidSmearing(SmearingConfig):
         # following qOffset is used for Pinhole and Rectangular
         qOffset = np.logspace(np.log10(q.min() / 5.),
                 np.log10(xb / 2.), num = np.ceil(n / 2.))
-        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
+        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset))
         if not self.twoDColl():
             # overwrite prepared integration steps qOffset:
             qOffset = np.logspace(np.log10(q.min() / 5.),
                     np.log10(xb / 2.), num = n)
             # tack on a zero at the beginning
-            qOffset = np.concatenate(([0,], qOffset)) 
+            qOffset = np.concatenate(([0,], qOffset))
 
         y, dummy = self.halfTrapzPDF(qOffset, xt, xb)
 
-        # volume fraction still off by a factor of two (I think). Can be 
-        # fixed by multiplying y with 0.5, but need to find it first in eqns. 
-                # volume fraction still off by a factor of two (I think). Can be 
-                # fixed by multiplying y with 0.5, but need to find it first in eqns. 
+        # volume fraction still off by a factor of two (I think). Can be
+        # fixed by multiplying y with 0.5, but need to find it first in eqns.
+                # volume fraction still off by a factor of two (I think). Can be
+                # fixed by multiplying y with 0.5, but need to find it first in eqns.
         self._qOffset, self._weights = qOffset, y
 
     def updateQUnit(self, newUnit):
@@ -187,7 +187,7 @@ class GaussianSmearing(SmearingConfig):
 
     def inputValid(self):
         # returns True if the input values are valid
-        return (self.Variance() > 0.) 
+        return (self.Variance() > 0.)
 
     @property
     def showParams(self):
@@ -197,10 +197,10 @@ class GaussianSmearing(SmearingConfig):
                     if name not in lst] + lst
 
     def setIntPoints(self, q):
-        """ sets smearing profile integration points for trapezoidal slit. 
-        Top (umbra) of trapezoid has full width xt, bottom of trapezoid 
+        """ sets smearing profile integration points for trapezoidal slit.
+        Top (umbra) of trapezoid has full width xt, bottom of trapezoid
         (penumbra) has full width.
-        Since the smearing function is assumed to be symmetrical, the 
+        Since the smearing function is assumed to be symmetrical, the
         integration parameters are calculated in the interval [0, xb/2]
         """
         n, GVar = self.nSteps(), self.Variance()
@@ -209,13 +209,13 @@ class GaussianSmearing(SmearingConfig):
         # following qOffset is used for Pinhole and Rectangular
         qOffset = np.logspace(np.log10(q.min() / 3.),
                 np.log10(2.5 * GVar), num = np.ceil(n / 2.))
-        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset)) 
+        qOffset = np.concatenate((-qOffset[::-1], [0,], qOffset))
         if not self.twoDColl():
             # overwrite prepared integration steps qOffset:
             qOffset = np.logspace(np.log10(q.min() / 3.),
                     np.log10(2.5 * GVar), num = n)
             # tack on a zero at the beginning
-            qOffset = np.concatenate(([0,], qOffset)) 
+            qOffset = np.concatenate(([0,], qOffset))
 
         y = stats.norm.pdf(qOffset, scale = GVar)
 
@@ -353,7 +353,7 @@ class SASConfig(DataConfig):
             logging.debug("prepareSmearing called for slit collimation")
             logging.debug("q.shape: {}, qOffset.shape: {}".format(q.shape, qOffset.shape))
             return np.sqrt(np.add.outer(q **2, qOffset **2))
-        else: 
+        else:
             logging.debug("prepareSmearing called for pinhole collimation")
             # Non-slit-smeared instruments, using azimuthally averaged
             # 2D-pattern (assumed!) with equally averaged beam profile.

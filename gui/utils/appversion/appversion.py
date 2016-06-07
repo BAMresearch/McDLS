@@ -5,7 +5,7 @@ from __future__ import absolute_import # PEP328
 import inspect
 import os.path
 import re
-from utils import isNonEmptyString
+from utils import isNonEmptyString, mcopen
 
 class AppVersion(object):
     """
@@ -70,7 +70,7 @@ class AppVersion(object):
             fn = fn[:-1]
         # read current file content
         content = None
-        with open(fn) as fd:
+        with mcopen(fn) as fd:
             content = fd.read()
         # get version number, parse and update it
         match = re.search(r'(versionNumber\s+=\s+(\"[^\"]*\"))', content)
@@ -78,7 +78,7 @@ class AppVersion(object):
         # replace version string and write back
         newversion = '"{0}"'.format(newversion)
         content = content.replace(oldversion, newversion)
-        with open(fn, 'wb') as fd:
+        with mcopen(fn, 'wb') as fd:
             fd.write(content)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:

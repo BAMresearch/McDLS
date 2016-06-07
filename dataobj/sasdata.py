@@ -189,7 +189,7 @@ class SASData(DataObj):
                             .format(minUncertaintyPercent))
             self.f.siDataU = self.config.eMin() * self.f.siData
         else:
-            upd = np.maximum(self.f.siDataU, 
+            upd = np.maximum(self.f.siDataU,
                     self.config.eMin() * self.f.siData)
             count = sum(self.f.siData < upd )
             if count > 0:

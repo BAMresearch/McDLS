@@ -83,12 +83,12 @@ class BackgroundScalingFit(object):
         sc = optimize.fmin(residual, sc, full_output = False, disp = 0)
         return sc
 
-    def calc(self, dataMeas, dataErr, dataCalc, sc, ver = 2):
-        dataMeas = dataMeas.flatten()
-        dataErr  = dataErr.flatten()
-        dataCalc = dataCalc.flatten()
-        if self._dataCalcSquared:
-            dataCalc = dataCalc**2 # required for other techniques than SAS
+    def calc(self, data, modelData, sc, ver = 2):
+        dataMeas = data.f.binnedData.flatten()
+        dataErr = 1.
+        if data.f.binnedDataU is not None:
+            dataErr = data.f.binnedDataU.flatten()
+        dataCalc = modelData.chisqrInt
 
         # different data fit approaches: speed vs. stability (?)
         if ver == 2:

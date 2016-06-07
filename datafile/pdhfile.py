@@ -3,7 +3,7 @@
 
 from __future__ import absolute_import # PEP328
 from utils import isList, isInteger, isString
-from utils.classproperty import classproperty
+from utils import classproperty
 from datafile import ArrayFile
 
 class PDHFile(ArrayFile):

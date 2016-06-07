@@ -59,7 +59,7 @@ import logging
 import h5py
 from utils import isString, isNumber, isList, isMap, isSet, testfor, assertName
 from utils.mixedmethod import mixedmethod
-from utils.classproperty import classproperty
+from utils import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
 from utils.units import NoUnit
 from utils import clip, isCallable
@@ -200,7 +200,7 @@ class ParameterBase(object):
 
     @mixedmethod
     def writeHDF(selforcls, filename, loc):
-        """ Writer method to output the <key, value> pairs to *filename*. 
+        """Writer method to output the <key, value> pairs to *filename*.
         "loc" is the internal HDF5 location, to which will be added a dataset
         with name stored in the Parameter "name" attribute. All other Parameter
         attributes are stored as dataset attributes therewith.

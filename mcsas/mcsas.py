@@ -260,9 +260,14 @@ class McSAS(AlgorithmBase):
         # store in output dict
         self.result.append(dict(
             contribs = contributions, # Rrep
+            # what about modelDataMean? ...
             fitMeasValMean = contribMeasVal.mean(axis = 2),
             fitMeasValStd = contribMeasVal.std(axis = 2),
             fitX0 = self.data.x0.binnedData,
+            # ... and dataMean
+            dataX0 = self.data.x0.binnedData,
+            dataMean = self.data.f.binnedData,
+            dataStd = self.data.f.binnedDataU,
             # background details:
             scaling = (scalings.mean(), scalings.std(ddof = 1)),
             background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
@@ -302,22 +307,23 @@ class McSAS(AlgorithmBase):
         else:
             rset = self.model.generateParameters(numContribs)
 
-        ft, vset, wset = self.model.calc(data, rset, compensationExponent)
+        modelData = self.model.calc(data, rset, compensationExponent)
+        ft, vset, wset = modelData.cumInt, modelData.vset, modelData.wset
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sc = numpy.array([data.f.limit[1] / ft.max(), data.f.limit[0]])
-        sc *= sum(wset)
+        sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
+#        sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
                                             self.model)
-        sc, conval, dummy = bgScalingFit.calc(
-                data.f.binnedData, data.f.binnedDataU,
-                ft / sum(wset), sc, ver = 1)
+        # for the least squares fit, normalize the intensity by the sum of
+        # weights which is << 1 (for SAXS, usually it's the sum
+        # of the scatterers volumes), though increasing ft and reducing the
+        # scaling sc[0]; when histogramming, this gets reverted
+        sc, conval, dummy = bgScalingFit.calc(data, modelData, sc, ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
-        sc, conval, dummy = bgScalingFit.calc(
-                data.f.binnedData, data.f.binnedDataU,
-                ft / sum(wset), sc)
+        sc, conval, dummy = bgScalingFit.calc(data, modelData, sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -334,24 +340,27 @@ class McSAS(AlgorithmBase):
                not self.stop):
             rt = self.model.generateParameters()
             # calculate contribution measVal:
-            ftt, vtt, wtt = self.model.calc(data, rt, compensationExponent)
+            newModelData = self.model.calc(data, rt, compensationExponent)
             # Calculate new total measVal, subtract old measVal, add new:
-            fo, dummy, dummy = self.model.calc(data, rset[ri].reshape((1, -1)),
+            oldModelData = self.model.calc(data, rset[ri].reshape((1, -1)),
                                                compensationExponent)
-            ftest = (ft - fo + ftt) # is this numerically stable?
-            # is numerically stable (so far). Can calculate final uncertainty
-            # based on number of valid "moves" and sys.float_info.epsilon
-
-            wtest = wset.sum() - wset[ri] + wtt
+            testModelData = self.model.modelDataType()(
+                # is numerically stable (so far). Can calculate final uncertainty
+                # based on number of valid "moves" and sys.float_info.epsilon
+                ft - oldModelData.cumInt + newModelData.cumInt,
+                vset,
+                # not as intended but sufficient for now
+                wset.sum() - wset[ri] + newModelData.wset)
+#            ftest = (ft - oldModelData.cumInt + newModelData.cumInt)
+#            wtest = wset.sum() - wset[ri] + newModelData.wset
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-            sct, convalt, dummy = bgScalingFit.calc(
-                    data.f.binnedData, data.f.binnedDataU, ftest / wtest, sc)
+            sct, convalt, dummy = bgScalingFit.calc(data, testModelData, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
-                ft, wset[ri] = ftest, wtt
+                ft, wset[ri] = testModelData.cumInt, newModelData.wset
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
@@ -389,9 +398,8 @@ class McSAS(AlgorithmBase):
             'numMoves': numMoves,
             'elapsed': elapsed})
 
-        sc, conval, ifinal = bgScalingFit.calc(
-                data.f.binnedData, data.f.binnedDataU,
-                ft / sum(wset), sc)
+        modelData = self.model.modelDataType()(ft, vset, wset)
+        sc, conval, ifinal = bgScalingFit.calc(data, modelData, sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -491,12 +499,15 @@ class McSAS(AlgorithmBase):
         volumeFraction = zeros((numContribs, numReps))
         # number fraction for each contribution
         numberFraction = zeros((numContribs, numReps))
+        volSqrFraction = zeros((numContribs, numReps))
         # volume frac. for each histogram bin
         minReqVol = zeros((numContribs, numReps)) 
         # number frac. for each histogram bin
         minReqNum = zeros((numContribs, numReps))
+        minReqVolSqr = zeros((numContribs, numReps))
         totalVolumeFraction = zeros((numReps))
         totalNumberFraction = zeros((numReps))
+        totalVolSqrFraction = zeros((numReps))
         # MeasVal scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
@@ -511,22 +522,23 @@ class McSAS(AlgorithmBase):
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere vset:
-            ft, vset, wset = self.model.calc(data, rset,
-                                             self.compensationExponent())
-#            dummy, vpa, dummy = self.model.calc(data, rset,
-#                    compensationExponent = 1.0, useSLD = True) # TODO: useSLD!
+            modelData = self.model.calc(data, rset, self.compensationExponent())
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            sc = numpy.array([data.f.limit[1] / ft.max(), data.f.limit[0]])
+            sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
             # optimize scaling and background for this repetition
-            sc, conval, dummy = bgScalingFit.calc(
-                    data.f.binnedData, data.f.binnedDataU, ft, sc)
+            sc, conval, dummy = bgScalingFit.calc(data, modelData, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
-            # is the volume fraction scaled to the weight or volume?
-            volumeFraction[:, ri] = (sc[0] * wset/vset).flatten()
+            # calculate individual volume fractions:
+            # here, the weight reverts intensity normalization effecting the
+            # scaling sc[0] during optimization, it does not influence
+            # the resulting volFrac
+            volumeFraction[:, ri] = modelData.volumeFraction(sc[0])
             totalVolumeFraction[ri] = sum(volumeFraction[:, ri])
-            numberFraction[:, ri] = volumeFraction[:, ri]/vset.flatten()
+            numberFraction[:, ri] = volumeFraction[:, ri]/modelData.vset.flatten()
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
+            volSqrFraction[:, ri] = volumeFraction[:, ri]*modelData.vset.flatten()
+            totalVolSqrFraction[ri] = sum(volSqrFraction[:, ri])
 
             # calc observability for each sphere/contribution
             for c in range(numContribs):
@@ -536,19 +548,24 @@ class McSAS(AlgorithmBase):
                 # volume fraction later which is compensated by default.
                 # additionally, we actually do not use this value.
                 # again, partial intensities for this size only required
-                fr, dummy, dummy = self.model.calc(data,
-                        rset[c].reshape((1, -1)), self.compensationExponent())
+                partialModelData = self.model.calc(data, rset[c].reshape((1, -1)),
+                                                   self.compensationExponent())
                 # FIXME: mcsas.py:542: RuntimeWarning: divide by zero encountered in divide
                 minReqVol[c, ri] = (
                         data.f.binnedDataU * volumeFraction[c, ri]
-                                / (sc[0] * fr)).min()
-                minReqNum[c, ri] = minReqVol[c, ri] / vset[c]
+                                / (sc[0] * partialModelData.cumInt)).min()
+                minReqNum[c, ri] = minReqVol[c, ri] / modelData.vset[c]
+                minReqVolSqr[c, ri] = (minReqNum[c, ri]
+                        * minReqVol[c, ri] * minReqVol[c, ri])
 
             numberFraction[:, ri] /= totalNumberFraction[ri]
-            minReqNum[:, ri] /= totalNumberFraction[ri]
+            minReqNum[:, ri]      /= totalNumberFraction[ri]
+            volSqrFraction[:, ri] /= totalVolSqrFraction[ri]
+            minReqVolSqr[:, ri]   /= totalVolSqrFraction[ri]
 
         fractions = dict(vol = (volumeFraction, minReqVol),
-                         num = (numberFraction, minReqNum))
+                         num = (numberFraction, minReqNum),
+                         volsqr = (volSqrFraction, minReqVolSqr))
 
         # now we histogram over each variable
         # for each variable parameter we define,
@@ -580,9 +597,11 @@ class McSAS(AlgorithmBase):
             logging.info('regenerating set {} of {}'.format(ri, numReps-1))
             rset = contribs[:, :, ri]
             # calculate their form factors
-            ft, vset, wset = self.model.calc(data, rset, compensationExponent)
+            # ft, vset, wset = self.model.calc(data, rset, compensationExponent)
+            modelData = self.model.calc(data, rset, compensationExponent)
             # Optimize the intensities and calculate convergence criterium
-            intAvg = intAvg + ft*scalingFactors[0, ri] + scalingFactors[1, ri]
+            intAvg = (intAvg + modelData.cumInt*scalingFactors[0, ri]
+                             + scalingFactors[1, ri])
         # print "Initial conval V1", Conval1
         intAvg /= numReps
         # mask (lifted from clipDataset)

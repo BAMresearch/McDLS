@@ -5,7 +5,7 @@ from __future__ import absolute_import # PEP328
 from numpy import array as np_array
 from numpy import ndarray as np_ndarray
 from datafile.asciifile import AsciiFile
-from utils.classproperty import classproperty
+from utils import classproperty
 from dataobj.sasdata import SASData
 
 class ArrayFile(AsciiFile):

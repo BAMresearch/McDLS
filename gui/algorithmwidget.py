@@ -85,23 +85,24 @@ class AlgorithmWidget(SettingsWidget):
         """Returns all existing input names (for store/restore)."""
         if self.algorithm is None:
             return
+        children = []
         for p in self.algorithm.params():
             query = p.name()
             try:
                 p.isActive() # fails for non-FitParameters
                 query = QRegExp("^" + p.name() + ".*")
-            except: pass
-            for w in self.findChildren(QWidget, query):
-                yield w
-        for w in self.uiWidgets:
-            yield w
+            except AttributeError:
+                pass
+            children.extend(self.findChildren(QWidget, query))
+        children.extend(self.uiWidgets)
+        return children
 
     @property
     def uiWidgets(self):
         """May return a list of input widgets compatible but not associated to
         a parameter, e.g. for UI configuration. To be overridden in subclasses.
         """
-        return ()
+        return []
 
     @property
     def keys(self):
@@ -160,7 +161,7 @@ class AlgorithmWidget(SettingsWidget):
         param.histograms().updateRanges()
         return displayRange
 
-    def updateParam(self, widget):
+    def updateParam(self, widget, emitBackendUpdated = True):
         """Write UI settings back to the algorithm."""
         if widget in self.uiWidgets:
             return # skip ui input widgets without a Parameter backend
@@ -214,7 +215,8 @@ class AlgorithmWidget(SettingsWidget):
         # enable signals again after ui updates
         self.sigValueChanged.connect(self.updateParam)
         # param internals could have changed, update ui accordingly
-        self.sigBackendUpdated.emit() # update other widgets possibly
+        if emitBackendUpdated:
+            self.sigBackendUpdated.emit() # update other widgets possibly
         if isNotNone(newRange):
             # the range was updated
             self.sigRangeChanged.emit()
@@ -222,7 +224,10 @@ class AlgorithmWidget(SettingsWidget):
     def updateAll(self):
         """Called in MainWindow on calculation start."""
         for w in self.inputWidgets:
-            self.updateParam(w)
+            self.updateParam(w, emitBackendUpdated = False)
+        # emit sigBackendUpdated after updating all widgets,
+        # because they may be removed in the meantime
+        self.sigBackendUpdated.emit()
 
     def onBackendUpdate(self):
         self.updateUi()
@@ -361,7 +366,8 @@ class AlgorithmWidget(SettingsWidget):
             # store the parameter name
             w.parameterName = param.name()
         # configure UI accordingly (hide/show widgets)
-        self.updateParam(widgets[-1])
+        # no backend update, ui was just built, data is still in sync
+        self.updateParam(widgets[-1], emitBackendUpdated = False)
         return widget
 
     @staticmethod
@@ -374,12 +380,12 @@ class AlgorithmWidget(SettingsWidget):
         if not isinstance(newParent, QWidget):
             newParent = None
         for i in reversed(range(layout.count())):
-            # reversed removal avoids renumbering eventually
+            # reversed removal avoids renumbering possibly
             item = layout.takeAt(i)
-            if newParent is not None:
-                try:
-                    item.widget().setParent(newParent)
-                except: pass
+            if newParent is None or item.widget() is None:
+                continue
+            item.widget().setParent(newParent)
+            item.widget().deleteLater()
 
     @staticmethod
     def removeWidgets(widget):

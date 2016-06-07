@@ -12,7 +12,7 @@ Required keyword arguments:
                        unicode strings.
     - *simagnitudename*: the si magnitude name.
 
-Example usage: 
+Example usage:
 
 >>> rUnit = Length("nm")
 >>> rUnit.siMagnitudeName
@@ -23,10 +23,12 @@ u'nm'
 1e-09
 
 or:
+
 >>> rUnit.toSi(32)
 3.2e-08
 
-Selecting a default: 
+Selecting a default:
+
 >>> qUnit = ScatteringVector(u"cm⁻¹")
 >>> qUnit.magnitudeConversion
 100.0
@@ -40,6 +42,7 @@ from numpy import pi
 from utils.classproperty import classproperty
 from utils.hdf5base import h5w, HDF5Mixin
 import h5py
+from utils import classproperty
 
 class Unit(HDF5Mixin, object):
     _magnitudeMap = None
@@ -81,9 +84,9 @@ class Unit(HDF5Mixin, object):
                     .format(loc, cls.name()))
             h5w(wloc, "unit", cls.name(), hType = "dataset")
             # write the displayMagnitudeName as attribute:
-            h5w(h5f[loc], 
-                    "displayMagnitudeName", 
-                    unicode(cls.displayMagnitudeName), 
+            h5w(h5f[loc],
+                    "displayMagnitudeName",
+                    unicode(cls.displayMagnitudeName),
                     hType = "attribute")
 
     @classproperty

@@ -18,6 +18,7 @@ import os, inspect
 import numpy as np
 from utils.parameter import (Parameter, ParameterFloat,
         ParameterBoolean, ParameterNumerical, ParameterString)
+from utils import mcopen
 
 class ExtendedEncoder(json.JSONEncoder):
     """JSON encoder extended to deal with Unicode, arrays and cls descriptions"""
@@ -84,7 +85,7 @@ class cInfo(object):
         parameters to self.parameters
         Can also be used to update existing parameters from supplied filename
         """
-        with open(fname, 'r') as jfile:
+        with mcopen(fname, 'r') as jfile:
             logging.info('loading parameters from file: {}'.format(fname))
             parDict = json.load(jfile)
 
@@ -143,7 +144,7 @@ class cInfo(object):
             parDict[kw] = subDict
 
         #write dictionary to file
-        with open(fname,'wb') as jfile:
+        with mcopen(fname, 'wb') as jfile:
             json.dump(parDict, jfile, cls=ExtendedEncoder, indent = 4, sort_keys=True)
 
 

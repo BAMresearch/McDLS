@@ -15,7 +15,7 @@ import pickle
 from gui.qt import QtCore
 from QtCore import QUrl
 from bases.dataset import DataSet
-from utils import isList, isString, testfor, isMac
+from utils import isList, isString, testfor, isMac, fixFilename, mcopen
 from utils.lastpath import LastPath
 from utils.units import Angle
 from datafile import PDHFile, AsciiFile
@@ -89,7 +89,8 @@ class OutputFilename(object):
             fn += ["_", kind]
         if isString(extension):
             fn += extension
-        return os.path.join(self._outDir, "".join(fn))
+        fn = os.path.join(self._outDir, "".join(fn))
+        return fixFilename(fn)
 
     def filenameVerbose(self, kind, descr, extension = '.txt'):
         """Returns the file name as in filename() and logs a descriptive
@@ -105,12 +106,16 @@ def plotStats(stats):
     # need a simple (generic) plotting method in mcsas.plotting
     # kind of a dirty hack for now ...
     from matplotlib.pyplot import (figure, show, subplot, plot,
-                                   errorbar, axes, legend)
+                                   errorbar, axes, legend, title,
+                                   xlabel, ylabel)
     fig = figure(figsize = (7, 7), dpi = 80,
                  facecolor = 'w', edgecolor = 'k')
-    fig.canvas.set_window_title("series statistics plot")
+    fig.canvas.set_window_title("series: " + stats["title"])
     a = subplot()
-    plot(stats["angle"], stats["mean"], 'r-', label = "mean")
+    plot(stats["angle"], stats["mean"], 'r-', label = stats["cfg"])
+    xlabel("angle")
+    ylabel("mean")
+    title(stats["title"])
     errorbar(stats["angle"], stats["mean"], stats["meanStd"],
              marker = '.', linestyle = "None")
     axes(a)
@@ -217,7 +222,7 @@ class Calculator(object):
     def _updateSeries(self, data, model):
         if not self.algo.seriesStats():
             return
-        if not hasattr(data, 'sampleName'):
+        if not hasattr(data, 'angles'):
             return
         def addSeriesData(key, hist, angles):
             if key not in self._series:
@@ -226,7 +231,9 @@ class Calculator(object):
         def makeKey(data, hist):
             """Derive a unique key for each pair of sample and histogram."""
             key = (data.sampleName,
-                   (hist.param.name(),) + h.xrange + (h.yweight,))
+                   (hist.param.name(),)
+                   + tuple(hist.param.unit().toDisplay(x) for x in h.xrange)
+                   + (h.yweight,))
             return key
 
         for p in model.activeParams():
@@ -273,6 +280,9 @@ class Calculator(object):
                                     "series statistics",
                                     columnNames, extension = '.dat')
             # simple statistics plotting, kind of a prototype for now ...
+            stats["cfg"] = u"{param} [{lo},{hi}] {w}".format(param = pname,
+                                                lo = lo, hi = hi, w = weight)
+            stats["title"] = sampleName
             if isMac():
                 plotStats(stats)
             else:
@@ -301,8 +311,12 @@ class Calculator(object):
                                 columnNames, extension = '.dat')
 
     def _writeFit(self, mcResult):
+        columnNames = ('fitX0', 'dataMean', 'dataStd',
+                       'fitMeasValMean', 'fitMeasValStd')
+        if isinstance(self.algo.data, SASData):
+            columnNames = ('fitX0', 'fitMeasValMean', 'fitMeasValStd')
         self._writeResultHelper(mcResult, "fit", "fit data",
-            ('fitQ', 'fitIntensityMean', 'fitIntensityStd'),
+            columnNames,
             extension = '.dat'
         )
 
@@ -327,7 +341,7 @@ class Calculator(object):
         fn = self._outFn.filenameVerbose("contributions",
                                          "Model contribution parameters",
                                          extension = '.pickle')
-        with open(fn,'w') as fh:
+        with mcopen(fn, 'w') as fh:
             pickle.dump(mcResult['contribs'], fh)
 
     def _writeSettings(self, mcargs, dataset):
@@ -364,13 +378,16 @@ class Calculator(object):
                 config.set(sectionName, p.name()+"_max", p.max())
             else:
                 config.set(sectionName, p.name(), p.value())
-        with codecs.open(fn, 'w', encoding = 'utf8') as configfile:
+        with mcopen(fn, 'w') as configfile:
             config.write(configfile)
 
     def _writeResultHelper(self, mcResult, fileKey, descr, columnNames,
                            extension = '.txt'):
         if not all(cn in mcResult for cn in columnNames):
-            logging.warning('Result does not contain the requested data')
+            logging.warning(
+                'Writing results: some of the requested {d} not found!'
+                .format(d = descr))
+            logging.warning(str(columnNames))
             return
         fn = self._outFn.filenameVerbose(fileKey, descr, extension = extension)
         logging.info("Containing the following columns:")
@@ -379,12 +396,13 @@ class Calculator(object):
         for cn in columnNames:
             msg = fmt.format(self.indent, cn)
             peek = np.ravel(mcResult[cn])
-            if len(peek) < 3:
-                for value in peek[0:2]:
-                    try:
-                        msg += " {0: .4e}".format(value)
-                    except ValueError:
-                        msg += " {0: >14s}".format(value)
+            if len(peek) > 2:
+                continue
+            for value in peek[0:2]:
+                try:
+                    msg += " {0: .4e}".format(value)
+                except ValueError:
+                    msg += " {0: >14s}".format(value)
             logging.info(msg)
         # write header:
         AsciiFile.writeHeaderLine(fn, columnNames)

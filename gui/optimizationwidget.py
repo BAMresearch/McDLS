@@ -16,9 +16,9 @@ class OptimizationWidget(AlgorithmWidget):
     @property
     def uiWidgets(self):
         if hasattr(self, "advanced"):
-            return (self.advanced,)
+            return [self.advanced,]
         else:
-            return ()
+            return []
 
     def __init__(self, *args):
         super(OptimizationWidget, self).__init__(*args)

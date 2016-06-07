@@ -13,7 +13,7 @@ from QtGui import (QApplication, QKeySequence, QTextBrowser, QDesktopServices)
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
 import log
-from utils import isString
+from utils import isString, mcopen
 from utils.lastpath import LastPath
 from gui.utils.translate import tr
 from gui.utils.filedialog import getSaveFile
@@ -174,7 +174,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
                 if not fn.endswith(u"_plotlog.txt"):
                     continue
                 fn = os.path.join(path, fn)
-                with open(fn, 'r') as fd:
+                with mcopen(fn, 'r') as fd:
                     content = fd.read() # get all of it
                     if len(content):
                         self.append(content)
@@ -238,7 +238,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
                              fn, filefilter)
         if fn is None or len(fn) < 1:
             return
-        with open(fn, 'w') as fd:
+        with mcopen(fn, 'w') as fd:
             fd.write(bytearray(self.contents(), "utf8"))
         return fn
 

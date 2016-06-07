@@ -164,7 +164,7 @@ import hashlib
 import platform
 from cx_Freeze import setup, Executable
 from gui.version import version
-from utils import isWindows, isLinux, isMac, testfor
+from utils import isWindows, isLinux, isMac, testfor, mcopen
 
 def sanitizeVersionNumber(number):
     """Removes non-digits to be compatible with pywin32"""
@@ -245,11 +245,12 @@ class Archiver7z(Archiver):
         return path
 
     def archive(self, targetPath):
+        targetPath = os.path.abspath(targetPath)
         if not os.path.isdir(targetPath):
             return None
         fnPackage = targetPath + "." + self._ext
-        fnLog = self.getLogFilename()
-        with open(fnLog, 'w') as fd:
+        fnLog = os.path.abspath(self.getLogFilename())
+        with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call(
                 [self._path, "a", "-t" + self._type, "-mx=9",
                  fnPackage, targetPath],
@@ -277,11 +278,12 @@ class ArchiverZip(Archiver):
 
     def archive(self, targetPath):
         """Expects an absolute target directory path"""
+        targetPath = os.path.abspath(targetPath)
         if not os.path.isdir(targetPath):
             return None
         fnPackage = targetPath + ".zip"
-        fnLog = self.getLogFilename()
-        with open(fnLog, 'w') as fd:
+        fnLog = os.path.abspath(self.getLogFilename())
+        with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call([self._path, "-r9",
                                        fnPackage, targetPath],
                                        stdout = fd,
@@ -429,7 +431,8 @@ if __name__ == "__main__":
 
     # calc a checksum of the package
     def hashFile(filename, hasher, blocksize = 65536):
-        with open(filename, 'rb') as fd:
+        os.path.abspath(filename)
+        with mcopen(filename, 'rb') as fd:
             buf = fd.read(blocksize)
             while len(buf) > 0:
                 hasher.update(buf)
@@ -438,7 +441,7 @@ if __name__ == "__main__":
     hashValue = hashFile(PACKAGEFN, hashlib.sha256())
 
     # write the checksum to file
-    with open(version.name() + ".sha", 'w') as fd:
+    with mcopen(os.path.abspath(version.name() + ".sha"), 'w') as fd:
         fd.write(" *".join(hashValue))
 
     # restore initially modified version
