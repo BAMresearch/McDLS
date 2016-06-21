@@ -13,7 +13,8 @@ import os.path
 import tempfile
 import codecs
 
-_logfd, _logfn = tempfile.mkstemp()
+prefix = os.path.splitext(os.path.basename(__file__))[0] + "_"
+_logfd, _logfn = tempfile.mkstemp(prefix = prefix)
 print("DBGF() to: '{}'".format(_logfn), file = sys.__stderr__)
 
 def DBGF(*args):
