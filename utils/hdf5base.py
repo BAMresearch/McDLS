@@ -30,6 +30,45 @@ def h5w(wloc, field, hDat, hType = "dataset"):
     else:
         wloc.attrs[field] = hDat
 
+from utils.devtools import DBG
+
+class HDFWriter(object):
+    """Represents an open HDF file location in memory and keeps track of
+    the current address/name for reading or writing. Once this object looses
+    scope, its data is actually written to file."""
+    _handle = None
+    _location = None
+
+    def __init__(self, hdfHandle):
+        self._handle = hdfHandle
+        self._location = hdfHandle.name
+
+    def __enter__(self):
+        """Implements a *with* statement context manager."""
+        self._handle.__enter__()
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        """Implements a *with* statement context manager."""
+        return self._handle.__exit__(*args, **kwargs)
+
+    @classmethod
+    def open(cls, filename):
+        return HDFWriter(h5py.File(filename, driver = 'core', backing_store = True))
+
+    @property
+    def location(self):
+        return self._location
+
+    def log(self, msg):
+        logging.debug("  [HDF] writing " + msg)
+
+    def writeAttribute(self, key, value):
+        if value is None:
+            return
+        self.log("attribute {}: '{}'".format(key, value))
+        self._handle[self.location].attrs[key] = value
+
 class HDF5Mixin(object):
     __metaclass__ = ABCMeta
     _h5Datasets = []
@@ -38,11 +77,29 @@ class HDF5Mixin(object):
     _h5LocAdd = ''
 
     # mixin object (?) to add a write function to other classes
-    def __init__(self, **kwargs):
-        super(HDF5Mixin, self).__init__(**kwargs)
+#    def __init__(self, **kwargs):
+#        super(HDF5Mixin, self).__init__(**kwargs)
 
-    # @mixedmethod
-    # @classmethod
+    def hdfStore(self, filename):
+        """Writes itself to an HDF file at the given position or group."""
+        with HDFWriter.open(filename) as hdf:
+            DBG(hdf)
+            self._hdfWrite(hdf)
+
+    def _hdfWrite(self, hdf):
+        """A private wrapper for custom hdfWrite() methods in sub classes.
+        Allows to handle common preprocessing without requiring to call the
+        method in the parent class."""
+        assert isinstance(hdf, HDFWriter)
+        DBG(hdf.location)
+        self.hdfWrite(hdf)
+
+    @classmethod
+    def hdfLoad(self):
+        """Restores an instance of this type from a given HDF file location
+        or group."""
+        pass
+
     def writeHDF(self, filename, loc, item = None):
         """
         Writes the vector to an HDF5 output file *filename*, at location *loc*.
