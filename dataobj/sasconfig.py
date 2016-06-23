@@ -251,9 +251,6 @@ GaussianSmearing.factory()
 class SASConfig(DataConfig):
     # TODO: fix UI elsewhere for unit selection along to each input and forward
     #       that to the DataVector
-    _iUnit = NoUnit()
-    _qUnit = NoUnit()
-    _pUnit = NoUnit()
     _smearing = None
     shortName = "SAS data configuration"
 
@@ -289,36 +286,6 @@ class SASConfig(DataConfig):
     def setX1ValueRange(self, limit):
         super(SASConfig, self).setX1ValueRange(limit)
         # TODO
-
-    @property
-    def iUnit(self):
-        return self._iUnit
-
-    @property
-    def qUnit(self):
-        return self._qUnit
-
-    @property
-    def pUnit(self):
-        return self._pUnit
-
-    @iUnit.setter
-    def iUnit(self, newUnit):
-        assert isinstance(newUnit, ScatteringIntensity)
-        self._iUnit = newUnit
-        self.callback("iunit", newUnit)
-
-    @qUnit.setter
-    def qUnit(self, newUnit):
-        assert isinstance(newUnit, ScatteringVector)
-        self._qUnit = newUnit
-        self.callback("qunit", newUnit)
-
-    @pUnit.setter
-    def pUnit(self, newUnit):
-        assert isinstance(newUnit, Angle)
-        self._pUnit = newUnit
-        self.callback("punit", newUnit)
 
     @property
     def smearing(self):
@@ -364,9 +331,6 @@ class SASConfig(DataConfig):
 
     def copy(self):
         other = super(SASConfig, self).copy(smearing = self.smearing.copy())
-        other.iUnit = self.iUnit
-        other.qUnit = self.qUnit
-        other.pUnit = self.pUnit
         return other
 
     def __init__(self, *args, **kwargs):
@@ -386,9 +350,6 @@ class SASConfig(DataConfig):
             self.register("x0limits", self.smearing.updateQLimits)
             # self.register("x0limits", self.smearing.updateSmearingLimits)
             self.register("x1limits", self.smearing.updatePLimits)
-        self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
-        self.qUnit = ScatteringVector(u"nm⁻¹")
-        self.pUnit = Angle(u"°")
         self.eMin.setOnValueUpdate(self.updateEMin)
 
     def __eq__(self, other):
