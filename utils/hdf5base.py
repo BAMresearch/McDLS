@@ -94,6 +94,10 @@ class HDFWriter(object):
             self._handle.require_group(self.location)
         return self._handle[self.location]
 
+    def writeAttributes(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            self.writeAttribute(key, value)
+
     def writeAttribute(self, key, value):
         if value is None:
             return
