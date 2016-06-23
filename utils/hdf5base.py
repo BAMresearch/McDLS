@@ -153,7 +153,7 @@ class HDFWriter(object):
             return
 
     def _warningPrefix(self, obj, memberName):
-        return (u"{cls}.{mem} {cal}:\n".format(cal = getCallerInfo(type(self)),
+        return (u"{cls}.{mem} {cal} ".format(cal = getCallerInfo(type(self)),
                 cls = classname(obj), mem = memberName))
 
 class HDF5Mixin(object):
@@ -184,6 +184,8 @@ class HDF5Mixin(object):
     def hdfWrite(self, hdf):
         """To be overridden by sub classes to store themselves in an HDF
         structure. *hdf*: a HDFWriter instance."""
+        logging.warning(u"Not defined: "
+                        + hdf._warningPrefix(self, "hdfWrite()"))
         pass
 
     @classmethod
