@@ -36,7 +36,7 @@ class DataVector(HDF5Mixin):
 
     def hdfWrite(self, hdf):
         hdf.writeMembers(self, "rawData", "rawDataU", "siData", "siDataU",
-                         "binnedData", "binnedDataU", "validIndices", "limit")
+                "binnedData", "binnedDataU", "validIndices", "limit", "unit")
 
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name

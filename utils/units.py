@@ -42,7 +42,7 @@ from numpy import pi
 from utils.classproperty import classproperty
 from utils.hdf5base import h5w, HDF5Mixin
 import h5py
-from utils import classproperty
+from utils import classproperty, classname
 
 class Unit(HDF5Mixin, object):
     _magnitudeMap = None
@@ -72,6 +72,11 @@ class Unit(HDF5Mixin, object):
         except KeyError:
             logging.warning(u"no matching magnitude to name {} found"
                     .format(name))
+
+    def hdfWrite(self, hdf):
+        hdf.writeAttributes(type = classname(self),
+                            displayMagnitudeName = self.displayMagnitudeName,
+                            magnitudeConversion = self.magnitudeConversion)
 
     @classmethod
     def writeHDF(cls, filename, loc, item = None):
