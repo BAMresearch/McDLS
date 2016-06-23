@@ -25,7 +25,6 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
     __metaclass__ = ABCMeta
     _filename = None
     _config = None
-    _validIndices = None # based on masks to filter certain values
     _validMask = None
     _x0 = None
     _x1 = None
