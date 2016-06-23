@@ -89,12 +89,17 @@ class HDFWriter(object):
     def log(self, msg):
         logging.debug(u"  [{}] {}".format(classname(self), msg))
 
+    def _writeLocation(self):
+        if self.location not in self._handle:
+            self._handle.require_group(self.location)
+        return self._handle[self.location]
+
     def writeAttribute(self, key, value):
         if value is None:
             return
         self.log("attribute '{loc}/{k}': '{v}'"
                  .format(loc = self.location.rstrip('/'), k = key, v = value))
-        self._handle[self.location].attrs[key] = value
+        self._writeLocation().attrs[key] = value
 
     def writeDataset(self, name, data):
         if not isList(data):
@@ -106,7 +111,7 @@ class HDFWriter(object):
         self.log("dataset '{loc}/{name}' {shape}"
                  .format(loc = self.location.rstrip('/'),
                          name = name, shape = shape))
-        writeLocation = self._handle[self.location]
+        writeLocation = self._writeLocation()
         DBG("loc: ", writeLocation)
         if name in writeLocation:
             del writeLocation[name]
@@ -139,13 +144,10 @@ class HDFWriter(object):
         elif isinstance(member, HDF5Mixin):
             # store the member in a group of its own
             oldLocation = self.location
-            DBG("loc0: ", self.location)
             self._location = "/".join((oldLocation.rstrip('/'), memberName))
-            DBG("loc1: ", self.location)
-            self._handle.require_group(self.location)
+        #    self._handle.require_group(self.location)
             member.hdfWrite(self) # recursion entry, mind the loops!
             self._location = oldLocation
-            DBG("loc3: ", self.location)
         else:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + "(={}) It is neither of a list type nor a {}!"
