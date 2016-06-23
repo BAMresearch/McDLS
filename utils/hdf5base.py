@@ -6,8 +6,12 @@ Helper functions for HDF5 functionality
 """
 
 import logging
+import inspect
+import os.path
 import h5py
+import numpy
 from abc import ABCMeta
+from utils import isCallable, isString, isList, classname
 
 def h5w(wloc, field, hDat, hType = "dataset"):
     """
@@ -31,6 +35,28 @@ def h5w(wloc, field, hDat, hType = "dataset"):
         wloc.attrs[field] = hDat
 
 from utils.devtools import DBG
+
+def getCallerInfo(referenceType = None, stackOffset = 0):
+    """*referenceType*: Stop the search for a frame when this type for a local
+    'self' is found.
+    *stackOffset*: grab that frame counted from the last instead of search"""
+    out = ""
+    stack = inspect.stack()
+    if isinstance(referenceType, type) and referenceType is not type(None):
+        # search for the appropriate frame in user code
+        frame = stack[stackOffset][0]
+        while ('self' not in frame.f_locals
+               or isinstance(frame.f_locals['self'], referenceType)):
+            stackOffset += 1
+            frame = stack[stackOffset][0]
+    else:
+        stackOffset += 2
+    if len(stack) > stackOffset:
+        frame = stack[stackOffset][0]
+        head, fn = os.path.split(frame.f_code.co_filename)
+#        func = inspect.getframeinfo(frame).function
+        out = (u"({} l.{})".format(fn, frame.f_lineno))
+    return out
 
 class HDFWriter(object):
     """Represents an open HDF file location in memory and keeps track of
@@ -61,13 +87,74 @@ class HDFWriter(object):
         return self._location
 
     def log(self, msg):
-        logging.debug("  [HDF] writing " + msg)
+        logging.debug(u"  [{}] {}".format(classname(self), msg))
 
     def writeAttribute(self, key, value):
         if value is None:
             return
-        self.log("attribute {}: '{}'".format(key, value))
+        self.log("attribute '{loc}/{k}': '{v}'"
+                 .format(loc = self.location.rstrip('/'), k = key, v = value))
         self._handle[self.location].attrs[key] = value
+
+    def writeDataset(self, name, data):
+        if not isList(data):
+            self.log("dataset {} is not of a list type! (={})"
+                     .format(name, classname(data)))
+            return
+        shape = getattr(data, 'shape',
+                        "(len: {})".format(len(data)))
+        self.log("dataset '{loc}/{name}' {shape}"
+                 .format(loc = self.location.rstrip('/'),
+                         name = name, shape = shape))
+        writeLocation = self._handle[self.location]
+        DBG("loc: ", writeLocation)
+        if name in writeLocation:
+            del writeLocation[name]
+        try:
+            writeLocation.create_dataset(name, data = data,
+                                         compression = "gzip")
+        except TypeError:
+            # a TypeError is raised for non-chunkable data (such as string)
+            writeLocation.create_dataset(name, data = data)
+
+    def writeMembers(self, obj, *members):
+        assert(len(members))
+        for member in members:
+            self.writeMember(obj, member)
+
+    def writeMember(self, obj, memberName):
+        if isString(obj):
+            logging.warning(u"String as object provided! "
+                            + self._warningPrefix(obj, memberName))
+        member = getattr(obj, memberName, None)
+        DBG(member)
+        if member is None:
+            self.log(u"skipped " + self._warningPrefix(obj, memberName)
+                     + u"It is empty or does not exist (=None).")
+            return
+        if isCallable(member):
+            member = member()
+        if isList(member):
+            self.writeDataset(memberName, member)
+        elif isinstance(member, HDF5Mixin):
+            # store the member in a group of its own
+            oldLocation = self.location
+            DBG("loc0: ", self.location)
+            self._location = "/".join((oldLocation.rstrip('/'), memberName))
+            DBG("loc1: ", self.location)
+            self._handle.require_group(self.location)
+            member.hdfWrite(self) # recursion entry, mind the loops!
+            self._location = oldLocation
+            DBG("loc3: ", self.location)
+        else:
+            self.log(u"skipped " + self._warningPrefix(obj, memberName)
+                     + "(={}) It is neither of a list type nor a {}!"
+                        .format(classname(member), classname(HDF5Mixin)))
+            return
+
+    def _warningPrefix(self, obj, memberName):
+        return (u"{cls}.{mem} {cal}:\n".format(cal = getCallerInfo(type(self)),
+                cls = classname(obj), mem = memberName))
 
 class HDF5Mixin(object):
     __metaclass__ = ABCMeta
@@ -93,6 +180,11 @@ class HDF5Mixin(object):
         assert isinstance(hdf, HDFWriter)
         DBG(hdf.location)
         self.hdfWrite(hdf)
+
+    def hdfWrite(self, hdf):
+        """To be overridden by sub classes to store themselves in an HDF
+        structure. *hdf*: a HDFWriter instance."""
+        pass
 
     @classmethod
     def hdfLoad(self):

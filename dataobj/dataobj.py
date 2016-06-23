@@ -162,6 +162,7 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self._reBin()
         # for HDF5 testing purposes:
         if self._h5test:
+            self.hdfStore("test2.h5")
             self.writeHDF("test.h5", "/mcentry01/")
         if not self.is2d:
             return # self.x1 will be None
@@ -172,6 +173,10 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self.config.x1High.setDisplayName(descr)
         self.config.setX1ValueRange(
                 (self.x1.siData.min(), self.x1.siData.max()))
+
+    def hdfWrite(self, hdf):
+        hdf.writeAttribute("filename", "dsfdsfsdfsdf")
+        hdf.writeMembers(self, "f", "x0")
 
     def _excludeInvalidX0(self):
         validX0Idx = 0 # get the first data point index above 0

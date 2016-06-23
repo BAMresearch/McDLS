@@ -34,6 +34,10 @@ class DataVector(HDF5Mixin):
     _h5Callers = ["unit"] # writeHDF will be called.
     _h5Attrs = ["name"]
 
+    def hdfWrite(self, hdf):
+        hdf.writeMembers(self, "rawData", "rawDataU", "siData", "siDataU",
+                         "binnedData", "binnedDataU", "validIndices", "limit")
+
     def __init__(self, name, raw, rawU = None, unit = None):
         self._name = name
         self._rawData = raw
