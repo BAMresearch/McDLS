@@ -11,6 +11,7 @@ from bases.algorithm import Parameter # not defined in utils.parameter
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
 from utils import isCallable
+from utils.hdf5base import HDF5Mixin
 
 def funcNotInFuncList(f, flst):
     """Custom predicate for comparing bounded methods:
@@ -71,7 +72,7 @@ class CallbackRegistry(object):
         state["_callbacks"] = None
         return state
 
-class DataConfig(AlgorithmBase, CallbackRegistry):
+class DataConfig(AlgorithmBase, CallbackRegistry, HDF5Mixin):
     _is2d = False
     _sampleName = None
     parameters = (
@@ -186,5 +187,9 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
 
     def __setstate__(self, state):
         super(DataConfig, self).__setstate__(state)
+
+    def hdfWrite(self, hdf):
+        hdf.writeAttributes(sampleName = self.sampleName,
+                            is2d = self.is2d)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

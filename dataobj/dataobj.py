@@ -175,7 +175,7 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
 
     def hdfWrite(self, hdf):
         hdf.writeAttribute("filename", "dsfdsfsdfsdf")
-        hdf.writeMembers(self, "f", "x0")
+        hdf.writeMembers(self, "f", "x0", "x1", "config")
 
     def _excludeInvalidX0(self):
         validX0Idx = 0 # get the first data point index above 0
