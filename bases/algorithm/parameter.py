@@ -516,7 +516,8 @@ class ParameterNumerical(ParameterBase):
         return isNumber(value) and not isinstance(value, float)
 
     def __str__(self):
-        return (ParameterBase.__str__(self) + u" in [{0}, {1}] ({sfx})"
+        return (super(ParameterNumerical, self).__str__()
+                + u" in [{0}, {1}] ({sfx})"
                 .format(*(self.valueRange()), sfx = self.suffix()))
 
     def generate(self, lower = None, upper = None, count = 1):
