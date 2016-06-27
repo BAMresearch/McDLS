@@ -6,6 +6,8 @@ from functools import partial
 from nose.tools import assert_raises
 from dataobj.dataconfig import DataConfig
 
+DataConfig.factory()
+
 def testDefaults():
     dc = DataConfig()
     assert dc.x0Low()  == 0.0
