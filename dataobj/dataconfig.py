@@ -185,9 +185,6 @@ class DataConfig(AlgorithmBase, CallbackRegistry, HDF5Mixin):
             state.update([(key, parentState[key]) for key in view])
         return state
 
-    def __setstate__(self, state):
-        super(DataConfig, self).__setstate__(state)
-
     def hdfWrite(self, hdf):
         hdf.writeAttributes(sampleName = self.sampleName,
                             is2d = self.is2d)
