@@ -316,7 +316,7 @@ class ParameterBase(object):
         return isinstance(value, cls.dtype)
 
     def __str__(self):
-        return "{0}: {1} ({2})".format(
+        return u"{0}: {1} ({2})".format(
                 self.displayName(), self.displayValue(), self.value())
 
     __repr__ = __str__
