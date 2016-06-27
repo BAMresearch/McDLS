@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import # PEP328
 
+import logging
 from abc import ABCMeta, abstractmethod, abstractproperty
 import numpy as np
 from scipy import stats
@@ -12,7 +13,6 @@ from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
                          Fraction, NoUnit)
 from utils import clip
 from dataobj import DataConfig
-import logging
 
 class SmearingConfig(AlgorithmBase):
     """Abstract base class, can't be instantiated."""
@@ -339,7 +339,9 @@ class SASConfig(DataConfig):
         if smearing is None:
             # smearing = TrapezoidSmearing()
             smearing = GaussianSmearing()
-        self.smearing = smearing
+        if not isinstance(self.smearing, SmearingConfig):
+            # is already set when unpickling
+            self.smearing = smearing
         self.register("qunit", self.x0Low.setUnit)
         self.register("qunit", self.x0High.setUnit)
         self.register("punit", self.x1Low.setUnit)
