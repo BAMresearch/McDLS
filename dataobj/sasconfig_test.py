@@ -6,8 +6,7 @@ from functools import partial
 from nose.tools import assert_raises
 from dataobj.sasconfig import SASConfig
 
-def testDefaults(): # from dataconfig_test
-    sc = SASConfig()
+def assertDefaults(sc): # from dataconfig_test
     assert sc.x0Low()  == 0.0
     assert sc.x0High() >= 1e200
     assert sc.x1Low()  == 0.0
@@ -19,6 +18,7 @@ def testSerialize():
     def dummyFunc(*args):
         pass
     sc = SASConfig()
+    assertDefaults(sc)
     sc.x0Low.setValueRange((1, 12))
     sc.x0Low.setValue(.5)
     sc.x0High.setValue(1.234e2)
