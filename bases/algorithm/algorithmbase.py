@@ -173,12 +173,6 @@ class AlgorithmBase(object):
     def makeDefault(cls):
         return cls()
 
-    def copy(self, *args, **kwargs):
-        """bypasses additional arguments to the constructor"""
-        cls = self.factory(self.name(),
-                           *[p.templateType() for p in self.params()])
-        return cls(*args, **kwargs)
-
     def __eq__(self, other):
         if (not isinstance(other, type(self)) or
             self.name() != other.name() or

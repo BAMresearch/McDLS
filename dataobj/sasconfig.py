@@ -57,14 +57,6 @@ class SmearingConfig(AlgorithmBase):
     def prepared(self):
         return self._qOffset, self._weights
 
-    def copy(self):
-        other = super(SmearingConfig, self).copy()
-        if self.qOffset is not None:
-            other._qOffset = self._qOffset.copy()
-        if self.weights is not None:
-            other._weights = self._weights.copy()
-        return other
-
     def __str__(self):
         s = [str(id(self)) + " " + super(SmearingConfig, self).__str__()]
         s.append("  qOffset: {}".format(self.qOffset))
@@ -329,10 +321,6 @@ class SASConfig(DataConfig):
             logging.debug("qOffset.min: {}, qOffset.max: {}"
                     .format(qOffset.min(), qOffset.max()))
             return np.add.outer(q, qOffset)
-
-    def copy(self):
-        other = super(SASConfig, self).copy(smearing = self.smearing.copy())
-        return other
 
     def __init__(self, *args, **kwargs):
         super(SASConfig, self).__init__()

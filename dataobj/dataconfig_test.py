@@ -58,18 +58,6 @@ def testCallbacks():
     assert_raises(FMasksCallbackRun, dc.fMaskNeg.setValue, True)
     assert dc.fMaskNeg()
 
-def testCopy():
-    dc = DataConfig()
-    dc.x0Low.setValue(-2.5)
-    dc.x0High.setValue(1.234e2)
-    dc2 = dc.copy()
-    assert dc == dc2
-    # test if they behave individually now
-    dc.x1Low.setValue(.5)
-    assert dc.x1Low() == .5
-    assert dc2.x1Low() == 0
-    assert dc2.x1Low() != dc.x1Low()
-
 def testSerialize():
     def dummyFunc(*args):
         pass
