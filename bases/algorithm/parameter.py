@@ -296,14 +296,14 @@ class ParameterBase(object):
         if newName is not None:
             selforcls._displayName = unicode(newName)
 
-    #in ParameterFloat, this is scaled to units used. For GUI display
     @mixedmethod
     def displayValue(selforcls):
+        """This is scaled to units used. For GUI display."""
         return selforcls.value()
 
-    #in ParameterFloat, this is scaled to units used. For GUI display
     @mixedmethod
     def setDisplayValue(selforcls, newValue):
+        """Set the value scaled to units used. For GUI display."""
         selforcls.setValue(newValue)
 
     @classproperty
