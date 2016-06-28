@@ -11,7 +11,7 @@ import os.path
 import h5py
 import numpy
 from abc import ABCMeta
-from utils import isCallable, isString, isList, classname
+from utils import isCallable, isString, isList, isNumber, classname
 
 def h5w(wloc, field, hDat, hType = "dataset"):
     """
@@ -96,7 +96,9 @@ class HDFWriter(object):
 
     def writeAttributes(self, **kwargs):
         for key, value in kwargs.iteritems():
-            self.writeAttribute(key, value)
+            # leading _ from keys are removed, they come from __getstate__()
+            # which gathers member variables (usually private with leading _)
+            self.writeAttribute(key.lstrip('_'), value)
 
     def writeAttribute(self, key, value):
         if value is None:
@@ -141,7 +143,8 @@ class HDFWriter(object):
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + u"It is empty or does not exist (=None).")
             return
-        if isCallable(member):
+        if isCallable(member) and not isinstance(member, HDF5Mixin):
+            # ParameterBase instances are callable but also HDF5Mixins
             member = member()
         if isList(member):
             self.writeDataset(memberName, member)
@@ -149,13 +152,14 @@ class HDFWriter(object):
             # store the member in a group of its own
             oldLocation = self.location
             self._location = "/".join((oldLocation.rstrip('/'), memberName))
-        #    self._handle.require_group(self.location)
             member.hdfWrite(self) # recursion entry, mind the loops!
             self._location = oldLocation
+        elif isString(member) or isNumber(member):
+            self.writeAttribute(memberName, member)
         else:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
-                     + "(={}) It is neither of a list type nor a {}!"
-                        .format(classname(member), classname(HDF5Mixin)))
+                     + "(={}) It is not a compatible value type!"
+                        .format(classname(member)))
             return
 
     def _warningPrefix(self, obj, memberName):
