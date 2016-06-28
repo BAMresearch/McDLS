@@ -60,7 +60,7 @@ from utils import (isString, isNumber, isList, isMap, isSet, testfor,
                    assertName, classname, classproperty, clip, isCallable)
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
-from utils.hdf5base import HDFMixin
+from utils.hdf import HDFMixin
 from numbergenerator import NumberGenerator, RandomUniform
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):

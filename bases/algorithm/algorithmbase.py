@@ -5,7 +5,7 @@ from __future__ import absolute_import # PEP328
 from utils import isString, isList, testfor, assertName
 from utils.mixedmethod import mixedmethod
 from utils import classproperty, classname
-from utils.hdf5base import HDFMixin
+from utils.hdf import HDFMixin
 from bases.algorithm.parameter import ParameterBase, ParameterError
 
 class AlgorithmError(StandardError):

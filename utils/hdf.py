@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# utils/hdf5base.py
+# utils/hdf.py
 
 """
 Helper functions for HDF5 functionality

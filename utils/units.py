@@ -40,7 +40,7 @@ import collections
 import numpy as np # For arrays
 from numpy import pi
 from utils.classproperty import classproperty
-from utils.hdf5base import HDFMixin
+from utils.hdf import HDFMixin
 from utils import classproperty, classname
 
 class Unit(HDFMixin):

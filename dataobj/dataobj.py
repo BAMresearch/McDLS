@@ -15,7 +15,7 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
-from utils.hdf5base import HDFMixin
+from utils.hdf import HDFMixin
 
 
 class DataObj(DataSet, DisplayMixin, HDFMixin):

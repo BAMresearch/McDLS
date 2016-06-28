@@ -10,7 +10,7 @@ import numpy as np
 import h5py
 
 from utils.units import Unit, NoUnit
-from utils.hdf5base import HDFMixin
+from utils.hdf import HDFMixin
 
 class DataVector(HDFMixin):
     """ a class for combining aspects of a particular vector of data.
