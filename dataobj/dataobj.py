@@ -15,7 +15,7 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
-from utils.hdf5base import h5w, HDF5Mixin
+from utils.hdf5base import HDF5Mixin
 
 
 class DataObj(DataSet, DisplayMixin, HDF5Mixin):
@@ -30,10 +30,6 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
     _x1 = None
     _x2 = None
     _f  = None
-    # config doesn't have a "writeHDF" yet. 
-    _h5Callers = ["f", "x0", "x1", "x2", "validIndices", "config"]
-    _h5LocAdd = "data01" # should be overridden by subclasses
-    _h5test = True #False # True
 
     # The following are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
@@ -160,9 +156,8 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self._excludeInvalidX0()
         self._reBin()
         # for HDF5 testing purposes:
-        if self._h5test:
+        if True:
             self.hdfStore("test2.h5")
-            self.writeHDF("test.h5", "/mcentry01/")
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)

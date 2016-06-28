@@ -19,7 +19,6 @@ class SmearingConfig(AlgorithmBase):
     __metaclass__ = ABCMeta
     _qOffset = None # integration point positions, depends on beam profile
     _weights = None # integration weight per position, depends on beam profile
-    locs = None # integration location matrix, depends on collType
     shortName = "SAS smearing configuration"
     parameters = (
         Parameter("doSmear", False, unit = NoUnit(),
