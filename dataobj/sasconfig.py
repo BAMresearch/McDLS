@@ -70,11 +70,11 @@ class SmearingConfig(AlgorithmBase):
 
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
-        Parameter("Umbra", 0., unit = NoUnit(), # unit set outside
+        Parameter("umbra", 0., unit = NoUnit(), # unit set outside
             displayName = "top width of <br />trapezoidal beam profile",
             description = "full top width of the trapezoidal beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
-        Parameter("Penumbra", 0., unit = NoUnit(), # unit set outside
+        Parameter("penumbra", 0., unit = NoUnit(), # unit set outside
             displayName = "bottom width of <br />trapezoidal beam profile",
             description = "full bottom width of the trapezoidal beam profile horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
@@ -82,11 +82,11 @@ class TrapezoidSmearing(SmearingConfig):
 
     def inputValid(self):
         # returns True if the input values are valid
-        return (self.Umbra() > 0.) and (self.Penumbra > self.Umbra())
+        return (self.umbra() > 0.) and (self.penumbra > self.umbra())
 
     @property
     def showParams(self):
-        lst = ["Umbra", "Penumbra"]
+        lst = ["umbra", "penumbra"]
         return [name
                 for name in super(TrapezoidSmearing, self).showParams
                     if name not in lst] + lst
@@ -115,7 +115,7 @@ class TrapezoidSmearing(SmearingConfig):
         Since the smearing function is assumed to be symmetrical, the 
         integration parameters are calculated in the interval [0, xb/2]
         """
-        n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
+        n, xt, xb = self.nSteps(), self.umbra(), self.penumbra()
         logging.debug("setIntPoints called with n = {}".format(n))
 
         # following qOffset is used for Pinhole and Rectangular
@@ -139,8 +139,8 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
-        self.Umbra.setUnit(newUnit)
-        self.Penumbra.setUnit(newUnit)
+        self.umbra.setUnit(newUnit)
+        self.penumbra.setUnit(newUnit)
 
     def updatePUnit(self, newUnit):
         assert isinstance(newUnit, Angle)
@@ -148,14 +148,14 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.Umbra.setValueRange((0., 2. * qHigh))
-        self.Penumbra.setValueRange((0., 2. * qHigh))
+        self.umbra.setValueRange((0., 2. * qHigh))
+        self.penumbra.setValueRange((0., 2. * qHigh))
 
     def updateSmearingLimits(self, q):
         qHigh = q.max()
         lowLim = diff(q).min()
-        self.Umbra.setValueRange((lowLim, 2. * qHigh))
-        self.Penumbra.setValueRange((lowLim, 2. * qHigh))
+        self.umbra.setValueRange((lowLim, 2. * qHigh))
+        self.penumbra.setValueRange((lowLim, 2. * qHigh))
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
@@ -163,31 +163,34 @@ class TrapezoidSmearing(SmearingConfig):
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
-        self.Umbra.setOnValueUpdate(self.onUmbraUpdate)
+        self.umbra.setOnValueUpdate(self.onUmbraUpdate)
 
     def onUmbraUpdate(self):
         """Value in umbra will not exceed available q."""
-        # value in Penumbra must not be smaller than Umbra
-        self.Penumbra.setValueRange((self.Umbra(), self.Penumbra.max()))
+        # value in penumbra must not be smaller than umbra
+        self.penumbra.setValueRange((self.umbra(), self.penumbra.max()))
 
 TrapezoidSmearing.factory()
 
 class GaussianSmearing(SmearingConfig):
     parameters = (
-        Parameter("Variance", 0., unit = NoUnit(), # unit set outside
-            #displayName = u"Variance (σ²) of <br /> Gaussian beam profile",
-            displayName = u"Variance of <br /> Gaussian beam profile",
-            description = "full width at half maximum of the Gaussian beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+        Parameter("variance", 0., unit = NoUnit(), # unit set outside
+            displayName = u"Variance (σ²) of <br /> Gaussian beam profile",
+            #displayName = u"Variance (&sigma;<sup>2</sup>)",
+            description = "Full width at half maximum of the Gaussian beam"
+                          "profile (horizontal for slit-collimated systems, "
+                          "circularly averaged for 2D pinhole and rectangular "
+                          "slit)",
             valueRange = (0., np.inf), decimals = 1),
     )
 
     def inputValid(self):
         # returns True if the input values are valid
-        return (self.Variance() > 0.)
+        return (self.variance() > 0.)
 
     @property
     def showParams(self):
-        lst = ["Variance"]
+        lst = ["variance"]
         return [name
                 for name in super(GaussianSmearing, self).showParams
                     if name not in lst] + lst
@@ -199,7 +202,7 @@ class GaussianSmearing(SmearingConfig):
         Since the smearing function is assumed to be symmetrical, the
         integration parameters are calculated in the interval [0, xb/2]
         """
-        n, GVar = self.nSteps(), self.Variance()
+        n, GVar = self.nSteps(), self.variance()
         logging.debug("setIntPoints called with n = {}".format(n))
 
         # following qOffset is used for Pinhole and Rectangular
@@ -220,7 +223,7 @@ class GaussianSmearing(SmearingConfig):
 
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
-        self.Variance.setUnit(newUnit)
+        self.variance.setUnit(newUnit)
 
     def updatePUnit(self, newUnit):
         assert isinstance(newUnit, Angle)
@@ -228,12 +231,12 @@ class GaussianSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.Variance.setValueRange((0., 2. * qHigh))
+        self.variance.setValueRange((0., 2. * qHigh))
 
     def updateSmearingLimits(self, q):
         qHigh = q.max()
         lowLim = diff(q).min()
-        self.Variance.setValueRange((lowLim, 2. * qHigh))
+        self.variance.setValueRange((lowLim, 2. * qHigh))
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
