@@ -232,20 +232,10 @@ class ParameterBase(object):
                 setter(value)
         return selforcls
 
-    @mixedmethod
-    def templateType(selforcls):
-        """Returns a type replicating the current object and its values."""
-        attr = selforcls.attributes(exclude = ("onValueUpdate",))
-        other = attr.pop("cls") # remove duplicate first argument of factory()
-        if isinstance(selforcls, object):
-            selforcls = type(selforcls)
-        attr["paramTypes"] = (other,)
-        other = factory(**attr)
-        return other
-
-    @mixedmethod
-    def copy(selforcls):
-        return selforcls.templateType()()
+    def copy(self):
+        param = type(self)()
+        param.setAttributes(**self.attributes())
+        return param
 
     @classmethod
     def get(cls, key, default = None):
