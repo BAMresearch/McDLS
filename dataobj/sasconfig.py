@@ -27,9 +27,11 @@ class SmearingConfig(AlgorithmBase):
         Parameter("nSteps", 25, unit = NoUnit(),
             displayName = "number of smearing points around each q",
             valueRange = (0, 1000)),
-        # 2-d collimated systems require a different smearing than slit-collimated data
+        # 2-d collimated systems require a different smearing than
+        # slit-collimated data
         Parameter("twoDColl", False, unit = NoUnit(),
-            displayName = "Slit-smeared data (unchecked), or 2D-averaged data (checked)",
+            displayName = "Slit-smeared data (unchecked), or 2D-averaged "
+                          "data (checked)",
             ),
 #        Parameter("collType", u"Slit", unit = NoUnit(),
 #            displayName = "Type of collimation leading to smearing",
@@ -66,17 +68,20 @@ class SmearingConfig(AlgorithmBase):
         super(SmearingConfig, self).hdfWrite(hdf)
         hdf.writeMembers(self, 'qOffset', 'weights')
 
-# SmearingConfig.factory() # not sure if required
-
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
         Parameter("umbra", 0., unit = NoUnit(), # unit set outside
             displayName = "top width of <br />trapezoidal beam profile",
-            description = "full top width of the trapezoidal beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            description = "full top width of the trapezoidal beam profile "
+                          "(horizontal for slit-collimated systems, "
+                          "circularly averaged for 2D pinhole and "
+                          "rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
         Parameter("penumbra", 0., unit = NoUnit(), # unit set outside
             displayName = "bottom width of <br />trapezoidal beam profile",
-            description = "full bottom width of the trapezoidal beam profile horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            description = "full bottom width of the trapezoidal beam profile "
+                          "horizontal for slit-collimated systems, circularly "
+                          "averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
     )
 
@@ -196,7 +201,7 @@ class GaussianSmearing(SmearingConfig):
                     if name not in lst] + lst
 
     def setIntPoints(self, q):
-        """ sets smearing profile integration points for trapezoidal slit.
+        """Sets smearing profile integration points for trapezoidal slit.
         Top (umbra) of trapezoid has full width xt, bottom of trapezoid
         (penumbra) has full width.
         Since the smearing function is assumed to be symmetrical, the
