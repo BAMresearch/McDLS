@@ -220,17 +220,17 @@ class ParameterBase(object):
                 ds[key] = value
 
 
-    @classmethod
-    def factory(cls, **kwargs):
+    @mixedmethod
+    def setAttributes(selforcls, **kwargs):
         """Returns this type with attribute values initialized in the ordering
         provided by attributeNames()"""
         for key, value in kwargs.iteritems():
             # set the attributes for which we find setters
             # the setter may raise exceptions for invalid data
-            setter = getattr(cls, _setterName(key), None)
+            setter = getattr(selforcls, _setterName(key), None)
             if isCallable(setter): # key exists
                 setter(value)
-        return cls
+        return selforcls
 
     @mixedmethod
     def templateType(selforcls):
