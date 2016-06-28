@@ -12,7 +12,7 @@ import h5py
 from abc import ABCMeta
 from utils import isCallable, isString, isList, isNumber, classname
 
-from utils.devtools import DBG
+# from utils.devtools import DBG
 
 def getCallerInfo(referenceType = None, stackOffset = 0):
     """*referenceType*: Stop the search for a frame when this type for a local
@@ -96,7 +96,7 @@ class HDFWriter(object):
                  .format(loc = self.location.rstrip('/'),
                          name = name, shape = shape))
         writeLocation = self._writeLocation()
-        DBG("loc: ", writeLocation)
+#        DBG("loc: ", writeLocation)
         if name in writeLocation:
             del writeLocation[name]
         try:
@@ -116,7 +116,7 @@ class HDFWriter(object):
             logging.warning(u"String as object provided! "
                             + self._warningPrefix(obj, memberName))
         member = getattr(obj, memberName, None)
-        DBG(member)
+#        DBG(member)
         if member is None:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + u"It is empty or does not exist (=None).")
@@ -150,7 +150,7 @@ class HDFMixin(object):
     def hdfStore(self, filename):
         """Writes itself to an HDF file at the given position or group."""
         with HDFWriter.open(filename) as hdf:
-            DBG(hdf)
+#            DBG(hdf)
             self._hdfWrite(hdf)
 
     def _hdfWrite(self, hdf):
@@ -158,7 +158,7 @@ class HDFMixin(object):
         Allows to handle common preprocessing without requiring to call the
         method in the parent class."""
         assert isinstance(hdf, HDFWriter)
-        DBG(hdf.location)
+#        DBG(hdf.location)
         self.hdfWrite(hdf)
 
     def hdfWrite(self, hdf):
