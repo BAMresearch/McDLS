@@ -134,7 +134,7 @@ class ParameterBase(object):
     # *valueRange*. Not sure, if this is a good idea but it reduces
     # repetition/code drastically.
     @classmethod
-    def setAttributes(cls, dictionary, *names, **namesAndValues):
+    def addAttributes(cls, dictionary, *names, **namesAndValues):
         """Sets an *ordered* list of attributes.
         Initializes the private variable to None and sets a default getter
         method for each name provided. Additionally, sets *attributeNames* to
@@ -156,7 +156,7 @@ class ParameterBase(object):
         # sets the ordered names of attributes
         dictionary["_attributeNames"] = names
 
-    setAttributes.__func__(None, locals(), "name", "value", "displayName",
+    addAttributes.__func__(None, locals(), "name", "value", "displayName",
                            "onValueUpdate") # user provided callback function
 
     @classmethod
@@ -371,7 +371,7 @@ class ParameterString(ParameterBase):
     String-based parameter class. The default value should be the first
     item in the _valueRange list.
     """
-    ParameterBase.setAttributes(locals(), "valueRange")
+    ParameterBase.addAttributes(locals(), "valueRange")
 
     @classmethod
     def setValueRange(self, newRange):
@@ -403,7 +403,7 @@ class ParameterNumerical(ParameterBase):
     # defines attributes for this parameter type and creates default
     # getter/setter for them. For specialized versions they can be
     # overridden as usual.
-    ParameterBase.setAttributes(locals(), "valueRange", "suffix",
+    ParameterBase.addAttributes(locals(), "valueRange", "suffix",
                   "stepping", "displayValues", "generator")
 
     @mixedmethod
@@ -525,7 +525,7 @@ class ParameterNumerical(ParameterBase):
                               lower, upper, count).astype(self.dtype)
 
 class ParameterFloat(ParameterNumerical):
-    ParameterNumerical.setAttributes(locals(), "decimals", unit = NoUnit())
+    ParameterNumerical.addAttributes(locals(), "decimals", unit = NoUnit())
 
     # some unit wrappers
 
