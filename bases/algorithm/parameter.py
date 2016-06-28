@@ -57,12 +57,14 @@ import numpy as np
 import sys
 import logging
 import h5py
-from utils import isString, isNumber, isList, isMap, isSet, testfor, assertName
+from utils import (isString, isNumber, isList, isMap, isSet, testfor,
+                   assertName, classname)
 from utils.mixedmethod import mixedmethod
 from utils import classproperty
 from numbergenerator import NumberGenerator, RandomUniform
 from utils.units import NoUnit
 from utils import clip, isCallable
+from utils.hdf5base import HDF5Mixin
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
     # works with vectors of multiple bounds too
@@ -124,7 +126,7 @@ def _makeSetter(varName):
 def _setterName(attrName):
     return "set" + attrName[0].upper() + attrName[1:]
 
-class ParameterBase(object):
+class ParameterBase(HDF5Mixin):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
 
@@ -338,6 +340,15 @@ class ParameterBase(object):
         """Shortcut for Parameter.value().
         For instances only (usually in model implementation)."""
         return self.value()
+
+    def hdfWrite(self, hdf):
+        xlst = ("onValueUpdate",)
+        selfAttr = self.attributes(exclude = xlst)
+        selfAttr['cls'] = classname(selfAttr['cls'])
+        if 'unit' in selfAttr:
+            selfAttr.pop('unit')
+            hdf.writeMember(self, 'unit')
+        hdf.writeAttributes(**selfAttr)
 
     def __reduce__(self):
         # remove possible callbacks to other objects

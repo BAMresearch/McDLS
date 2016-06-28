@@ -174,8 +174,8 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         got its callbacks configured. To be overridden in sub classes."""
         pass
 
-#    def hdfWrite(self, hdf):
-#        DBG("state:", str(self.__getstate__()))
-#        hdf.writeAttributes(**self.__getstate__())
+    def hdfWrite(self, hdf):
+        super(DataConfig, self).hdfWrite(hdf)
+        hdf.writeMembers(self, 'sampleName', 'is2d')
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

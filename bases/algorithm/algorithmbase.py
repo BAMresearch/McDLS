@@ -216,7 +216,8 @@ class AlgorithmBase(HDF5Mixin):
             newParam.setAttributes(**p.attributes())
 
     def hdfWrite(self, hdf):
-        pass
+        hdf.writeAttributes(name = self.name(), cls = classname(self))
+        hdf.writeMembers(self, *[p.name() for p in self.params()])
 
 if __name__ == "__main__":
     pass

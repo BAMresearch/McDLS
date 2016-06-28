@@ -63,6 +63,10 @@ class SmearingConfig(AlgorithmBase):
         s.append("  weights: {}".format(self.weights))
         return "\n".join(s)
 
+    def hdfWrite(self, hdf):
+        super(SmearingConfig, self).hdfWrite(hdf)
+        hdf.writeMembers(self, 'qOffset', 'weights')
+
 # SmearingConfig.factory() # not sure if required
 
 class TrapezoidSmearing(SmearingConfig):
@@ -355,6 +359,10 @@ class SASConfig(DataConfig):
             super(SASConfig, self).__str__(),
             unicode(self.smearing)
         ))
+
+    def hdfWrite(self, hdf):
+        super(SASConfig, self).hdfWrite(hdf)
+        hdf.writeMember(self, 'smearing')
 
 SASConfig.factory() # check class variables
 
