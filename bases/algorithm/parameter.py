@@ -178,7 +178,7 @@ class ParameterBase(object):
         their values in this type or instance.
         Helps to avoid having explicit long argument lists"""
         base = selforcls
-        if isinstance(base, object):
+        if not isinstance(base, type) and isinstance(base, object):
             base = type(base)
         # Parameter classes have only one direct subclass
         # FIXME: not necessarily true, see FitParameter
@@ -239,9 +239,8 @@ class ParameterBase(object):
         other = attr.pop("cls") # remove duplicate first argument of factory()
         if isinstance(selforcls, object):
             selforcls = type(selforcls)
-        if not issubclass(other, selforcls):
-            other = selforcls
-        other.factory(**attr)
+        attr["paramTypes"] = (other,)
+        other = factory(**attr)
         return other
 
     @mixedmethod
@@ -352,12 +351,15 @@ class ParameterBase(object):
 
     def __reduce__(self):
         # remove possible callbacks to other objects
-        attr = self.attributes(exclude = ("onValueUpdate",))
-        return (_unpickleParameter, (attr,))
+        xlst = ("onValueUpdate",)
+        selfAttr = self.attributes(exclude = xlst)
+        clsAttr = type(self).attributes(exclude = xlst)
+        return (_unpickleParameter, (clsAttr, selfAttr))
 
-def _unpickleParameter(attr):
+def _unpickleParameter(clsAttr, selfAttr):
     # reconstruct based on parent class and attributes, call constructor
-    param = factory(**attr)()
+    param = factory(**clsAttr)()    # reconstruct the class first
+    param.setAttributes(**selfAttr) # reset to original instance configuration
     return param
 
 class ParameterBoolean(ParameterBase):
@@ -642,11 +644,7 @@ def factory(name, value, paramTypes = None, **kwargs):
     typeName = str(name.title()).translate(None, ' \t\n\r') + "Parameter"
     NewType = type(typeName, (cls,), clsdict)
     # set up the new class before return
-    return NewType.factory(**kwargs)
-    # creating new types here is a problem for pickle
-    # it is done to be able to change/add class (type) attributes
-    # without modifying the base classes
-    # ATM: __doc__ + all class attribs get mod by Param.factory()
+    return NewType.setAttributes(**kwargs)
 
 if __name__ == "__main__":
     import doctest

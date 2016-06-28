@@ -170,8 +170,12 @@ def testParameterSerialize():
     pType = factory(name = "radius", value = 3.4, valueRange = (1,5), decimals = 3)
     p = pType()
     p.setOnValueUpdate(Dummy().dummyFunc)
+    p.setValue(5.2)
     data = pickle.dumps(p)
     p2 = pickle.loads(data)
+    # verify the attributes of the instances are the same
     assert p == p2
+    # also verify the attributes of the underlying classes to match
+    assert type(p).attributes() == type(p2).attributes()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
