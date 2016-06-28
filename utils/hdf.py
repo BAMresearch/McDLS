@@ -65,7 +65,7 @@ class HDFWriter(object):
         return self._location
 
     def log(self, msg):
-        logging.debug(u"  [{}] {}".format(classname(self), msg))
+        logging.debug(u"[{}] {}".format(classname(self), msg))
 
     def _writeLocation(self):
         if self.location not in self._handle:
