@@ -10,7 +10,7 @@ from bases.algorithm import AlgorithmBase
 from bases.algorithm import Parameter # not defined in utils.parameter
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
-from utils import isCallable
+from utils import isCallable, classname
 from utils.hdf5base import HDF5Mixin
 
 def funcNotInFuncList(f, flst):
@@ -72,7 +72,7 @@ class CallbackRegistry(object):
         state["_callbacks"] = None
         return state
 
-class DataConfig(AlgorithmBase, CallbackRegistry, HDF5Mixin):
+class DataConfig(AlgorithmBase, CallbackRegistry):
     _is2d = False
     _sampleName = None
     parameters = (
@@ -174,19 +174,8 @@ class DataConfig(AlgorithmBase, CallbackRegistry, HDF5Mixin):
         got its callbacks configured. To be overridden in sub classes."""
         pass
 
-    def __getstate__(self):
-        view = self.__dict__.viewkeys()
-        state = dict()
-        for cls in type(self).mro():
-            if issubclass(cls, DataConfig) or not hasattr(cls, "__getstate__"):
-                continue
-            parentState = cls.__getstate__(self)
-            view = view & parentState.viewkeys()
-            state.update([(key, parentState[key]) for key in view])
-        return state
-
-    def hdfWrite(self, hdf):
-        hdf.writeAttributes(sampleName = self.sampleName,
-                            is2d = self.is2d)
+#    def hdfWrite(self, hdf):
+#        DBG("state:", str(self.__getstate__()))
+#        hdf.writeAttributes(**self.__getstate__())
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
