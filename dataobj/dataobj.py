@@ -15,10 +15,10 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
-from utils.hdf5base import HDF5Mixin
+from utils.hdf5base import HDFMixin
 
 
-class DataObj(DataSet, DisplayMixin, HDF5Mixin):
+class DataObj(DataSet, DisplayMixin, HDFMixin):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
     """

@@ -5,7 +5,7 @@ from __future__ import absolute_import # PEP328
 from utils import isString, isList, testfor, assertName
 from utils.mixedmethod import mixedmethod
 from utils import classproperty, classname
-from utils.hdf5base import HDF5Mixin
+from utils.hdf5base import HDFMixin
 from bases.algorithm.parameter import ParameterBase, ParameterError
 
 class AlgorithmError(StandardError):
@@ -41,7 +41,7 @@ class AlgorithmParameterError(AlgorithmError):
 # -> allows to define e.g. RadiusParameter which can be reused for several
 #    models.
 
-class AlgorithmBase(HDF5Mixin):
+class AlgorithmBase(HDFMixin):
     """Base class for all data filtering algorithms."""
     _name = None # name to display in GUI
     _parameters = None # list of parameters types or instances

@@ -121,12 +121,12 @@ class HDFWriter(object):
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + u"It is empty or does not exist (=None).")
             return
-        if isCallable(member) and not isinstance(member, HDF5Mixin):
-            # ParameterBase instances are callable but also HDF5Mixins
+        if isCallable(member) and not isinstance(member, HDFMixin):
+            # ParameterBase instances are callable but also HDFMixins
             member = member()
         if isList(member):
             self.writeDataset(memberName, member)
-        elif isinstance(member, HDF5Mixin):
+        elif isinstance(member, HDFMixin):
             # store the member in a group of its own
             oldLocation = self.location
             self._location = "/".join((oldLocation.rstrip('/'), memberName))
@@ -144,7 +144,7 @@ class HDFWriter(object):
         return (u"{cls}.{mem} {cal} ".format(cal = getCallerInfo(type(self)),
                 cls = classname(obj), mem = memberName))
 
-class HDF5Mixin(object):
+class HDFMixin(object):
     __metaclass__ = ABCMeta
 
     def hdfStore(self, filename):

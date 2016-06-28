@@ -40,10 +40,10 @@ import collections
 import numpy as np # For arrays
 from numpy import pi
 from utils.classproperty import classproperty
-from utils.hdf5base import HDF5Mixin
+from utils.hdf5base import HDFMixin
 from utils import classproperty, classname
 
-class Unit(HDF5Mixin, object):
+class Unit(HDFMixin):
     _magnitudeMap = None
     _siMagnitudeName = None
     _displayMagnitudeName = None

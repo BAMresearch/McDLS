@@ -11,7 +11,6 @@ from bases.algorithm import Parameter # not defined in utils.parameter
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
 from utils import isCallable, classname
-from utils.hdf5base import HDF5Mixin
 
 def funcNotInFuncList(f, flst):
     """Custom predicate for comparing bounded methods:
