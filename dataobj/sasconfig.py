@@ -180,7 +180,8 @@ TrapezoidSmearing.factory()
 class GaussianSmearing(SmearingConfig):
     parameters = (
         Parameter("Variance", 0., unit = NoUnit(), # unit set outside
-            displayName = u"Variance (σ²) of <br /> Gaussian beam profile",
+            #displayName = u"Variance (σ²) of <br /> Gaussian beam profile",
+            displayName = u"Variance of <br /> Gaussian beam profile",
             description = "full width at half maximum of the Gaussian beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
     )
