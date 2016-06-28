@@ -9,7 +9,6 @@ import logging
 import inspect
 import os.path
 import h5py
-from abc import ABCMeta
 from utils import isCallable, isString, isList, isNumber, classname
 
 # from utils.devtools import DBG
@@ -145,7 +144,6 @@ class HDFWriter(object):
                 cls = classname(obj), mem = memberName))
 
 class HDFMixin(object):
-    __metaclass__ = ABCMeta
 
     def hdfStore(self, filename):
         """Writes itself to an HDF file at the given position or group."""
