@@ -249,26 +249,26 @@ class ParameterBase(object):
         return selforcls.templateType()()
 
     @classmethod
-    def get(self, key, default = None):
+    def get(cls, key, default = None):
         """metagetter to get an attribute parameter"""
-        if key in self.attributeNames():
-            getterFunc = getattr(self, key, default)
+        if key in cls.attributeNames():
+            getterFunc = getattr(cls, key, default)
             return getterFunc()
         else:
             logging.warning(
                     "parameter {n} attribute {k} not understood in get"
-                    .format(n = self.name(), k = key))
+                    .format(n = cls.name(), k = key))
 
     @classmethod
-    def set(self, key, value):
+    def set(cls, key, value):
         """metasetter to set an attribute value"""
-        if key in self.attributeNames():
-            setterFunc = getattr(self, _setterName(key))
+        if key in cls.attributeNames():
+            setterFunc = getattr(cls, _setterName(key))
             setterFunc(value)
         else:
             logging.warning(
                     "parameter {n} attribute {k} not found in set"
-                    .format(n = self.name(), k = key))
+                    .format(n = cls.name(), k = key))
 
     @classmethod
     def setName(cls, name):
