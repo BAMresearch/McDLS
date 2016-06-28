@@ -8,8 +8,7 @@ from dataobj.dataconfig import DataConfig
 
 DataConfig.factory()
 
-def testDefaults():
-    dc = DataConfig()
+def assertDefaults(dc):
     assert dc.x0Low()  == 0.0
     assert dc.x0High() >= 1e200
     assert dc.x1Low()  == 0.0
@@ -19,6 +18,7 @@ def testDefaults():
 
 def testSetter():
     dc = DataConfig()
+    assertDefaults(dc)
     dc.x0Low.setValue(-1.5)
     dc.x0High.setValue(12.)
     assert dc.x0Low()  == 0
@@ -26,6 +26,7 @@ def testSetter():
 
 def testLimits():
     dc = DataConfig()
+    assertDefaults(dc)
     dc.x0Low.setValue(-2.5)
     dc.x0High.setValue(1.234e2)
     dc.setX0ValueRange((0., 10.))
@@ -42,6 +43,7 @@ def testCallbacks():
     def test(err, *args):
         raise err
     dc = DataConfig()
+    assertDefaults(dc)
     dc.register("x0limits", partial(test, X0CallbackRun))
     dc.register("x1limits", partial(test, X1CallbackRun))
     dc.register("fMasks", partial(test, FMasksCallbackRun))
@@ -62,6 +64,7 @@ def testSerialize():
     def dummyFunc(*args):
         pass
     dc = DataConfig()
+    assertDefaults(dc)
     dc.x0Low.setValueRange((1, 12))
     dc.x0Low.setValue(.5)
     dc.x0High.setValue(1.234e2)
