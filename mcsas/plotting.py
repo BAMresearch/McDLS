@@ -34,6 +34,8 @@ from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
         text, plot, grid, legend, title, xlim, ylim, gca, axis,
         close, colorbar, imshow, subplot, axes, show, savefig)
 
+PM = u"\u00B1"
+
 class CoordinateFormat(object):
     """A Function object which sets up the particular formatting with axis
     name and associated unit at initialization time and formats plot
@@ -240,10 +242,10 @@ class PlotResults(object):
             pStatFieldName = pStatFieldNames[si]
             pStatField = pStatFields[si]
             pStatFieldSTD = pStatFields[si + 1]
-            oString += u'\n {0}:  {1:0.03e} $\pm$ {2:0.03e}'.format(
+            oString += u'\n {0}:  {1:0.03e} {pm} {2:0.03e}'.format(
                     pStatFieldName,
                     pStatField,
-                    pStatFieldSTD)
+                    pStatFieldSTD, pm = PM)
 
         return oString
 
@@ -254,14 +256,14 @@ class PlotResults(object):
         oString += u'\n {}'.format(self._dataset.x0.limsString)
         oString += u'\n Active parameters$:$ {}, ranges: {} '.format(
             self._modelData['activeParamCount'], self._nR)
-        oString += u'\n Background level: {0:3.3g} $\pm$ {1:3.3g}'.format(
-                self._BG[0], self._BG[1])
-        oString += u'\n ( Scaling factor: {0:3.3g} $\pm$ {1:3.3g} )'.format(
-                self._SC[0], self._SC[1])
-        oString += u'\n Timing: {0:d} repetitions of {1:3.3g} $\pm$ {2:3.3g} seconds'.format(
+        oString += u'\n Background level: {0:3.3g} {pm} {1:3.3g}'.format(
+                self._BG[0], self._BG[1], pm = PM)
+        oString += u'\n ( Scaling factor: {0:3.3g} {pm} {1:3.3g} )'.format(
+                self._SC[0], self._SC[1], pm = PM)
+        oString += u'\n Timing: {0:d} repetitions of {1:3.3g} {pm} {2:3.3g} seconds'.format(
                 np.size(self._result['times']), 
                 self._result['times'].mean(), 
-                self._result['times'].std(ddof = 1))
+                self._result['times'].std(ddof = 1), pm = PM)
 
         return oString
 
