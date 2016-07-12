@@ -161,7 +161,7 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         self.config.onUpdatedX1(self.x1.siData)
 
     def hdfWrite(self, hdf):
-        hdf.writeAttribute("filename", "dsfdsfsdfsdf")
+        hdf.writeMember(self, "filename")
         hdf.writeMembers(self, "f", "x0", "x1", "config")
 
     def _excludeInvalidX0(self):
