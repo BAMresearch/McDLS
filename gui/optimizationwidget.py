@@ -9,9 +9,10 @@ from QtGui import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.algorithmwidget import AlgorithmWidget, rearrangeWidgets
 from gui.settingsgroup import DefaultSettings, AdvancedSettings
-
+from dataobj import DataObj, SASConfig
 
 class OptimizationWidget(AlgorithmWidget):
+    _tempCompExp = None
 
     @property
     def uiWidgets(self):
@@ -46,5 +47,17 @@ class OptimizationWidget(AlgorithmWidget):
         self.advanced.rearrangeWidgets(targetWidth)
         # add empty spacer at the bottom
         self.layout().addStretch()
+
+    def onDataSelected(self, dataobj):
+        """Sets defaults for certain types of DataConfig selected,
+        respectively fixes some values."""
+        if not isinstance(dataobj, DataObj):
+            return
+        if (isinstance(dataobj.config, SASConfig)
+            and self._tempCompExp is not None):
+            self.set("compensationExponent", self._tempCompExp)
+        elif self.get("compensationExponent", 1.0) != 1.0:
+            self._tempCompExp = self.get("compensationExponent", None)
+            self.set("compensationExponent", 1.0)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
