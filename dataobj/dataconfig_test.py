@@ -25,11 +25,12 @@ def testSetter():
     assert dc.x0High() == 12
 
 def testLimits():
+    import numpy
     dc = DataConfig()
     assertDefaults(dc)
     dc.x0Low.setValue(-2.5)
     dc.x0High.setValue(1.234e2)
-    dc.setX0ValueRange((0., 10.))
+    dc.onUpdatedX0(numpy.array((0., 10.)))
     assert dc.x0Low()  == 0.
     assert dc.x0High() == 10.
 

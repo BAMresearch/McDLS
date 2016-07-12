@@ -4,7 +4,7 @@
 from __future__ import absolute_import # PEP328
 
 import logging
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta
 import numpy as np
 from scipy import stats
 from bases.algorithm import AlgorithmBase
@@ -38,12 +38,19 @@ class SmearingConfig(AlgorithmBase):
 #            valueRange = [u"Slit", u"Pinhole", u"Rectangular", u"None"])
     )
 
-    @abstractmethod
     def updateQUnit(self, newUnit):
+        assert isinstance(newUnit, ScatteringVector)
+
+    def updateQLimits(self, qLimit):
         pass
 
-    @abstractmethod
-    def updateQLimits(self, qLimit):
+    def updatePUnit(self, newUnit):
+        assert isinstance(newUnit, Angle)
+
+    def updatePLimits(self, pLimit):
+        pass
+
+    def updateSmearingLimits(self, q):
         pass
 
     @property
@@ -143,28 +150,28 @@ class TrapezoidSmearing(SmearingConfig):
         self._qOffset, self._weights = qOffset, y
 
     def updateQUnit(self, newUnit):
-        assert isinstance(newUnit, ScatteringVector)
+        super(TrapezoidSmearing, self).updateQUnit(newUnit)
         self.umbra.setUnit(newUnit)
         self.penumbra.setUnit(newUnit)
-
-    def updatePUnit(self, newUnit):
-        assert isinstance(newUnit, Angle)
-        # TODO
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
         self.umbra.setValueRange((0., 2. * qHigh))
         self.penumbra.setValueRange((0., 2. * qHigh))
 
-    def updateSmearingLimits(self, q):
-        qHigh = q.max()
-        lowLim = diff(q).min()
-        self.umbra.setValueRange((lowLim, 2. * qHigh))
-        self.penumbra.setValueRange((lowLim, 2. * qHigh))
+    def updatePUnit(self, newUnit):
+        super(TrapezoidSmearing, self).updatePUnit(newUnit)
+        # TODO
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
         # TODO
+
+    def updateSmearingLimits(self, q):
+        super(TrapezoidSmearing, self).updateSmearingLimits(q)
+        low, high = np.absolute(np.diff(q)).min(), q.max()
+        self.umbra.setValueRange((low, 2. * high))
+        self.penumbra.setValueRange((low, 2. * high))
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
@@ -227,25 +234,26 @@ class GaussianSmearing(SmearingConfig):
         self._qOffset, self._weights = qOffset, y
 
     def updateQUnit(self, newUnit):
-        assert isinstance(newUnit, ScatteringVector)
+        super(GaussianSmearing, self).updateQUnit(newUnit)
         self.variance.setUnit(newUnit)
-
-    def updatePUnit(self, newUnit):
-        assert isinstance(newUnit, Angle)
-        # TODO
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
         self.variance.setValueRange((0., 2. * qHigh))
 
-    def updateSmearingLimits(self, q):
-        qHigh = q.max()
-        lowLim = diff(q).min()
-        self.variance.setValueRange((lowLim, 2. * qHigh))
+    def updatePUnit(self, newUnit):
+        super(GaussianSmearing, self).updatePUnit(newUnit)
+        # TODO
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
         # TODO
+
+    def updateSmearingLimits(self, q):
+        super(GaussianSmearing, self).updateSmearingLimits(q)
+        # it seems, diff(q) can be negative
+        low, high = np.absolute(np.diff(q)).min(), q.max()
+        self.variance.setValueRange((low, 2. * high))
 
     def __init__(self):
         super(GaussianSmearing, self).__init__()
@@ -279,16 +287,16 @@ class SASConfig(DataConfig):
     def updateEMin(self):
         self.callback("eMin", self.eMin())
 
-    def setX0ValueRange(self, limit):
+    def onUpdatedX0(self, x0):
         """Sets available range of loaded data."""
-        super(SASConfig, self).setX0ValueRange(limit)
+        super(SASConfig, self).onUpdatedX0(x0)
         if self.smearing is None:
             return
-        self.smearing.updateQLimits((self.x0Low(), self.x0High())) # correct?
-        # self.smearing.updateSmearingLimits(self.q) # correct?
+        self.smearing.updateQLimits((self.x0Low(), self.x0High()))
+        self.smearing.updateSmearingLimits(x0)
 
-    def setX1ValueRange(self, limit):
-        super(SASConfig, self).setX1ValueRange(limit)
+    def onUpdatedX1(self, x1):
+        super(SASConfig, self).onUpdatedX1(x1)
         # TODO
 
     @property
@@ -350,7 +358,6 @@ class SASConfig(DataConfig):
             self.register("qunit", self.smearing.updateQUnit)
             self.register("punit", self.smearing.updatePUnit)
             self.register("x0limits", self.smearing.updateQLimits)
-            # self.register("x0limits", self.smearing.updateSmearingLimits)
             self.register("x1limits", self.smearing.updatePLimits)
         self.eMin.setOnValueUpdate(self.updateEMin)
 
