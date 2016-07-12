@@ -281,8 +281,7 @@ class SASConfig(DataConfig):
 
     @property
     def callbackSlots(self):
-        return super(SASConfig, self).callbackSlots | set((
-            "qunit", "punit", "iunit", "eMin"))
+        return super(SASConfig, self).callbackSlots | set(("eMin",))
 
     def updateEMin(self):
         self.callback("eMin", self.eMin())
@@ -298,6 +297,18 @@ class SASConfig(DataConfig):
     def onUpdatedX1(self, x1):
         super(SASConfig, self).onUpdatedX1(x1)
         # TODO
+
+    def updateX0Unit(self, newUnit):
+        super(SASConfig, self).updateX0Unit(newUnit)
+        if self.smearing is None:
+            return
+        self.smearing.updateQUnit(newUnit)
+
+    def updateX1Unit(self, newUnit):
+        super(SASConfig, self).updateX1Unit(newUnit)
+        if self.smearing is None:
+            return
+        self.smearing.updatePUnit(newUnit)
 
     @property
     def smearing(self):
@@ -350,13 +361,7 @@ class SASConfig(DataConfig):
         if not isinstance(self.smearing, SmearingConfig):
             # is already set when unpickling
             self.smearing = smearing
-        self.register("qunit", self.x0Low.setUnit)
-        self.register("qunit", self.x0High.setUnit)
-        self.register("punit", self.x1Low.setUnit)
-        self.register("punit", self.x1High.setUnit)
         if self.smearing is not None:
-            self.register("qunit", self.smearing.updateQUnit)
-            self.register("punit", self.smearing.updatePUnit)
             self.register("x0limits", self.smearing.updateQLimits)
             self.register("x1limits", self.smearing.updatePLimits)
         self.eMin.setOnValueUpdate(self.updateEMin)

@@ -140,6 +140,7 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         self.config.x0Low.formatDisplayName(x0 = self.x0.name)
         self.config.x0LowClip.formatDisplayName(x0 = self.x0.name)
         self.config.x0High.formatDisplayName(x0 = self.x0.name)
+        self.config.updateX0Unit(self.x0.unit)
         self.config.fMaskZero.formatDisplayName(f = self.f.name)
         self.config.fMaskNeg.formatDisplayName(f = self.f.name)
         # FIXME: Problem with a many2one relation (many data sets, one config)
@@ -156,6 +157,7 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         self.config.register("x1limits", self._onLimitsUpdate)
         self.config.x1Low.formatDisplayName(x1 = self.x1.name)
         self.config.x1High.formatDisplayName(x1 = self.x1.name)
+        self.config.updateX1Unit(self.x1.unit)
         self.config.onUpdatedX1(self.x1.siData)
 
     def hdfWrite(self, hdf):

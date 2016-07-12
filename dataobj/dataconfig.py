@@ -159,6 +159,19 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def updateFMasks(self):
         self.callback("fMasks", (self.fMaskZero(), self.fMaskNeg()))
 
+    def updateX0Unit(self, newUnit):
+        """Sets the unit of the x0 vector."""
+        # No callback this time because it is updated top-down from the
+        # DataVectors in DataObj. The unit is not expected the be updated
+        # in the Parameter only and has to bubble upwards to the DataVector
+        # (atm!).
+        self.x0Low.setUnit(newUnit)
+        self.x0High.setUnit(newUnit)
+
+    def updateX1Unit(self, newUnit):
+        self.x1Low.setUnit(newUnit)
+        self.x1High.setUnit(newUnit)
+
     def onUpdatedX0(self, x0):
         """Sets available range of loaded data."""
         limits = (x0.min(), x0.max())
