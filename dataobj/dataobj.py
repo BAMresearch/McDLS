@@ -17,7 +17,6 @@ from utils import classproperty
 import logging
 from utils.hdf import HDFMixin
 
-
 class DataObj(DataSet, DisplayMixin, HDFMixin):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
@@ -151,8 +150,7 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         # FIXME: Problem with a many2one relation (many data sets, one config)
         #        -> What is the valid range supposed to be?
         #           Atm, the smallest common range wins. [ingo]
-        self.config.setX0ValueRange(
-                (self.x0.siData.min(), self.x0.siData.max()))
+        self.config.onUpdatedX0(self.x0.siData)
         self._excludeInvalidX0()
         self._reBin()
         # for HDF5 testing purposes:
@@ -165,8 +163,7 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         self.config.x1Low.setDisplayName(descr)
         descr = self.config.x1High.displayName().format(x1 = self.x1.name)
         self.config.x1High.setDisplayName(descr)
-        self.config.setX1ValueRange(
-                (self.x1.siData.min(), self.x1.siData.max()))
+        self.config.onUpdatedX1(self.x1.siData)
 
     def hdfWrite(self, hdf):
         hdf.writeAttribute("filename", "dsfdsfsdfsdf")

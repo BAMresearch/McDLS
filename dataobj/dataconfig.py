@@ -159,12 +159,13 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def updateFMasks(self):
         self.callback("fMasks", (self.fMaskZero(), self.fMaskNeg()))
 
-    def setX0ValueRange(self, limits):
+    def onUpdatedX0(self, x0):
         """Sets available range of loaded data."""
+        limits = (x0.min(), x0.max())
         self.x0Low.setValueRange(limits)
         self.x0High.setValueRange(limits)
 
-    def setX1ValueRange(self, limits):
+    def onUpdatedX1(self, x1):
         pass
 
     def overrideDefaults(self):
