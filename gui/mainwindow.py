@@ -247,6 +247,7 @@ class MainWindow(MainWindowBase):
     def _setupOptimWidget(self):
         """Set up property widget with settings."""
         self.optimWidget = OptimizationWidget(self, self.calculator.algo)
+        self.fileWidget.sigSelectedData.connect(self.optimWidget.onDataSelected)
         return self.optimWidget
 
     def _setupModelWidget(self):
