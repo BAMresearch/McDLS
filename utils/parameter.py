@@ -536,7 +536,7 @@ class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
     bases.algorithm.parameter to introduce more specific fit
     related attributes."""
-    ParameterBase.setAttributes(locals(), histograms = None,
+    ParameterBase.addAttributes(locals(), histograms = None,
             activeValues = list(), activeRange = None)
 
     def __init__(self):

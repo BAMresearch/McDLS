@@ -49,4 +49,9 @@ def mcopen(fn, mode, encoding = "utf8"):
     else:
         return codecs.open(fixFilename(fn), mode, encoding = encoding)
 
+def classname(obj):
+    if not isinstance(obj, type):
+        obj = type(obj)
+    return obj.__name__
+
 # vim: set ts=4 sw=4 sts=4 tw=0:

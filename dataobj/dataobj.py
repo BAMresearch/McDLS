@@ -15,26 +15,21 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
-from utils.hdf5base import h5w, HDF5Mixin
+from utils.hdf import HDFMixin
 
 
-class DataObj(DataSet, DisplayMixin, HDF5Mixin):
+class DataObj(DataSet, DisplayMixin, HDFMixin):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
     """
     __metaclass__ = ABCMeta
     _filename = None
     _config = None
-    _validIndices = None # based on masks to filter certain values
     _validMask = None
     _x0 = None
     _x1 = None
     _x2 = None
     _f  = None
-    # config doesn't have a "writeHDF" yet. 
-    _h5Callers = ["f", "x0", "x1", "x2", "validIndices", "config"]
-    _h5LocAdd = "data01" # should be overridden by subclasses
-    _h5test = True #False # True
 
     # The following are to be set by the particular application dataset: 
     # i.e.: x = q, y = psi, f = I for SAS, x = tau, f = (G1 - 1) for DLS
@@ -161,8 +156,8 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self._excludeInvalidX0()
         self._reBin()
         # for HDF5 testing purposes:
-        if self._h5test:
-            self.writeHDF("test.h5", "/mcentry01/")
+        if True:
+            self.hdfStore("test2.h5")
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
@@ -172,6 +167,10 @@ class DataObj(DataSet, DisplayMixin, HDF5Mixin):
         self.config.x1High.setDisplayName(descr)
         self.config.setX1ValueRange(
                 (self.x1.siData.min(), self.x1.siData.max()))
+
+    def hdfWrite(self, hdf):
+        hdf.writeAttribute("filename", "dsfdsfsdfsdf")
+        hdf.writeMembers(self, "f", "x0", "x1", "config")
 
     def _excludeInvalidX0(self):
         validX0Idx = 0 # get the first data point index above 0

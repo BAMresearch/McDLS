@@ -65,9 +65,7 @@ class SphericalCoreShell(SASModel):
                           self.eta_s() - self.eta_sol())
         kc = k(dataset.q, self.radius(),
                           self.eta_s() - self.eta_c())
-        return ks - vRatio * kc
-        #integrate over orientation
-        #Fell[:,ri]=numpy.sqrt(numpy.mean(fsplit**2, axis=1)) #should be length q
+        return (ks - vRatio * kc).flatten()
 
     def volume(self):
         v = 4./3 * pi * (self.radius() + self.t())**3
@@ -77,38 +75,5 @@ class SphericalCoreShell(SASModel):
         return self.volume() #TODO: check how to do this.
 
 SphericalCoreShell.factory()
-
-#if __name__ == "__main__":
-#    import sys
-#    sys.path.append('..')
-#    sys.path.append('.')
-#    sys.path.append('../utils')
-#    from bases.datafile import PDHFile, AsciiFile
-#    from models.SphericalCoreShell import SphericalCoreShell
-#    # FIXME: use SASData.load() instead
-#    pf = PDHFile("testData/SphCoreShell_R100_dR150_c3p16_s2p53.csv")
-#    model = SphericalCoreShell()
-#    model.radius.setValue(100.)
-#    model.radius.setActive(False)
-#    model.t.setValue(150.)
-#    model.t.setActive(False)
-#    model.eta_c.setValue(3.16)
-#    model.eta_c.setActive(False)
-#    model.eta_s.setValue(2.53)
-#    model.eta_s.setActive(False)
-#    model.eta_sol.setValue(0.)
-#    model.eta_sol.setActive(False)
-#    intensity = (model.formfactor(pf.data, None).reshape(-1))**2
-#    q = pf.data[:, 0]
-#    oldInt = pf.data[:, 1]
-#    #normalize
-#    intensity /= intensity.max()
-#    oldInt /= oldInt.max()
-#    delta = abs(oldInt - intensity)
-#    print('mean Delta: {}'.format(delta.mean()))
-#    result = numpy.dstack((q, intensity, delta))[0]
-#    AsciiFile.writeFile("SphericalCoreShell.dat", result)
-#    # call it like this:
-#    # PYTHONPATH=..:../mcsas/ python SphericalCoreShell.py && gnuplot -p -e 'set logscale xy; plot "gauss.dat" using 1:2:3 with errorbars'
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

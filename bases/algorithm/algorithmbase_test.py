@@ -55,16 +55,6 @@ def testTypeVsInstance():
     # type of instance should remain in class too
     assert id(atype.testPar) == id(type(ainst).testPar)
 
-def testCopy():
-    class DummyAlgo(AlgorithmBase):
-        pass
-    a1 = DummyAlgo.factory("testalgo", TestPar)()
-    a2 = a1.copy()
-    assert a1 == a2
-    a1.testPar.setValue(a1.testPar.value() + 1)
-    assert a1.testPar != a2.testPar
-    assert a1 != a2
-
 class DummyAlgo(AlgorithmBase):
     shortName = "Dummy"
     parameters = (TestPar, Parameter(name = "test", value = 3.4,

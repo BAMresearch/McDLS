@@ -4,7 +4,8 @@
 from __future__ import absolute_import # PEP328
 from utils import isString, isList, testfor, assertName
 from utils.mixedmethod import mixedmethod
-from utils import classproperty
+from utils import classproperty, classname
+from utils.hdf import HDFMixin
 from bases.algorithm.parameter import ParameterBase, ParameterError
 
 class AlgorithmError(StandardError):
@@ -40,7 +41,7 @@ class AlgorithmParameterError(AlgorithmError):
 # -> allows to define e.g. RadiusParameter which can be reused for several
 #    models.
 
-class AlgorithmBase(object):
+class AlgorithmBase(HDFMixin):
     """Base class for all data filtering algorithms."""
     _name = None # name to display in GUI
     _parameters = None # list of parameters types or instances
@@ -173,12 +174,6 @@ class AlgorithmBase(object):
     def makeDefault(cls):
         return cls()
 
-    def copy(self, *args, **kwargs):
-        """bypasses additional arguments to the constructor"""
-        cls = self.factory(self.name(),
-                           *[p.templateType() for p in self.params()])
-        return cls(*args, **kwargs)
-
     def __eq__(self, other):
         if (not isinstance(other, type(self)) or
             self.name() != other.name() or
@@ -195,19 +190,34 @@ class AlgorithmBase(object):
     def __getstate__(self):
         """Prepares the internal state for pickle by removing the attribute
         for each parameter which is usually set by __init__() and during
-        unpickle."""
+        unpickle in __setstate__()."""
         state = self.__dict__.copy()
-        for p in self.params():
-            del state[p.name()]
+        keys = state.viewkeys()
+        for cls in type(self).mro():
+            if (issubclass(cls, AlgorithmBase) # prevents recursion loop
+                or not hasattr(cls, "__getstate__")): # excludes other mixins
+                continue
+            parentState = cls.__getstate__(self)
+            keys = keys & parentState.viewkeys() # sync common keys only
+            state.update([(key, parentState[key]) for key in keys])
         return state
 
     def __setstate__(self, state):
         self.__dict__ = state
+        # self.params() contains parameter instances already at this point
+        # AlgorithmBase.__init__ expects types to be initialized
         parameters = self.params()
-        self._parameters = []
+        self._parameters = [type(p) for p in parameters]
+        self.__init__() # call custom constructor code
         for p in parameters:
-            self._parameters.append(p.templateType())
-        self.__init__()
+            newParam = getattr(self, p.name(), None)
+            if not isinstance(newParam, ParameterBase):
+                continue
+            newParam.setAttributes(**p.attributes())
+
+    def hdfWrite(self, hdf):
+        hdf.writeAttributes(name = self.name(), cls = classname(self))
+        hdf.writeMembers(self, *[p.name() for p in self.params()])
 
 if __name__ == "__main__":
     pass

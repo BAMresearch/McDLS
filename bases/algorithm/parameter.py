@@ -50,19 +50,18 @@ that attribute in general for all new instances to be created
 which is behaves like a default value.
 """
 
+import sys
+import logging
 from math import log10 as math_log10
 from math import fabs as math_fabs
 from inspect import getmembers
 import numpy as np
-import sys
-import logging
-import h5py
-from utils import isString, isNumber, isList, isMap, isSet, testfor, assertName
+from utils import (isString, isNumber, isList, isMap, isSet, testfor,
+                   assertName, classname, classproperty, clip, isCallable)
 from utils.mixedmethod import mixedmethod
-from utils import classproperty
-from numbergenerator import NumberGenerator, RandomUniform
 from utils.units import NoUnit
-from utils import clip, isCallable
+from utils.hdf import HDFMixin
+from numbergenerator import NumberGenerator, RandomUniform
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
     # works with vectors of multiple bounds too
@@ -124,7 +123,7 @@ def _makeSetter(varName):
 def _setterName(attrName):
     return "set" + attrName[0].upper() + attrName[1:]
 
-class ParameterBase(object):
+class ParameterBase(HDFMixin):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
 
@@ -134,7 +133,7 @@ class ParameterBase(object):
     # *valueRange*. Not sure, if this is a good idea but it reduces
     # repetition/code drastically.
     @classmethod
-    def setAttributes(cls, dictionary, *names, **namesAndValues):
+    def addAttributes(cls, dictionary, *names, **namesAndValues):
         """Sets an *ordered* list of attributes.
         Initializes the private variable to None and sets a default getter
         method for each name provided. Additionally, sets *attributeNames* to
@@ -156,7 +155,7 @@ class ParameterBase(object):
         # sets the ordered names of attributes
         dictionary["_attributeNames"] = names
 
-    setAttributes.__func__(None, locals(), "name", "value", "displayName",
+    addAttributes.__func__(None, locals(), "name", "value", "displayName",
                            "onValueUpdate") # user provided callback function
 
     @classmethod
@@ -178,7 +177,7 @@ class ParameterBase(object):
         their values in this type or instance.
         Helps to avoid having explicit long argument lists"""
         base = selforcls
-        if isinstance(base, object):
+        if not isinstance(base, type) and isinstance(base, object):
             base = type(base)
         # Parameter classes have only one direct subclass
         # FIXME: not necessarily true, see FitParameter
@@ -199,76 +198,43 @@ class ParameterBase(object):
         return res
 
     @mixedmethod
-    def writeHDF(selforcls, filename, loc):
-        """Writer method to output the <key, value> pairs to *filename*.
-        "loc" is the internal HDF5 location, to which will be added a dataset
-        with name stored in the Parameter "name" attribute. All other Parameter
-        attributes are stored as dataset attributes therewith.
-        """
-        parName = selforcls.get(name, None)
-        if parName is None:
-            logging.error("Parameter has no name")
-            return
-        with h5py.File(filename) as h5f:
-            if not (loc + parName) in h5f:
-                ds = h5f.create_dataset(loc + parName, data = selforcls.value())
-            else:
-                ds = h5f[loc + parName]
-                ds.values = selforcls.value()
-
-            for key, value in selforcls.attributes():
-                ds[key] = value
-
-
-    @classmethod
-    def factory(cls, **kwargs):
+    def setAttributes(selforcls, **kwargs):
         """Returns this type with attribute values initialized in the ordering
         provided by attributeNames()"""
         for key, value in kwargs.iteritems():
             # set the attributes for which we find setters
             # the setter may raise exceptions for invalid data
-            setter = getattr(cls, _setterName(key), None)
+            setter = getattr(selforcls, _setterName(key), None)
             if isCallable(setter): # key exists
                 setter(value)
-        return cls
+        return selforcls
 
-    @mixedmethod
-    def templateType(selforcls):
-        """Returns a type replicating the current object and its values."""
-        attr = selforcls.attributes(exclude = ("onValueUpdate",))
-        other = attr.pop("cls") # remove duplicate first argument of factory()
-        if isinstance(selforcls, object):
-            selforcls = type(selforcls)
-        if not issubclass(other, selforcls):
-            other = selforcls
-        other.factory(**attr)
-        return other
-
-    @mixedmethod
-    def copy(selforcls):
-        return selforcls.templateType()()
+    def copy(self):
+        param = type(self)()
+        param.setAttributes(**self.attributes())
+        return param
 
     @classmethod
-    def get(self, key, default = None):
+    def get(cls, key, default = None):
         """metagetter to get an attribute parameter"""
-        if key in self.attributeNames():
-            getterFunc = getattr(self, key, default)
+        if key in cls.attributeNames():
+            getterFunc = getattr(cls, key, default)
             return getterFunc()
         else:
             logging.warning(
                     "parameter {n} attribute {k} not understood in get"
-                    .format(n = self.name(), k = key))
+                    .format(n = cls.name(), k = key))
 
     @classmethod
-    def set(self, key, value):
+    def set(cls, key, value):
         """metasetter to set an attribute value"""
-        if key in self.attributeNames():
-            setterFunc = getattr(self, _setterName(key))
+        if key in cls.attributeNames():
+            setterFunc = getattr(cls, _setterName(key))
             setterFunc(value)
         else:
             logging.warning(
                     "parameter {n} attribute {k} not found in set"
-                    .format(n = self.name(), k = key))
+                    .format(n = cls.name(), k = key))
 
     @classmethod
     def setName(cls, name):
@@ -296,14 +262,14 @@ class ParameterBase(object):
         if newName is not None:
             selforcls._displayName = unicode(newName)
 
-    #in ParameterFloat, this is scaled to units used. For GUI display
     @mixedmethod
     def displayValue(selforcls):
+        """This is scaled to units used. For GUI display."""
         return selforcls.value()
 
-    #in ParameterFloat, this is scaled to units used. For GUI display
     @mixedmethod
     def setDisplayValue(selforcls, newValue):
+        """Set the value scaled to units used. For GUI display."""
         selforcls.setValue(newValue)
 
     @classproperty
@@ -316,7 +282,7 @@ class ParameterBase(object):
         return isinstance(value, cls.dtype)
 
     def __str__(self):
-        return "{0}: {1} ({2})".format(
+        return u"{0}: {1} ({2})".format(
                 self.displayName(), self.displayValue(), self.value())
 
     __repr__ = __str__
@@ -350,14 +316,26 @@ class ParameterBase(object):
         For instances only (usually in model implementation)."""
         return self.value()
 
+    def hdfWrite(self, hdf):
+        xlst = ("onValueUpdate",)
+        selfAttr = self.attributes(exclude = xlst)
+        selfAttr['cls'] = classname(selfAttr['cls'])
+        if 'unit' in selfAttr:
+            selfAttr.pop('unit')
+            hdf.writeMember(self, 'unit')
+        hdf.writeAttributes(**selfAttr)
+
     def __reduce__(self):
         # remove possible callbacks to other objects
-        attr = self.attributes(exclude = ("onValueUpdate",))
-        return (_unpickleParameter, (attr,))
+        xlst = ("onValueUpdate",)
+        selfAttr = self.attributes(exclude = xlst)
+        clsAttr = type(self).attributes(exclude = xlst)
+        return (_unpickleParameter, (clsAttr, selfAttr))
 
-def _unpickleParameter(attr):
+def _unpickleParameter(clsAttr, selfAttr):
     # reconstruct based on parent class and attributes, call constructor
-    param = factory(**attr)()
+    param = factory(**clsAttr)()    # reconstruct the class first
+    param.setAttributes(**selfAttr) # reset to original instance configuration
     return param
 
 class ParameterBoolean(ParameterBase):
@@ -371,7 +349,7 @@ class ParameterString(ParameterBase):
     String-based parameter class. The default value should be the first
     item in the _valueRange list.
     """
-    ParameterBase.setAttributes(locals(), "valueRange")
+    ParameterBase.addAttributes(locals(), "valueRange")
 
     @classmethod
     def setValueRange(self, newRange):
@@ -403,7 +381,7 @@ class ParameterNumerical(ParameterBase):
     # defines attributes for this parameter type and creates default
     # getter/setter for them. For specialized versions they can be
     # overridden as usual.
-    ParameterBase.setAttributes(locals(), "valueRange", "suffix",
+    ParameterBase.addAttributes(locals(), "valueRange", "suffix",
                   "stepping", "displayValues", "generator")
 
     @mixedmethod
@@ -516,7 +494,8 @@ class ParameterNumerical(ParameterBase):
         return isNumber(value) and not isinstance(value, float)
 
     def __str__(self):
-        return (ParameterBase.__str__(self) + u" in [{0}, {1}] ({sfx})"
+        return (super(ParameterNumerical, self).__str__()
+                + u" in [{0}, {1}] ({sfx})"
                 .format(*(self.valueRange()), sfx = self.suffix()))
 
     def generate(self, lower = None, upper = None, count = 1):
@@ -524,7 +503,7 @@ class ParameterNumerical(ParameterBase):
                               lower, upper, count).astype(self.dtype)
 
 class ParameterFloat(ParameterNumerical):
-    ParameterNumerical.setAttributes(locals(), "decimals", unit = NoUnit())
+    ParameterNumerical.addAttributes(locals(), "decimals", unit = NoUnit())
 
     # some unit wrappers
 
@@ -641,11 +620,7 @@ def factory(name, value, paramTypes = None, **kwargs):
     typeName = str(name.title()).translate(None, ' \t\n\r') + "Parameter"
     NewType = type(typeName, (cls,), clsdict)
     # set up the new class before return
-    return NewType.factory(**kwargs)
-    # creating new types here is a problem for pickle
-    # it is done to be able to change/add class (type) attributes
-    # without modifying the base classes
-    # ATM: __doc__ + all class attribs get mod by Param.factory()
+    return NewType.setAttributes(**kwargs)
 
 if __name__ == "__main__":
     import doctest

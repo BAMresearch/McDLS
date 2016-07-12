@@ -13,25 +13,32 @@ import os.path
 import tempfile
 import codecs
 
-_logfd, _logfn = tempfile.mkstemp()
+prefix = os.path.splitext(os.path.basename(__file__))[0] + "_"
+_logfd, _logfn = tempfile.mkstemp(prefix = prefix)
 print("DBGF() to: '{}'".format(_logfn), file = sys.__stderr__)
 
 def DBGF(*args):
     with codecs.open(_logfn, 'a', encoding = 'utf8') as fd:
-        DBG(_file = fd, *args)
+        fd.write(_formatMessage(*args) + u"\n")
 
-def DBG(*args, **kwargs):
-    _file = kwargs.pop('_file', sys.__stderr__)
+def _messagePrefix():
     stack = inspect.stack()
-    prefix = ""
+    res = []
     if len(stack) > 1:
-        frame = stack[1][0]
+        frame = stack[3][0]
         head, fn = os.path.split(frame.f_code.co_filename)
         head, mod = os.path.split(head)
         fn = os.path.splitext(fn)[0]
         func = inspect.getframeinfo(frame).function
         prefix = u"[{0:04d}|{1}]".format(frame.f_lineno, '.'.join((mod, fn)))
-    print(u" ".join([prefix, func]
-        + [unicode(a) for a in args]), file = _file)
+        res += [func, prefix]
+    return res
+
+def _formatMessage(*args):
+    return u" ".join(_messagePrefix() + [unicode(a) for a in args])
+
+def DBG(*args, **kwargs):
+    _file = kwargs.pop('_file', sys.__stderr__)
+    print(_formatMessage(*args), file = _file)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

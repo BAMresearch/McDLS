@@ -10,7 +10,7 @@ from bases.algorithm import AlgorithmBase
 from bases.algorithm import Parameter # not defined in utils.parameter
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
-from utils import isCallable
+from utils import isCallable, classname
 
 def funcNotInFuncList(f, flst):
     """Custom predicate for comparing bounded methods:
@@ -173,18 +173,8 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         got its callbacks configured. To be overridden in sub classes."""
         pass
 
-    def __getstate__(self):
-        view = self.__dict__.viewkeys()
-        state = dict()
-        for cls in type(self).mro():
-            if issubclass(cls, DataConfig) or not hasattr(cls, "__getstate__"):
-                continue
-            parentState = cls.__getstate__(self)
-            view = view & parentState.viewkeys()
-            state.update([(key, parentState[key]) for key in view])
-        return state
-
-    def __setstate__(self, state):
-        super(DataConfig, self).__setstate__(state)
+    def hdfWrite(self, hdf):
+        super(DataConfig, self).hdfWrite(hdf)
+        hdf.writeMembers(self, 'sampleName', 'is2d')
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

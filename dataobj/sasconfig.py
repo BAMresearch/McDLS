@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import # PEP328
 
+import logging
 from abc import ABCMeta, abstractmethod, abstractproperty
 import numpy as np
 from scipy import stats
@@ -12,14 +13,12 @@ from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
                          Fraction, NoUnit)
 from utils import clip
 from dataobj import DataConfig
-import logging
 
 class SmearingConfig(AlgorithmBase):
     """Abstract base class, can't be instantiated."""
     __metaclass__ = ABCMeta
     _qOffset = None # integration point positions, depends on beam profile
     _weights = None # integration weight per position, depends on beam profile
-    locs = None # integration location matrix, depends on collType
     shortName = "SAS smearing configuration"
     parameters = (
         Parameter("doSmear", False, unit = NoUnit(),
@@ -28,9 +27,11 @@ class SmearingConfig(AlgorithmBase):
         Parameter("nSteps", 25, unit = NoUnit(),
             displayName = "number of smearing points around each q",
             valueRange = (0, 1000)),
-        # 2-d collimated systems require a different smearing than slit-collimated data
+        # 2-d collimated systems require a different smearing than
+        # slit-collimated data
         Parameter("twoDColl", False, unit = NoUnit(),
-            displayName = "Slit-smeared data (unchecked), or 2D-averaged data (checked)",
+            displayName = "Slit-smeared data (unchecked), or 2D-averaged "
+                          "data (checked)",
             ),
 #        Parameter("collType", u"Slit", unit = NoUnit(),
 #            displayName = "Type of collimation leading to smearing",
@@ -57,41 +58,40 @@ class SmearingConfig(AlgorithmBase):
     def prepared(self):
         return self._qOffset, self._weights
 
-    def copy(self):
-        other = super(SmearingConfig, self).copy()
-        if self.qOffset is not None:
-            other._qOffset = self._qOffset.copy()
-        if self.weights is not None:
-            other._weights = self._weights.copy()
-        return other
-
     def __str__(self):
         s = [str(id(self)) + " " + super(SmearingConfig, self).__str__()]
         s.append("  qOffset: {}".format(self.qOffset))
         s.append("  weights: {}".format(self.weights))
         return "\n".join(s)
 
-# SmearingConfig.factory() # not sure if required
+    def hdfWrite(self, hdf):
+        super(SmearingConfig, self).hdfWrite(hdf)
+        hdf.writeMembers(self, 'qOffset', 'weights')
 
 class TrapezoidSmearing(SmearingConfig):
     parameters = (
-        Parameter("Umbra", 0., unit = NoUnit(), # unit set outside
+        Parameter("umbra", 0., unit = NoUnit(), # unit set outside
             displayName = "top width of <br />trapezoidal beam profile",
-            description = "full top width of the trapezoidal beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            description = "full top width of the trapezoidal beam profile "
+                          "(horizontal for slit-collimated systems, "
+                          "circularly averaged for 2D pinhole and "
+                          "rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
-        Parameter("Penumbra", 0., unit = NoUnit(), # unit set outside
+        Parameter("penumbra", 0., unit = NoUnit(), # unit set outside
             displayName = "bottom width of <br />trapezoidal beam profile",
-            description = "full bottom width of the trapezoidal beam profile horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            description = "full bottom width of the trapezoidal beam profile "
+                          "horizontal for slit-collimated systems, circularly "
+                          "averaged for 2D pinhole and rectangular slit)",
             valueRange = (0., np.inf), decimals = 1),
     )
 
     def inputValid(self):
         # returns True if the input values are valid
-        return (self.Umbra() > 0.) and (self.Penumbra > self.Umbra())
+        return (self.umbra() > 0.) and (self.penumbra > self.umbra())
 
     @property
     def showParams(self):
-        lst = ["Umbra", "Penumbra"]
+        lst = ["umbra", "penumbra"]
         return [name
                 for name in super(TrapezoidSmearing, self).showParams
                     if name not in lst] + lst
@@ -120,7 +120,7 @@ class TrapezoidSmearing(SmearingConfig):
         Since the smearing function is assumed to be symmetrical, the 
         integration parameters are calculated in the interval [0, xb/2]
         """
-        n, xt, xb = self.nSteps(), self.Umbra(), self.Penumbra()
+        n, xt, xb = self.nSteps(), self.umbra(), self.penumbra()
         logging.debug("setIntPoints called with n = {}".format(n))
 
         # following qOffset is used for Pinhole and Rectangular
@@ -144,8 +144,8 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
-        self.Umbra.setUnit(newUnit)
-        self.Penumbra.setUnit(newUnit)
+        self.umbra.setUnit(newUnit)
+        self.penumbra.setUnit(newUnit)
 
     def updatePUnit(self, newUnit):
         assert isinstance(newUnit, Angle)
@@ -153,14 +153,14 @@ class TrapezoidSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.Umbra.setValueRange((0., 2. * qHigh))
-        self.Penumbra.setValueRange((0., 2. * qHigh))
+        self.umbra.setValueRange((0., 2. * qHigh))
+        self.penumbra.setValueRange((0., 2. * qHigh))
 
     def updateSmearingLimits(self, q):
         qHigh = q.max()
         lowLim = diff(q).min()
-        self.Umbra.setValueRange((lowLim, 2. * qHigh))
-        self.Penumbra.setValueRange((lowLim, 2. * qHigh))
+        self.umbra.setValueRange((lowLim, 2. * qHigh))
+        self.penumbra.setValueRange((lowLim, 2. * qHigh))
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
@@ -168,42 +168,46 @@ class TrapezoidSmearing(SmearingConfig):
 
     def __init__(self):
         super(TrapezoidSmearing, self).__init__()
-        self.Umbra.setOnValueUpdate(self.onUmbraUpdate)
+        self.umbra.setOnValueUpdate(self.onUmbraUpdate)
 
     def onUmbraUpdate(self):
         """Value in umbra will not exceed available q."""
-        # value in Penumbra must not be smaller than Umbra
-        self.Penumbra.setValueRange((self.Umbra(), self.Penumbra.max()))
+        # value in penumbra must not be smaller than umbra
+        self.penumbra.setValueRange((self.umbra(), self.penumbra.max()))
 
 TrapezoidSmearing.factory()
 
 class GaussianSmearing(SmearingConfig):
     parameters = (
-        Parameter("Variance", 0., unit = NoUnit(), # unit set outside
+        Parameter("variance", 0., unit = NoUnit(), # unit set outside
             displayName = u"Variance (σ²) of <br /> Gaussian beam profile",
-            description = "full width at half maximum of the Gaussian beam profile (horizontal for slit-collimated systems, circularly averaged for 2D pinhole and rectangular slit)",
+            #displayName = u"Variance (&sigma;<sup>2</sup>)",
+            description = "Full width at half maximum of the Gaussian beam"
+                          "profile (horizontal for slit-collimated systems, "
+                          "circularly averaged for 2D pinhole and rectangular "
+                          "slit)",
             valueRange = (0., np.inf), decimals = 1),
     )
 
     def inputValid(self):
         # returns True if the input values are valid
-        return (self.Variance() > 0.)
+        return (self.variance() > 0.)
 
     @property
     def showParams(self):
-        lst = ["Variance"]
+        lst = ["variance"]
         return [name
                 for name in super(GaussianSmearing, self).showParams
                     if name not in lst] + lst
 
     def setIntPoints(self, q):
-        """ sets smearing profile integration points for trapezoidal slit.
+        """Sets smearing profile integration points for trapezoidal slit.
         Top (umbra) of trapezoid has full width xt, bottom of trapezoid
         (penumbra) has full width.
         Since the smearing function is assumed to be symmetrical, the
         integration parameters are calculated in the interval [0, xb/2]
         """
-        n, GVar = self.nSteps(), self.Variance()
+        n, GVar = self.nSteps(), self.variance()
         logging.debug("setIntPoints called with n = {}".format(n))
 
         # following qOffset is used for Pinhole and Rectangular
@@ -224,7 +228,7 @@ class GaussianSmearing(SmearingConfig):
 
     def updateQUnit(self, newUnit):
         assert isinstance(newUnit, ScatteringVector)
-        self.Variance.setUnit(newUnit)
+        self.variance.setUnit(newUnit)
 
     def updatePUnit(self, newUnit):
         assert isinstance(newUnit, Angle)
@@ -232,12 +236,12 @@ class GaussianSmearing(SmearingConfig):
 
     def updateQLimits(self, qLimit):
         qLow, qHigh = qLimit
-        self.Variance.setValueRange((0., 2. * qHigh))
+        self.variance.setValueRange((0., 2. * qHigh))
 
     def updateSmearingLimits(self, q):
         qHigh = q.max()
         lowLim = diff(q).min()
-        self.Variance.setValueRange((lowLim, 2. * qHigh))
+        self.variance.setValueRange((lowLim, 2. * qHigh))
 
     def updatePLimits(self, pLimit):
         pLow, pHigh = pLimit
@@ -251,9 +255,6 @@ GaussianSmearing.factory()
 class SASConfig(DataConfig):
     # TODO: fix UI elsewhere for unit selection along to each input and forward
     #       that to the DataVector
-    _iUnit = NoUnit()
-    _qUnit = NoUnit()
-    _pUnit = NoUnit()
     _smearing = None
     shortName = "SAS data configuration"
 
@@ -289,36 +290,6 @@ class SASConfig(DataConfig):
     def setX1ValueRange(self, limit):
         super(SASConfig, self).setX1ValueRange(limit)
         # TODO
-
-    @property
-    def iUnit(self):
-        return self._iUnit
-
-    @property
-    def qUnit(self):
-        return self._qUnit
-
-    @property
-    def pUnit(self):
-        return self._pUnit
-
-    @iUnit.setter
-    def iUnit(self, newUnit):
-        assert isinstance(newUnit, ScatteringIntensity)
-        self._iUnit = newUnit
-        self.callback("iunit", newUnit)
-
-    @qUnit.setter
-    def qUnit(self, newUnit):
-        assert isinstance(newUnit, ScatteringVector)
-        self._qUnit = newUnit
-        self.callback("qunit", newUnit)
-
-    @pUnit.setter
-    def pUnit(self, newUnit):
-        assert isinstance(newUnit, Angle)
-        self._pUnit = newUnit
-        self.callback("punit", newUnit)
 
     @property
     def smearing(self):
@@ -362,19 +333,14 @@ class SASConfig(DataConfig):
                     .format(qOffset.min(), qOffset.max()))
             return np.add.outer(q, qOffset)
 
-    def copy(self):
-        other = super(SASConfig, self).copy(smearing = self.smearing.copy())
-        other.iUnit = self.iUnit
-        other.qUnit = self.qUnit
-        other.pUnit = self.pUnit
-        return other
-
     def __init__(self, *args, **kwargs):
         super(SASConfig, self).__init__()
         smearing = kwargs.pop("smearing", None)
         if smearing is None:
             smearing = GaussianSmearing()
-        self.smearing = smearing
+        if not isinstance(self.smearing, SmearingConfig):
+            # is already set when unpickling
+            self.smearing = smearing
         self.register("qunit", self.x0Low.setUnit)
         self.register("qunit", self.x0High.setUnit)
         self.register("punit", self.x1Low.setUnit)
@@ -385,9 +351,6 @@ class SASConfig(DataConfig):
             self.register("x0limits", self.smearing.updateQLimits)
             # self.register("x0limits", self.smearing.updateSmearingLimits)
             self.register("x1limits", self.smearing.updatePLimits)
-        self.iUnit = ScatteringIntensity(u"(m sr)⁻¹")
-        self.qUnit = ScatteringVector(u"nm⁻¹")
-        self.pUnit = Angle(u"°")
         self.eMin.setOnValueUpdate(self.updateEMin)
 
     def __eq__(self, other):
@@ -402,6 +365,10 @@ class SASConfig(DataConfig):
             super(SASConfig, self).__str__(),
             unicode(self.smearing)
         ))
+
+    def hdfWrite(self, hdf):
+        super(SASConfig, self).hdfWrite(hdf)
+        hdf.writeMember(self, 'smearing')
 
 SASConfig.factory() # check class variables
 
