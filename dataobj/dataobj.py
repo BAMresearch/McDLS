@@ -137,16 +137,12 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         self.config.register("x0limits", self._onLimitsUpdate)
         self.config.register("x0Clipping", self._onClippingUpdate)
         self.config.register("fMasks", self._onFMasksUpdate)
-        descr = self.config.x0Low.displayName().format(x0 = self.x0.name)
-        self.config.x0Low.setDisplayName(descr)
-        descr = self.config.x0LowClip.displayName().format(x0 = self.x0.name)
-        self.config.x0LowClip.setDisplayName(descr)
-        descr = self.config.x0High.displayName().format(x0 = self.x0.name)
-        self.config.x0High.setDisplayName(descr)
-        descr = self.config.fMaskZero.displayName().format(f = self.f.name)
-        self.config.fMaskZero.setDisplayName(descr)
-        descr = self.config.fMaskNeg.displayName().format(f = self.f.name)
-        self.config.fMaskNeg.setDisplayName(descr)
+        self.config.x0Low.formatDisplayName(x0 = self.x0.name)
+        self.config.x0LowClip.formatDisplayName(x0 = self.x0.name)
+        self.config.x0High.formatDisplayName(x0 = self.x0.name)
+        self.config.updateX0Unit(self.x0.unit)
+        self.config.fMaskZero.formatDisplayName(f = self.f.name)
+        self.config.fMaskNeg.formatDisplayName(f = self.f.name)
         # FIXME: Problem with a many2one relation (many data sets, one config)
         #        -> What is the valid range supposed to be?
         #           Atm, the smallest common range wins. [ingo]
@@ -159,14 +155,13 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
-        descr = self.config.x1Low.displayName().format(x1 = self.x1.name)
-        self.config.x1Low.setDisplayName(descr)
-        descr = self.config.x1High.displayName().format(x1 = self.x1.name)
-        self.config.x1High.setDisplayName(descr)
+        self.config.x1Low.formatDisplayName(x1 = self.x1.name)
+        self.config.x1High.formatDisplayName(x1 = self.x1.name)
+        self.config.updateX1Unit(self.x1.unit)
         self.config.onUpdatedX1(self.x1.siData)
 
     def hdfWrite(self, hdf):
-        hdf.writeAttribute("filename", "dsfdsfsdfsdf")
+        hdf.writeMember(self, "filename")
         hdf.writeMembers(self, "f", "x0", "x1", "config")
 
     def _excludeInvalidX0(self):

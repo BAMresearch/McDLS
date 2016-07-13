@@ -263,6 +263,17 @@ class ParameterBase(HDFMixin):
             selforcls._displayName = unicode(newName)
 
     @mixedmethod
+    def formatDisplayName(selforcls, **kwargs):
+        unformatted = any([
+            unicode('{' + k + '}') in selforcls.displayName()
+            for k in kwargs.iterkeys()])
+        if unformatted: # remember the original text for repeated formatting
+            selforcls._origDisplayName = selforcls.displayName()
+        if not hasattr(selforcls, "_origDisplayName"):
+            return # Can not be formatted
+        selforcls.setDisplayName(selforcls._origDisplayName.format(**kwargs))
+
+    @mixedmethod
     def displayValue(selforcls):
         """This is scaled to units used. For GUI display."""
         return selforcls.value()
