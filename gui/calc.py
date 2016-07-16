@@ -139,8 +139,7 @@ class Calculator(HDFMixin):
 
     def hdfWrite(self, hdf):
         """ write a calculator configuration """
-        pass
-        # hdf.writeMembers(self, "model", "data")
+        hdf.writeMember(self.algo, "data")
 
     def hdfLoad(self, filehandle):
         """ load a calculator configuration """
