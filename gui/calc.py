@@ -24,6 +24,8 @@ import log
 from mcsas.mcsas import McSAS
 from utils.parameter import Histogram, Moments, isActiveParam
 from dataobj import SASData
+from utils.hdf import HDFMixin
+
 
 DEFAULTSECT = ConfigParser.DEFAULTSECT
 
@@ -124,7 +126,7 @@ def plotStats(stats):
     fig.show()
     show()
 
-class Calculator(object):
+class Calculator(HDFMixin):
     _algo = None  # McSAS algorithm instance
     _outFn = None # handles output file names, creates directories
     _series = None # stores results of multiple data sets for a final summary
@@ -134,6 +136,15 @@ class Calculator(object):
 
     def __init__(self):
         self._algo = McSAS.factory()()
+
+    def hdfWrite(self, hdf):
+        """ write a calculator configuration """
+        pass
+        # hdf.writeMembers(self, "model", "data")
+
+    def hdfLoad(self, filehandle):
+        """ load a calculator configuration """
+        pass
 
     @property
     def algo(self):
