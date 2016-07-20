@@ -53,11 +53,12 @@ class OptimizationWidget(AlgorithmWidget):
         respectively fixes some values."""
         if not isinstance(dataobj, DataObj):
             return
-        if (isinstance(dataobj.config, SASConfig)
-            and self._tempCompExp is not None):
-            self.set("compensationExponent", self._tempCompExp)
+        if isinstance(dataobj.config, SASConfig):
+            if self._tempCompExp is not None: # restore the original value
+                self.set("compensationExponent", self._tempCompExp)
         elif self.get("compensationExponent", 1.0) != 1.0:
+            # remember the original value
             self._tempCompExp = self.get("compensationExponent", None)
-            self.set("compensationExponent", 1.0)
+            self.set("compensationExponent", 1.0) # fix its value
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
