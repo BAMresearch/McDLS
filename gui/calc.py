@@ -138,8 +138,13 @@ class Calculator(HDFMixin):
         self._algo = McSAS.factory()()
 
     def hdfWrite(self, hdf):
-        """ write a calculator configuration """
+        """ write a calculator configuration. """
+        hdf.writeMember(self, "algo")
         hdf.writeMember(self.algo, "data")
+        # for p in self.model.params():
+        #     logging.debug("Writing model parameter: {} value: {} to HDF5".format(p.name(), p.value()))
+        #     hdf.writeMember(self.model, p.name())
+        # pass
 
     def hdfLoad(self, filehandle):
         """ load a calculator configuration """
@@ -181,9 +186,6 @@ class Calculator(HDFMixin):
         self._series = dict()
 
     def __call__(self, dataset):
-        """ the *recalc* boolean skips the optimisation algorithm and moves
-        directly on to the histogramming. If this was a run that was completed
-        successfully before, re-histogramming should be available """
         if self.model is None:
             logging.warning("No model set!")
             return
@@ -207,6 +209,8 @@ class Calculator(HDFMixin):
             log.removeHandler(widgetHandler)
         #set data in the algorithm
         self._algo.data = dataset
+        # write HDF5
+        self.hdfStore(self._outFn.filenameVerbose("HDF5Archive", "Complete state of the calculation", extension = '.mh5'))
         self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)

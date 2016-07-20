@@ -23,7 +23,6 @@ from gui.utils.displayexception import DisplayException
 from gui.version import version
 from gui.calc import Calculator
 from dataobj import SASData
-from utils.hdf import HDFMixin
 
 from gui.scientrybox import SciEntryBox
 
@@ -174,7 +173,7 @@ class ToolBox(QToolBox):
         if isinstance(child, DataWidget):
             child.resizeEvent(event)
 
-class MainWindow(MainWindowBase, HDFMixin):
+class MainWindow(MainWindowBase):
     onCloseSignal = Signal()
     _args = None # python command line arguments parser
     _calculator = None # calculator calling algorithm on all data
@@ -348,8 +347,8 @@ class MainWindow(MainWindowBase, HDFMixin):
     def onStartStopClick(self, checked):
         processEventLoop()
         if checked:
-            # write HDF datafile
-            self.hdfStore("test3.h5")
+            # # write HDF datafile
+            # self.hdfStore("test3.h5")
             self.startStopBtn.setText("stop")
             self.startStopBtn.setChecked(True)
             self._updateWidgets() # get latest input in case sth didn't update
@@ -359,8 +358,8 @@ class MainWindow(MainWindowBase, HDFMixin):
         self.startStopBtn.setText("start")
         self.startStopBtn.setChecked(False)
 
-    def hdfWrite(self, hdf):
-        hdf.writeMember(self, "calculator")
+    # def hdfWrite(self, hdf):
+    #     hdf.writeMember(self, "calculator")
 
     def calc(self):
         if len(self.fileWidget) <= 0:
