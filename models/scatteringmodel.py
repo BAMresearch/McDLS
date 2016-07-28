@@ -9,14 +9,18 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from itertools import izip
 from numpy import arange, zeros, argmax, hstack
-from utils import isList, isNumber, mixedmethod, testfor
+from utils import isList, isNumber, mixedmethod, testfor, classname
 from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveParam
+from utils.hdf import HDFMixin
 
-class ModelData(object):
+class ModelData(HDFMixin):
     _int = None
     _vset = None
     _wset = None
+
+    def hdfWrite(self, hdf):
+        hdf.writeMembers(self, "cumInt", "vset", "wset", "volumeFraction")
 
     @property
     def cumInt(self):
@@ -86,6 +90,12 @@ class ScatteringModel(AlgorithmBase):
         """Forwarding to usual volume() by default.
         Can be overridden to include SLD."""
         return self.volume()
+
+    def hdfWrite(self, hdf):
+        hdf.writeAttributes(modelName = classname(self))
+        for p in self.params():
+            logging.debug("Writing model parameter: {} to HDF5".format(p.name()))
+            hdf.writeMember(self, p.name())
 
     def _volume(self, compensationExponent = None):
         """Wrapper around the user-defined function."""

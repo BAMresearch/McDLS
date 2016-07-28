@@ -125,7 +125,7 @@ class HDFWriter(object):
             member = member()
         if isList(member):
             self.writeDataset(memberName, member)
-        elif isinstance(member, HDFMixin):
+        elif isinstance(member, HDFMixin): # or hasattr(member, "hdfWrite"): not recognising RandomUniform HDFMixin hereditry
             # store the member in a group of its own
             oldLocation = self.location
             self._location = "/".join((oldLocation.rstrip('/'), memberName))
