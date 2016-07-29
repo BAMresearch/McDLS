@@ -148,10 +148,6 @@ class DataObj(DataSet, DisplayMixin):
         self.config.onUpdatedX0(self.x0.siData)
         self._excludeInvalidX0()
         self._reBin()
-        # for HDF5 testing purposes:
-        if True:
-            pass
-            # self.hdfStore("test2.h5")
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
