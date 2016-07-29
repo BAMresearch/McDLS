@@ -4,4 +4,4 @@ doc/build
 doc/_build
 .hg*
 lmfit*
-testdata/quickstartdemo*
+testdata/* *-*-*_*-*-*/
