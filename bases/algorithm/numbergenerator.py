@@ -21,6 +21,7 @@ class NumberGenerator(HDFMixin):
     def get(cls, count = 1):
         raise NotImplementedError
 
+    @classmethod
     def hdfWrite(self, hdf):
         hdf.writeAttributes(cls = classname(self))
 

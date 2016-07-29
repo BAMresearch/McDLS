@@ -128,7 +128,7 @@ class ParameterBase(HDFMixin):
     information to ease automated GUI building."""
 
     # for hdfWrite, do not write these as attributes but as members:
-    _HDFWriteAsMember = ['unit', 'generator', 'histograms'] 
+    _HDFWriteAsMember = ['unit', 'generator', 'histograms']
 
     # Be able to manage attributes programmatically also for derived classes
     # while maintaining the order of attributes which is not preserved by
