@@ -210,7 +210,9 @@ class Calculator(HDFMixin):
         #set data in the algorithm
         self._algo.data = dataset
         # write HDF5
-        self.hdfStore(self._outFn.filenameVerbose("HDF5Archive", "Complete state of the calculation", extension = '.mh5'))
+        self.hdfStore(self._outFn.filenameVerbose(
+            "hdf5archive", "Complete state of the calculation",
+            extension = '.mh5'))
         self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)
