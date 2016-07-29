@@ -3,14 +3,13 @@
 
 from abc import ABCMeta, abstractmethod
 import numpy
-from utils.hdf import HDFMixin
 from utils import classname
 
 # it seems treating number generators as instances is more convenient than
 # the current implementation (types/classes only)
 # instances could be constructed with parameters, eg for randomExp or const
 
-class NumberGenerator(HDFMixin):
+class NumberGenerator(object):
     """Base class for number generators.
     Generates numbers in the interval [0, 1].
     Scaling is supposed to happen elsewhere."""

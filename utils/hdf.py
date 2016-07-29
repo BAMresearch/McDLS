@@ -124,9 +124,10 @@ class HDFWriter(object):
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + u"It is empty or does not exist (=None).")
             return
-        if isCallable(member) and not isinstance(member, HDFMixin):
-            # ParameterBase instances are callable but also HDFMixins
+
+        if isCallable(member) and not hasattr(member, "hdfWrite"):
             member = member()
+
         if hasattr(member, "hdfWrite"): # support instances and types
             # store the member in a group of its own
             oldLocation = self.location

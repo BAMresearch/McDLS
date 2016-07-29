@@ -12,9 +12,8 @@ from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor, classname
 from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveParam
-from utils.hdf import HDFMixin
 
-class ModelData(HDFMixin):
+class ModelData(object):
     _int = None
     _vset = None
     _wset = None
