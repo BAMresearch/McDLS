@@ -123,21 +123,20 @@ class HDFWriter(object):
         if isCallable(member) and not isinstance(member, HDFMixin):
             # ParameterBase instances are callable but also HDFMixins
             member = member()
-        if isList(member):
-            self.writeDataset(memberName, member)
-        elif hasattr(member, "hdfWrite"): # support instances and types
+        if hasattr(member, "hdfWrite"): # support instances and types
             # store the member in a group of its own
             oldLocation = self.location
             self._location = "/".join((oldLocation.rstrip('/'), memberName))
             member.hdfWrite(self) # recursion entry, mind the loops!
             self._location = oldLocation
+        elif isList(member):
+            self.writeDataset(memberName, member)
         elif isString(member) or isNumber(member):
             self.writeAttribute(memberName, member)
         else:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + "(={}) It is not a compatible value type!"
                         .format(classname(member)))
-            return
 
     def _warningPrefix(self, obj, memberName):
         return (u"{cls}.{mem} {cal} ".format(cal = getCallerInfo(type(self)),

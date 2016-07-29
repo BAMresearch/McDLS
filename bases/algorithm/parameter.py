@@ -127,9 +127,6 @@ class ParameterBase(HDFMixin):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
 
-    # for hdfWrite, do not write these as attributes but as members:
-    _HDFWriteAsMember = ['unit', 'generator', 'histograms']
-
     # Be able to manage attributes programmatically also for derived classes
     # while maintaining the order of attributes which is not preserved by
     # pythons __dict__. Initialization of *decimals* has to occur after
@@ -330,11 +327,14 @@ class ParameterBase(HDFMixin):
         For instances only (usually in model implementation)."""
         return self.value()
 
+    def hdfStoreAsMember(self):
+        return []
+
     def hdfWrite(self, hdf):
         xlst = ("onValueUpdate", "histograms")
         selfAttr = self.attributes(exclude = xlst)
         selfAttr['cls'] = classname(selfAttr['cls'])
-        for name in self._HDFWriteAsMember:
+        for name in self.hdfStoreAsMember():
             if name in selfAttr:
                 selfAttr.pop(name)
                 hdf.writeMember(self, name)
@@ -398,6 +398,10 @@ class ParameterNumerical(ParameterBase):
     # overridden as usual.
     ParameterBase.addAttributes(locals(), "valueRange", "suffix",
                   "stepping", "displayValues", "generator")
+
+    def hdfStoreAsMember(self):
+        return (super(ParameterNumerical, self).hdfStoreAsMember()
+                + ['generator',])
 
     @mixedmethod
     def setValue(selforcls, newValue, clip = True):
@@ -519,6 +523,10 @@ class ParameterNumerical(ParameterBase):
 
 class ParameterFloat(ParameterNumerical):
     ParameterNumerical.addAttributes(locals(), "decimals", unit = NoUnit())
+
+    def hdfStoreAsMember(self):
+        return (super(ParameterFloat, self).hdfStoreAsMember()
+                + ['unit',])
 
     # some unit wrappers
 

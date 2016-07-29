@@ -539,6 +539,10 @@ class FitParameterBase(ParameterBase):
     ParameterBase.addAttributes(locals(), histograms = None,
             activeValues = list(), activeRange = None)
 
+    def hdfStoreAsMember(self):
+        return (super(FitParameterBase, self).hdfStoreAsMember()
+                + ['histograms',])
+
     def __init__(self):
         super(FitParameterBase, self).__init__()
         # point the parameter reference to this instance now
