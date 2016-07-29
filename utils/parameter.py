@@ -477,6 +477,11 @@ class Histogram(DataSet, DisplayMixin):
 
     __repr__ = __str__
 
+    def hdfWrite(self, hdf):
+        hdf.writeAttribute("param", self.param.name())
+        hdf.writeMembers(self, "lower", "upper", "binCount", "xscale",
+                               "yweight", "autoFollow")
+
     def __eq__(self, other):
         """Compares with another Histogram or tuple."""
         if id(self.param) != id(other.param):
@@ -526,6 +531,9 @@ class Histograms(list):
         # work directly on the histograms, no copy
         for i in range(len(self)):
             self[i].calc(*args)
+
+    def hdfWrite(self, hdf):
+        hdf.writeMembers(self, *range(len(self)))
 
 def isActiveParam(param):
     """Checks any type of parameter for activeness.

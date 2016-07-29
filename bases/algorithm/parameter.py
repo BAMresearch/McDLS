@@ -331,7 +331,7 @@ class ParameterBase(HDFMixin):
         return []
 
     def hdfWrite(self, hdf):
-        xlst = ("onValueUpdate", "histograms")
+        xlst = ("onValueUpdate",)
         selfAttr = self.attributes(exclude = xlst)
         selfAttr['cls'] = classname(selfAttr['cls'])
         for name in self.hdfStoreAsMember():

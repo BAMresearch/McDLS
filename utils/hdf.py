@@ -9,7 +9,7 @@ import logging
 import inspect
 import os.path
 import h5py
-from utils import isCallable, isString, isList, isNumber, classname
+from utils import isCallable, isString, isList, isNumber, isInteger, classname
 
 # from utils.devtools import DBG
 
@@ -114,7 +114,11 @@ class HDFWriter(object):
         if isString(obj):
             logging.warning(u"String as object provided! "
                             + self._warningPrefix(obj, memberName))
-        member = getattr(obj, memberName, None)
+        if isInteger(memberName) and isList(obj):
+            member = obj[memberName]
+            memberName = str(memberName)
+        else:
+            member = getattr(obj, memberName, None)
 #        DBG(member)
         if member is None:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
