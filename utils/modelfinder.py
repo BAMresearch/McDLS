@@ -11,6 +11,8 @@ import os
 import h5py
 import fnmatch
 from models.scatteringmodel import SASModel
+from collections import OrderedDict
+
 
 # from utils.devtools import DBG
 
@@ -21,7 +23,7 @@ class FindModels(object):
     returns a list of full paths, and a list of associated model names
     """
     _startPwd = None
-    _modelFiles = []
+    _modelFiles = {}
     
     def __init__(self, startPwd = None):
         self._startPwd = startPwd 
@@ -33,8 +35,10 @@ class FindModels(object):
                     .format(self._startPath))
         for filename in self.candidateFiles():
             if isModel(filename):
-                self._modelFiles.append(filename)
-
+                self._modelFiles.update(
+                        { self.modelClassName(filename): filename })
+                logging.info("Model {} found in this location: {}"
+                        .format(self.modelClassName(filename), filename))
 
     def candidateFiles(self):
         """
