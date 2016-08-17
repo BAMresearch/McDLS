@@ -10,6 +10,7 @@ from gui.utils.signal import Signal
 from QtGui import (QWidget, QVBoxLayout, QComboBox)
 from gui.bases.mixins.titlehandler import TitleHandler
 from utils import isString
+from utils.findmodels import FindModels
 
 from gui.scientrybox import SciEntryBox
 
@@ -47,6 +48,7 @@ class ModelWidget(AlgorithmWidget):
 
     def __init__(self, parent, calculator):
         super(ModelWidget, self).__init__(parent, None)
+        FindModels()
         self._calculator = calculator
         self.title = TitleHandler.setup(self, "Model")
 

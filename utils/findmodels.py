@@ -29,12 +29,13 @@ class FindModels(object):
         self._startPwd = startPwd 
         if self._startPwd is None:
             # find root path of main.py, use that: TODO: abspath necessary?
-            self._startPwd = os.path.dirname(os.path.abspath(inspect.stack()[-1][0]) )
+            self._startPwd = os.path.dirname(os.path.abspath(inspect.stack()[-1][1]) )
             self._startPwd = os.path.join(self._startPwd, "models")
             logging.info("Start path for model finding not supplied, using default: {}"
-                    .format(self._startPath))
+                    .format(self._startPwd))
         for filename in self.candidateFiles():
-            if isModel(filename):
+            modelClassName = self.modelClassName(filename)
+            if modelClassName is not None:
                 self._modelFiles.update(
                         { self.modelClassName(filename): filename })
                 logging.info("Model {} found in this location: {}"
@@ -52,26 +53,7 @@ class FindModels(object):
                     filename = os.path.join(r, filename)
                     yield filename
 
-    def isModel(self, modelPath):
-        """ 
-        Tests whether the functions in a file is a ScatteringModel. 
-        Functionality redundant due to modelClassName
-        """
-        # first test: does it mention "ScatteringModel" in the file? Superseded by modelClassName
-        # strFound = False
-        # for fline in open(modelPath):
-        #     if "SASModel" in fline:
-        #         strFound = True
-        # if not strFound:
-        #     return False
-        # second test, does it define a method with the same name as the filename?
-        modelClassName = modelPath
-        if modelClassName is None:
-            return False
-
-        return True
-
-    def modelClassName(modelPath):
+    def modelClassName(self, modelPath):
         """
         extract the model class name from the module file
         """
@@ -80,8 +62,8 @@ class FindModels(object):
         filebasename = os.path.basename(modelPath)[:-3] # we know it ends with ".py"
         for fline in open(modelPath):
             if searchPrepend + filebasename + searchAppend in fline.lower():
-                starti = fline.lower().index(filebase)
-                return fline[starti : starti + len(filebasename) + 1]
+                starti = fline.lower().index(filebasename)
+                return fline[starti : starti + len(filebasename)]
         return None
 
 
