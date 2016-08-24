@@ -12,7 +12,7 @@ value used for the integration is the mass-weighted centre.
 import numpy, scipy, scipy.special, scipy.stats
 from numpy import pi, zeros, sin, cos, linspace, diff, sinc
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import SASModel
+from models.scatteringmodel import SASModel
 
 # parameters must not be inf
 

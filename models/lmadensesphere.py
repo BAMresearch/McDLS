@@ -6,7 +6,7 @@ from numpy import pi, sin, cos
 import logging
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import SASModel
+from models.scatteringmodel import SASModel
 from utils.units import Length, Fraction, NoUnit, SLD
 
 class LMADenseSphere(SASModel):

@@ -4,7 +4,7 @@
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import SASModel
+from models.scatteringmodel import SASModel
 from bases.algorithm import RandomExponential, RandomUniform
 from utils.units import Length, NoUnit, Angle, SLD
 

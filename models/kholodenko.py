@@ -6,7 +6,7 @@ import numpy
 from scipy.special import j1 as bessel_j1
 from scipy.integrate import quad
 from utils.parameter import FitParameter
-from scatteringmodel import SASModel
+from models.scatteringmodel import SASModel
 from bases.algorithm import RandomUniform, RandomExponential
 from utils.units import Length
 
