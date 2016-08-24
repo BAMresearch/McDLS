@@ -24,6 +24,17 @@ class FindModels(object):
     """
     _startPwd = None
     _modelFiles = {}
+    _priorityModels = [ # list of standard models in order of appearance
+            "Sphere",
+            "LMADenseSphere",
+            "EllipsoidsIsotropic",
+            "CylindersIsotropic",
+            "SphericalCoreShell",
+            "EllipsoidalCoreShell",
+            "GaussianChain",
+            "Kholodenko"
+            ]
+    _orderedModelFiles = OrderedDict()
     
     def __init__(self, startPwd = None):
         self._startPwd = startPwd 
@@ -40,6 +51,8 @@ class FindModels(object):
                         { self.modelClassName(filename): filename })
                 logging.info("Model {} found in this location: {}"
                         .format(self.modelClassName(filename), filename))
+        self.prioritize()
+        logging.info("Ordered model files: {}".format(self._orderedModelFiles))
 
     def candidateFiles(self):
         """
@@ -66,13 +79,22 @@ class FindModels(object):
                 return fline[starti : starti + len(filebasename)]
         return None
 
-
-
     def prioritize(self):
         """ 
         prioritises the lists to put a few primary models on top, like spheres, cylinders
-        and ellipsoids. These are predefined.
+        and ellipsoids. These are predefined. Returns an orderedDict of model names and paths
         """
-        pass
+        modelNames = self._modelFiles.keys()
+        # first we fill in the models matching the prioritized models
+        for oName in self._priorityModels:
+            if oName in modelNames:
+                modelNames.remove(oName)
+                self._orderedModelFiles.update({oName: self._modelFiles[oName]})
+
+        # remainder of names are listed alphabetically. 
+        modelNames = sorted(modelNames)
+        for mName in modelNames:
+            self._orderedModelFiles.update({mName: self._modelFiles[mName]})
+
     
 # vim: set ts=4 sts=4 sw=4 tw=0:
