@@ -49,10 +49,8 @@ class FindModels(object):
             if modelClassName is not None:
                 self._modelFiles.update(
                         { self.modelClassName(filename): filename })
-                logging.info("Model {} found in this location: {}"
-                        .format(self.modelClassName(filename), filename))
         self.prioritize()
-        logging.info("Ordered model files: {}".format(self._orderedModelFiles))
+        logging.debug("Ordered model files: {}".format(self._orderedModelFiles))
 
     def candidateFiles(self):
         """

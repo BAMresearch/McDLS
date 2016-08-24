@@ -5,6 +5,7 @@ from __future__ import absolute_import # PEP328
 import sys
 import logging
 import imp
+import os
 
 from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
@@ -14,7 +15,9 @@ from utils import isString
 from utils.findmodels import FindModels
 
 from gui.scientrybox import SciEntryBox
+from collections import OrderedDict
 
+"""
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
 from models.kholodenko import Kholodenko
@@ -25,7 +28,6 @@ from models.cylindersradiallyisotropic import CylindersRadiallyIsotropic
 from models.ellipsoidsisotropic import EllipsoidsIsotropic
 from models.ellipsoidalcoreshell import EllipsoidalCoreShell
 from models.sphericalcoreshell import SphericalCoreShell
-from collections import OrderedDict
 
 MODELS = OrderedDict((
     (Sphere.name(), Sphere),
@@ -38,6 +40,9 @@ MODELS = OrderedDict((
     (LMADenseSphere.name(), LMADenseSphere),
     (Kholodenko.name(), Kholodenko),
 ))
+"""
+MODELS = OrderedDict()
+
 FIXEDWIDTH = 120
 
 from gui.algorithmwidget import AlgorithmWidget
@@ -53,6 +58,7 @@ class ModelWidget(AlgorithmWidget):
         super(ModelWidget, self).__init__(parent, None)
         FindModels()
         self._modelPaths = FindModels._orderedModelFiles
+        self.importModels()
         self._calculator = calculator
         self.title = TitleHandler.setup(self, "Model")
 
@@ -68,22 +74,34 @@ class ModelWidget(AlgorithmWidget):
         self.modelWidget.setLayout(paramLayout)
         layout.addWidget(self.modelWidget)
 
-    def importModel(self, uri):
-        # code modified from http://stackoverflow.com/questions/301134/dynamic-module-import-in-python
+    def importModels(self):
+        # tries to import an ordered dict of models
+        for mName in self._modelPaths.keys():
+            print("trying to import mName: {} from path: {}".format(mName, self._modelPaths[mName]))
+            # try importing
+            mFunc = self.importModel(mName, self._modelPaths[mName])
+            if mFunc is not None:
+                print("importing mFunc: {}, using mName: {}".format(mFunc, mName))
+                # MODELS.update({mFunc.name(): mFunc}) # complains it has no attribute "name"
+                MODELS.update({mName: mFunc})
+        
+
+    def importModel(self, modelName, uri):
         path, fname = os.path.split(uri)
-        mname, ext = os.path.splitext(fname)
-        no_ext = os.path.join(path, mname)
-            
-        if os.path.exists(no_ext + '.pyc'):
-            try:
-                return imp.load_compiled(mname, no_ext + '.pyc')
-            except:
-                pass
-        if os.path.exists(no_ext + '.py'):
-            try:
-                return imp.load_source(mname, no_ext + '.py')
-            except:
-                pass
+
+        fp, pathname, description = imp.find_module(modelName.lower(), [path])
+
+        try:
+            package = imp.load_module(modelName, fp, pathname, description)
+            print("success trying to import model: {} from {}".format(modelName, fp))
+        except:
+            package = None
+            print("failed trying to import model: {}".format(modelName))
+        finally:
+            if fp:
+                fp.close()
+
+        return package
 
     def onDataSelected(self, dataobj):
         """Gets the data which is currently selected in the UI and rebuilds
