@@ -28,7 +28,7 @@ class LMADenseSphere(SASModel):
                     displayName = "Sphere radius",
                     valueRange = (0., np.inf),
                     generator = RandomUniform,
-                    decimals = 1),
+                    decimals = 9),
             FitParameter("volFrac", 
                     Fraction(u"%").toSi(10), 
                     unit = Fraction(u"%"),
@@ -36,20 +36,20 @@ class LMADenseSphere(SASModel):
                     valueRange = (Fraction(u"%").toSi(0.001), 
                         Fraction(u"%").toSi(100.)),
                     generator = RandomUniform,
-                    decimals = 1),
+                    decimals = 9),
             Parameter("mf", 
                     -1., # auto
                     displayName = "standoff multiplier (-1 = auto)",
                     valueRange = (-1., 1.e6),
                     unit = NoUnit(u''),
-                    decimals = 1,
+                    decimals = 9,
                     displayValues = {-1.: "auto"}),
             Parameter("sld", 
                     SLD(u'Å⁻²').toSi(1e-6), 
                     unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
                     valueRange = (0., np.inf),
-                    decimals = 1)
+                    decimals = 9)
             )
 
     def __init__(self):

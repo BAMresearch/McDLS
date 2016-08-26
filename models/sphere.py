@@ -18,11 +18,11 @@ class Sphere(SASModel):
                     valueRange = (0., numpy.inf),
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
-                    decimals = 1), 
+                    decimals = 9),
                   Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
-                    decimals = 1), )
+                    decimals = 9), )
 
     def __init__(self):
         super(Sphere, self).__init__()

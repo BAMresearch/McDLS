@@ -19,6 +19,7 @@ class SciEntryValidator(QDoubleValidator):
         super(SciEntryValidator, self).__init__(parent)
 #        DBG(11, id(parent))
         self.setNotation(QDoubleValidator.ScientificNotation)
+        # some defaults if nothing is set
         self.setRange(-1e200, 1e200)
         self.setDecimals(9)
 
@@ -77,7 +78,7 @@ class SciEntryBox(QLineEdit):
         if decimals is None:
             return "{0:g}"
         # according to https://docs.python.org/2/library/string.html#formatspec
-        return "{0:." + str(decimals - 3) + "g}"
+        return "{0:." + str(max(0, decimals - 3)) + "g}"
 
     @classmethod
     def updateToolTip(cls, widget, decimals = None):
