@@ -164,6 +164,7 @@ class DataObj(DataSet, DisplayMixin):
         validX0Idx = 0 # get the first data point index above 0
         while self.x0.siData[validX0Idx] <= 0.0:
             validX0Idx += 1
+        # TODO: what about x0LowClip possibly set by other DataObj in list?
         if self.config.x0LowClip() < validX0Idx:
             self.config.x0LowClip.setValue(validX0Idx)
 
@@ -243,7 +244,8 @@ class DataObj(DataSet, DisplayMixin):
         #  It stops calling back in _onLimitsUpdate() because the clipping
         #  value does not change further (no update needed)
         # -> vice versa at the end of _onLimitsUpdate() above
-        self.config.x0Low.setValue(self.x0.sanitized.min())
+        if self.x0.sanitized.min() < self.config.x0Low():
+            self.config.x0Low.setValue(self.x0.sanitized.min())
 
     def _reBin(self):
         """Rebinning method, to be run (f.ex.) upon every "Start" buttonpress.
