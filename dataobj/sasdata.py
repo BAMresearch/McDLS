@@ -146,7 +146,9 @@ class SASData(DataObj):
                              unit = ScatteringIntensity(u"(m sr)⁻¹"))
         # sanitized uncertainty, we should use self._e.copy
         logging.info("Init SASData: " + self.qLimsString)
-        if rawArray.shape[1] > 3: # psi column is present
+        if (rawArray.shape[1] > 3 and rawArray[:, 3].min()
+                                   != rawArray[:, 3].max()):
+            # psi column is present and contains some data
             self.x1 = DataVector(u'ψ', rawArray[:, 3], unit = Angle(u"°"))
             logging.info(self.pLimsString)
 
