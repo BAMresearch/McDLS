@@ -252,6 +252,8 @@ class DataObj(DataSet, DisplayMixin):
         For now, this will rebin using the x0 vector as a base, although the
         binning vector can theoretically be chosen freely.
         """
+        if not len(self.x0.sanitized):
+            return
         logging.info("Initiating binning procedure")
         nBin = self.config.nBin.value()
         # self._binned = DataVector() once binning finishes.. dataVector can be set once.

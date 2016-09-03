@@ -203,6 +203,8 @@ class SASData(DataObj):
 
     def _propagateMask(self, *args):
         super(SASData, self)._propagateMask(*args)
+        if self.x0.limit[0] == 0.:
+            return
         self._sizeEst = np.pi / np.array([self.x0.limit[1],
                                           abs(self.x0.limit[0])])
 
