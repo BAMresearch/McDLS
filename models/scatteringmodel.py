@@ -14,9 +14,10 @@ from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveParam
 
 class ModelData(object):
-    _int = None
+    _cumInt = None
     _vset = None
     _wset = None
+    _sset = None
 
     def hdfWrite(self, hdf):
         hdf.writeMembers(self, "cumInt", "vset", "wset", "volumeFraction")
@@ -24,7 +25,7 @@ class ModelData(object):
     @property
     def cumInt(self):
         """Returns the cumulated model intensity or signal."""
-        return self._int
+        return self._cumInt
 
     @property
     def chisqrInt(self):
@@ -43,13 +44,20 @@ class ModelData(object):
         """Returns the associated set of weights."""
         return self._wset
 
-    def __init__(self, cumInt, vset, wset):
+    @property
+    def sset(self):
+        """Returns the associated set of surfaces."""
+        return self._sset
+
+    def __init__(self, cumInt, vset, wset, sset):
         assert cumInt is not None
         assert vset is not None
         assert wset is not None
-        self._int = cumInt.flatten()
+        assert sset is not None
+        self._cumInt = cumInt.flatten()
         self._vset = vset.flatten()
         self._wset = wset.flatten()
+        self._sset = sset.flatten()
 
     def volumeFraction(self, scaling):
         """Returns the volume fraction based on the provided scaling factor to
@@ -90,12 +98,6 @@ class ScatteringModel(AlgorithmBase):
         Can be overridden to include SLD."""
         return self.volume()
 
-    def hdfWrite(self, hdf):
-        hdf.writeAttributes(modelName = classname(self))
-        for p in self.params():
-            logging.debug("Writing model parameter: {} to HDF5".format(p.name()))
-            hdf.writeMember(self, p.name())
-
     def _volume(self, compensationExponent = None):
         """Wrapper around the user-defined function."""
         self.compensationExponent = compensationExponent
@@ -125,6 +127,18 @@ class ScatteringModel(AlgorithmBase):
         i = self.formfactor(dataset)
         return i
 
+    def surface(self):
+        """Returns the surface area of a single scatterer. Used for the
+        surface weighted distribution histogram. Returns 0 by default.
+        Reimplement this for a model."""
+        return 0
+
+    def hdfWrite(self, hdf):
+        hdf.writeAttributes(modelName = classname(self))
+        for p in self.params():
+            logging.debug("Writing model parameter: {} to HDF5".format(p.name()))
+            hdf.writeMember(self, p.name())
+
     @abstractmethod
     def calcIntensity(self, data, compensationExponent = None):
         """Calculates the model intensity which is later compared to the data.
@@ -148,20 +162,21 @@ class ScatteringModel(AlgorithmBase):
         cumInt = zeros(data.f.binnedData.shape) # cumulated intensities
         vset = zeros(pset.shape[0])
         wset = zeros(pset.shape[0])
+        sset = zeros(pset.shape[0])
         # call the model for each parameter set explicitly
         # otherwise the model gets complex for multiple params incl. fitting
         for i in arange(pset.shape[0]): # for each contribution
             for p, v in izip(params, pset[i]): # for each fit param within
                 p.setValue(v)
             # result squared or not is model type dependent
-            it, vset[i], wset[i] = self.calcIntensity(data,
-                    compensationExponent = compensationExponent)
+            it, vset[i], wset[i], sset[i] = self.calcIntensity(data,
+                          compensationExponent = compensationExponent)
             # a set of intensities
             cumInt += it
         # restore previous parameter values
         for p, v in izip(params, oldValues):
             p.setValue(v)
-        return self.modelDataType()(cumInt.flatten(), vset, wset)
+        return self.modelDataType()(cumInt.flatten(), vset, wset, sset)
 
     @abstractmethod
     def modelDataType(self):
@@ -339,6 +354,7 @@ class SASModel(ScatteringModel):
         """
         v = self._volume(compensationExponent = compensationExponent)
         w = self._weight(compensationExponent = compensationExponent)
+        s = self.surface()
 
         if ((data.config.smearing is not None) and 
                 self.canSmear and 
@@ -363,6 +379,6 @@ class SASModel(ScatteringModel):
             ff = self._formfactor(data)
             # a set of intensities
             it = ff**2 * w
-        return it, v, w
+        return it, v, w, s
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

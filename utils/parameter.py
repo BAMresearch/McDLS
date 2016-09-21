@@ -99,7 +99,9 @@ class Moments(object):
             rset = contribs[self._validRange[ri], ri]
             frac = fraction[self._validRange[ri], ri]
             val[ri] = sum(frac)
-            mu[ri]  = sum(rset * frac)/sum(frac)
+            mu[ri]  = sum(rset * frac)
+            if 0 != sum(frac):
+                mu[ri] /= sum(frac)
             var[ri] = sum( (rset-mu[ri])**2 * frac )/sum(frac)
             sigma   = np.sqrt(abs(var[ri]))
             skw[ri] = ( sum( (rset-mu[ri])**3 * frac )
@@ -322,7 +324,7 @@ class Histogram(DataSet, DisplayMixin):
 
     @staticmethod
     def yweighting(index = None):
-        avail = ('vol', 'num', 'volsqr')
+        avail = ('vol', 'num', 'volsqr', 'surf')
         try:
             return avail[index]
         except:
