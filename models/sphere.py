@@ -28,6 +28,13 @@ class Sphere(SASModel):
         super(Sphere, self).__init__()
         self.radius.setActive(True)
 
+    def surface(self):
+        r"""Calculates the surface of a sphere defined by:
+
+        :math:`s(r) = 4 \pi r^2`
+        """
+        return 4. * pi * self.radius() * self.radius()
+
     def volume(self):
         r"""Calculates the volume of a sphere defined by:
 
