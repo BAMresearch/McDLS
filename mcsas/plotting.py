@@ -196,8 +196,7 @@ class PlotResults(object):
                 # fitMeasVal, fitSTD = parStat.measVal
                 # self.plotPartial(fitX0, fitMeasVal, fitSTD, qAxis)
 
-                self.plotHist(plotPar, parHist, 
-                        hAxis, self._axisMargin, rangei)
+                self.plotHist(plotPar, parHist, hAxis, rangei)
 
                 # put the rangeInfo in the plot above
                 InfoAxis = self._ah[hi + 1]
@@ -443,7 +442,7 @@ class PlotResults(object):
         fig.show()
         axis('tight')
 
-    def plotHist(self, plotPar, parHist, hAxis, axisMargin, rangei):
+    def plotHist(self, plotPar, parHist, hAxis, rangei):
         """histogram plot"""
         # make active:
         axes(hAxis)
