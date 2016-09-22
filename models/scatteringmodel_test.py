@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # models/scatteringmodel_test.py
 
-from models.scatteringmodel import ScatteringModel
+from models.scatteringmodel import SASModel
 from utils.parameter import FitParameter
 
-class DummyModel(ScatteringModel):
+class DummyModel(SASModel):
     shortName = "DummyModelName"
     parameters = (
         FitParameter(name = "testp0", value = 3.4, valueRange = (.5, 6.7)),

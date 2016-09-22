@@ -14,7 +14,6 @@ from gui.bases.mixins.titlehandler import TitleHandler
 from gui.algorithmwidget import AlgorithmWidget, SettingsGridWidget 
 from dataobj import DataObj, DataConfig
 
-import sys
 
 class DataWidget(QWidget):
     sigConfig = Signal((object,))

@@ -83,13 +83,13 @@ class TrapezoidSmearing(SmearingConfig):
                           "(horizontal for slit-collimated systems, "
                           "circularly averaged for 2D pinhole and "
                           "rectangular slit)",
-            valueRange = (0., np.inf), decimals = 1),
+            valueRange = (0., np.inf), decimals = 9),
         Parameter("penumbra", 0., unit = NoUnit(), # unit set outside
             displayName = "bottom width of <br />trapezoidal beam profile",
             description = "full bottom width of the trapezoidal beam profile "
                           "horizontal for slit-collimated systems, circularly "
                           "averaged for 2D pinhole and rectangular slit)",
-            valueRange = (0., np.inf), decimals = 1),
+            valueRange = (0., np.inf), decimals = 9),
     )
 
     def inputValid(self):
@@ -193,7 +193,7 @@ class GaussianSmearing(SmearingConfig):
                           "profile (horizontal for slit-collimated systems, "
                           "circularly averaged for 2D pinhole and rectangular "
                           "slit)",
-            valueRange = (0., np.inf), decimals = 1),
+            valueRange = (0., np.inf), decimals = 9),
     )
 
     def inputValid(self):
@@ -269,7 +269,7 @@ class SASConfig(DataConfig):
     parameters = (
         Parameter("eMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
             displayName = "minimum uncertainty estimate",
-            valueRange = (0., 1.), decimals = 1),
+            valueRange = (0., 1.), decimals = 9),
     )
 
     @property

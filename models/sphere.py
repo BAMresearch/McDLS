@@ -18,15 +18,22 @@ class Sphere(SASModel):
                     valueRange = (0., numpy.inf),
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
-                    decimals = 1), 
+                    decimals = 9),
                   Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "scattering length density difference",
                     valueRange = (0., numpy.inf),
-                    decimals = 1), )
+                    decimals = 9), )
 
     def __init__(self):
         super(Sphere, self).__init__()
         self.radius.setActive(True)
+
+    def surface(self):
+        r"""Calculates the surface of a sphere defined by:
+
+        :math:`s(r) = 4 \pi r^2`
+        """
+        return 4. * pi * self.radius() * self.radius()
 
     def volume(self):
         r"""Calculates the volume of a sphere defined by:

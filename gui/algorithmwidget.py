@@ -256,8 +256,8 @@ class AlgorithmWidget(SettingsWidget):
         return lbl
 
     def _makeEntry(self, name, dtype, value, minmax = None,
-                   widgetType = None, parent = None, **kwargs):
-
+                   widgetType = None, parent = None, decimals = None,
+                   **kwargs):
         testfor(name not in self.keys, KeyError,
             "Input widget '{w}' exists already in '{s}'"
             .format(w = name, s = self.objectName()))
@@ -270,6 +270,8 @@ class AlgorithmWidget(SettingsWidget):
             parent = self
         widget = widgetType(parent, **kwargs)
         widget.setObjectName(name)
+        if decimals is not None: # set precision before the value is set
+            widget.setDecimals(decimals)
         if dtype is bool:
             widget.setCheckable(True)
             widget.setChecked(value)
@@ -325,9 +327,12 @@ class AlgorithmWidget(SettingsWidget):
             minmaxValue = param.min(), param.max()
         if isinstance(param, ParameterFloat):
             minmaxValue = param.displayValueRange()
-
+        decimals = None
+        if hasattr(param, "decimals"):
+            decimals = param.decimals()
         w = self._makeEntry(param.name(), param.dtype, param.displayValue(),
-                                      minmax = minmaxValue, parent = widget)
+                            decimals = decimals, minmax = minmaxValue,
+                            parent = widget)
         try: # set special value text for lower bound, simple solution
             special = param.displayValues(w.minimum())
             w.setSpecialValueText(special)
@@ -346,7 +351,7 @@ class AlgorithmWidget(SettingsWidget):
                            "max": param.displayActiveRange()[1] }
             for bound in "min", "max":
                 w = self._makeEntry(param.name() + bound, param.dtype,
-                                    activeRange[bound],
+                                    activeRange[bound], decimals = decimals,
                                     minmax = minmaxValue, parent = widget)
                 w.setPrefix(bound + ": ")
                 w.setFixedWidth(FIXEDWIDTH)

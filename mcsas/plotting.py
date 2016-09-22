@@ -488,6 +488,8 @@ class PlotResults(object):
             hAxDict['ylabel'] = '[Rel.] Volume Fraction'
         elif "num" in parHist.yweight:
             hAxDict['ylabel'] = '[Rel.] Number Fraction'
+        elif "surf" in parHist.yweight:
+            hAxDict['ylabel'] = '[Rel.] Surface Fraction'
         # update axes settings:
         hAxis.update(hAxDict)
         # change axis settings not addressible through dictionary:

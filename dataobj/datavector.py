@@ -45,10 +45,14 @@ class DataVector(object):
 
     @validIndices.setter
     def validIndices(self, indices):
-        assert indices.min() >= 0
-        assert indices.max() <= self.siData.size
+        if len(indices):
+            assert indices.min() >= 0
+            assert indices.max() <= self.siData.size
         self._validIndices = indices
-        self._limit = [self.sanitized.min(), self.sanitized.max()]
+        if len(indices):
+            self._limit = [self.sanitized.min(), self.sanitized.max()]
+        else:
+            self._limit = [0., 0.]
 
     @property
     def sanitized(self):

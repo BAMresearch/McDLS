@@ -308,7 +308,8 @@ class McSAS(AlgorithmBase):
             rset = self.model.generateParameters(numContribs)
 
         modelData = self.model.calc(data, rset, compensationExponent)
-        ft, vset, wset = modelData.cumInt, modelData.vset, modelData.wset
+        ft, vset, wset, sset = (modelData.cumInt, modelData.vset,
+                                modelData.wset, modelData.sset)
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
@@ -350,7 +351,8 @@ class McSAS(AlgorithmBase):
                 ft - oldModelData.cumInt + newModelData.cumInt,
                 vset,
                 # not as intended but sufficient for now
-                wset.sum() - wset[ri] + newModelData.wset)
+                wset.sum() - wset[ri] + newModelData.wset,
+                sset) # surface from testModelData is not used
 #            ftest = (ft - oldModelData.cumInt + newModelData.cumInt)
 #            wtest = wset.sum() - wset[ri] + newModelData.wset
             # optimize measVal and calculate convergence criterium
@@ -361,6 +363,8 @@ class McSAS(AlgorithmBase):
                 # replace current settings with better ones
                 rset[ri], sc, conval = rt, sct, convalt
                 ft, wset[ri] = testModelData.cumInt, newModelData.wset
+                # updating unused data for completeness as well
+                vset[ri], sset[ri] = newModelData.vset, newModelData.sset
                 logging.info("Improvement in iteration number {0}, "
                              "Chi-squared value {1:f} of {2:f}\r"
                              .format(numIter, conval, minConvergence))
@@ -398,7 +402,7 @@ class McSAS(AlgorithmBase):
             'numMoves': numMoves,
             'elapsed': elapsed})
 
-        modelData = self.model.modelDataType()(ft, vset, wset)
+        modelData = self.model.modelDataType()(ft, vset, wset, sset)
         sc, conval, ifinal = bgScalingFit.calc(data, modelData, sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
@@ -500,14 +504,17 @@ class McSAS(AlgorithmBase):
         # number fraction for each contribution
         numberFraction = zeros((numContribs, numReps))
         volSqrFraction = zeros((numContribs, numReps))
+        surfaceFraction = zeros((numContribs, numReps))
         # volume frac. for each histogram bin
         minReqVol = zeros((numContribs, numReps)) 
         # number frac. for each histogram bin
         minReqNum = zeros((numContribs, numReps))
         minReqVolSqr = zeros((numContribs, numReps))
+        minReqSurface = zeros((numContribs, numReps))
         totalVolumeFraction = zeros((numReps))
         totalNumberFraction = zeros((numReps))
         totalVolSqrFraction = zeros((numReps))
+        totalSurfaceFraction = zeros((numReps))
         # MeasVal scaling factors for matching to the experimental
         # scattering pattern (Amplitude A and flat background term b,
         # defined in the paper)
@@ -539,6 +546,8 @@ class McSAS(AlgorithmBase):
             totalNumberFraction[ri] = sum(numberFraction[:, ri])
             volSqrFraction[:, ri] = volumeFraction[:, ri]*modelData.vset.flatten()
             totalVolSqrFraction[ri] = sum(volSqrFraction[:, ri])
+            surfaceFraction[:, ri] = numberFraction[:, ri]*modelData.sset.flatten()
+            totalSurfaceFraction[ri] = sum(surfaceFraction[:, ri])
 
             # calc observability for each sphere/contribution
             for c in range(numContribs):
@@ -557,15 +566,22 @@ class McSAS(AlgorithmBase):
                 minReqNum[c, ri] = minReqVol[c, ri] / modelData.vset[c]
                 minReqVolSqr[c, ri] = (minReqNum[c, ri]
                         * minReqVol[c, ri] * minReqVol[c, ri])
+                minReqSurface[c, ri] = (minReqNum[c, ri] * modelData.sset[c])
 
-            numberFraction[:, ri] /= totalNumberFraction[ri]
-            minReqNum[:, ri]      /= totalNumberFraction[ri]
-            volSqrFraction[:, ri] /= totalVolSqrFraction[ri]
-            minReqVolSqr[:, ri]   /= totalVolSqrFraction[ri]
+            if 0 != totalNumberFraction[ri]:
+                numberFraction[:, ri] /= totalNumberFraction[ri]
+                minReqNum[:, ri]      /= totalNumberFraction[ri]
+            if 0 != totalVolSqrFraction[ri]:
+                volSqrFraction[:, ri] /= totalVolSqrFraction[ri]
+                minReqVolSqr[:, ri]   /= totalVolSqrFraction[ri]
+            if 0 != totalSurfaceFraction[ri]:
+                surfaceFraction[:, ri] /= totalSurfaceFraction[ri]
+                minReqSurface[:, ri]   /= totalSurfaceFraction[ri]
 
         fractions = dict(vol = (volumeFraction, minReqVol),
                          num = (numberFraction, minReqNum),
-                         volsqr = (volSqrFraction, minReqVolSqr))
+                         volsqr = (volSqrFraction, minReqVolSqr),
+                         surf = (surfaceFraction, minReqSurface))
 
         # now we histogram over each variable
         # for each variable parameter we define,
