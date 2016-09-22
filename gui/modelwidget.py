@@ -4,14 +4,12 @@
 from __future__ import absolute_import # PEP328
 import sys
 import logging
-import imp
 
 from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
 from QtGui import (QWidget, QVBoxLayout, QComboBox)
 from gui.bases.mixins.titlehandler import TitleHandler
 from utils import isString
-from utils.findmodels import FindModels
 
 from gui.scientrybox import SciEntryBox
 
@@ -46,13 +44,9 @@ from dataobj import DataObj
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
-    _modelNames = OrderedDict()
-    _modelPaths = OrderedDict()
 
     def __init__(self, parent, calculator):
         super(ModelWidget, self).__init__(parent, None)
-        FindModels()
-        self._modelPaths = FindModels._orderedModelFiles
         self._calculator = calculator
         self.title = TitleHandler.setup(self, "Model")
 
@@ -67,23 +61,6 @@ class ModelWidget(AlgorithmWidget):
         paramLayout = QVBoxLayout(self.modelWidget)
         self.modelWidget.setLayout(paramLayout)
         layout.addWidget(self.modelWidget)
-
-    def importModel(self, uri):
-        # code modified from http://stackoverflow.com/questions/301134/dynamic-module-import-in-python
-        path, fname = os.path.split(uri)
-        mname, ext = os.path.splitext(fname)
-        no_ext = os.path.join(path, mname)
-            
-        if os.path.exists(no_ext + '.pyc'):
-            try:
-                return imp.load_compiled(mname, no_ext + '.pyc')
-            except:
-                pass
-        if os.path.exists(no_ext + '.py'):
-            try:
-                return imp.load_source(mname, no_ext + '.py')
-            except:
-                pass
 
     def onDataSelected(self, dataobj):
         """Gets the data which is currently selected in the UI and rebuilds
