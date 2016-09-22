@@ -645,6 +645,7 @@ class McSAS(AlgorithmBase):
 
         # remove circular parameter references for pickling/forwarding
         # need a list of histograms only, with params for meta info
+        # soon to be replaced by HDF parsing (TODO)
         histograms = []
         for p in self.model.activeParams():
             # calls FitParameter.__init__() which sets histogram.param
@@ -652,16 +653,14 @@ class McSAS(AlgorithmBase):
             newParam.setActive(False) # remove the old histograms
             for h in p.histograms():
                 newHist = copy.copy(h) # new hist containing old param
+                newHist.param = newParam
                 histograms.append(newHist)
-                h.param = p # reset to the old param, revert FitParameter.__init__()
         # arguments for plotting process below
         modelData = dict(activeParamCount = self.model.activeParamCount(),
                          histograms = histograms)
         pargs = [self.result, self.data]
         pkwargs = dict(axisMargin = axisMargin, outputFilename = outputFilename,
-                       modelData = dict(
-                           activeParamCount = self.model.activeParamCount(),
-                           histograms = histograms),
+                       modelData = modelData,
                        autoClose = autoClose, logToFile = False)
         if isMac():
             PlotResults(*pargs, **pkwargs)
@@ -673,7 +672,7 @@ class McSAS(AlgorithmBase):
             pkwargs["queue"] = q
             proc = Process(target = PlotResults,
                            args = pargs, kwargs = pkwargs)
-            proc.start()
+            proc.start() # memoize() AssertionsError on Windows raised here
             if not autoClose:
                 return # keeps the plot window open
             # wait for the plot window to finish drawing, then close it
