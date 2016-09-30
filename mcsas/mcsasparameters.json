@@ -52,6 +52,14 @@
         "displayUnit" : "-",
         "isActive" : false 
     },
+    "fixed1stPoint" : {
+        "displayName" : "Fix 1st model point to data?",
+        "description" : "Sets the first point of the model to first point of the measured data.",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
     "startFromMinimum" : {
         "displayName" : "depreciated",
         "description" : "Sets the initial guess to minimal values rather than a uniform dist.",

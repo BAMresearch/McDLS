@@ -315,8 +315,8 @@ class McSAS(AlgorithmBase):
         # generate initial guess for scaling factor and background
         sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
 #        sc *= sum(wset)
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
-                                            self.model)
+        bgScalingFit = BackgroundScalingFit(self.findBackground(),
+                                            self.fixed1stPoint())
         # for the least squares fit, normalize the intensity by the sum of
         # weights which is << 1 (for SAXS, usually it's the sum
         # of the scatterers volumes), though increasing ft and reducing the
@@ -525,8 +525,8 @@ class McSAS(AlgorithmBase):
         # data, store it in result too, enables to postprocess later
         # store the model instance too
         data = self.data
-        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
-                                            self.model)
+        bgScalingFit = BackgroundScalingFit(self.findBackground(),
+                                            self.fixed1stPoint())
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
