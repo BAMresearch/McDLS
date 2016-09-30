@@ -69,8 +69,6 @@ class SASModelData(ModelData):
     pass
 
 class DLSModelData(ModelData):
-    def __init__(self, *args, **kwargs):
-        super(DLSModelData, self).__init__(*args, **kwargs)
 
     @property
     def chisqrInt(self):
