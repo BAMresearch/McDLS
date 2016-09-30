@@ -36,11 +36,9 @@ class BackgroundScalingFit(object):
               chi-squared value.
     """
     findBackground = None # True: find optimal background as well
-    _dataCalcSquared = False
 
     def __init__(self, findBackground, model):
         self.findBackground = findBackground
-        self._dataCalcSquared = not isinstance(model, SASModel)
 
     @staticmethod
     def chi(sc, dataMeas, dataErr, dataCalc):
