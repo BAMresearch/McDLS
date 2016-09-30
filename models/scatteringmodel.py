@@ -10,7 +10,8 @@ from abc import ABCMeta, abstractmethod
 from itertools import izip
 from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor, classname
-from bases.algorithm import AlgorithmBase
+from bases.algorithm import AlgorithmBase, Parameter
+from utils.units import NoUnit
 from utils.parameter import isActiveParam
 
 class ModelData(object):
@@ -82,6 +83,11 @@ class DLSModelData(ModelData):
         fraction because the model intensities are squared after cumulation and
         normalization during post-processing."""
         return super(DLSModelData, self).volumeFraction(sqrt(scaling))
+
+class DLSModelDataPlainVol(DLSModelData):
+    def volumeFraction(self, scaling):
+        return (super(DLSModelDataPlainVol, self)
+                        .volumeFraction(scaling) * self.vset)
 
 class ScatteringModel(AlgorithmBase):
     __metaclass__ = ABCMeta
@@ -384,9 +390,17 @@ class SASModel(ScatteringModel):
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
     _scatteringVector = None
+    parameters = (
+        Parameter("ampSquared", True, unit = NoUnit(),
+            displayName = "square the amplitude?",
+            description = "ON = (volume * formfactor)², OFF = volume * formfactor"),
+    )
 
     def modelDataType(self):
-        return DLSModelData
+        if self.ampSquared():
+            return DLSModelData
+        else:
+            return DLSModelDataPlainVol
 
     @property
     def scatteringVector(self):
@@ -396,6 +410,8 @@ class DLSModel(ScatteringModel):
         self._scatteringVector = data.scatteringVector
         v = self._volume(compensationExponent = compensationExponent)
         w = self._weight(compensationExponent = compensationExponent)
+        if self.ampSquared():
+            w *= w # square the weight, i.e. amplitude
         # calculate their form factors
         ff = self._formfactor(data)
         # a set of intensities
