@@ -6,7 +6,7 @@
         "default" : 300,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "numReps" : {
         "displayName" : "number of repetitions",
@@ -15,7 +15,7 @@
         "valueRange" : [1,1e6],
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "maxIterations" : {
         "displayName" : "maximum iterations",
@@ -24,7 +24,7 @@
         "description" : "Maximum number of iterations allowed before failing.",
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "compensationExponent" : {
         "displayName" : "weighting compensation",
@@ -33,7 +33,7 @@
         "description" : "Compensates the weighting of contributions, default volume-weighted (2/3).",
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "convergenceCriterion" : {
         "displayName" : "convergence criterion",
@@ -42,15 +42,15 @@
         "default" : 1.00,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "findBackground" : {
-        "displayName" : "find background level?",
+        "displayName" : "Find background level?",
         "description" : "Adds a constant background level to the model fitting.",
         "default" : true,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "startFromMinimum" : {
         "displayName" : "depreciated",
@@ -58,7 +58,7 @@
         "default" : false,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "maxRetries" : {
         "displayName" : "Maximum no. of allowed retries",
@@ -67,7 +67,7 @@
         "description" : "When the MC method cannot reach convergence, it will try again this number of times.",
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     },
     "autoClose" : {
         "displayName" : "Automatically close result windows",
@@ -91,7 +91,6 @@
         "default" : false,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
-        "isActive" : false 
+        "isActive" : false
     }
 }
-                
