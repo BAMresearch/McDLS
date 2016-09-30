@@ -365,9 +365,11 @@ class McSAS(AlgorithmBase):
                 ft, wset[ri] = testModelData.cumInt, newModelData.wset
                 # updating unused data for completeness as well
                 vset[ri], sset[ri] = newModelData.vset, newModelData.sset
-                logging.info("Improvement in iteration number {0}, "
-                             "Chi-squared value {1:f} of {2:f}\r"
-                             .format(numIter, conval, minConvergence))
+                logging.info("rep {rep}/{reps}, good iter {it}: "
+                             "Chisqr= {cs:f}/{conv:.2f}, param= {par}\r"
+                             .format(it = numIter, cs = conval,
+                                 conv = minConvergence, rep = nRun,
+                                 reps = self.numReps(), par = rt.flatten()))
                 numMoves += 1
 
             if time.time() - lastUpdate > 0.25:
