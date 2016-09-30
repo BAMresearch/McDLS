@@ -561,10 +561,13 @@ class McSAS(AlgorithmBase):
                 # again, partial intensities for this size only required
                 partialModelData = self.model.calc(data, rset[c].reshape((1, -1)),
                                                    self.compensationExponent())
-                # FIXME: mcsas.py:542: RuntimeWarning: divide by zero encountered in divide
+                # dividing by zero tends to go towards infinity,
+                # when chosing the minimum those can be ignored
+                weightedInt = data.f.binnedDataU * volumeFraction[c, ri]
+                partialCumIntScaled = sc[0] * partialModelData.cumInt
+                indices = (partialCumIntScaled != 0.)
                 minReqVol[c, ri] = (
-                        data.f.binnedDataU * volumeFraction[c, ri]
-                                / (sc[0] * partialModelData.cumInt)).min()
+                    weightedInt[indices] / partialCumIntScaled[indices]).min()
                 minReqNum[c, ri] = minReqVol[c, ri] / modelData.vset[c]
                 minReqVolSqr[c, ri] = (minReqNum[c, ri]
                         * minReqVol[c, ri] * minReqVol[c, ri])
