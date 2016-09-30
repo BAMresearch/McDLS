@@ -36,9 +36,11 @@ class BackgroundScalingFit(object):
               chi-squared value.
     """
     _findBackground = None # True: find optimal background as well
+    _fix1stPt = None       # True: fix first point of model data to exp. data
 
-    def __init__(self, findBackground, *args):
+    def __init__(self, findBackground, fix1stPt):
         self._findBackground = bool(findBackground)
+        self._fix1stPt = bool(fix1stPt)
 
     @staticmethod
     def chi(sc, dataMeas, dataErr, dataCalc):
@@ -95,6 +97,8 @@ class BackgroundScalingFit(object):
         else:
             sc = self.fitSimplex(dataMeas, dataErr, dataCalc, sc)
 
+        if self._fix1stPt:
+            sc[0] = dataMeas[0]/dataCalc[0]
         if not self._findBackground:
             sc[1] = 0.0
         # calculate convergence value

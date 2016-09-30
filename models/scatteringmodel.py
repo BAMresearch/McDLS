@@ -410,12 +410,13 @@ class DLSModel(ScatteringModel):
         self._scatteringVector = data.scatteringVector
         v = self._volume(compensationExponent = compensationExponent)
         w = self._weight(compensationExponent = compensationExponent)
+        s = self.surface()
         if self.ampSquared():
             w *= w # square the weight, i.e. amplitude
         # calculate their form factors
         ff = self._formfactor(data)
         # a set of intensities
         it = ff * w
-        return it, v, w
+        return it, v, w, s
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
