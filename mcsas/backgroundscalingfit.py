@@ -74,7 +74,8 @@ class BackgroundScalingFit(object):
         func = self.chiNoBg
         if self.findBackground:
             func = self.chi
-        sc, success = optimize.leastsq(func, sc, args = (dataMeas, dataErr, dataCalc), full_output = False)
+        sc, success = optimize.leastsq(func, sc, args = (dataMeas, dataErr, dataCalc),
+                                       full_output = False)
         return sc
 
     def fitSimplex(self, dataMeas, dataErr, dataCalc, sc):
