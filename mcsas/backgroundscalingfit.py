@@ -35,10 +35,10 @@ class BackgroundScalingFit(object):
               intensity scaling factor and background and the reduced
               chi-squared value.
     """
-    findBackground = None # True: find optimal background as well
+    _findBackground = None # True: find optimal background as well
 
-    def __init__(self, findBackground, model):
-        self.findBackground = findBackground
+    def __init__(self, findBackground, *args):
+        self._findBackground = bool(findBackground)
 
     @staticmethod
     def chi(sc, dataMeas, dataErr, dataCalc):
@@ -63,14 +63,14 @@ class BackgroundScalingFit(object):
     def dataScaled(self, data, sc):
         """Returns the input data scaled by the provided factor and background
         level applied if requested."""
-        if self.findBackground:
+        if self._findBackground:
             return (data * sc[0]) + sc[1] # apply background on request
         # else:
         return (data * sc[0])
 
     def fitLM(self, dataMeas, dataErr, dataCalc, sc):
         func = self.chiNoBg
-        if self.findBackground:
+        if self._findBackground:
             func = self.chi
         sc, success = optimize.leastsq(func, sc, args = (dataMeas, dataErr, dataCalc),
                                        full_output = False)
@@ -95,7 +95,7 @@ class BackgroundScalingFit(object):
         else:
             sc = self.fitSimplex(dataMeas, dataErr, dataCalc, sc)
 
-        if not self.findBackground:
+        if not self._findBackground:
             sc[1] = 0.0
         # calculate convergence value
         conval = self.chiSqr(dataMeas, dataErr, self.dataScaled(dataCalc, sc))
