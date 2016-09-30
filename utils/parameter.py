@@ -99,7 +99,9 @@ class Moments(object):
             rset = contribs[self._validRange[ri], ri]
             frac = fraction[self._validRange[ri], ri]
             val[ri] = sum(frac)
-            mu[ri]  = sum(rset * frac)/sum(frac)
+            mu[ri]  = sum(rset * frac)
+            if 0 != sum(frac):
+                mu[ri] /= sum(frac)
             var[ri] = sum( (rset-mu[ri])**2 * frac )/sum(frac)
             sigma   = np.sqrt(abs(var[ri]))
             skw[ri] = ( sum( (rset-mu[ri])**3 * frac )
@@ -322,7 +324,7 @@ class Histogram(DataSet, DisplayMixin):
 
     @staticmethod
     def yweighting(index = None):
-        avail = ('vol', 'num', 'volsqr')
+        avail = ('vol', 'num', 'volsqr', 'surf')
         try:
             return avail[index]
         except:
@@ -477,6 +479,11 @@ class Histogram(DataSet, DisplayMixin):
 
     __repr__ = __str__
 
+    def hdfWrite(self, hdf):
+        hdf.writeAttribute("param", self.param.name())
+        hdf.writeMembers(self, "lower", "upper", "binCount", "xscale",
+                               "yweight", "autoFollow")
+
     def __eq__(self, other):
         """Compares with another Histogram or tuple."""
         if id(self.param) != id(other.param):
@@ -527,6 +534,9 @@ class Histograms(list):
         for i in range(len(self)):
             self[i].calc(*args)
 
+    def hdfWrite(self, hdf):
+        hdf.writeMembers(self, *range(len(self)))
+
 def isActiveParam(param):
     """Checks any type of parameter for activeness.
     Shorter than that below or a try/except clause."""
@@ -538,6 +548,10 @@ class FitParameterBase(ParameterBase):
     related attributes."""
     ParameterBase.addAttributes(locals(), histograms = None,
             activeValues = list(), activeRange = None)
+
+    def hdfStoreAsMember(self):
+        return (super(FitParameterBase, self).hdfStoreAsMember()
+                + ['histograms',])
 
     def __init__(self):
         super(FitParameterBase, self).__init__()

@@ -74,22 +74,23 @@ class CallbackRegistry(object):
 class DataConfig(AlgorithmBase, CallbackRegistry):
     _is2d = False
     _sampleName = None
+    _x0seen, _x1seen = None, None # remembers data sets seen
     parameters = (
         Parameter("x0Low", 0., unit = NoUnit(),
             displayName = "lower {x0} cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
+            valueRange = (0., numpy.inf), decimals = 10),
         Parameter("x0LowClip", 0, unit = NoUnit(),
             displayName = "ignore leading {x0} points",
             valueRange = (0, 2**30)),
         Parameter("x0High", numpy.inf, unit = NoUnit(),
             displayName = "upper {x0} cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
+            valueRange = (0., numpy.inf), decimals = 10),
         Parameter("x1Low", 0., unit = NoUnit(),
             displayName = "lower {x1} cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
+            valueRange = (0., numpy.inf), decimals = 10),
         Parameter("x1High", numpy.inf, unit = NoUnit(),
             displayName = "upper {x1} cut-off",
-            valueRange = (0., numpy.inf), decimals = 1),
+            valueRange = (0., numpy.inf), decimals = 10),
         Parameter("fMaskZero", False, unit = NoUnit(),
             displayName = "Mask {f} values of 0", description =
             "Renders intensity values that are zero invalid for fitting"),
@@ -174,7 +175,17 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
 
     def onUpdatedX0(self, x0):
         """Sets available range of loaded data."""
-        limits = (x0.min(), x0.max())
+        if self._x0seen is None:
+            # on the first data, set the param limits to the exact value range
+            limits = (x0.min(), x0.max())
+            self._x0seen = id(x0) # just store something for now
+        else: # there were other data sets already, the value range grows
+            # alternatives: (1) shrinking means another range for broader
+            # datasets can not be selected in the UI; (2) using the exact
+            # range as above means the last one wins and it would change
+            # self.x0LowClip for other datasets, thus cause auto-alternations
+            limits = self.x0Low.valueRange()
+            limits = min(x0.min(), limits[0]), max(x0.max(), limits[1])
         self.x0Low.setValueRange(limits)
         self.x0High.setValueRange(limits)
 

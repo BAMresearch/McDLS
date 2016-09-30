@@ -6,19 +6,16 @@ from QtGui import QLineEdit, QDoubleValidator, QValidator
 from QtCore import Qt
 from utils import clip
 
-#from utils.devtools import DBG
-
 class SciEntryValidator(QDoubleValidator):
     """Assumes the associated QLineEdit is provided as parent object
     in the constructor."""
 
     def __init__(self, parent = None):
-#        DBG(10, self, id(self), parent, id(parent))
         # FIXME: On Windows, python crashes here, sometimes ...
         # everything looks ok, except that it 'stops working'
         super(SciEntryValidator, self).__init__(parent)
-#        DBG(11, id(parent))
         self.setNotation(QDoubleValidator.ScientificNotation)
+        # some defaults if nothing is set
         self.setRange(-1e200, 1e200)
         self.setDecimals(9)
 
@@ -77,7 +74,7 @@ class SciEntryBox(QLineEdit):
         if decimals is None:
             return "{0:g}"
         # according to https://docs.python.org/2/library/string.html#formatspec
-        return "{0:." + str(decimals - 3) + "g}"
+        return "{0:." + str(max(0, decimals - 3)) + "g}"
 
     @classmethod
     def updateToolTip(cls, widget, decimals = None):

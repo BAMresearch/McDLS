@@ -15,9 +15,8 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
-from utils.hdf import HDFMixin
 
-class DataObj(DataSet, DisplayMixin, HDFMixin):
+class DataObj(DataSet, DisplayMixin):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
     """
@@ -149,9 +148,6 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         self.config.onUpdatedX0(self.x0.siData)
         self._excludeInvalidX0()
         self._reBin()
-        # for HDF5 testing purposes:
-        if True:
-            self.hdfStore("test2.h5")
         if not self.is2d:
             return # self.x1 will be None
         self.config.register("x1limits", self._onLimitsUpdate)
@@ -168,6 +164,7 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         validX0Idx = 0 # get the first data point index above 0
         while self.x0.siData[validX0Idx] <= 0.0:
             validX0Idx += 1
+        # TODO: what about x0LowClip possibly set by other DataObj in list?
         if self.config.x0LowClip() < validX0Idx:
             self.config.x0LowClip.setValue(validX0Idx)
 
@@ -247,13 +244,16 @@ class DataObj(DataSet, DisplayMixin, HDFMixin):
         #  It stops calling back in _onLimitsUpdate() because the clipping
         #  value does not change further (no update needed)
         # -> vice versa at the end of _onLimitsUpdate() above
-        self.config.x0Low.setValue(self.x0.sanitized.min())
+        if self.x0.sanitized.min() < self.config.x0Low():
+            self.config.x0Low.setValue(self.x0.sanitized.min())
 
     def _reBin(self):
         """Rebinning method, to be run (f.ex.) upon every "Start" buttonpress.
         For now, this will rebin using the x0 vector as a base, although the
         binning vector can theoretically be chosen freely.
         """
+        if not len(self.x0.sanitized):
+            return
         logging.info("Initiating binning procedure")
         nBin = self.config.nBin.value()
         # self._binned = DataVector() once binning finishes.. dataVector can be set once.

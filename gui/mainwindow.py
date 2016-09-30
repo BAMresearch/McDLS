@@ -393,6 +393,8 @@ class MainWindow(MainWindowBase):
     def onStartStopClick(self, checked):
         processEventLoop()
         if checked:
+            # # write HDF datafile
+            # self.hdfStore("test3.h5")
             self.startStopBtn.setText("stop")
             self.startStopBtn.setChecked(True)
             self._updateWidgets() # get latest input in case sth didn't update
@@ -401,6 +403,9 @@ class MainWindow(MainWindowBase):
         self.calculator.stop()
         self.startStopBtn.setText("start")
         self.startStopBtn.setChecked(False)
+
+    # def hdfWrite(self, hdf):
+    #     hdf.writeMember(self, "calculator")
 
     def calc(self):
         if len(self.fileWidget) <= 0:

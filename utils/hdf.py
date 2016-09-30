@@ -9,7 +9,7 @@ import logging
 import inspect
 import os.path
 import h5py
-from utils import isCallable, isString, isList, isNumber, classname
+from utils import isCallable, isString, isList, isNumber, isInteger, classname
 
 # from utils.devtools import DBG
 
@@ -114,30 +114,34 @@ class HDFWriter(object):
         if isString(obj):
             logging.warning(u"String as object provided! "
                             + self._warningPrefix(obj, memberName))
-        member = getattr(obj, memberName, None)
+        if isInteger(memberName) and isList(obj):
+            member = obj[memberName]
+            memberName = str(memberName)
+        else:
+            member = getattr(obj, memberName, None)
 #        DBG(member)
         if member is None:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + u"It is empty or does not exist (=None).")
             return
-        if isCallable(member) and not isinstance(member, HDFMixin):
-            # ParameterBase instances are callable but also HDFMixins
+
+        if isCallable(member) and not hasattr(member, "hdfWrite"):
             member = member()
-        if isList(member):
-            self.writeDataset(memberName, member)
-        elif isinstance(member, HDFMixin):
+
+        if hasattr(member, "hdfWrite"): # support instances and types
             # store the member in a group of its own
             oldLocation = self.location
             self._location = "/".join((oldLocation.rstrip('/'), memberName))
             member.hdfWrite(self) # recursion entry, mind the loops!
             self._location = oldLocation
+        elif isList(member):
+            self.writeDataset(memberName, member)
         elif isString(member) or isNumber(member):
             self.writeAttribute(memberName, member)
         else:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + "(={}) It is not a compatible value type!"
                         .format(classname(member)))
-            return
 
     def _warningPrefix(self, obj, memberName):
         return (u"{cls}.{mem} {cal} ".format(cal = getCallerInfo(type(self)),

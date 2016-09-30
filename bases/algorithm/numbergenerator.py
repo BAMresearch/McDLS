@@ -3,6 +3,7 @@
 
 from abc import ABCMeta, abstractmethod
 import numpy
+from utils import classname
 
 # it seems treating number generators as instances is more convenient than
 # the current implementation (types/classes only)
@@ -18,6 +19,10 @@ class NumberGenerator(object):
     @abstractmethod
     def get(cls, count = 1):
         raise NotImplementedError
+
+    @classmethod
+    def hdfWrite(self, hdf):
+        hdf.writeAttributes(cls = classname(self))
 
 class RandomUniform(NumberGenerator):
     @classmethod

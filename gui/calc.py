@@ -24,6 +24,8 @@ import log
 from mcsas.mcsas import McSAS
 from utils.parameter import Histogram, Moments, isActiveParam
 from dataobj import SASData
+from utils.hdf import HDFMixin
+
 
 DEFAULTSECT = ConfigParser.DEFAULTSECT
 
@@ -99,8 +101,11 @@ class OutputFilename(object):
         message containing the full file name which is usually click-able."""
         fn = self.filename(kind, extension = extension)
         logging.info("Writing {0} to:".format(descr))
+        fnUrl = fn
+        if fnUrl.startswith('\\\\?'):
+            fnUrl = fnUrl[4:]
         logging.info("{0}'{1}'".format(self._indent,
-                                       QUrl.fromLocalFile(fn).toEncoded()))
+            QUrl.fromLocalFile(fnUrl).toEncoded()))
         return fn
 
 def plotStats(stats):
@@ -126,7 +131,7 @@ def plotStats(stats):
     fig.show()
     show()
 
-class Calculator(object):
+class Calculator(HDFMixin):
     _algo = None  # McSAS algorithm instance
     _outFn = None # handles output file names, creates directories
     _series = None # stores results of multiple data sets for a final summary
@@ -136,6 +141,19 @@ class Calculator(object):
 
     def __init__(self):
         self._algo = McSAS.factory()()
+
+    def hdfWrite(self, hdf):
+        """ write a calculator configuration. """
+        hdf.writeMember(self, "algo")
+        hdf.writeMember(self.algo, "data")
+        hdf.writeMember(self, "model")
+        # for p in self.model.params():
+        #     logging.debug("Writing model parameter: {} value: {} to HDF5".format(p.name(), p.value()))
+        #     hdf.writeMember(self.model, p.name())
+
+    def hdfLoad(self, filehandle):
+        """ load a calculator configuration """
+        pass
 
     @property
     def algo(self):
@@ -173,9 +191,6 @@ class Calculator(object):
         self._series = dict()
 
     def __call__(self, dataset):
-        """ the *recalc* boolean skips the optimisation algorithm and moves
-        directly on to the histogramming. If this was a run that was completed
-        successfully before, re-histogramming should be available """
         if self.model is None:
             logging.warning("No model set!")
             return
@@ -199,6 +214,10 @@ class Calculator(object):
             log.removeHandler(widgetHandler)
         #set data in the algorithm
         self._algo.data = dataset
+        # write HDF5
+        self.hdfStore(self._outFn.filenameVerbose(
+            "hdf5archive", "Complete state of the calculation",
+            extension = '.mh5'))
         self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)

@@ -7,12 +7,9 @@ A class describing a vector with limits, units, mask and uncertainties
 
 from __future__ import absolute_import # PEP328
 import numpy as np
-import h5py
-
 from utils.units import Unit, NoUnit
-from utils.hdf import HDFMixin
 
-class DataVector(HDFMixin):
+class DataVector(object):
     """ a class for combining aspects of a particular vector of data.
     This is intended only as a storage container without additional functionality.
     """
@@ -48,10 +45,14 @@ class DataVector(HDFMixin):
 
     @validIndices.setter
     def validIndices(self, indices):
-        assert indices.min() >= 0
-        assert indices.max() <= self.siData.size
+        if len(indices):
+            assert indices.min() >= 0
+            assert indices.max() <= self.siData.size
         self._validIndices = indices
-        self._limit = [self.sanitized.min(), self.sanitized.max()]
+        if len(indices):
+            self._limit = [self.sanitized.min(), self.sanitized.max()]
+        else:
+            self._limit = [0., 0.]
 
     @property
     def sanitized(self):

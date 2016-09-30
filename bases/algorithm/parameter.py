@@ -60,7 +60,6 @@ from utils import (isString, isNumber, isList, isMap, isSet, testfor,
                    assertName, classname, classproperty, clip, isCallable)
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
-from utils.hdf import HDFMixin
 from numbergenerator import NumberGenerator, RandomUniform
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
@@ -123,7 +122,7 @@ def _makeSetter(varName):
 def _setterName(attrName):
     return "set" + attrName[0].upper() + attrName[1:]
 
-class ParameterBase(HDFMixin):
+class ParameterBase(object):
     """Base class for algorithm parameters providing additional
     information to ease automated GUI building."""
 
@@ -327,13 +326,17 @@ class ParameterBase(HDFMixin):
         For instances only (usually in model implementation)."""
         return self.value()
 
+    def hdfStoreAsMember(self):
+        return []
+
     def hdfWrite(self, hdf):
         xlst = ("onValueUpdate",)
         selfAttr = self.attributes(exclude = xlst)
         selfAttr['cls'] = classname(selfAttr['cls'])
-        if 'unit' in selfAttr:
-            selfAttr.pop('unit')
-            hdf.writeMember(self, 'unit')
+        for name in self.hdfStoreAsMember():
+            if name in selfAttr:
+                selfAttr.pop(name)
+                hdf.writeMember(self, name)
         hdf.writeAttributes(**selfAttr)
 
     def __reduce__(self):
@@ -394,6 +397,10 @@ class ParameterNumerical(ParameterBase):
     # overridden as usual.
     ParameterBase.addAttributes(locals(), "valueRange", "suffix",
                   "stepping", "displayValues", "generator")
+
+    def hdfStoreAsMember(self):
+        return (super(ParameterNumerical, self).hdfStoreAsMember()
+                + ['generator',])
 
     @mixedmethod
     def setValue(selforcls, newValue, clip = True):
@@ -515,6 +522,10 @@ class ParameterNumerical(ParameterBase):
 
 class ParameterFloat(ParameterNumerical):
     ParameterNumerical.addAttributes(locals(), "decimals", unit = NoUnit())
+
+    def hdfStoreAsMember(self):
+        return (super(ParameterFloat, self).hdfStoreAsMember()
+                + ['unit',])
 
     # some unit wrappers
 

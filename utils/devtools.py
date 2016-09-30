@@ -9,12 +9,13 @@ This module is supposed to not being required in a release package.
 from __future__ import print_function
 import sys
 import inspect
-import os.path
+import os, os.path
 import tempfile
 import codecs
 
 prefix = os.path.splitext(os.path.basename(__file__))[0] + "_"
 _logfd, _logfn = tempfile.mkstemp(prefix = prefix)
+os.close(_logfd) # not used/needed
 print("DBGF() to: '{}'".format(_logfn), file = sys.__stderr__)
 
 def DBGF(*args):

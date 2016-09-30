@@ -125,7 +125,7 @@ def test():
     if not success:
         logging.error("Test for {0} failed!".format(key))
 
-if __name__ == "__main__":
-    test()
+#if __name__ == "__main__":
+#    test() # FIXME? -> outdated
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
