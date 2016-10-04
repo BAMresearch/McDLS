@@ -37,6 +37,18 @@ from gui.filelist import FileList
 from main import makeAbsolutePath
 
 INFOTEXT = (u"""
+<strong>major changes in McDLS Mk.VIII:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>fixed histogramming regarding calculated DLS amplitude</li>
+<li>option to square the amplitude or not (V²Phi² vs. V·Phi)</li>
+<li>option to fix the first point of the model to the measured data</li>
+<li>surface weighted histogram</li>
+<li>current repetition included in progress log message</li>
+<li>Windows: URL links in log window should work again</li>
+<li>mostly fixed overlapping histogram plots</li>
+<li>fit configuration written to HDF5</li>
+<li>some bug fixes</li>
+</ul>
 <strong>major changes in McDLS Mk.VII:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>fix for long path names on Windows, supposed to work with >260 characters now</li>
