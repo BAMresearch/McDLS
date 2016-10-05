@@ -74,6 +74,9 @@ On a fresh installation of Windows 7 the following packages are required:
 
     - `pywin32 219 <http://sourceforge.net/projects/pywin32/files/pywin32/Build%20219/pywin32-219.win32-py2.7.exe>`_
 
+    - h5py HDF5 support, install one of the precompiled Windows packages, such as
+      `h5py-2.4.0.win32-py2.7.exe <https://pypi.python.org/packages/df/6d/b9463b64fa8ff6bd71ae7c5a5b3591dbc1c8536af0926f0bfb712a4356fe/h5py-2.4.0.win32-py2.7.exe#md5=032d7d10a9938aefbcc278e2fe5e2864>`_
+
 Mac OS X
 --------
 After installing the required packages below a disk image file (.dmg)
@@ -107,6 +110,14 @@ On a fresh installation of OS X 10.8 the following packages are required:
         Install it on the command line by::
 
                 $ /usr/local/bin/pip install matplotlib-1.4.2-*.whl
+
+    - h5py HDF5 support, install HDF5 from source first::
+
+            $ cd hdf5-src
+            $ ./configure --prefix=/usr/local
+            $ make && sudo make install
+            $
+            $ pip2 install h5py
 
     - `a modified cx_Freeze 4.3.4 <https://bitbucket.org/ibressler/cx_freeze>`_
       with local modifications for successful app freezing on OS X
@@ -361,8 +372,8 @@ if __name__ == "__main__":
                     "matplotlib.backends.backend_qt4agg",
                     # savefig dependencies?
                     "matplotlib.backends.backend_tkagg", "Tkinter", "FileDialog",
+                    "h5py"
                     ],
-    #    excludes = ["Tkinter"],
         # Icons for Windows using this approach:
         # https://stackoverflow.com/a/10819673
         icon = "resources/icon/mcsas.ico",

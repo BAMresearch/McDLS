@@ -61,25 +61,25 @@ class ModelData(object):
 
     def volumeFraction(self, scaling):
         """Returns the volume fraction based on the provided scaling factor to
-        match this model data to the measured data."""
+        match this model data to the measured data. Assumes that the weights
+        'self.wset' contain the scatterer volume squared."""
         return (self.wset * scaling / self.vset).flatten()
 
 class SASModelData(ModelData):
     pass
 
 class DLSModelData(ModelData):
-    def __init__(self, *args, **kwargs):
-        super(DLSModelData, self).__init__(*args, **kwargs)
 
     @property
     def chisqrInt(self):
         """Normalize and square the cumulated model intensities before passing
-        them to the chi-square test."""
+        them to the chi-square test. This is g1(tau)², the first-order
+        correlation function squared."""
         return (self.cumInt / sum(self.wset))**2
 
     def volumeFraction(self, scaling):
         """Using the square root of the scaling factor to determine the volume
-        fraction because the model intensities is squared after cumulation and
+        fraction because the model intensities are squared after cumulation and
         normalization during post-processing."""
         return super(DLSModelData, self).volumeFraction(sqrt(scaling))
 

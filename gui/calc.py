@@ -99,8 +99,11 @@ class OutputFilename(object):
         message containing the full file name which is usually click-able."""
         fn = self.filename(kind, extension = extension)
         logging.info("Writing {0} to:".format(descr))
+        fnUrl = fn
+        if fnUrl.startswith('\\\\?'):
+            fnUrl = fnUrl[4:]
         logging.info("{0}'{1}'".format(self._indent,
-                                       QUrl.fromLocalFile(fn).toEncoded()))
+            QUrl.fromLocalFile(fnUrl).toEncoded()))
         return fn
 
 def plotStats(stats):

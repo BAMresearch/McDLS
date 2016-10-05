@@ -15,6 +15,8 @@ import log
 from main import makeAbsolutePath
 from dataobj import SASData
 
+#from utils.devtools import DBG
+
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
     # actually, we're using the TkAgg backend via matplotlibrc (Windows/Linux)
@@ -32,9 +34,22 @@ import matplotlib.font_manager as fm
 from matplotlib import gridspec
 from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
         text, plot, grid, legend, title, xlim, ylim, gca, axis,
-        close, colorbar, imshow, subplot, axes, show, savefig)
+        close, colorbar, imshow, subplot, axes, show, savefig,
+        get_current_fig_manager)
 
 PM = u"\u00B1"
+
+def getTextSize(fig, fontProps):
+    """Returns the width and height of a character for the given font setup.
+    This can be different on each platform.
+    """
+    testText = "TEST"
+    r = fig.canvas.get_renderer()
+    t = text(0.5, 0.5, testText, fontproperties = fontProps)
+    bb = t.get_window_extent(renderer=r)
+    w, h = bb.width, bb.height
+    t.remove()
+    return w / len(testText), h
 
 class CoordinateFormat(object):
     """A Function object which sets up the particular formatting with axis
@@ -112,7 +127,7 @@ class PlotResults(object):
         # set parameters
         self._result = allRes[0]
         self._dataset = dataset
-        self._axisMargin = axisMargin
+        self._axisMargin = 0.0 # does not have any effect, it seems
         try:
             self._figureTitle = outputFilename.basename
         except AttributeError:
@@ -196,8 +211,7 @@ class PlotResults(object):
                 # fitMeasVal, fitSTD = parStat.measVal
                 # self.plotPartial(fitX0, fitMeasVal, fitSTD, qAxis)
 
-                self.plotHist(plotPar, parHist, 
-                        hAxis, self._axisMargin, rangei)
+                self.plotHist(plotPar, parHist, hAxis, rangei)
 
                 # put the rangeInfo in the plot above
                 InfoAxis = self._ah[hi + 1]
@@ -206,14 +220,28 @@ class PlotResults(object):
             #plot labels in qAxis:
             axes(qAxis)
             legend(loc = 1, fancybox = True, prop = self._textfont)
-        # trigger plot window popup
-        self._fig.canvas.draw()
-        self._fig.show()
+
+        # check current figure size, might change due to screen size (?)
+        targetWidth, targetHeight = (self._figWidth * self._fig.get_dpi(),
+                                     self._figHeight * self._fig.get_dpi())
+        # set desired figure size (again)
+        self._fig.set_figwidth(self._figWidth)
+        self._fig.set_figheight(self._figHeight)
         # save figure
         try:
-            savefig(outputFilename.filenameVerbose(
-                    None, "plot PDF", extension = '.pdf'))
+            self._fig.savefig(outputFilename.filenameVerbose(
+                                None, "plot PDF", extension = '.pdf'),
+                              dpi = 300)
         except AttributeError: pass
+        # trigger plot window popup
+        manager = get_current_fig_manager()
+        manager.canvas.draw()
+        manager.show() # resizes large windows to screen width by default
+        # resize slightly to update figure to window size,
+        # Windows&MacOS need this, just do it on Linux as well
+        # somehow, left&right ylabel moves out of the window on windows (FIXME)
+        manager.resize(targetWidth*1.005, targetHeight*1.005)
+
         if queue is not None:
             queue.put(True) # queue not empty means: plotting done here
         # show() seems to be nescessary otherwise the plot window is
@@ -300,18 +328,27 @@ class PlotResults(object):
         The bottom row axes are for plotting the fits and the histograms
         TODO: add settings to window title? (next to figure_xy)"""
         ahl = list() #list of axes handles from top left to bottom right.
-
-        fig = figure(figsize = (7 * (nHists + 1), 7 * nR), dpi = 80,
-                     facecolor = 'w', edgecolor = 'k')
+        cellWidth, cellHeight = 7, 7
+        numCols, numRows = nHists + 1, nR
+        self._figWidth = cellWidth * numCols
+        self._figHeight = cellHeight * numRows
+        fig = figure(figsize = (self._figWidth, self._figHeight),
+                     dpi = 80, facecolor = 'w', edgecolor = 'k')
         if isString(figureTitle):
             fig.canvas.set_window_title(figureTitle)
 
-        gs = gridspec.GridSpec(2 * nR, nHists + 1,
-                height_ratios = np.tile([1,6],nR ) )
+        charWidth, charHeight = getTextSize(fig, self._textfont)
+        charWidth, charHeight = (charWidth / (cellWidth * fig.dpi),
+                                 charHeight / (cellHeight * fig.dpi))
+        #DBG("text size (%):", charWidth, charHeight)
+        gs = gridspec.GridSpec(2 * numRows, numCols,
+                height_ratios = np.tile([1,6], numRows))
         # update margins
-        gs.update(left = 0.12, bottom = 0.10,
-                  right = 0.90, top = 0.95,
-                  wspace = 0.23, hspace = 0.13)
+        self._subPlotPars = dict(
+                left  =    charWidth*11./numCols, bottom =    charHeight*4.,
+                right = 1.-charWidth* 7./numCols, top    = 1.-charHeight*1.5,
+                wspace =   charWidth*20.,         hspace =    charHeight*7.)
+        gs.update(**self._subPlotPars)
 
         textAxDict = {
                 'frame_on' : False,
@@ -320,13 +357,13 @@ class PlotResults(object):
                 'ylim' : [0., 1.],
                 'xlim' : [0., 1.],
                 }
-        for ai in range((nHists + 1) * nR * 2 ):
+        for ai in range(numCols * numRows * 2 ):
             # initialise axes
             ah = subplot(gs[ai])
             # disable mouse coordinates while avoiding Tkinter error
             # about None not being callable
             ah.format_coord = lambda x, y: ""
-            if ai%((nHists + 1) * 2) < (nHists + 1):
+            if ai%(numCols * 2) < numCols:
                 ah.update(textAxDict) # text box settings:
             ahl.append(ah)
         return fig, ahl
@@ -443,7 +480,7 @@ class PlotResults(object):
         fig.show()
         axis('tight')
 
-    def plotHist(self, plotPar, parHist, hAxis, axisMargin, rangei):
+    def plotHist(self, plotPar, parHist, hAxis, rangei):
         """histogram plot"""
         # make active:
         axes(hAxis)
