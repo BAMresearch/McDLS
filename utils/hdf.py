@@ -35,6 +35,48 @@ def getCallerInfo(referenceType = None, stackOffset = 0):
         out = (u"({} l.{})".format(fn, frame.f_lineno))
     return out
 
+
+def HDFCleanup(infile):
+    """Unused space is reclaimed by making a copy of the contents in the 
+    current hdf 5 file object, and moves the copy in place of the original. 
+    if the input argument supplied is a file name instead of an HDF5 object, 
+    the method returns nothing. Else, the method returns the new HDF5 object"""
+    
+    inputIsFilename = False
+    if isinstance(infile, (str, unicode)): # a filename was supplied
+        infile = h5py.File(infile)
+        inputIsFilename = True
+    def hdfDeepCopy(infile, outfilename):
+        """Copies the internals of an open HDF5 file object (infile) to a second file."""
+        infile.flush()
+        outfile = h5py.File(outfilename, "w") # create file, truncate if exists
+        for item in infile:
+            outfile.copy(infile[item], item)
+        for attr_name in infile.attrs:
+            outfile.attrs[attr_name] = infile.attrs[attr_name]
+        outfile.close()
+    # shutil.move is more flexible than os.rename, and can move across disks.
+    origfname = infile.filename
+    tempfname = "{}.mh5".format(str(uuid.uuid4().hex)) # generate a temporary file for the original backup
+    tempofname = "{}.mh5".format(str(uuid.uuid4().hex)) # temporary output filename
+    shutil.copy(origfname, tempfname) # backup copy
+    try: 
+        hdfDeepCopy(infile, tempofname) # copy internals
+        infile.close() # close old file
+        shutil.move(tempofname, origfname) # replace with new
+    except:
+        # move back the backup
+        shutil.move(tempfname, origfname) 
+    infile = h5py.File(origfname) # reopen new file
+    # cleanup:
+    for filename in [tempfname, tempofname]:
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+    if not inputIsFilename:
+        return infile
+
 class HDFWriter(object):
     """Represents an open HDF file location in memory and keeps track of
     the current address/name for reading or writing. Once this object looses
