@@ -37,6 +37,10 @@ from gui.filelist import FileList
 from main import makeAbsolutePath
 
 INFOTEXT = (u"""
+<strong>major changes in McDLS Mk.IX:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>alternative Goodness-of-Fit indicator output added</li>
+</ul>
 <strong>major changes in McDLS Mk.VIII:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>fixed histogramming regarding calculated DLS amplitude</li>
