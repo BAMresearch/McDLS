@@ -62,6 +62,13 @@ class BackgroundScalingFit(object):
         """
         return sum(((dataMeas - dataCalc)/dataErr)**2) / len(dataMeas)
 
+    @staticmethod
+    def aGoFsAlpha(dataMeas, dataErr, dataCalc):
+        """The alternative Goodness-of-Fit value without alpha, i.e. multiplied
+        by alpha, according to [Henn 2016]
+        ( http://dx.doi.org/10.1107/S2053273316013206 )."""
+        return sum((dataMeas - dataCalc)**2) / sum(dataErr**2)
+
     def dataScaled(self, data, sc):
         """Returns the input data scaled by the provided factor and background
         level applied if requested."""
@@ -101,6 +108,9 @@ class BackgroundScalingFit(object):
             sc[1] = 0.0
         # calculate convergence value
         conval = self.chiSqr(dataMeas, dataErr, self.dataScaled(dataCalc, sc))
-        return sc, conval, dataCalc
+        aGoFs = self.aGoFsAlpha(dataMeas, dataErr, self.dataScaled(dataCalc, sc))
+        # multiplied by the reciprocal of alpha
+        aGoFs *= len(dataMeas) / (len(dataMeas) - modelData.numParams )
+        return sc, conval, dataCalc, aGoFs
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
