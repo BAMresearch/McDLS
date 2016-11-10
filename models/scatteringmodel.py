@@ -19,6 +19,7 @@ class ModelData(object):
     _vset = None
     _wset = None
     _sset = None
+    _numParams = 0
 
     def hdfWrite(self, hdf):
         hdf.writeMembers(self, "cumInt", "vset", "wset", "volumeFraction")
@@ -50,7 +51,12 @@ class ModelData(object):
         """Returns the associated set of surfaces."""
         return self._sset
 
-    def __init__(self, cumInt, vset, wset, sset):
+    @property
+    def numParams(self):
+        """Returns the number of active (fitted) parameters."""
+        return self._numParams
+
+    def __init__(self, cumInt, vset, wset, sset, numParams):
         assert cumInt is not None
         assert vset is not None
         assert wset is not None
@@ -59,6 +65,7 @@ class ModelData(object):
         self._vset = vset.flatten()
         self._wset = wset.flatten()
         self._sset = sset.flatten()
+        self._numParams = abs(numParams)
 
     def volumeFraction(self, scaling):
         """Returns the volume fraction based on the provided scaling factor to
@@ -182,7 +189,11 @@ class ScatteringModel(AlgorithmBase):
         # restore previous parameter values
         for p, v in izip(params, oldValues):
             p.setValue(v)
-        return self.modelDataType()(cumInt.flatten(), vset, wset, sset)
+        return self.getModelData(cumInt, vset, wset, sset)
+
+    def getModelData(self, cumInt, vset, wset, sset):
+        return self.modelDataType()(cumInt.flatten(), vset, wset, sset,
+                                    self.activeParamCount())
 
     @abstractmethod
     def modelDataType(self):

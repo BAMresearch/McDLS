@@ -313,7 +313,8 @@ class McSAS(AlgorithmBase):
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
+        sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(),
+                          data.f.limit[0]])
 #        sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground(),
                                             self.fixed1stPoint())
@@ -321,10 +322,11 @@ class McSAS(AlgorithmBase):
         # weights which is << 1 (for SAXS, usually it's the sum
         # of the scatterers volumes), though increasing ft and reducing the
         # scaling sc[0]; when histogramming, this gets reverted
-        sc, conval, dummy = bgScalingFit.calc(data, modelData, sc, ver = 1)
+        sc, conval, dummy, dummy2 = bgScalingFit.calc(data, modelData, sc,
+                                                      ver = 1)
         # reoptimize with V2, there might be a slight discrepancy in the
         # residual definitions of V1 and V2 which would prevent optimization.
-        sc, conval, dummy = bgScalingFit.calc(data, modelData, sc)
+        sc, conval, dummy, dummy2 = bgScalingFit.calc(data, modelData, sc)
         logging.info("Initial Chi-squared value: {0}".format(conval))
 
         # start the MC procedure
@@ -345,7 +347,7 @@ class McSAS(AlgorithmBase):
             # Calculate new total measVal, subtract old measVal, add new:
             oldModelData = self.model.calc(data, rset[ri].reshape((1, -1)),
                                                compensationExponent)
-            testModelData = self.model.modelDataType()(
+            testModelData = self.model.getModelData(
                 # is numerically stable (so far). Can calculate final uncertainty
                 # based on number of valid "moves" and sys.float_info.epsilon
                 ft - oldModelData.cumInt + newModelData.cumInt,
@@ -357,7 +359,8 @@ class McSAS(AlgorithmBase):
 #            wtest = wset.sum() - wset[ri] + newModelData.wset
             # optimize measVal and calculate convergence criterium
             # using version two here for a >10 times speed improvement
-            sct, convalt, dummy = bgScalingFit.calc(data, testModelData, sc)
+            sct, convalt, dummy, aGoFs = bgScalingFit.calc(
+                                                    data, testModelData, sc)
             # test if the radius change is an improvement:
             if convalt < conval: # it's better
                 # replace current settings with better ones
@@ -366,10 +369,10 @@ class McSAS(AlgorithmBase):
                 # updating unused data for completeness as well
                 vset[ri], sset[ri] = newModelData.vset, newModelData.sset
                 logging.info("rep {rep}/{reps}, good iter {it}: "
-                             "Chisqr= {cs:f}/{conv:.2f}, param= {par}\r"
+                             "Chisqr= {cs:f}/{conv:.2f}, aGoFs= {opt}\r"
                              .format(it = numIter, cs = conval,
                                  conv = minConvergence, rep = nRun,
-                                 reps = self.numReps(), par = rt.flatten()))
+                                 reps = self.numReps(), opt = aGoFs))
                 numMoves += 1
 
             if time.time() - lastUpdate > 0.25:
@@ -404,8 +407,8 @@ class McSAS(AlgorithmBase):
             'numMoves': numMoves,
             'elapsed': elapsed})
 
-        modelData = self.model.modelDataType()(ft, vset, wset, sset)
-        sc, conval, ifinal = bgScalingFit.calc(data, modelData, sc)
+        modelData = self.model.getModelData(ft, vset, wset, sset)
+        sc, conval, ifinal, dummy = bgScalingFit.calc(data, modelData, sc)
         details.update({'scaling': sc[0], 'background': sc[1]})
 
         result = [rset]
@@ -536,7 +539,7 @@ class McSAS(AlgorithmBase):
             # initial guess for the scaling factor.
             sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
             # optimize scaling and background for this repetition
-            sc, conval, dummy = bgScalingFit.calc(data, modelData, sc)
+            sc, conval, dummy, dummy2 = bgScalingFit.calc(data, modelData, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
             # calculate individual volume fractions:
             # here, the weight reverts intensity normalization effecting the
