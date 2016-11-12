@@ -5,6 +5,15 @@ default for settings  and info used for a McSAS run
 used by McSASCfg
 """
 
+from builtins import str
+from builtins import object
+import logging, json
+import os, inspect
+import numpy as np
+from utils.parameter import (Parameter, ParameterFloat,
+        ParameterBoolean, ParameterNumerical, ParameterString)
+from utils import mcopen
+
 __author__ = "Brian R. Pauw"
 __contact__ = "brian@stack.nl"
 __license__ = "GPLv3+"
@@ -13,17 +22,10 @@ __date__ = "2013-12-21"
 __status__ = "alpha"
 version = "0.0.1"
 
-import logging, json
-import os, inspect
-import numpy as np
-from utils.parameter import (Parameter, ParameterFloat,
-        ParameterBoolean, ParameterNumerical, ParameterString)
-from utils import mcopen
-
 class ExtendedEncoder(json.JSONEncoder):
     """JSON encoder extended to deal with Unicode, arrays and cls descriptions"""
     def default(self, obj):
-        if isinstance(obj, unicode):
+        if isinstance(obj, str):
             return str(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
@@ -33,7 +35,7 @@ class ExtendedEncoder(json.JSONEncoder):
             #return a suitable string
             if obj is float:
                 return "float"
-            elif obj is unicode:
+            elif obj is str:
                 return "unicode"
             elif obj is str:
                 return "str"
@@ -94,7 +96,7 @@ class cInfo(object):
             self.parameters = lambda: None
 
         # now we cast this information into the Parameter class:
-        for kw in parDict.keys():
+        for kw in list(parDict.keys()):
             subDict = parDict[kw]
             name = kw
             value = subDict.pop("value", None)
