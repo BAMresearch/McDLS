@@ -5,6 +5,7 @@
 Utils for testing something.
 """
 
+from past.builtins import basestring
 import collections
 import platform
 import numpy
@@ -51,15 +52,15 @@ def isNumber(obj):
     # the faster way to do this is "Duck typing", according to SO:
     try:
         float(obj)
-    except StandardError: # catch ValueError and TypeError (for None)
+    except Exception: # catch ValueError and TypeError (for None)
         try:
             complex(obj)
-        except StandardError:
+        except Exception:
             return False
     return True
 
 def isInteger(obj):
-    return (isinstance(obj, int) or isinstance(obj, long))
+    return (isinstance(obj, int) or isinstance(obj, int))
 
 def isCallable(obj):
     return isinstance(obj, collections.Callable)
