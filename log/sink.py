@@ -5,8 +5,12 @@
 Interface and convenience methods for general logging.
 """
 
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import object
 import logging
-from cStringIO import StringIO
+from io import StringIO
 
 class Sink(object):
     buf = None
@@ -18,7 +22,7 @@ class Sink(object):
             self.buf = StringIO()
         if msg[0] == '\t':
             self.buf.write('\n')
-        self.buf.write(unicode(msg)) # make sure we add unicode only
+        self.buf.write(str(msg)) # make sure we add unicode only
         if msg[-1] in ('\n', '\r'):
             # call the logging function, removing duplicate newlines
             func(self.buf.getvalue().rstrip("\n"))

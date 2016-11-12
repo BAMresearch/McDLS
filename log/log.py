@@ -4,12 +4,13 @@
 """
 Interface and convenience methods for general logging.
 """
+from __future__ import absolute_import
 
 import sys
 import time
 import string
 import logging
-from sink import StdOutSink, StdErrSink
+from .sink import StdOutSink, StdErrSink
 
 FORMATTER = logging.Formatter(
                 fmt='%(asctime)s %(levelname)-8s %(message)s',
