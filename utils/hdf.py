@@ -5,6 +5,8 @@
 Helper functions for HDF5 functionality
 """
 
+from builtins import str
+from builtins import object
 import logging
 import inspect
 import os.path
@@ -43,7 +45,7 @@ def HDFCleanup(infile):
     the method returns nothing. Else, the method returns the new HDF5 object"""
     
     inputIsFilename = False
-    if isinstance(infile, (str, unicode)): # a filename was supplied
+    if isinstance(infile, str): # a filename was supplied
         infile = h5py.File(infile)
         inputIsFilename = True
     def hdfDeepCopy(infile, outfilename):
@@ -114,7 +116,7 @@ class HDFWriter(object):
         return self._handle[self.location]
 
     def writeAttributes(self, **kwargs):
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             # leading _ from keys are removed, they come from __getstate__()
             # which gathers member variables (usually private with leading _)
             self.writeAttribute(key.lstrip('_'), value)
@@ -167,7 +169,7 @@ class HDFWriter(object):
                      + u"It is empty or does not exist (=None).")
             return
 
-        if isCallable(member) and not hasattr(member, "hdfWrite"):
+        if hasattr(member, '__call__') and not hasattr(member, "hdfWrite"):
             member = member()
 
         if hasattr(member, "hdfWrite"): # support instances and types

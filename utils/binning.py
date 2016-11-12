@@ -15,7 +15,9 @@
    distances to the centres. If error provided is empty, the standard
    deviation of the intensities in the bins are computed.
 """
+from __future__ import print_function
 
+from builtins import range
 from numpy import (zeros, mean, sqrt, std, reshape, size, linspace,
                    argsort, ones, array, sort, diff)
 
@@ -33,11 +35,11 @@ def binningArray(q, psi, intensity, error, s = 2):
     sq = q.shape
     if isodd(sq[0]):
         # trim edge
-        for it in ddi.keys():
+        for it in list(ddi.keys()):
             ddi[it] = ddi[it][1:, :]
     if isodd(sq[1]):
         # trim edge
-        for it in ddi.keys():
+        for it in list(ddi.keys()):
             ddi[it] = ddi[it][:, 1:]
     # now we can do n-by-n binning
     sq = q.shape
@@ -70,10 +72,10 @@ def binning1d(q, intensity, error = None, numBins = 200, stats = 'std'):
     
     # Let's make sure the input is consistent
     if size(q) != size(intensity):
-        print "Incompatible sizes of q and intensity"
+        print("Incompatible sizes of q and intensity")
         return
     elif error is not None and size(error) != size(intensity):
-        print "Size of error is not identical to q and intensity"
+        print("Size of error is not identical to q and intensity")
         return
 
     #flatten q, intensity and error
@@ -175,12 +177,12 @@ def binningWeighted1d(q, intensity, error = None,
                "q must be of the same number of elements as intensity")
         return
     elif error is not None and (size(error) != size(intensity)):
-        print "Size of error is not identical to q and intensity"
+        print("Size of error is not identical to q and intensity")
         return
     stats = stats.lower()
     if (stats != 'std' and stats != 'poisson' and
         stats != 'se' and stats != 'auto'):
-        print "Statistics can only be set to 'se' (default), or 'auto'.\n"
+        print("Statistics can only be set to 'se' (default), or 'auto'.\n")
         print ("Only use 'auto' for photon-counting detectors, selects "
                "largest error between se and Poisson.\n")
         print ("If errors are supplied, standard errors are not calculated "
