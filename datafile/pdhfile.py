@@ -2,6 +2,8 @@
 # datafile/pdhfile.py
 
 from __future__ import absolute_import # PEP328
+from builtins import range
+from builtins import object
 from utils import isList, isInteger, isString
 from utils import classproperty
 from datafile import ArrayFile
@@ -41,7 +43,7 @@ class PDHHeader(object):
         """Creates setter methods for each name in _entries."""
         def setValueFactory(index):
             return lambda self, value: self._setValue(index, value)
-        for key, index in cls._entries.iteritems():
+        for key, index in cls._entries.items():
             key = "set" + key[0].upper() + key[1:]
             setattr(cls, key, setValueFactory(index))
 
@@ -71,11 +73,11 @@ class PDHHeader(object):
     @classproperty
     @classmethod
     def maxLines(cls):
-        return max([index[0] for index in cls._entries.itervalues()]) + 1
+        return max([index[0] for index in cls._entries.values()]) + 1
 
     def __init__(self, dataCount, description = None):
         object.__init__(self)
-        if any([not hasattr(self, key) for key in self._entries.iterkeys()]):
+        if any([not hasattr(self, key) for key in self._entries.keys()]):
             self._setup()
         # init header with default values
         if not isString(description):

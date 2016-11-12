@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 # datafile/datafile.py
 
+from builtins import str
+from builtins import object
 import os.path
 from abc import ABCMeta, abstractmethod, abstractproperty
 from numpy import ndarray as np_ndarray
 from utils.error import FileError
 from utils.lastpath import LastPath
 from utils import classproperty
+from future.utils import with_metaclass
 
-class DataFile(object):
+class DataFile(with_metaclass(ABCMeta, object)):
     """
     Base class for handling data files.
     Can be initialized with a file (name) to read or with a data array.
@@ -37,7 +40,6 @@ class DataFile(object):
     >>> if os.path.isfile(fd.name):
     ...     os.remove(fd.name)
     """
-    __metaclass__ = ABCMeta
     _filename = None
 
     @abstractproperty
@@ -67,7 +69,7 @@ class DataFile(object):
     @staticmethod
     def sanitizeReadFilename(filename):
         """Checks provided filename for plausibility and updates LastPath."""
-        filename = os.path.abspath(unicode(filename))
+        filename = os.path.abspath(str(filename))
         if not os.path.isfile(filename):
             raise FileError("Given file does not exist!", filename)
         return filename
@@ -104,7 +106,7 @@ class DataFile(object):
             dummy, ex = cls.extensions[0]
             if filename[-len(ex):] != ex:
                 filename = "{0}.{1}".format(filename, ex)
-        filename = os.path.abspath(unicode(filename))
+        filename = os.path.abspath(str(filename))
         dirname = os.path.dirname(filename)
         if not os.path.isdir(dirname):
             raise FileError("Directory does not exist:", dirname)

@@ -8,10 +8,10 @@ from numpy import array as np_array
 from datafile import DataFile
 from utils.error import FileError
 from utils import isString, isWindows, mcopen
+from future.utils import with_metaclass
 
-class AsciiFile(DataFile):
+class AsciiFile(with_metaclass(ABCMeta, DataFile)):
     """A generic ascii data file."""
-    __metaclass__ = ABCMeta
     valueFormat = "{0: 14.6E}" # format of data values for ascii export
     separator = " "
     newline="\n"
