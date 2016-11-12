@@ -4,6 +4,8 @@
 Defines the format of the final report on success of an MC fit. 
 """
 
+from builtins import range
+from builtins import object
 import logging
 import inspect
 import os.path
@@ -316,9 +318,9 @@ class PlotResults(object):
         ah.tick_params(axis = 'y', colors = 'black', width = 2,
                 which = 'minor', direction = 'in', length = 3)
         locs, labels = xticks()
-        xticks(locs, map(lambda x: "%g" % x, locs))
+        xticks(locs, ["%g" % x for x in locs])
         locs, labels = yticks()
-        yticks(locs, map(lambda x: "%g" % x, locs))
+        yticks(locs, ["%g" % x for x in locs])
         return ah
 
     def figInit(self, nHists, figureTitle, nR = 1):
