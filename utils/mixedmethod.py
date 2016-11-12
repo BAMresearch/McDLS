@@ -15,7 +15,9 @@ it works on the instance data. Thus, for instances modifications apply
 to that individual instance only. For classes modifications apply on the
 class level which applies changes to all instances created from that.
 """
+from __future__ import print_function
 
+from builtins import object
 from functools import partial
 
 class mixedmethod(object):
@@ -50,6 +52,6 @@ if __name__ == '__main__':
     egg.ham(5)
     Spam.ham(4)
 
-    print "Spam: ", Spam.bla, "egg:", egg.bla
+    print("Spam: ", Spam.bla, "egg:", egg.bla)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # utils/parameter.py
 
+from builtins import str
+from builtins import range
+from builtins import object
 import logging
 import numpy as np
 from utils import mixedmethod, isList, testfor, isInteger, classproperty
@@ -535,7 +538,7 @@ class Histograms(list):
             self[i].calc(*args)
 
     def hdfWrite(self, hdf):
-        hdf.writeMembers(self, *range(len(self)))
+        hdf.writeMembers(self, *list(range(len(self))))
 
 def isActiveParam(param):
     """Checks any type of parameter for activeness.
