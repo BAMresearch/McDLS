@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import #PEP328
 from __future__ import (division, absolute_import, print_function,
                                 unicode_literals)
+from builtins import range
 import sys
 import os
 import os.path
@@ -59,7 +59,7 @@ def main(argv = None):
                 del sys.argv[i]
     try:
         args = parser.parse_args()
-    except SystemExit, e:
+    except SystemExit as e:
         # useful debugging code, ensure destination is writable!
 #        logfn = ("/tmp/{name}_unsupported_args.log"
 #                 .format(name = SCRIPT_FILENAME))
@@ -82,7 +82,7 @@ def main(argv = None):
         try:
             from gui import calc
             calc(args.fnames)
-        except StandardError, e:
+        except Exception as e:
             # show detailed error traceback if there was one
             import traceback
             logging.error(traceback.format_exc())
