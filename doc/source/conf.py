@@ -11,6 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+from __future__ import print_function
+from builtins import range
+from builtins import object
 import sys, os
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -94,7 +97,7 @@ members_to_watch = ['function', 'method'];
 def warn_undocumented_members(app, what, name, obj, options, lines):
     if(what in members_to_watch and len(lines) == 0):
         # warn to terminal during build
-        print "Warning: ", what, "is undocumented: ", name, "(%d)"% len(lines)
+        print("Warning: ", what, "is undocumented: ", name, "(%d)"% len(lines))
         # or modify the docstring so the rendered output is highlights the omission
         lines.append(".. Warning:: %s '%s' undocumented" % (what, name))
 
