@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # models/lmadensesphere.py
 
+from __future__ import absolute_import
 import numpy as np
 from numpy import pi, sin, cos
 import logging
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import SASModel
+from .scatteringmodel import SASModel
 from utils.units import Length, Fraction, NoUnit, SLD
 
 class LMADenseSphere(SASModel):

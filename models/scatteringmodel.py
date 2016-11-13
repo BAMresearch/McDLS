@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 # models/scatteringmodel.py
 
+from builtins import zip
+from builtins import object
 import os.path
 import logging
 import inspect
 from math import sqrt
 import numpy as np
 from abc import ABCMeta, abstractmethod
-from itertools import izip
+from future.utils import with_metaclass
+
 from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor, classname
 from bases.algorithm import AlgorithmBase
@@ -83,9 +86,7 @@ class DLSModelData(ModelData):
         normalization during post-processing."""
         return super(DLSModelData, self).volumeFraction(sqrt(scaling))
 
-class ScatteringModel(AlgorithmBase):
-    __metaclass__ = ABCMeta
-
+class ScatteringModel(with_metaclass(ABCMeta, AlgorithmBase)):
     @abstractmethod
     def volume(self):
         """Calculates the volume of this model, taking compensationExponent
@@ -166,7 +167,7 @@ class ScatteringModel(AlgorithmBase):
         # call the model for each parameter set explicitly
         # otherwise the model gets complex for multiple params incl. fitting
         for i in arange(pset.shape[0]): # for each contribution
-            for p, v in izip(params, pset[i]): # for each fit param within
+            for p, v in zip(params, pset[i]): # for each fit param within
                 p.setValue(v)
             # result squared or not is model type dependent
             it, vset[i], wset[i], sset[i] = self.calcIntensity(data,
@@ -174,7 +175,7 @@ class ScatteringModel(AlgorithmBase):
             # a set of intensities
             cumInt += it
         # restore previous parameter values
-        for p, v in izip(params, oldValues):
+        for p, v in zip(params, oldValues):
             p.setValue(v)
         return self.modelDataType()(cumInt.flatten(), vset, wset, sset)
 
@@ -227,7 +228,7 @@ class ScatteringModel(AlgorithmBase):
         """Update parameter values based on provided dict with parameter
         names as keys."""
         selforcls.fixTestParams(paramDict)
-        for key, value in paramDict.iteritems():
+        for key, value in paramDict.items():
             try:
                 p = getattr(selforcls, key)
             except: pass
@@ -310,8 +311,7 @@ class ScatteringModel(AlgorithmBase):
                         )
                 )
 
-class SASModel(ScatteringModel):
-    __metaclass__ = ABCMeta
+class SASModel(with_metaclass(ABCMeta, ScatteringModel)):
     canSmear = False # Indicates a model function which supports smearing...
 
     def modelDataType(self):
