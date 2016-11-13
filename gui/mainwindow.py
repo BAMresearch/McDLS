@@ -2,6 +2,7 @@
 # gui/mainwindow.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
 import os.path
 import re
 import sys
@@ -308,9 +309,9 @@ class MainWindow(MainWindowBase):
             settingsWidget.appSettings = self.appSettings()
             settingsWidget.restoreSession()
         try:
-            value = unicode(settings.value("lastpath").toString())
+            value = str(settings.value("lastpath").toString())
         except AttributeError: # QVariant
-            value = unicode(settings.value("lastpath"))
+            value = str(settings.value("lastpath"))
         if os.path.isdir(value):
             LastPath.set(value)
 

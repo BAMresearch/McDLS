@@ -2,6 +2,7 @@
 # gui/algorithmwidget.py
 
 from __future__ import absolute_import # PEP328
+from builtins import range
 import logging
 
 from gui.qt import QtCore, QtGui
@@ -132,7 +133,7 @@ class AlgorithmWidget(SettingsWidget):
             value = self.appSettings.value(key)
             try:
                 self.set(key, value)
-            except StandardError, e:
+            except Exception as e:
                 logging.warn(e)
         self.appSettings.endGroup()
 
@@ -384,7 +385,7 @@ class AlgorithmWidget(SettingsWidget):
         assert isinstance(layout, QLayout)
         if not isinstance(newParent, QWidget):
             newParent = None
-        for i in reversed(range(layout.count())):
+        for i in reversed(list(range(layout.count()))):
             # reversed removal avoids renumbering possibly
             item = layout.takeAt(i)
             if newParent is None or item.widget() is None:

@@ -2,6 +2,7 @@
 # gui/rangelist.py
 
 from __future__ import absolute_import # PEP328
+from builtins import zip
 import logging
 
 from numpy import inf as numpy_inf
