@@ -2,6 +2,7 @@
 # gui/utils/dialoginteraction.py
 
 from __future__ import absolute_import # PEP328
+from __future__ import print_function
 from gui.qt import QtCore, QtGui
 from QtCore import (Qt, QThread, QMetaObject)
 from QtGui import (QApplication, QMessageBox)
@@ -49,7 +50,7 @@ class DialogInteraction(QThread):
         di.start()
         try:
             result = blockingFunc(*args, **kwargs)
-        except StandardError:
+        except Exception:
             raise
         finally:
             di.quit()

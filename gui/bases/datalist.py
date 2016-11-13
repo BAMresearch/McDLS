@@ -2,6 +2,8 @@
 # gui/bases/datalist.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
+from builtins import range
 import os.path
 import logging
 import collections
@@ -102,7 +104,7 @@ class DataItem(QTreeWidgetItem):
         elif value is None: # allows not set attrib., removes text from gui
             value = ""
         else:
-            value = unicode(value) # convert numbers eventually
+            value = str(value) # convert numbers eventually
         return getProperty, setProperty, value
 
     def dataId(self):
@@ -149,7 +151,7 @@ class DataItem(QTreeWidgetItem):
             deltaTs = abs(self.clicked[1] - self.changed[1])
             return (self.clicked[0] == self.changed[0] and
                     deltaTs < 0.1)
-        except StandardError:
+        except Exception:
             pass
         return False
 
@@ -470,13 +472,13 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                         break
                     if stopFunc is not None and stopFunc():
                         break
-                except StandardError, e:
+                except Exception as e:
                     errorOccured = True
                     logging.error(str(e).replace("\n"," ") + " ... skipping")
                     continue
             if progress is not None:
                 progress.close()
-        except StandardError, e:
+        except Exception as e:
             # progress.cancel()
             # catch and display _all_ exceptions in user friendly manner
             # DisplayException(e)
@@ -541,12 +543,12 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             data = None
             try:
                 data = processSourceFunc(sourceItem, **kwargs)
-            except StandardError, e:
+            except Exception as e:
                 # progress.cancel()
                 # DisplayException(e)
                 # on error, skip the current file
                 errorOccured = True
-                logging.error(unicode(e).replace("\n"," ") + " ... skipping")
+                logging.error(str(e).replace("\n"," ") + " ... skipping")
                 continue
             if data is not None:
                 lastItem = self.add(data)
@@ -568,7 +570,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         try:
             if sys.exc_info()[0] is not None:
                 raise
-        except StandardError, e:
+        except Exception as e:
             DisplayException(e)
 
 if __name__ == "__main__":

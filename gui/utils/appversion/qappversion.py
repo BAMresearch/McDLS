@@ -2,6 +2,7 @@
 # gui/utils/appversion/qappversion.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
 from gui.utils.appversion import AppVersion
 from utils import isString
 from gui.qt import QtCore

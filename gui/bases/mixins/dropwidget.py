@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mixins/dropwidget.py
 
+from builtins import str
+from builtins import object
 class DropWidget(object):
     """
     Drag&Drop support for widgets which inherit from this.
@@ -10,7 +12,7 @@ class DropWidget(object):
             ev.acceptProposedAction()
 
     def dropEvent(self, ev):
-        lst = [unicode(url.toLocalFile()) for url in ev.mimeData().urls()]
+        lst = [str(url.toLocalFile()) for url in ev.mimeData().urls()]
         self.sigReceivedUrls.emit(lst)
         ev.acceptProposedAction()
 

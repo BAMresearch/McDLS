@@ -2,6 +2,8 @@
 # gui/bases/logwidget.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
+from builtins import filter
 import os
 import os.path
 import sys
@@ -132,7 +134,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
         # copy relevant actions from standard context menu
         menu = self.createStandardContextMenu()
         for a in menu.actions():
-            title = unicode(a.text()).replace('&', '')
+            title = str(a.text()).replace('&', '')
             startswith = title.startswith
             if title.startswith("Copy\t"):
                 self.addMenuEntryAction("copy", a, "isCopyAvailable")
@@ -216,13 +218,13 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
     def append(self, text):
         """Appends a new line of text."""
         wasEmpty = self.document().isEmpty()
-        self._buffer.extend(url2href(unicode(text.replace('\r', ''))).splitlines())
+        self._buffer.extend(url2href(str(text.replace('\r', ''))).splitlines())
         self._bufferDirty = True
         if wasEmpty:
             self._updateContents()
 
     def contents(self):
-        return unicode(self.toPlainText())
+        return str(self.toPlainText())
 
     def saveToFile(self, filename = None):
         fn = filename

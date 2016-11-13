@@ -2,6 +2,8 @@
 # gui/bases/mixins/contextmenuwidget.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
+from builtins import object
 from collections import OrderedDict
 from utils import isString, isList, isMap
 from gui.utils.translate import tr
@@ -42,7 +44,7 @@ class ContextMenuWidget(object):
 
     def _updateTitle(self, text):
         """Updates a menu title with the widget title."""
-        text = unicode(text)
+        text = str(text)
         if '%' in text:
             title = self.title
             if isinstance(title, TitleHandler):
@@ -142,7 +144,7 @@ class ContextMenuWidget(object):
         # default actions
         availableActions = self.menuEntries(self.allMenuStates) # copy!
         # try to find a set of actions depending on the current state
-        for attrname, actions in self._states.iteritems():
+        for attrname, actions in self._states.items():
             if (not hasattr(self, attrname) or
                 not getattr(self, attrname)()):
                 continue
