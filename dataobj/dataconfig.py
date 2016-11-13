@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import # PEP328
 
+from builtins import object
 from abc import ABCMeta, abstractproperty
 from types import MethodType
 import numpy
@@ -19,11 +20,11 @@ def funcNotInFuncList(f, flst):
     if not isinstance(f, MethodType):
         return (f not in flst)
 
-    idExists = (id(f.im_self) in [id(of.im_self)
+    idExists = (id(f.__self__) in [id(of.__self__)
                     for of in flst if isinstance(of, MethodType)])
     if not idExists:
         return True
-    nameExists = (f.im_func.func_name in [of.im_func.func_name
+    nameExists = (f.__func__.__name__ in [of.__func__.__name__
                     for of in flst if isinstance(of, MethodType)])
     if not nameExists:
         return True
@@ -38,7 +39,8 @@ class CallbackRegistry(object):
 
     def register(self, what, *func):
         # check for the correct number of arguments of func as well?
-        assert all((isCallable(f) for f in func))
+        # assert all((isCallable(f) for f in func))
+        assert all((hasattr(f, '__call__') for f in func)) # recommended change by RefactoringTool
         self._assertPurpose(what)
         if self._callbacks is None: # lazy init
             self._callbacks = dict()
@@ -54,7 +56,8 @@ class CallbackRegistry(object):
             return
         funcLst = []
         for func in self._callbacks.get(what, []):
-            if not isCallable(func):
+            # if not isCallable(func):
+            if not hasattr(func, '__call__'): # recommended change by RefactoringTool
                 continue
             func(*args, **kwargs)
             funcLst.append(func)

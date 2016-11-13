@@ -6,6 +6,8 @@ A class describing a vector with limits, units, mask and uncertainties
 """
 
 from __future__ import absolute_import # PEP328
+from builtins import str
+from builtins import object
 import numpy as np
 from utils.units import Unit, NoUnit
 
@@ -37,7 +39,7 @@ class DataVector(object):
 
     @property
     def name(self):
-        return unicode(self._name)
+        return str(self._name)
 
     @property
     def validIndices(self):

@@ -6,6 +6,7 @@ Represents input data associated with a measurement.
 """
 
 from __future__ import absolute_import # PEP328
+from builtins import range
 import os # Miscellaneous operating system interfaces
 from numpy import all as np_all
 import numpy as np
@@ -15,12 +16,12 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
+from future.utils import with_metaclass
 
-class DataObj(DataSet, DisplayMixin):
+class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {}))):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
     """
-    __metaclass__ = ABCMeta
     _filename = None
     _config = None
     _validMask = None
