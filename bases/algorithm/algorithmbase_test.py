@@ -2,6 +2,7 @@
 # bases/algorithm/algorithmbase_test.py
 
 from __future__ import absolute_import # PEP328
+from builtins import zip
 from nose.tools import raises, assert_raises
 from numpy import array as np_array
 from numpy import uint32, float64, dtype
