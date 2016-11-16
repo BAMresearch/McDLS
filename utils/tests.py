@@ -52,10 +52,10 @@ def isNumber(obj):
     # the faster way to do this is "Duck typing", according to SO:
     try:
         float(obj)
-    except Exception: # catch ValueError and TypeError (for None)
+    except (ValueError, TypeError):
         try:
             complex(obj)
-        except Exception:
+        except (ValueError, TypeError):
             return False
     return True
 
