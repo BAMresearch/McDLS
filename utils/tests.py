@@ -60,7 +60,7 @@ def isNumber(obj):
     return True
 
 def isInteger(obj):
-    return (isinstance(obj, int) or isinstance(obj, int))
+    return isinstance(obj, int)
 
 def isCallable(obj):
     try: # python 3
