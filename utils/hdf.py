@@ -169,7 +169,7 @@ class HDFWriter(object):
                      + u"It is empty or does not exist (=None).")
             return
 
-        if hasattr(member, '__call__') and not hasattr(member, "hdfWrite"):
+        if isCallable(member) and not hasattr(member, "hdfWrite"):
             member = member()
 
         if hasattr(member, "hdfWrite"): # support instances and types

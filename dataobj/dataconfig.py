@@ -39,8 +39,7 @@ class CallbackRegistry(object):
 
     def register(self, what, *func):
         # check for the correct number of arguments of func as well?
-        # assert all((isCallable(f) for f in func))
-        assert all((hasattr(f, '__call__') for f in func)) # recommended change by RefactoringTool
+        assert all((isCallable(f) for f in func))
         self._assertPurpose(what)
         if self._callbacks is None: # lazy init
             self._callbacks = dict()
@@ -56,8 +55,7 @@ class CallbackRegistry(object):
             return
         funcLst = []
         for func in self._callbacks.get(what, []):
-            # if not isCallable(func):
-            if not hasattr(func, '__call__'): # recommended change by RefactoringTool
+            if not isCallable(func):
                 continue
             func(*args, **kwargs)
             funcLst.append(func)

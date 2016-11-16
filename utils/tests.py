@@ -63,7 +63,10 @@ def isInteger(obj):
     return (isinstance(obj, int) or isinstance(obj, int))
 
 def isCallable(obj):
-    return isinstance(obj, collections.Callable)
+    try: # python 3
+        return isinstance(obj, collections.abc.Callable)
+    except AttributeError: # python 2
+        return isinstance(obj, collections.Callable)
 
 # environment tests
 

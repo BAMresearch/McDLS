@@ -41,7 +41,7 @@ class TitleHandler(TitleMixin):
             func(title)
 
     def registerUpdateFunc(self, func):
-        assert hasattr(func, '__call__')
+        assert isCallable(func)
         self._updateFunc.append(func)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
