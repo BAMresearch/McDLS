@@ -2,10 +2,19 @@
 
 from __future__ import (division, absolute_import, print_function,
                                 unicode_literals)
-from builtins import range
+
 import sys
 import os
 import os.path
+
+try:
+    from builtins import range
+except ImportError as e:
+    print("Error:", e)
+    print("Failed to use Python 3 imports!")
+    print("When using Python 2, package 'future' might be missing.")
+    print("Install it by 'sudo pip2 install future'.")
+    sys.exit()
 
 def getScriptPath():
     """Returns the full path to the current script file which calls this
