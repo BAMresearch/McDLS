@@ -2,14 +2,22 @@
 # gui/bases/datalist.py
 
 from __future__ import absolute_import # PEP328
+from __future__ import division
+from past.utils import old_div
 from builtins import str
 from builtins import range
 import os.path
 import logging
 import collections
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+
+try:
+    # make all modifications to sys (below) local to this module
+    # Python 2 needed this for some reason ...
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+except NameError:
+    pass
 
 from time import time as timestamp
 from gui.utils.signal import Signal
@@ -280,8 +288,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         """Selects all items in the list if not all are selected.
         Clears the selection if all items in the list already are selected.
         """
-        if (len(self.listWidget.selectedIndexes())
-            / self.listWidget.columnCount()) == len(self):
+        if (old_div(len(self.listWidget.selectedIndexes()), self.listWidget.columnCount())) == len(self):
             self.listWidget.clearSelection()
         else:
             self.listWidget.selectAll()
