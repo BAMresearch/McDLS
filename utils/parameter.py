@@ -487,16 +487,17 @@ class Histogram(DataSet, DisplayMixin):
         hdf.writeMembers(self, "lower", "upper", "binCount", "xscale",
                                "yweight", "autoFollow")
 
+    def __hash__(self):
+        value = 0
+        if self.param is not None:
+            value = hash(id(self.param))
+        for attr in "lower", "upper", "binCount", "xscale", "yweight":
+            value ^= hash(getattr(self, attr)) # XORed
+        return value
+
     def __eq__(self, other):
         """Compares with another Histogram or tuple."""
-        if id(self.param) != id(other.param):
-            return False
-        for attr in "lower", "upper", "binCount", "xscale", "yweight":
-            thisval = getattr(self, attr)
-            otherval = getattr(other, attr)
-            if otherval != thisval:
-                return False
-        return True
+        return hash(self) == hash(other)
 
     def __neq__(self, other):
         return not self.__eq__(other)
