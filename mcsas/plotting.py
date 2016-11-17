@@ -461,21 +461,21 @@ class PlotResults(object):
 
     def plotInfo(self, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
-        delta = 0.001 #minor offset
         # make active:
         axes(InfoAxis)
         # show volume-weighted info:
         ovString = self.formatAlgoInfo()
+        delta = 0.003 # minor offset
         tvObj = text(0. - delta, 0. + delta, ovString, **self._infoText)
         self._fig.show()
         axis('tight')
 
     def plotStats(self, parHist, rangei, fig, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
-        delta = 0.001 # minor offset
         # make active:
         axes(InfoAxis)
         # show volume-weighted info:
+        delta = 0.002 # minor offset
         ovString = self.formatRangeInfo(parHist, rangei, weighti = 0)
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.95}, **self._infoText)
