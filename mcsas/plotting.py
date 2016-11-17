@@ -95,8 +95,12 @@ class PlotResults(object):
             "solid_capstyle" : 'round',
             "solid_joinstyle" : 'miter'
     }
+    # for some reason 'small' didn't work reliably and consistently with
+    # py2&py3, sometimes info boxes show up with different text sizes
+    # although the matplotlib version is the same for both (1.3.1)
+    _infoTextFontSize = 10 # 'small'
     _infoText = {
-            "size" : "small",
+            "fontsize" : _infoTextFontSize, "size" : _infoTextFontSize,
             "horizontalalignment" : 'center',
             "multialignment" : 'center',
             "verticalalignment" : 'center'
