@@ -16,7 +16,6 @@ try:
     import configparser
 except ImportError: 
     import ConfigParser as configparser
-import numpy
 import numpy as np
 import pickle
 
@@ -374,7 +373,7 @@ class Calculator(HDFMixin):
         fn = self._outFn.filenameVerbose("contributions",
                                          "Model contribution parameters",
                                          extension = '.pickle')
-        with mcopen(fn, 'w') as fh:
+        with mcopen(fn, 'wb') as fh:
             pickle.dump(mcResult['contribs'], fh)
 
     def _writeSettings(self, mcargs, dataset):
@@ -400,8 +399,7 @@ class Calculator(HDFMixin):
         config.set(sectionName, "model", self.model.name())
         # We don't have to do anything with these yet, but storing them for now:
         if isinstance(dataset, SASData): # useful with SAS data only
-            config.set(sectionName, "X0 limits", 
-                    np.array(dataset.x0.limit))
+            config.set(sectionName, "X0 limits", str(dataset.x0.limit))
 
         sectionName = "Model Settings"
         config.add_section(sectionName)
