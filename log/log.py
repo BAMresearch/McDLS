@@ -5,10 +5,10 @@
 Interface and convenience methods for general logging.
 """
 from __future__ import absolute_import
+from builtins import str
 
 import sys
 import time
-import string
 import logging
 from .sink import StdOutSink, StdErrSink
 
@@ -25,7 +25,7 @@ def timestampFormat():
     >>> timestampFormat()
     '%Y-%m-%d_%H-%M-%S'
     """
-    return FORMATTER.datefmt.translate(string.maketrans(" :", "_-"))
+    return FORMATTER.datefmt.translate(str.maketrans(" :", "_-"))
 
 def timestamp():
     """Current local time.
