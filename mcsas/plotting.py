@@ -465,7 +465,7 @@ class PlotResults(object):
         axes(InfoAxis)
         # show volume-weighted info:
         ovString = self.formatAlgoInfo()
-        delta = 0.003 # minor offset
+        delta = 0.001 # minor offset
         tvObj = text(0. - delta, 0. + delta, ovString, **self._infoText)
         self._fig.show()
         axis('tight')
@@ -475,7 +475,7 @@ class PlotResults(object):
         # make active:
         axes(InfoAxis)
         # show volume-weighted info:
-        delta = 0.002 # minor offset
+        delta = 0.001 # minor offset
         ovString = self.formatRangeInfo(parHist, rangei, weighti = 0)
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.95}, **self._infoText)
