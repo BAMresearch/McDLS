@@ -50,6 +50,16 @@ try:
 except NameError:
     pass
 
+def getQMethodSignature(qobject, methodName):
+    metaobject = qobject.metaObject()
+    for i in range(metaobject.methodCount()):
+        if (metaobject.method(i).signature().startswith(methodName)):
+            return metaobject.method(i).signature()
+    return None
+
+def hasReceivers(qobject, signalName):
+    return qobject.receivers(getQMethodSignature(qobject, signalName))
+
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
@@ -120,9 +130,8 @@ class ModelWidget(AlgorithmWidget):
 
     def _selectModelSlot(self, key = None):
         # rebuild the UI without early signals
-        try:
+        if hasReceivers(self, "sigRangeChanged"):
             self.sigRangeChanged.disconnect(self.sigModelChanged)
-        except: sys.exc_clear()
         model = MODELS.get(str(key), None)
         if model is None or not issubclass(model, ScatteringModel):
             return
