@@ -50,6 +50,10 @@ that attribute in general for all new instances to be created
 which is behaves like a default value.
 """
 
+from __future__ import absolute_import
+from builtins import object
+from builtins import str
+
 import sys
 import logging
 from math import log10 as math_log10
@@ -60,7 +64,7 @@ from utils import (isString, isNumber, isList, isMap, isSet, testfor,
                    assertName, classname, classproperty, clip, isCallable)
 from utils.mixedmethod import mixedmethod
 from utils.units import NoUnit
-from numbergenerator import NumberGenerator, RandomUniform
+from .numbergenerator import NumberGenerator, RandomUniform
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):
     # works with vectors of multiple bounds too
@@ -82,7 +86,7 @@ def generateValues(numberGenerator, defaultRange, lower, upper, count):
     # scale numbers to requested range
     return values * (vRange[1] - vRange[0]) + vRange[0]
 
-class ParameterError(StandardError):
+class ParameterError(Exception):
     pass
 
 class DefaultValueError(ParameterError):
@@ -200,7 +204,7 @@ class ParameterBase(object):
     def setAttributes(selforcls, **kwargs):
         """Returns this type with attribute values initialized in the ordering
         provided by attributeNames()"""
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             # set the attributes for which we find setters
             # the setter may raise exceptions for invalid data
             setter = getattr(selforcls, _setterName(key), None)
@@ -240,8 +244,7 @@ class ParameterBase(object):
         """Changing the name is allowed for the class/type only,
         not for instances."""
         assertName(name, ParameterNameError)
-        replacements = dict([(ord(char), None) for char in u' \t\n\r'])
-        safename = unicode(name).translate(replacements)
+        safename = str(name).translate(str.maketrans("", "", ' \t\n\r'))
         cls._name = safename
 
     @mixedmethod
@@ -259,13 +262,13 @@ class ParameterBase(object):
         if (not isString(newName) or len(newName) <= 0):
             newName = selforcls.name()
         if newName is not None:
-            selforcls._displayName = unicode(newName)
+            selforcls._displayName = str(newName)
 
     @mixedmethod
     def formatDisplayName(selforcls, **kwargs):
         unformatted = any([
-            unicode('{' + k + '}') in selforcls.displayName()
-            for k in kwargs.iterkeys()])
+            str('{' + k + '}') in selforcls.displayName()
+            for k in kwargs.keys()])
         if unformatted: # remember the original text for repeated formatting
             selforcls._origDisplayName = selforcls.displayName()
         if not hasattr(selforcls, "_origDisplayName"):
@@ -454,9 +457,9 @@ class ParameterNumerical(ParameterBase):
             return
         testfor(isMap(newDisplayValues), DisplayValuesError,
                 "Expected a display value mapping of numbers to text!")
-        testfor(all([isNumber(v) for v in newDisplayValues.iterkeys()]),
+        testfor(all([isNumber(v) for v in newDisplayValues.keys()]),
             DisplayValuesError, "Display value keys have to be numbers!")
-        testfor(all([isString(s) for s in newDisplayValues.itervalues()]),
+        testfor(all([isString(s) for s in newDisplayValues.values()]),
             DisplayValuesError, "Display values have to be text!")
         # TODO: also add reverse lookup
         selforcls._displayValues = newDisplayValues
@@ -639,8 +642,14 @@ def factory(name, value, paramTypes = None, **kwargs):
         clsdict['__doc__'] = description
     # create a new class/type with given name and base class
     # translate works different for unicode strings:
-    typeName = str(name.title()).translate(None, ' \t\n\r') + "Parameter"
-    NewType = type(typeName, (cls,), clsdict)
+    typeName = (str(name.title())
+                .translate(str.maketrans("", "", ' \t\n\r'))
+                + "Parameter")
+    NewType = None
+    try:
+        NewType = type(typeName, (cls,), clsdict)
+    except TypeError: # Python 2: type() argument 1 must be string, not unicode
+        NewType = type(typeName.encode('ascii', 'ignore'), (cls,), clsdict)
     # set up the new class before return
     return NewType.setAttributes(**kwargs)
 

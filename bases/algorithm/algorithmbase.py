@@ -7,7 +7,7 @@ from builtins import object
 from utils import isString, isList, testfor, assertName
 from utils.mixedmethod import mixedmethod
 from utils import classproperty, classname
-from bases.algorithm.parameter import ParameterBase, ParameterError
+from .parameter import ParameterBase, ParameterError
 
 class AlgorithmError(Exception):
     pass
