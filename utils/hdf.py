@@ -13,6 +13,12 @@ import os.path
 import h5py
 from utils import isCallable, isString, isList, isNumber, isInteger, classname
 
+HDFString = str # Python 3 default
+try:
+    HDFString = unicode # fails with Python 3
+except NameError:
+    pass
+
 # from utils.devtools import DBG
 
 def getCallerInfo(referenceType = None, stackOffset = 0):
@@ -45,7 +51,7 @@ def HDFCleanup(infile):
     the method returns nothing. Else, the method returns the new HDF5 object"""
     
     inputIsFilename = False
-    if isinstance(infile, str): # a filename was supplied
+    if isString(infile): # a filename was supplied
         infile = h5py.File(infile)
         inputIsFilename = True
     def hdfDeepCopy(infile, outfilename):
@@ -124,6 +130,8 @@ class HDFWriter(object):
     def writeAttribute(self, key, value):
         if value is None:
             return
+        if isString(value):
+            value = HDFString(value)
         self.log("attribute '{loc}/{k}': '{v}'"
                  .format(loc = self.location.rstrip('/'), k = key, v = value))
         self._writeLocation().attrs[key] = value
