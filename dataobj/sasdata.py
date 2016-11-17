@@ -122,6 +122,8 @@ class SASData(DataObj):
                 rUnitName = self.rUnit.displayMagnitudeName)
 
     def shannonChannelEst(self):
+        if self._shannonChannelEst is None:
+            return None # otherwise int() below fails with TypeError
         return int(self._shannonChannelEst)
 
     def _prepareShannonChannelEst(self, *args):
@@ -129,7 +131,10 @@ class SASData(DataObj):
 
     @property
     def shannonChannelEstText(self):
-        return u"≤ {0:2d} bins ".format(self.shannonChannelEst())
+        est = self.shannonChannelEst()
+        if est is None:
+            return None
+        return u"≤ {0:2d} bins ".format(est)
 
     def __init__(self, **kwargs):
         super(SASData, self).__init__(**kwargs)
