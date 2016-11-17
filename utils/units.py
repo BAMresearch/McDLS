@@ -35,6 +35,7 @@ Selecting a default:
 
 """
 
+from builtins import str
 import logging
 import collections
 import numpy as np # For arrays
@@ -56,13 +57,13 @@ class Unit(object):
             logging.warning(u"Provided default magnitude name '{mn}' is not "
                             u"available: '{map}'!".format(
                             mn = magnitudeName, map = self.magnitudeMapping))
-        self._displayMagnitudeName = unicode(magnitudeName)
+        self._displayMagnitudeName = str(magnitudeName)
 
     @classmethod
     # unit/factor mapping is defined for each class
     def magnitude(cls, name):
         """Returns a (numerical) magnitude matching a magnitude name"""
-        name = unicode(name)
+        name = str(name)
         try:
             return cls.magnitudeMapping[name]
         except KeyError:
@@ -114,7 +115,7 @@ class Unit(object):
     # needs neither class not instance
     def invName(unitString):
         u""" Adds an ⁻¹ sign or removes it if already present"""
-        unitString = unicode(unitString)
+        unitString = str(unitString)
         if not u"⁻¹" in unitString:
             return unitString + u"⁻¹"
         else: 
