@@ -35,11 +35,12 @@ from gui.bases.mixins.dropwidget import DropWidget
 from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
 from gui.bases.mixins.titlehandler import TitleHandler
 
-class DataItem(QTreeWidgetItem):
-    """Generates a QTreeWidgetItem from arbitrary python objects.
-    Storing those objects separately."""
-    _store = None # storage for data objects associated with each item
-    _isRemovable = None
+# alternative implementation to DataItem._store which fails
+class __ItemStore__(object):
+    """Actually stores the data objects whereas the UI widgets store the key
+    (object ID) of the data objects only.
+    This will be reworked or removed once we implement an non-UI queue."""
+    _store = None
 
     @classmethod
     def store(cls, key, value):
@@ -52,6 +53,15 @@ class DataItem(QTreeWidgetItem):
         if cls._store is None:
             return
         del cls._store[key]
+
+    @classmethod
+    def get(cls, key):
+        return cls._store.get(key, None)
+
+class DataItem(QTreeWidgetItem):
+    """Generates a QTreeWidgetItem from arbitrary python objects.
+    Storing those objects separately."""
+    _isRemovable = None
 
     @staticmethod
     def hash32(data):
@@ -69,7 +79,11 @@ class DataItem(QTreeWidgetItem):
         assert isinstance(data, DisplayMixin)
         self._isRemovable = data.isRemovable
         self.setData(0, Qt.UserRole, self.hash32(data))
-        self.store(self.dataId(), data)
+        # this fails magically with Python 3.4 on Ubuntu 14.04, default packages
+#        print(0, DataItem._store)
+#        DataItem._store = 2314
+#        print(1, DataItem._store) # seems it is set later on, some delay?
+        __ItemStore__.store(self.dataId(), data)
         self.update()
 
     def update(self):
@@ -127,7 +141,7 @@ class DataItem(QTreeWidgetItem):
     def data(self, *args):
         if len(args) > 1:
             return super(DataItem, self).data(*args)
-        return self._store.get(self.dataId(), None)
+        return __ItemStore__.get(self.dataId())
 
     def listIndex(self):
         """
@@ -147,7 +161,7 @@ class DataItem(QTreeWidgetItem):
             self.treeWidget().takeTopLevelItem(self.listIndex())
         elif self.parent():
             self.parent().removeChild(self)
-        self.clear(self.dataId()) # remove data object form store
+        __ItemStore__.clear(self.dataId()) # remove data object from store
 
     def setClicked(self, column):
         self.clicked = column, timestamp()
