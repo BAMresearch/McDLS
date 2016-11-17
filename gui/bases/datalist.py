@@ -481,7 +481,14 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                         break
                 except Exception as e:
                     errorOccured = True
-                    logging.error(str(e).replace("\n"," ") + " ... skipping")
+                    import traceback
+                    logging.error(traceback.format_exc())
+                    itemName = str(item)
+                    try:
+                        itemName = item.filename
+                    except AttributeError:
+                        pass
+                    logging.error("Skipping '{}'".format(itemName))
                     continue
             if progress is not None:
                 progress.close()
@@ -490,6 +497,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             # catch and display _all_ exceptions in user friendly manner
             # DisplayException(e)
             errorOccured = True
+            import traceback
+            logging.error(traceback.format_exc())
             pass
         if errorOccured:
             self.reraiseLast()
