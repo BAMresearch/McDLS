@@ -81,9 +81,11 @@ class DataItem(QTreeWidgetItem):
             if not isList(columnData): # columnData is supposed to be tuple
                 columnData = (columnData, )
             for attrname in columnData: # set attributes of columns if avail
-                if not isString(attrname) or not hasattr(data, attrname):
+                if not isString(attrname):
                     continue
-                value = getattr(data, attrname)
+                value = getattr(data, attrname, None)
+                if value is None:
+                    continue
                 getProperty, setProperty, value = self.getItemProperty(value)
                 # set it always, regardless if needed
                 setProperty(column, value)
