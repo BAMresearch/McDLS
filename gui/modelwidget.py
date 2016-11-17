@@ -2,6 +2,8 @@
 # gui/modelwidget.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
+from builtins import range
 import sys
 import logging
 
@@ -41,6 +43,13 @@ FIXEDWIDTH = 120
 from gui.algorithmwidget import AlgorithmWidget
 from dataobj import DataObj
 
+# py2&3 data type for signals text arguments
+Text = str
+try:
+    Text = unicode # fails with Python 3
+except NameError:
+    pass
+
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
@@ -68,16 +77,16 @@ class ModelWidget(AlgorithmWidget):
         if not isinstance(dataobj, DataObj):
             return
         try:
-            self.modelBox.currentIndexChanged[str].disconnect()
+            self.modelBox.currentIndexChanged[Text].disconnect()
         except:
             pass
         self.modelBox.clear()
-        for name, cls in MODELS.iteritems():
+        for name, cls in MODELS.items():
             if cls is None or not issubclass(cls, dataobj.modelType):
                 continue
             self.modelBox.addItem(name)
         self.modelBox.setCurrentIndex(-1) # select none first
-        self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
+        self.modelBox.currentIndexChanged[Text].connect(self._selectModelSlot)
         # trigger signal by switching from none -> 0
         self.modelBox.setCurrentIndex(0)
 
