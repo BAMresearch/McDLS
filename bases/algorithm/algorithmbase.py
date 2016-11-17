@@ -193,13 +193,13 @@ class AlgorithmBase(object):
         for each parameter which is usually set by __init__() and during
         unpickle in __setstate__()."""
         state = self.__dict__.copy()
-        keys = state.keys()
+        keys = set(state.keys())
         for cls in type(self).mro():
             if (issubclass(cls, AlgorithmBase) # prevents recursion loop
                 or not hasattr(cls, "__getstate__")): # excludes other mixins
                 continue
             parentState = cls.__getstate__(self)
-            keys = keys & parentState.keys() # sync common keys only
+            keys = keys & set(parentState.keys()) # sync common keys only
             state.update([(key, parentState[key]) for key in keys])
         return state
 
