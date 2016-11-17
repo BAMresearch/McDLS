@@ -220,10 +220,16 @@ class Calculator(HDFMixin):
             log.removeHandler(widgetHandler)
         #set data in the algorithm
         self._algo.data = dataset
-        # write HDF5
-        self.hdfStore(self._outFn.filenameVerbose(
-            "hdf5archive", "Complete state of the calculation",
-            extension = '.mh5'))
+
+        # write HDF5, show exceptions traceback, if any
+        try:
+            self.hdfStore(self._outFn.filenameVerbose(
+                "hdf5archive", "Complete state of the calculation",
+                extension = '.mh5'))
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+
         self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)
