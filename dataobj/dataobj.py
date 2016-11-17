@@ -316,9 +316,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         return value
 
     def __eq__(self, other):
-        return (np_all(self.rawArray == other.rawArray)
-                and self.title == other.title
-                and self.filename == other.filename)
+        return hash(self) == hash(other)
 
     def __neq__(self, other):
         return not self.__eq__(other)
