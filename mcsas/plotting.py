@@ -262,9 +262,9 @@ class PlotResults(object):
             
     def formatRangeInfo(self, parHist, RI, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
-        oString = u'Range {} to {}, {}-weighted'.format(
-                parHist.lower, parHist.upper,
-                parHist.yweight)
+        oString = u'Range {l:0.03e} to {u:0.03e}, {w}-weighted'.format(
+                    l = parHist.lower, u = parHist.upper,
+                    w = parHist.yweight)
         pStat = parHist.moments
         pStatFields = pStat.fields
         pStatFieldNames = pStat.fieldNames()
