@@ -25,7 +25,7 @@ def timestampFormat():
     >>> timestampFormat()
     '%Y-%m-%d_%H-%M-%S'
     """
-    return FORMATTER.datefmt.translate(str.maketrans(" :", "_-"))
+    return str(FORMATTER.datefmt).translate(str.maketrans(" :", "_-"))
 
 def timestamp():
     """Current local time.
