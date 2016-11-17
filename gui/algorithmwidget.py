@@ -86,9 +86,9 @@ class AlgorithmWidget(SettingsWidget):
     @property
     def inputWidgets(self):
         """Returns all existing input names (for store/restore)."""
-        if self.algorithm is None:
-            return
         children = []
+        if self.algorithm is None:
+            return children
         for p in self.algorithm.params():
             query = p.name()
             try:
@@ -237,6 +237,8 @@ class AlgorithmWidget(SettingsWidget):
 
     def updateUi(self):
         """Update input widgets according to possibly changed backend data."""
+        if self.algorithm is None:
+            return
         # disable signals during ui updates
         self.sigValueChanged.disconnect(self.updateParam)
         for p in self.algorithm.params():
