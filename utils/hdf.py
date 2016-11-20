@@ -113,6 +113,10 @@ class HDFWriter(object):
     def location(self):
         return self._location
 
+    @location.setter
+    def location(self, newLocation):
+        self._location = newLocation
+
     def log(self, msg):
         logging.debug(u"[{}] {}".format(classname(self), msg))
 
@@ -201,9 +205,11 @@ class HDFWriter(object):
 
 class HDFMixin(object):
 
-    def hdfStore(self, filename):
+    def hdfStore(self, filename, rootLocation = None):
         """Writes itself to an HDF file at the given position or group."""
         with HDFWriter.open(filename) as hdf:
+            if rootLocation is not None:
+                hdf.location = rootLocation
 #            DBG(hdf)
             self._hdfWrite(hdf)
 
