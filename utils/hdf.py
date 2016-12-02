@@ -92,9 +92,11 @@ class HDFWriter(object):
     _handle = None
     _location = None
 
-    def __init__(self, hdfHandle):
+    def __init__(self, hdfHandle, rootLocation = None):
         self._handle = hdfHandle
         self._location = hdfHandle.name
+        if rootLocation is not None:
+            self._location = rootLocation
 
     def __enter__(self):
         """Implements a *with* statement context manager."""
@@ -106,16 +108,13 @@ class HDFWriter(object):
         return self._handle.__exit__(*args, **kwargs)
 
     @classmethod
-    def open(cls, filename):
-        return HDFWriter(h5py.File(filename, driver = 'core', backing_store = True))
+    def open(cls, filename, rootLocation = None):
+        return HDFWriter(h5py.File(filename, driver = 'core',
+                                   backing_store = True), rootLocation)
 
     @property
     def location(self):
         return self._location
-
-    @location.setter
-    def location(self, newLocation):
-        self._location = newLocation
 
     def log(self, msg):
         logging.debug(u"[{}] {}".format(classname(self), msg))
@@ -207,9 +206,7 @@ class HDFMixin(object):
 
     def hdfStore(self, filename, rootLocation = None):
         """Writes itself to an HDF file at the given position or group."""
-        with HDFWriter.open(filename) as hdf:
-            if rootLocation is not None:
-                hdf.location = rootLocation
+        with HDFWriter.open(filename, rootLocation) as hdf:
 #            DBG(hdf)
             self._hdfWrite(hdf)
 
