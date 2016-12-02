@@ -1,9 +1,20 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import #PEP328
+from __future__ import (division, absolute_import, print_function,
+                                unicode_literals)
+
 import sys
 import os
 import os.path
+
+try:
+    from builtins import range
+except ImportError as e:
+    print("Error:", e)
+    print("Failed to use Python 3 imports!")
+    print("When using Python 2, package 'future' might be missing.")
+    print("Install it by 'sudo pip2 install future'.")
+    sys.exit()
 
 def getScriptPath():
     """Returns the full path to the current script file which calls this
@@ -57,7 +68,7 @@ def main(argv = None):
                 del sys.argv[i]
     try:
         args = parser.parse_args()
-    except SystemExit, e:
+    except SystemExit as e:
         # useful debugging code, ensure destination is writable!
 #        logfn = ("/tmp/{name}_unsupported_args.log"
 #                 .format(name = SCRIPT_FILENAME))
@@ -80,7 +91,7 @@ def main(argv = None):
         try:
             from gui import calc
             calc(args.fnames)
-        except StandardError, e:
+        except Exception as e:
             # show detailed error traceback if there was one
             import traceback
             logging.error(traceback.format_exc())

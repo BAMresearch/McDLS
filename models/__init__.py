@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # __init__.py
 
-from scatteringmodel import ScatteringModel, SASModel, DLSModel
+from __future__ import absolute_import
+from .scatteringmodel import ScatteringModel, SASModel, DLSModel
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

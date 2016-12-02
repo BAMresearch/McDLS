@@ -8,11 +8,13 @@ integration over this tilt angle is done over several segments of the Gaussian
 PDF, with each segment occupying an equal cumulative probability. The centroid
 value used for the integration is the mass-weighted centre.
 """
+from __future__ import absolute_import
 
+from builtins import range
 import numpy, scipy, scipy.special, scipy.stats
 from numpy import pi, zeros, sin, cos, linspace, diff, sinc
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import SASModel
+from .scatteringmodel import SASModel
 
 # parameters must not be inf
 

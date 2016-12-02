@@ -6,6 +6,7 @@ Represents input data associated with a measurement.
 """
 
 from __future__ import absolute_import # PEP328
+from builtins import range
 import os # Miscellaneous operating system interfaces
 from numpy import all as np_all
 import numpy as np
@@ -15,12 +16,12 @@ from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
 from utils import classproperty
 import logging
+from future.utils import with_metaclass
 
-class DataObj(DataSet, DisplayMixin):
+class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {}))):
     """General container for data loaded from file. It offers specialised
     methods to derive information from the provided data.
     """
-    __metaclass__ = ABCMeta
     _filename = None
     _config = None
     _validMask = None
@@ -305,10 +306,17 @@ class DataObj(DataSet, DisplayMixin):
     def __init__(self, **kwargs):
         super(DataObj, self).__init__(**kwargs)
 
+    def __hash__(self):
+        value = hash(self.title) ^ hash(self.filename)
+        try:
+            value ^= hash(self.rawArray.data)
+        except ValueError:
+            # Python 3: memoryview: hashing is restricted to formats 'B', 'b' or 'c'
+            value ^= hash(self.rawArray.data.tobytes())
+        return value
+
     def __eq__(self, other):
-        return (np_all(self.rawArray == other.rawArray)
-                and self.title == other.title
-                and self.filename == other.filename)
+        return hash(self) == hash(other)
 
     def __neq__(self, other):
         return not self.__eq__(other)

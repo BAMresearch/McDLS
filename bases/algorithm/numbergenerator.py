@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/numbergenerator.py
 
+from builtins import str
+from builtins import range
+from builtins import object
 from abc import ABCMeta, abstractmethod
 import numpy
 from utils import classname
+from future.utils import with_metaclass
 
 # it seems treating number generators as instances is more convenient than
 # the current implementation (types/classes only)
 # instances could be constructed with parameters, eg for randomExp or const
 
-class NumberGenerator(object):
+class NumberGenerator(with_metaclass(ABCMeta, object)):
     """Base class for number generators.
     Generates numbers in the interval [0, 1].
     Scaling is supposed to happen elsewhere."""
-    __metaclass__ = ABCMeta
 
     @classmethod
     @abstractmethod
@@ -95,7 +98,7 @@ class RandomXorShiftUniform(NumberGenerator):
     @classmethod
     def get(cls, count = 1):
         def getFloat():
-            return ( ( 1./4 ) / ( 1L << 62 ) ) * cls.next()
+            return ( ( 1./4 ) / ( 1 << 62 ) ) * next(cls)
         old_settings = numpy.seterr(all = 'ignore')
         res = numpy.zeros(count)
         for i in range(count):
@@ -154,7 +157,7 @@ class RandomXorShiftUniformTest(unittest.TestCase):
         def test(self):
             for i in range(self._seedSize * 5): # testing thrice the seed size
                 numRef = self.getRef()
-                numThis = RandomXorShiftUniform.next()
+                numThis = next(RandomXorShiftUniform)
                 self.assertEqual(numRef, numThis, msg =
                     "Number {i}: {ref}(ref) != {this}(this) with seed '{seed}'"
                     .format(i = i, seed = tuple(RandomXorShiftUniform.getSeed()),

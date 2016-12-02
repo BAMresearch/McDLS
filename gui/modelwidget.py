@@ -2,6 +2,8 @@
 # gui/modelwidget.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
+from builtins import range
 import sys
 import logging
 
@@ -43,6 +45,23 @@ FIXEDWIDTH = 120
 from gui.algorithmwidget import AlgorithmWidget
 from dataobj import DataObj
 
+# py2&3 data type for signals text arguments
+Text = str
+try:
+    Text = unicode # fails with Python 3
+except NameError:
+    pass
+
+def getQMethodSignature(qobject, methodName):
+    metaobject = qobject.metaObject()
+    for i in range(metaobject.methodCount()):
+        if (metaobject.method(i).signature().startswith(methodName)):
+            return metaobject.method(i).signature()
+    return None
+
+def hasReceivers(qobject, signalName):
+    return qobject.receivers(getQMethodSignature(qobject, signalName))
+
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
@@ -70,16 +89,16 @@ class ModelWidget(AlgorithmWidget):
         if not isinstance(dataobj, DataObj):
             return
         try:
-            self.modelBox.currentIndexChanged[str].disconnect()
+            self.modelBox.currentIndexChanged[Text].disconnect()
         except:
             pass
         self.modelBox.clear()
-        for name, cls in MODELS.iteritems():
+        for name, cls in MODELS.items():
             if cls is None or not issubclass(cls, dataobj.modelType):
                 continue
             self.modelBox.addItem(name)
         self.modelBox.setCurrentIndex(-1) # select none first
-        self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
+        self.modelBox.currentIndexChanged[Text].connect(self._selectModelSlot)
         # trigger signal by switching from none -> 0
         self.modelBox.setCurrentIndex(0)
 
@@ -113,9 +132,8 @@ class ModelWidget(AlgorithmWidget):
 
     def _selectModelSlot(self, key = None):
         # rebuild the UI without early signals
-        try:
+        if hasReceivers(self, "sigRangeChanged"):
             self.sigRangeChanged.disconnect(self.sigModelChanged)
-        except: sys.exc_clear()
         model = MODELS.get(str(key), None)
         if model is None or not issubclass(model, ScatteringModel):
             return

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # models/cylinders.py
 
+from __future__ import absolute_import
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import SASModel
+from .scatteringmodel import SASModel
 from bases.algorithm import RandomExponential, RandomUniform
 from utils.units import Length, NoUnit, Angle, SLD
 

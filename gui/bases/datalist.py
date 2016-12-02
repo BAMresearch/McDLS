@@ -2,12 +2,22 @@
 # gui/bases/datalist.py
 
 from __future__ import absolute_import # PEP328
+from __future__ import division
+from past.utils import old_div
+from builtins import str
+from builtins import range
 import os.path
 import logging
 import collections
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+
+try:
+    # make all modifications to sys (below) local to this module
+    # Python 2 needed this for some reason ...
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+except NameError:
+    pass
 
 from time import time as timestamp
 from gui.utils.signal import Signal
@@ -25,11 +35,12 @@ from gui.bases.mixins.dropwidget import DropWidget
 from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
 from gui.bases.mixins.titlehandler import TitleHandler
 
-class DataItem(QTreeWidgetItem):
-    """Generates a QTreeWidgetItem from arbitrary python objects.
-    Storing those objects separately."""
-    _store = None # storage for data objects associated with each item
-    _isRemovable = None
+# alternative implementation to DataItem._store which fails
+class __ItemStore__(object):
+    """Actually stores the data objects whereas the UI widgets store the key
+    (object ID) of the data objects only.
+    This will be reworked or removed once we implement an non-UI queue."""
+    _store = None
 
     @classmethod
     def store(cls, key, value):
@@ -42,6 +53,15 @@ class DataItem(QTreeWidgetItem):
         if cls._store is None:
             return
         del cls._store[key]
+
+    @classmethod
+    def get(cls, key):
+        return cls._store.get(key, None)
+
+class DataItem(QTreeWidgetItem):
+    """Generates a QTreeWidgetItem from arbitrary python objects.
+    Storing those objects separately."""
+    _isRemovable = None
 
     @staticmethod
     def hash32(data):
@@ -59,7 +79,11 @@ class DataItem(QTreeWidgetItem):
         assert isinstance(data, DisplayMixin)
         self._isRemovable = data.isRemovable
         self.setData(0, Qt.UserRole, self.hash32(data))
-        self.store(self.dataId(), data)
+        # this fails magically with Python 3.4 on Ubuntu 14.04, default packages
+#        print(0, DataItem._store)
+#        DataItem._store = 2314
+#        print(1, DataItem._store) # seems it is set later on, some delay?
+        __ItemStore__.store(self.dataId(), data)
         self.update()
 
     def update(self):
@@ -71,9 +95,11 @@ class DataItem(QTreeWidgetItem):
             if not isList(columnData): # columnData is supposed to be tuple
                 columnData = (columnData, )
             for attrname in columnData: # set attributes of columns if avail
-                if not isString(attrname) or not hasattr(data, attrname):
+                if not isString(attrname):
                     continue
-                value = getattr(data, attrname)
+                value = getattr(data, attrname, None)
+                if value is None:
+                    continue
                 getProperty, setProperty, value = self.getItemProperty(value)
                 # set it always, regardless if needed
                 setProperty(column, value)
@@ -102,7 +128,7 @@ class DataItem(QTreeWidgetItem):
         elif value is None: # allows not set attrib., removes text from gui
             value = ""
         else:
-            value = unicode(value) # convert numbers eventually
+            value = str(value) # convert numbers eventually
         return getProperty, setProperty, value
 
     def dataId(self):
@@ -115,7 +141,7 @@ class DataItem(QTreeWidgetItem):
     def data(self, *args):
         if len(args) > 1:
             return super(DataItem, self).data(*args)
-        return self._store.get(self.dataId(), None)
+        return __ItemStore__.get(self.dataId())
 
     def listIndex(self):
         """
@@ -135,7 +161,7 @@ class DataItem(QTreeWidgetItem):
             self.treeWidget().takeTopLevelItem(self.listIndex())
         elif self.parent():
             self.parent().removeChild(self)
-        self.clear(self.dataId()) # remove data object form store
+        __ItemStore__.clear(self.dataId()) # remove data object from store
 
     def setClicked(self, column):
         self.clicked = column, timestamp()
@@ -149,7 +175,7 @@ class DataItem(QTreeWidgetItem):
             deltaTs = abs(self.clicked[1] - self.changed[1])
             return (self.clicked[0] == self.changed[0] and
                     deltaTs < 0.1)
-        except StandardError:
+        except Exception:
             pass
         return False
 
@@ -278,8 +304,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         """Selects all items in the list if not all are selected.
         Clears the selection if all items in the list already are selected.
         """
-        if (len(self.listWidget.selectedIndexes())
-            / self.listWidget.columnCount()) == len(self):
+        if (old_div(len(self.listWidget.selectedIndexes()), self.listWidget.columnCount())) == len(self):
             self.listWidget.clearSelection()
         else:
             self.listWidget.selectAll()
@@ -470,17 +495,26 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                         break
                     if stopFunc is not None and stopFunc():
                         break
-                except StandardError, e:
+                except Exception as e:
                     errorOccured = True
-                    logging.error(str(e).replace("\n"," ") + " ... skipping")
+                    import traceback
+                    logging.error(traceback.format_exc())
+                    itemName = str(item)
+                    try:
+                        itemName = item.filename
+                    except AttributeError:
+                        pass
+                    logging.error("Skipping '{}'".format(itemName))
                     continue
             if progress is not None:
                 progress.close()
-        except StandardError, e:
+        except Exception as e:
             # progress.cancel()
             # catch and display _all_ exceptions in user friendly manner
             # DisplayException(e)
             errorOccured = True
+            import traceback
+            logging.error(traceback.format_exc())
             pass
         if errorOccured:
             self.reraiseLast()
@@ -541,12 +575,12 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             data = None
             try:
                 data = processSourceFunc(sourceItem, **kwargs)
-            except StandardError, e:
+            except Exception as e:
                 # progress.cancel()
                 # DisplayException(e)
                 # on error, skip the current file
                 errorOccured = True
-                logging.error(unicode(e).replace("\n"," ") + " ... skipping")
+                logging.error(str(e).replace("\n"," ") + " ... skipping")
                 continue
             if data is not None:
                 lastItem = self.add(data)
@@ -568,7 +602,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         try:
             if sys.exc_info()[0] is not None:
                 raise
-        except StandardError, e:
+        except Exception as e:
             DisplayException(e)
 
 if __name__ == "__main__":

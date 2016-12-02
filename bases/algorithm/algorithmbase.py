@@ -2,12 +2,14 @@
 # bases/algorithm/algorithmbase.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
+from builtins import object
 from utils import isString, isList, testfor, assertName
 from utils.mixedmethod import mixedmethod
 from utils import classproperty, classname
-from bases.algorithm.parameter import ParameterBase, ParameterError
+from .parameter import ParameterBase, ParameterError
 
-class AlgorithmError(StandardError):
+class AlgorithmError(Exception):
     pass
 
 class AlgorithmNameError(AlgorithmError):
@@ -166,7 +168,7 @@ class AlgorithmBase(object):
     def __str__(self):
         text = [ self.name() ]
         for i, p in enumerate(self.params()):
-            text.append(u"  {0}: {1}".format(i, unicode(getattr(self, p.name()))))
+            text.append(u"  {0}: {1}".format(i, str(getattr(self, p.name()))))
         return "\n".join(text)
 
     @classmethod
@@ -191,13 +193,13 @@ class AlgorithmBase(object):
         for each parameter which is usually set by __init__() and during
         unpickle in __setstate__()."""
         state = self.__dict__.copy()
-        keys = state.viewkeys()
+        keys = set(state.keys())
         for cls in type(self).mro():
             if (issubclass(cls, AlgorithmBase) # prevents recursion loop
                 or not hasattr(cls, "__getstate__")): # excludes other mixins
                 continue
             parentState = cls.__getstate__(self)
-            keys = keys & parentState.viewkeys() # sync common keys only
+            keys = keys & set(parentState.keys()) # sync common keys only
             state.update([(key, parentState[key]) for key in keys])
         return state
 

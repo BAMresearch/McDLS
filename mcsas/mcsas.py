@@ -2,7 +2,10 @@
 # mcsas/mcsas.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
-from __future__ import absolute_import # PEP328
+from __future__ import (division, absolute_import, print_function,
+                                        unicode_literals)
+from builtins import str
+from builtins import range
 import numpy # For arrays
 from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,
@@ -165,7 +168,7 @@ class McSAS(AlgorithmBase):
             return
         logging.info(
                 "\n".join([u"Analysing parameters: "] +
-                    [unicode(p) + u", active: " + unicode(isActiveParam(p))
+                    [str(p) + u", active: " + str(isActiveParam(p))
                         for p in self.model.params()])
         )
         self.analyse()

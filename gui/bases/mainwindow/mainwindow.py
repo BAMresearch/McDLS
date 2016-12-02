@@ -2,6 +2,7 @@
 # gui/bases/mainwindow/mainwindow.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
 import sys
 import logging
 from QtGui import QMainWindow
@@ -75,7 +76,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if defaultSettings is not None:
             # loading default settings if not set previously
             custom, default = [], []
-            for key, value in defaultSettings.iteritems():
+            for key, value in defaultSettings.items():
                 if self._appsettings.contains(key):
                     custom.append(key)
                 else: # qsettings doesn't contain the key, add it

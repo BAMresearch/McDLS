@@ -7,6 +7,7 @@ This module is supposed to not being required in a release package.
 """
 
 from __future__ import print_function
+from builtins import str
 import sys
 import inspect
 import os, os.path
@@ -36,7 +37,7 @@ def _messagePrefix():
     return res
 
 def _formatMessage(*args):
-    return u" ".join(_messagePrefix() + [unicode(a) for a in args])
+    return u" ".join(_messagePrefix() + [str(a) for a in args])
 
 def DBG(*args, **kwargs):
     _file = kwargs.pop('_file', sys.__stderr__)

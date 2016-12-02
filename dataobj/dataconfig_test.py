@@ -35,11 +35,11 @@ def testLimits():
     assert dc.x0High() == 10.
 
 def testCallbacks():
-    class X0CallbackRun(StandardError):
+    class X0CallbackRun(Exception):
         pass
-    class X1CallbackRun(StandardError):
+    class X1CallbackRun(Exception):
         pass
-    class FMasksCallbackRun(StandardError):
+    class FMasksCallbackRun(Exception):
         pass
     def test(err, *args):
         raise err

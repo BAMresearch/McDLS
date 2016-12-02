@@ -2,6 +2,7 @@
 # bases/algorithm/parameter_test.py
 
 from __future__ import absolute_import # PEP328
+from builtins import object
 from bases.algorithm.parameter import (
         ParameterBase, ParameterNumerical, ParameterFloat, ParameterLog,
         factory,
@@ -21,7 +22,7 @@ def testParameterName():
     for name in (None, "", 1.3, 0):
         yield testName, name
 
-@raises(StandardError)
+@raises(Exception)
 def testParameterDefaultValue1():
     p = Parameter("testpar")
 
@@ -73,7 +74,7 @@ def testParameterNumericalDisplayValues():
     dv = {1: 'one', 2: 'two', 3: 'three'}
     p = Parameter("testpar", 1, valueRange = (1, 5),
                      displayValues = dv)()
-    for key, value in dv.iteritems():
+    for key, value in dv.items():
         assert key in p.displayValues()
         assert p.displayValues(key) == value
 

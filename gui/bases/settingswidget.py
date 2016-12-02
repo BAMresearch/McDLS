@@ -2,6 +2,7 @@
 # gui/bases/settingswidget.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
 from gui.qt import QtCore, QtGui
 from QtGui import (QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox,
                    QAbstractButton, QAbstractSpinBox, QGroupBox)
@@ -89,7 +90,7 @@ class SettingsWidget(QWidget):
                 value.lower() == "false"):
                 value = ""
             setter(dtype(value))
-        except (TypeError, ValueError), e:
+        except (TypeError, ValueError) as e:
             raise IndexError("Could not set widget '{0}' to '{1}'!: ".
                              format(key, value) + str(e).title())
         else:
@@ -104,10 +105,10 @@ class SettingsWidget(QWidget):
     def _connectInputWidget(self, widget):
         def isInputWidget(widget):
             return any([isinstance(widget, widgetType)
-                        for widgetType in QAbstractButton,
+                        for widgetType in (QAbstractButton,
                                           QAbstractSpinBox,
                                           QLineEdit,
-                                          QGroupBox
+                                          QGroupBox)
                         ])
         if not isInputWidget(widget):
             return

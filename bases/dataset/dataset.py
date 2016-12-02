@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 # bases/dataset/dataset.py
 
+from __future__ import absolute_import
+from builtins import object
 from abc import ABCMeta, abstractproperty
-from titlemixin import TitleMixin
-from rawarraymixin import RawArrayMixin
-from hierarchicalmixin import HierarchicalMixin
+from .titlemixin import TitleMixin
+from .rawarraymixin import RawArrayMixin
+from .hierarchicalmixin import HierarchicalMixin
 from utils import isString, classproperty
+from future.utils import with_metaclass
+from functools import reduce
 
-class DisplayMixin(object):
+class DisplayMixin(with_metaclass(ABCMeta, object)):
     """Provides additional data to display in a list or tree view."""
-    __metaclass__ = ABCMeta
 
     @abstractproperty
     @classproperty
@@ -36,9 +39,7 @@ class DisplayMixin(object):
     def __init__(self, **kwargs):
         super(DisplayMixin, self).__init__(**kwargs)
 
-class ResultMixin(object):
-    __metaclass__ = ABCMeta
-
+class ResultMixin(with_metaclass(ABCMeta, object)):
     @property
     def result(self):
         """Supposed to return a list of *Result* types."""

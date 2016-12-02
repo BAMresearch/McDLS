@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 # bases/dataset/hierarchicalmixin.py
 
+from builtins import object
 from abc import ABCMeta
+from future.utils import with_metaclass
 
-class HierarchicalMixin(object):
+class HierarchicalMixin(with_metaclass(ABCMeta, object)):
     """
     Manages a list of objects of the same type which makes up a tree
     structure.
     """
-    __metaclass__ = ABCMeta
     _children = None
     _parent = None
 

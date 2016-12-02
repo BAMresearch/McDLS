@@ -5,14 +5,14 @@
 Some Error classes.
 """
 
-class AppError(StandardError):
+class AppError(Exception):
     msg = ""
     """
     General error with descriptive message to be forwarded and shown to
     the user in a message box.
     """
     def __init__(self, msg = ""):
-        StandardError.__init__(self, self.getMessage(msg))
+        Exception.__init__(self, self.getMessage(msg))
 
     @classmethod
     def getMessage(cls, msg = ""):

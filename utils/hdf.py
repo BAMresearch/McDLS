@@ -5,11 +5,19 @@
 Helper functions for HDF5 functionality
 """
 
+from builtins import str
+from builtins import object
 import logging
 import inspect
 import os.path
 import h5py
 from utils import isCallable, isString, isList, isNumber, isInteger, classname
+
+HDFString = str # Python 3 default
+try:
+    HDFString = unicode # fails with Python 3
+except NameError:
+    pass
 
 # from utils.devtools import DBG
 
@@ -34,6 +42,48 @@ def getCallerInfo(referenceType = None, stackOffset = 0):
 #        func = inspect.getframeinfo(frame).function
         out = (u"({} l.{})".format(fn, frame.f_lineno))
     return out
+
+
+def HDFCleanup(infile):
+    """Unused space is reclaimed by making a copy of the contents in the 
+    current hdf 5 file object, and moves the copy in place of the original. 
+    if the input argument supplied is a file name instead of an HDF5 object, 
+    the method returns nothing. Else, the method returns the new HDF5 object"""
+    
+    inputIsFilename = False
+    if isString(infile): # a filename was supplied
+        infile = h5py.File(infile)
+        inputIsFilename = True
+    def hdfDeepCopy(infile, outfilename):
+        """Copies the internals of an open HDF5 file object (infile) to a second file."""
+        infile.flush()
+        outfile = h5py.File(outfilename, "w") # create file, truncate if exists
+        for item in infile:
+            outfile.copy(infile[item], item)
+        for attr_name in infile.attrs:
+            outfile.attrs[attr_name] = infile.attrs[attr_name]
+        outfile.close()
+    # shutil.move is more flexible than os.rename, and can move across disks.
+    origfname = infile.filename
+    tempfname = "{}.mh5".format(str(uuid.uuid4().hex)) # generate a temporary file for the original backup
+    tempofname = "{}.mh5".format(str(uuid.uuid4().hex)) # temporary output filename
+    shutil.copy(origfname, tempfname) # backup copy
+    try: 
+        hdfDeepCopy(infile, tempofname) # copy internals
+        infile.close() # close old file
+        shutil.move(tempofname, origfname) # replace with new
+    except:
+        # move back the backup
+        shutil.move(tempfname, origfname) 
+    infile = h5py.File(origfname) # reopen new file
+    # cleanup:
+    for filename in [tempfname, tempofname]:
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+    if not inputIsFilename:
+        return infile
 
 class HDFWriter(object):
     """Represents an open HDF file location in memory and keeps track of
@@ -72,7 +122,7 @@ class HDFWriter(object):
         return self._handle[self.location]
 
     def writeAttributes(self, **kwargs):
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             # leading _ from keys are removed, they come from __getstate__()
             # which gathers member variables (usually private with leading _)
             self.writeAttribute(key.lstrip('_'), value)
@@ -80,6 +130,8 @@ class HDFWriter(object):
     def writeAttribute(self, key, value):
         if value is None:
             return
+        if isString(value):
+            value = HDFString(value)
         self.log("attribute '{loc}/{k}': '{v}'"
                  .format(loc = self.location.rstrip('/'), k = key, v = value))
         self._writeLocation().attrs[key] = value

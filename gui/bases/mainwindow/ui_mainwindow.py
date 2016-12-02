@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mainwindow/ui_mainwindow.py
 
+from __future__ import absolute_import
+from builtins import object
 from gui.qt import QtCore, QtGui
 from gui.utils.translate import fromUtf8
 
@@ -30,6 +32,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         pass
 
-import mainwindow_rc
+from . import mainwindow_rc
 
 # vim: set ts=4 sw=4 sts=4 tw=0:

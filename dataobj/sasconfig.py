@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import # PEP328
 
+from builtins import str
 import logging
 from abc import ABCMeta
 import numpy as np
@@ -13,10 +14,10 @@ from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
                          Fraction, NoUnit)
 from utils import clip
 from dataobj import DataConfig
+from future.utils import with_metaclass
 
-class SmearingConfig(AlgorithmBase):
+class SmearingConfig(with_metaclass(ABCMeta, AlgorithmBase)):
     """Abstract base class, can't be instantiated."""
-    __metaclass__ = ABCMeta
     _qOffset = None # integration point positions, depends on beam profile
     _weights = None # integration weight per position, depends on beam profile
     shortName = "SAS smearing configuration"
@@ -375,7 +376,7 @@ class SASConfig(DataConfig):
     def __str__(self):
         return "\n".join((
             super(SASConfig, self).__str__(),
-            unicode(self.smearing)
+            str(self.smearing)
         ))
 
     def hdfWrite(self, hdf):

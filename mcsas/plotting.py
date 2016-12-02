@@ -4,6 +4,8 @@
 Defines the format of the final report on success of an MC fit. 
 """
 
+from builtins import range
+from builtins import object
 import logging
 import inspect
 import os.path
@@ -93,8 +95,12 @@ class PlotResults(object):
             "solid_capstyle" : 'round',
             "solid_joinstyle" : 'miter'
     }
+    # for some reason 'small' didn't work reliably and consistently with
+    # py2&py3, sometimes info boxes show up with different text sizes
+    # although the matplotlib version is the same for both (1.3.1)
+    _infoTextFontSize = 10 # 'small'
     _infoText = {
-            "size" : "small",
+            "fontsize" : _infoTextFontSize, "size" : _infoTextFontSize,
             "horizontalalignment" : 'center',
             "multialignment" : 'center',
             "verticalalignment" : 'center'
@@ -260,9 +266,9 @@ class PlotResults(object):
             
     def formatRangeInfo(self, parHist, RI, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
-        oString = u'Range {} to {}, {}-weighted'.format(
-                parHist.lower, parHist.upper,
-                parHist.yweight)
+        oString = u'Range {l:0.03e} to {u:0.03e}, {w}-weighted'.format(
+                    l = parHist.lower, u = parHist.upper,
+                    w = parHist.yweight)
         pStat = parHist.moments
         pStatFields = pStat.fields
         pStatFieldNames = pStat.fieldNames()
@@ -316,9 +322,9 @@ class PlotResults(object):
         ah.tick_params(axis = 'y', colors = 'black', width = 2,
                 which = 'minor', direction = 'in', length = 3)
         locs, labels = xticks()
-        xticks(locs, map(lambda x: "%g" % x, locs))
+        xticks(locs, ["%g" % x for x in locs])
         locs, labels = yticks()
-        yticks(locs, map(lambda x: "%g" % x, locs))
+        yticks(locs, ["%g" % x for x in locs])
         return ah
 
     def figInit(self, nHists, figureTitle, nR = 1):
@@ -459,21 +465,21 @@ class PlotResults(object):
 
     def plotInfo(self, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
-        delta = 0.001 #minor offset
         # make active:
         axes(InfoAxis)
         # show volume-weighted info:
         ovString = self.formatAlgoInfo()
+        delta = 0.001 # minor offset
         tvObj = text(0. - delta, 0. + delta, ovString, **self._infoText)
         self._fig.show()
         axis('tight')
 
     def plotStats(self, parHist, rangei, fig, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
-        delta = 0.001 # minor offset
         # make active:
         axes(InfoAxis)
         # show volume-weighted info:
+        delta = 0.001 # minor offset
         ovString = self.formatRangeInfo(parHist, rangei, weighti = 0)
         tvObj = text(0. - delta, 0. + delta, ovString, bbox = 
                 {'facecolor' : 'white', 'alpha': 0.95}, **self._infoText)

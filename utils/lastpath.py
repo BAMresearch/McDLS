@@ -5,6 +5,8 @@
 General utilities without GUI dependencies.
 """
 
+from builtins import str
+from builtins import object
 import os
 import logging
 from utils import isString
@@ -36,7 +38,7 @@ class LastPath(object):
         """Accepts a directory path or a file path.
         Determines the directory itself in the latter case."""
         if not isString(lastpath):
-            lastpath = unicode(lastpath)
+            lastpath = str(lastpath)
         # get path of possible unwritten files (previously selected)
         path = lastpath
         while not os.path.isdir(path) and len(path) > 0:

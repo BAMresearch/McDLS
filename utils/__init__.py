@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 # utils/__init__.py
 
+from __future__ import absolute_import
+from builtins import str
 import sys
 import codecs
 import numpy as np
-from tests import (isList, isString, isNonEmptyString, isMap, isSet,
+from .tests import (isList, isString, isNonEmptyString, isMap, isSet,
                          isNumber, isInteger, isCallable)
-from tests import isLinux, isMac, isWindows, isFrozen
-from tests import testfor, assertName
-from mixedmethod import mixedmethod
-from classproperty import classproperty
+from .tests import isLinux, isMac, isWindows, isFrozen
+from .tests import testfor, assertName
+from .mixedmethod import mixedmethod
+from .classproperty import classproperty
 
 EPS = sys.float_info.epsilon
 
@@ -41,7 +43,7 @@ def fixFilename(filename):
     if not isWindows() or filename.startswith(_winFilenamePrefix):
         return filename
     # work around maxlen=260 chars, \\?\ allows 32k chars max
-    return _winFilenamePrefix + unicode(filename)
+    return _winFilenamePrefix + str(filename)
 
 def mcopen(fn, mode, encoding = "utf8"):
     if 'b' in mode:

@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 # datafile/__init__.py
 
+from __future__ import absolute_import
 __all__ = ["DataFile", "AsciiFile", "ArrayFile", "PDHFile", "PDHHeader",
            "CGSFile", "getFileFilter", "loaddatafile"]
 
 import logging
 import os.path
 
-from datafile import DataFile
-from arrayfile import ArrayFile
-from asciifile import AsciiFile
-from pdhfile import PDHFile, PDHHeader
-from cgsfile import CGSFile
+from .datafile import DataFile
+from .arrayfile import ArrayFile
+from .asciifile import AsciiFile
+from .pdhfile import PDHFile, PDHHeader
+from .cgsfile import CGSFile
 
 from utils import isLinux, isString
 

@@ -2,13 +2,20 @@
 # gui/calc.py
 
 from __future__ import absolute_import # PEP328
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from builtins import object
 import sys
 import logging
 import time
 import os.path
 import codecs
-import ConfigParser
-import numpy
+try: 
+    import configparser
+except ImportError: 
+    import ConfigParser as configparser
 import numpy as np
 import pickle
 
@@ -27,26 +34,26 @@ from dataobj import SASData
 from utils.hdf import HDFMixin
 
 
-DEFAULTSECT = ConfigParser.DEFAULTSECT
+DEFAULTSECT = configparser.DEFAULTSECT
 
 def cfgwrite(self, fp):
     """Write an .ini-format representation of the configuration state."""
     if self._defaults:
         fp.write("[%s]\n" % DEFAULTSECT)
-        for (key, value) in self._defaults.items():
-            fp.write("%s = %s\n" % (key, unicode(value).replace('\n', '\n\t')))
+        for (key, value) in list(self._defaults.items()):
+            fp.write("%s = %s\n" % (key, str(value).replace('\n', '\n\t')))
         fp.write("\n")
     for section in self._sections:
         fp.write("[%s]\n" % section)
-        for (key, value) in self._sections[section].items():
+        for (key, value) in list(self._sections[section].items()):
             if key == "__name__":
                 continue
             if (value is not None) or (self._optcre == self.OPTCRE):
-                key = " = ".join((key, unicode(value).replace('\n', '\n\t')))
+                key = " = ".join((key, str(value).replace('\n', '\n\t')))
             fp.write("%s\n" % (key))
         fp.write("\n")
 
-ConfigParser.RawConfigParser.write = cfgwrite
+configparser.RawConfigParser.write = cfgwrite
 
 class OutputFilename(object):
     """Generates output filenames with a common time stamp and logs
@@ -195,7 +202,7 @@ class Calculator(HDFMixin):
             logging.warning("No model set!")
             return
         # start log file writing
-        testfor(isinstance(dataset, DataSet), StandardError,
+        testfor(isinstance(dataset, DataSet), Exception,
                 "{cls} requires a DataSet!".format(cls = type(self)))
         self._outFn = OutputFilename(dataset)
         fn = self._outFn.filenameVerbose("log", "this log")
@@ -214,10 +221,16 @@ class Calculator(HDFMixin):
             log.removeHandler(widgetHandler)
         #set data in the algorithm
         self._algo.data = dataset
-        # write HDF5
-        self.hdfStore(self._outFn.filenameVerbose(
-            "hdf5archive", "Complete state of the calculation",
-            extension = '.mh5'))
+
+        # write HDF5, show exceptions traceback, if any
+        try:
+            self.hdfStore(self._outFn.filenameVerbose(
+                "hdf5archive", "Complete state of the calculation",
+                extension = '.mh5'))
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+
         self._algo.calc()
         if self.nolog:
             log.addHandler(widgetHandler)
@@ -289,7 +302,7 @@ class Calculator(HDFMixin):
             self._outFn = OutputFilename(fakeDataSet, createDir = False)
             # convert numerical stats to proper formatted text
             statsStr = dict()
-            for key, values in stats.iteritems():
+            for key, values in stats.items():
                 # proper float-str formatting for text file output
                 statsStr[key] = []
                 for value in values:
@@ -310,7 +323,7 @@ class Calculator(HDFMixin):
                 from multiprocessing import Process
                 proc = Process(target = plotStats, args = (stats,))
                 proc.start()
-        for key, valuePairs in self._series.iteritems():
+        for key, valuePairs in self._series.items():
             sampleName, histCfg = key
             processSeriesStats(sampleName, histCfg, valuePairs)
 
@@ -362,7 +375,7 @@ class Calculator(HDFMixin):
         fn = self._outFn.filenameVerbose("contributions",
                                          "Model contribution parameters",
                                          extension = '.pickle')
-        with mcopen(fn, 'w') as fh:
+        with mcopen(fn, 'wb') as fh:
             pickle.dump(mcResult['contribs'], fh)
 
     def _writeSettings(self, mcargs, dataset):
@@ -370,7 +383,7 @@ class Calculator(HDFMixin):
             return []
         fn = self._outFn.filenameVerbose("settings", "algorithm settings",
                                          extension = '.cfg')
-        config = ConfigParser.RawConfigParser()
+        config = configparser.RawConfigParser()
 
         sectionName = "I/O Settings"
         config.add_section(sectionName)
@@ -381,15 +394,14 @@ class Calculator(HDFMixin):
 
         sectionName = "MCSAS Settings"
         config.add_section(sectionName)
-        for key, value in mcargs.iteritems():
+        for key, value in mcargs.items():
             config.set(sectionName, key, value)
         for p in self.algo.params():
             config.set(sectionName, p.name(), p.value())
         config.set(sectionName, "model", self.model.name())
         # We don't have to do anything with these yet, but storing them for now:
         if isinstance(dataset, SASData): # useful with SAS data only
-            config.set(sectionName, "X0 limits", 
-                    np.array(dataset.x0.limit))
+            config.set(sectionName, "X0 limits", str(dataset.x0.limit))
 
         sectionName = "Model Settings"
         config.add_section(sectionName)

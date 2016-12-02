@@ -2,6 +2,9 @@
 # gui/algorithmwidget.py
 
 from __future__ import absolute_import # PEP328
+from __future__ import division
+from past.utils import old_div
+from builtins import range
 import logging
 
 from gui.qt import QtCore, QtGui
@@ -38,7 +41,7 @@ def rearrangeWidgets(layout, widgets, targetWidth):
     numCols = max(1, getNumCols())
     # add them again with new column count
     for i, w in enumerate(widgets):
-        layout.addWidget(w, i / numCols, i % numCols, Qt.AlignTop)
+        layout.addWidget(w, old_div(i, numCols), i % numCols, Qt.AlignTop)
 
 class AlgorithmWidget(SettingsWidget):
     _algo = None
@@ -83,9 +86,9 @@ class AlgorithmWidget(SettingsWidget):
     @property
     def inputWidgets(self):
         """Returns all existing input names (for store/restore)."""
-        if self.algorithm is None:
-            return
         children = []
+        if self.algorithm is None:
+            return children
         for p in self.algorithm.params():
             query = p.name()
             try:
@@ -132,7 +135,7 @@ class AlgorithmWidget(SettingsWidget):
             value = self.appSettings.value(key)
             try:
                 self.set(key, value)
-            except StandardError, e:
+            except Exception as e:
                 logging.warn(e)
         self.appSettings.endGroup()
 
@@ -234,6 +237,8 @@ class AlgorithmWidget(SettingsWidget):
 
     def updateUi(self):
         """Update input widgets according to possibly changed backend data."""
+        if self.algorithm is None:
+            return
         # disable signals during ui updates
         self.sigValueChanged.disconnect(self.updateParam)
         for p in self.algorithm.params():
@@ -339,7 +344,7 @@ class AlgorithmWidget(SettingsWidget):
         except: 
             pass
         w.setFixedWidth(FIXEDWIDTH)
-        widgets.insert(len(widgets)/2, w)
+        widgets.insert(old_div(len(widgets),2), w)
 
         # Special widget settings for active fitting parameters:
         activeBtns = activeBtns and isinstance(param, FitParameterBase)
@@ -384,7 +389,7 @@ class AlgorithmWidget(SettingsWidget):
         assert isinstance(layout, QLayout)
         if not isinstance(newParent, QWidget):
             newParent = None
-        for i in reversed(range(layout.count())):
+        for i in reversed(list(range(layout.count()))):
             # reversed removal avoids renumbering possibly
             item = layout.takeAt(i)
             if newParent is None or item.widget() is None:

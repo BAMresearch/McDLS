@@ -3,6 +3,8 @@
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
 from __future__ import absolute_import # PEP328
+from __future__ import division
+from builtins import object
 from scipy import optimize
 from models import SASModel
 

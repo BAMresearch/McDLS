@@ -2,6 +2,7 @@
 # gui/utils/displayexception.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
 import logging
 import traceback
 import inspect
@@ -46,7 +47,7 @@ class DisplayException(QMessageBox):
         okBtn = self.addButton("ok", QMessageBox.AcceptRole)
         self.setDefaultButton(okBtn)
         className, methodName = self.classAndMethodName()
-        excName, excMsg = type(exception).__name__, unicode(exception)
+        excName, excMsg = type(exception).__name__, str(exception)
         text = u"{3}\n[ {2} in {0}.{1} ]".format(className, methodName, excName, excMsg)
         self.setText(u"<nobr>{0}</nobr>".format(text.replace("\n", "<br />")))
         logfunc = self._logging.get(level, logging.error)

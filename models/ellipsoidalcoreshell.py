@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 # models/EllipsoidalCoreShell.py
 
+from __future__ import absolute_import
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
 from bases.algorithm import RandomUniform, RandomExponential
-from scatteringmodel import SASModel
+from .scatteringmodel import SASModel
 from utils.units import Length, NoUnit, SLD
 
 # parameters must not be inf

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # log/__init__.py
 
+from __future__ import absolute_import
 import logging
-from log import (timestampFormat, timestamp, replaceStdOutErr,
+from .log import (timestampFormat, timestamp, replaceStdOutErr,
                  replaceHandler, addHandler, removeHandler)
-from widgethandler import WidgetHandler
+from .widgethandler import WidgetHandler
 
 log = logging.getLogger()
 

@@ -2,6 +2,7 @@
 # gui/mainwindow.py
 
 from __future__ import absolute_import # PEP328
+from builtins import str
 from QtGui import QLineEdit, QDoubleValidator, QValidator
 from QtCore import Qt
 from utils import clip
@@ -48,7 +49,7 @@ class SciEntryValidator(QDoubleValidator):
                 clip(float(input), self.bottom(), self.top()))
         except ValueError:
             pass # do nothing if float conversion fails
-        return unicode(input)
+        return str(input)
 
 class SciEntryBox(QLineEdit):
     toolTipFmt = "A value between {lo} and {hi} (including)."
@@ -114,7 +115,7 @@ class SciEntryBox(QLineEdit):
         self.setMaximum(hi)
         
     def setValue(self, value):
-        self.setText(unicode(self.fmt.format(value)))
+        self.setText(str(self.fmt.format(value)))
 
     def value(self):
         return float(self.text())
