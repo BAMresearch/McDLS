@@ -6,8 +6,11 @@ Represents data from dynamic light scattering (DLS) measurement.
 
 """
 
-from __future__ import absolute_import # PEP328
+from __future__ import division, absolute_import # PEP328
 
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import logging
 import copy
 from collections import OrderedDict
@@ -90,7 +93,7 @@ class MultiDataVector(DataVector):
             return a
         if self._count == 1:
             return a.reshape((-1, 1)) # nothing to do
-        rowCount = len(a) / self._count
+        rowCount = old_div(len(a), self._count)
         if self._wasRepeated: # just take the first non-duplicates
             result = a[:rowCount]
         else:
@@ -183,7 +186,7 @@ class DLSData(DataObj):
             summary[g].append(i)
         res = ";".join(["{group}: {indices}".format(group = g,
             indices = ",".join([str(i) for i in lst]))
-                for g, lst in summary.iteritems()])
+                for g, lst in summary.items()])
         return res
 
     # define DataObj interface
@@ -240,7 +243,7 @@ class DLSData(DataObj):
         if fmt is None:
             fmt = u"{0:.0f}{1}"
         return u";".join((
-            unicode(fmt).format(unit.toDisplay(a), unit.displayMagnitudeName)
+            str(fmt).format(unit.toDisplay(a), unit.displayMagnitudeName)
                     for a in self.angles))
 
     # temperature, viscosity, refractiveIndex, wavelength including std.err
@@ -284,8 +287,8 @@ class DLSData(DataObj):
             return
         q2 = self._scatteringVector * self._scatteringVector
         # 0.5 ensures the necessary sqrt() within the model
-        self._gammaDivR = ( (- q2 * self.temperature[0] * KB)
-                         / (6. * pi * self.viscosity[0]) )
+        self._gammaDivR = ( old_div((- q2 * self.temperature[0] * KB),
+                                    (6. * pi * self.viscosity[0])) )
         self._calcTauGamma()
 
     def _calcTauGamma(self):

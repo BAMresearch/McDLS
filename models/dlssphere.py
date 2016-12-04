@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 # models/dlssphere.py
 
+from __future__ import division, absolute_import
+from past.utils import old_div
 import numpy
 from numpy import pi, exp, sqrt, sin, cos
 from bases.algorithm import RandomUniform
 from utils.parameter import FitParameter, Parameter
-from scatteringmodel import DLSModel
+from .scatteringmodel import DLSModel
 from utils.units import NM
 
 class DLSSphere(DLSModel):
@@ -44,7 +46,7 @@ class DLSSphere(DLSModel):
         return self._ffSphere() * self.volume()**self.compensationExponent
 
     def formfactor(self, data):
-        return exp( data.tauGamma.sanitized / self.radius() )
+        return exp( old_div(data.tauGamma.sanitized, self.radius()) )
 
 DLSSphere.factory()
 

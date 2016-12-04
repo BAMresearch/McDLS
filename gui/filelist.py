@@ -2,6 +2,7 @@
 # gui/filelist.py
 
 from __future__ import absolute_import # PEP328
+from builtins import range
 import logging
 
 from collections import OrderedDict
@@ -17,7 +18,6 @@ from dataobj import DataObj
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
-import sys
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))
@@ -77,14 +77,14 @@ class FileList(DataList):
                 samples[key] = []
             samples[key].append(d)
         newData = [] # accumulate data objects if possible
-        for dummy, lst in samples.iteritems():
+        for dummy, lst in samples.items():
             avg = lst[0].accumulate(lst)
             if avg is None:
                 newData.extend(lst)
             else:
                 newData.append(avg)
         # remove the single data sets which where just loaded
-        self.removeItems(range(firstIdx, len(self)))
+        self.removeItems(list(range(firstIdx, len(self))))
         # add the combined dls data split up per angle
         def splitUp(d):
             try: # perhaps test for isinstance(d, DLSData) instead
