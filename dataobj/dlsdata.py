@@ -374,6 +374,16 @@ class DLSData(DataObj):
             out.append(u"{0}: {1}".format(p, getattr(self, _privPropName(p))))
         return u"\n".join(out)
 
+    def __hash__(self):
+        value = hash(self.title) ^ hash(self.filename)
+        for p in self._properties:
+            propData = getattr(self, _privPropName(p))
+            try:
+                value ^= hash(propData)
+            except TypeError: # numpy.ndarray
+                value ^= hash(propData.data.tobytes())
+        return value
+
     @classmethod
     def setPropertyGetters(cls):
         for p in cls._properties:
