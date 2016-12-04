@@ -308,11 +308,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
 
     def __hash__(self):
         value = hash(self.title) ^ hash(self.filename)
-        try:
-            value ^= hash(self.rawArray.data)
-        except ValueError:
-            # Python 3: memoryview: hashing is restricted to formats 'B', 'b' or 'c'
-            value ^= hash(self.rawArray.data.tobytes())
+        value ^= hashNumpyArray(self.rawArray)
         return value
 
     def __eq__(self, other):

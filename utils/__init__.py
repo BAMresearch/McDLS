@@ -28,6 +28,16 @@ def clip(value, minv, maxv):
     value = valueType(value)
     return value
 
+def hashNumpyArray(arr):
+    # get a read-only view
+    view = arr.view()
+    view.setflags(write = False)
+    try:
+        return hash(view.data)
+    except ValueError:
+        # Python 3: memoryview: hashing is restricted to formats 'B', 'b' or 'c'
+        return hash(view.data.tobytes()) # python3
+
 # fixes IOError on Windows: Errno 2, no such fn or dir
 # http://stackoverflow.com/a/11442604
 # better use str.encode(sys.getfilesystemencoding())
