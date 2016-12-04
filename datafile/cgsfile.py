@@ -115,9 +115,9 @@ class CGSFile(AsciiFile):
                 continue
             if line.strip('"') in self.knownProperties:
                 # parse float array
-                i, rawArray = self.readArray(asciiLines, startLine = i+1)
+                i, arr = self.readArray(asciiLines, startLine = i+1)
                 key, idx, unit = self.processKey(line.strip('"'))
-                setattr(self, "_"+key, rawArray)
+                setattr(self, "_"+key, arr)
                 continue
             key, value = self.splitKeyValue(line)
             key, idx, unit = self.processKey(key)
