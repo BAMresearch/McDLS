@@ -53,6 +53,14 @@ class DLSConfig(DataConfig):
 DLSConfig.factory()
 
 class MultiDataVector(DataVector):
+    """Stores multiple values for each data point and can switch between a
+    flat and a two-dimensional representation. For example, for a given
+    *x* vector consisting of N values, it can store *f(x)*, *g(x)* and *h(x)*
+    (1+3 columns, N rows).
+    The flat representation means to concatenate the columns of *f*, *g* and
+    *h* while repeating the *x* vector for each of them (1+1 columns,
+    3N rows).
+    """
     _count = None
     _wasRepeated = False
 
