@@ -98,6 +98,7 @@ class BackgroundScalingFit(object):
         dataErr = 1.
         if data.f.binnedDataU is not None:
             dataErr = data.f.binnedDataU.flatten()
+            dataErr[dataErr == 0.0] = 1. # prevent division by zero
         dataCalc = modelData.chisqrInt
 
         # different data fit approaches: speed vs. stability (?)
