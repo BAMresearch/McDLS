@@ -16,7 +16,7 @@ import copy
 from collections import OrderedDict
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty)
-from utils import classproperty, isCallable, isInteger, isList
+from utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
 from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle)
 from dataobj import DataObj, DataVector, DataConfig
 from models import DLSModel
@@ -224,7 +224,7 @@ class DLSData(DataObj):
     def setAngles(self, anglesUnit, angles):
         """Expects angles in si units and their associated unit for proper
         formatting."""
-        self._angles = angles
+        self._angles = angles.copy() # make them contiguous for hashing
         self._anglesUnit = anglesUnit
         self._calcScatteringVector()
 
@@ -384,7 +384,7 @@ class DLSData(DataObj):
             try:
                 value ^= hash(propData)
             except TypeError: # numpy.ndarray
-                value ^= hash(propData.data.tobytes())
+                value ^= hashNumpyArray(propData)
         return value
 
     @classmethod
