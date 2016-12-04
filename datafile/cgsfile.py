@@ -73,9 +73,7 @@ class CGSFile(AsciiFile):
 
     @classmethod
     def setPropertyGetters(cls):
-        if not hasattr(cls.knownProperties, "iteritems"):
-            return
-        for inName, memName in cls.knownProperties.iteritems():
+        for inName, memName in cls.knownProperties.items():
             if memName is None or not len(memName):
                 memName = inName
             intName = "_" + memName
@@ -133,7 +131,7 @@ class CGSFile(AsciiFile):
             parseFunc(value, text2num(idx, dtype = int))
             self.setUnit(key, unit)
 
-        for dataName, memName in self.knownProperties.iteritems():
+        for dataName, memName in self.knownProperties.items():
             if memName is None or not len(memName): memName = dataName
             value = getattr(self, memName)
 
@@ -211,12 +209,6 @@ class CGSFile(AsciiFile):
             lst = getattr(self, propName)
             idx = min(idx, len(lst))
             lst.insert(idx, value)
-
-    def setArray(self, propName, rawArray):
-        if propName not in self.knownProperties:
-            return False
-        setattr(self, propName, rawArray)
-        return True
 
     def parseSampleMemo(self, *args):
         self.setListValue("sampleMemo", *args)
