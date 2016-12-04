@@ -14,7 +14,7 @@ import numpy as np
 from abc import ABCMeta, abstractproperty
 from bases.dataset import DataSet, DisplayMixin
 from dataobj.datavector import DataVector
-from utils import classproperty
+from utils import classproperty, hashNumpyArray
 import logging
 from future.utils import with_metaclass
 
