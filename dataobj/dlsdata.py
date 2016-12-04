@@ -313,8 +313,6 @@ class DLSData(DataObj):
                     o.sampleName == self.sampleName]
         if not len(others):
             return None
-        if len(others) == 1:
-            return self
         # average basic properties
         for prop in ("temperature", "viscosity",
                      "refractiveIndex", "wavelength"):
