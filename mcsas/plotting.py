@@ -411,7 +411,8 @@ class PlotResults(object):
         plot(fitX0, fitMeasVal, 'b-', lw = 1, label = label)
 
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
-        #settings for Q-axes (override previous settings where appropriate):
+        """plots 1D data and fit"""
+        # settings for Q-axes (override previous settings where appropriate):
         xOrigin = dataset.x0.unit.toDisplay(dataset.x0.binnedData)
         yOrigin = dataset.f.unit.toDisplay(dataset.f.binnedData)
         uOrigin = dataset.f.unit.toDisplay(dataset.f.binnedDataU)
@@ -429,8 +430,7 @@ class PlotResults(object):
                 mag = dataset.f.unit.displayMagnitudeName)
                 })
 
-        """plots 1D data and fit"""
-        #make active:
+        # make active:
         axes(qAxis)
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
