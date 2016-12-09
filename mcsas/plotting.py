@@ -455,8 +455,11 @@ class PlotResults(object):
         except:
             logging.error("could not plot background")
             pass
-        title(u"Measured vs. Fitted {name}".format(name = dataset.f.name),
-              fontproperties = self._textfont, size = 'large')
+
+        titleHandler = qAxis.set_title(u"Measured vs. Fitted {name}"
+                                       .format(name = dataset.f.name),
+                                       fontproperties = self._textfont,
+                                       size = 'large')
         # reapply limits, necessary for some reason:
         qAxis.set_xlim(xLim)
         # make the background line visible
