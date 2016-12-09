@@ -221,10 +221,6 @@ class PlotResults(object):
                 InfoAxis = self._ah[hi + 1]
                 self.plotStats(parHist, rangei, self._fig, InfoAxis)
 
-            #plot labels in qAxis:
-            axes(qAxis)
-            legend(loc = 1, fancybox = True, prop = self._textfont)
-
         # check current figure size, might change due to screen size (?)
         targetWidth, targetHeight = (self._figWidth * self._fig.get_dpi(),
                                      self._figHeight * self._fig.get_dpi())
@@ -460,6 +456,10 @@ class PlotResults(object):
                                        .format(name = dataset.f.name),
                                        fontproperties = self._textfont,
                                        size = 'large')
+
+        legendHandle, legendLabel = qAxis.get_legend_handles_labels()
+        qAxis.legend(legendHandle, legendLabel,
+                     loc = 1, fancybox = True, prop = self._textfont)
         # reapply limits, necessary for some reason:
         qAxis.set_xlim(xLim)
         # make the background line visible
