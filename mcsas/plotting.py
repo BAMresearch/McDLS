@@ -455,9 +455,21 @@ class PlotResults(object):
         titleHandler = qAxis.set_title(u"Measured vs. Fitted {name}"
                                        .format(name = dataset.f.name),
                                        fontproperties = self._textfont,
-                                       size = 'large')
+                                       size = 'large', loc = 'left')
 
+        suppAx = self.plotCountRate(qAxis, dataset)
+
+        # set up the combined legend
         legendHandle, legendLabel = qAxis.get_legend_handles_labels()
+        if suppAx is not None:
+            handle, label = suppAx.get_legend_handles_labels()
+            legendHandle += handle
+            legendLabel += label
+            # move the title above the upper x axis
+            # check self._subPlotPars['hspace'] as well
+            xpos, ypos = titleHandler.get_position()
+            titleHandler.set_position((xpos, ypos + self._charHeight*2.2))
+
         qAxis.legend(legendHandle, legendLabel,
                      loc = 1, fancybox = True, prop = self._textfont)
         # reapply limits, necessary for some reason:
@@ -578,5 +590,68 @@ class PlotResults(object):
         xlim(xLim)
         suppAx.format_coord = CoordinateFormat(plotPar.name(), plotPar.unit(),
                                                "y", None)
+
+    def plotCountRate(self, otherAxis, dataset):
+        """Creates an overlay axes object behind the given axes and draws the
+        count rate with error bar. If the dataset has no countRate and capTime
+        attribute, this does nothing."""
+        countRate = None
+        capTime = None
+        try:
+            countRate = dataset.countRate
+            capTime = dataset.capTime
+        except AttributeError:
+            return None
+        # duplicate axis for additional data possibly
+        # twinx() doesn't allow to set up a 2nd x axis
+        suppAx = otherAxis.get_figure().add_axes(otherAxis.get_position())
+        suppAx = self.setAxis(suppAx)
+#        suppAx.set_visible(False) # for testing
+        # put suppAx behind otherAxis, make otherAxis transparent
+        suppAx.set_zorder(otherAxis.get_zorder() - 1)
+        suppAx.set_ylabel('Count Rate', size = 'small',
+                          fontproperties = self._textfont)
+        xvec = capTime.unit.toDisplay(capTime.binnedData)
+        yvec = countRate.unit.toDisplay(countRate.binnedData)
+        uvec = countRate.unit.toDisplay(countRate.binnedDataU)
+        suppAx.set_ylim(yvec.min(), yvec.max())
+        # set up y axis, let all uncertainty error bars be visible
+        ymin, ymax = (yvec - uvec).min(), (yvec + uvec).max()
+        ystep = (np.ceil(ymax) - np.floor(ymin)) // 4
+        yticks_ = np.arange(np.floor(ymin), np.ceil(ymax) + ystep, ystep)
+#        yticks_ = np.append(yticks_, yvec.mean())
+        suppAx.set_yticks(yticks_)
+        suppAx.set_yticklabels(["{0:.1f}".format(t) for t in yticks_])
+        delta = (ymax - ymin) * .02 # 2% of y-axis range
+        suppAx.set_ylim(ymin - delta, ymax + delta)
+        suppAx.get_yaxis().set_label_position('right')
+        suppAx.get_yaxis().set_ticks_position('right')
+        # set up x axis label
+        xlabel = suppAx.set_xlabel('Capture Time ({})'
+                        .format(capTime.unit.displayMagnitudeName),
+                        size = 'small', horizontalalignment = 'right',
+                        fontproperties = self._textfont)
+        # align the x axis label to the right axis
+        xpos, ypos = xlabel.get_position()
+        xlabel.set_position((1., ypos))
+        suppAx.get_xaxis().set_label_position('top')
+        suppAx.get_xaxis().tick_top()
+        # make the other top&right axis invisible
+        otherAxis.patch.set_visible(False)
+        otherAxis.spines['top'].set_visible(False)
+        otherAxis.spines['right'].set_visible(False)
+        otherAxis.get_xaxis().tick_bottom()
+        otherAxis.get_yaxis().tick_left()
+        # configure x axis ticks
+        xticks_ = np.arange(np.floor(min(xvec)), np.ceil(max(xvec))+1, 10)
+        suppAx.set_xticks(xticks_)
+        suppAx.set_xticklabels(["{0:.0f}".format(t) for t in xticks_])
+        suppAx.set_xlim(np.floor(min(xvec)), np.ceil(max(xvec)))
+        # finally, draw the count rate in the background,
+        # use unobstrusive colors
+        suppAx.errorbar(xvec, yvec, uvec, zorder = 2, color = 'grey',
+                        ecolor = 'lavender', # or 'thistle' ?
+                        label = suppAx.get_ylabel())
+        return suppAx
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

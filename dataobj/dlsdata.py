@@ -54,12 +54,11 @@ DLSConfig.factory()
 
 class MultiDataVector(DataVector):
     """Stores multiple values for each data point and can switch between a
-    flat and a two-dimensional representation. For example, for a given
-    *x* vector consisting of N values, it can store *f(x)*, *g(x)* and *h(x)*
-    (1+3 columns, N rows).
+    flat and a two-dimensional representation. For example, for multiple
+    vectors consisting of N values, it stores *f(x)*, *g(x)* and *h(x)*
+    (3 columns, N rows).
     The flat representation means to concatenate the columns of *f*, *g* and
-    *h* while repeating the *x* vector for each of them (1+1 columns,
-    3N rows).
+    *h* (1 column, 3N rows) or repeating the first column *count* times.
     """
     _count = None
     _wasRepeated = False
@@ -134,7 +133,8 @@ class DLSData(DataObj):
                    "refractiveIndex", "wavelength",
                    "measIndices",
                    # calculated properties
-                   "scatteringVector", "gammaDivR", "tauGamma")
+                   "scatteringVector", "gammaDivR", "tauGamma",
+                   "capTime" ,"countRate")
 
     @classproperty
     @classmethod
@@ -212,16 +212,27 @@ class DLSData(DataObj):
                                   count = self.numAngles)
         self._calcTauGamma()
 
-    def setCorrelation(self, rawArray, rawArrayU = None):
-        assert self.isValidInput(rawArray), "Invalid data from file!"
-        assert rawArray.shape[1] == self.numAngles, (
-            "Correlation intensity: {} columns != {} scattering angles"
-            .format(rawArray.shape[1], self.numAngles))
-        if rawArrayU is not None:
-            assert self.isValidInput(rawArrayU), "Invalid data from file!"
-            assert rawArray.shape == rawArrayU.shape, \
+    def _verifyDataMember(self, inArray, inArrayU = None):
+        assert self.isValidInput(inArray), "Invalid data from file!"
+        assert inArray.shape[1] == self.numAngles, (
+            "Input data: {} columns != {} scattering angles"
+            .format(inArray.shape[1], self.numAngles))
+        if inArrayU is not None:
+            assert self.isValidInput(inArrayU), "Invalid data from file!"
+            assert inArray.shape == inArrayU.shape, \
                 "Shapes of the provided data and its uncertainties do not match!"
-        self.f = MultiDataVector(u"G_2(τ)-1", rawArray, rawU = rawArrayU)
+
+    def setCorrelation(self, inArray, inArrayU = None):
+        self._verifyDataMember(inArray, inArrayU)
+        self.f = MultiDataVector(u"G_2(τ)-1", inArray, rawU = inArrayU)
+
+    def setCapTime(self, timeUnit, inArray):
+        self._capTime = MultiDataVector("t", inArray.flatten(),
+                                    unit = timeUnit, count = self.numAngles)
+
+    def setCountRate(self, inArray, inArrayU = None):
+        self._verifyDataMember(inArray, inArrayU)
+        self._countRate = MultiDataVector("Cnt(t)", inArray, rawU = inArrayU)
 
     @property
     def count(self):
@@ -340,6 +351,11 @@ class DLSData(DataObj):
         self.setCorrelation(stacked.mean(-1), stacked.std(-1))
         assert len(self.x0.siData) == len(self.f.siData), \
             "Dimensions of flattened data arrays do not match!"
+        # same for count rate data
+        stacked = dstack((o.countRate.rawDataSrcShape for o in others))
+        self.setCountRate(stacked.mean(-1), stacked.std(-1))
+        assert len(self.capTime.siData) == len(self.countRate.siData), \
+            "Dimensions of flattened data arrays do not match!"
         # reset config in order to fix callbacks
         self.setConfig(self.configType())
         return self
@@ -355,6 +371,9 @@ class DLSData(DataObj):
             another.setCorrelation(
                     self.correlation.rawDataSrcShape[:, i, newaxis],
                     self.correlation.rawDataUSrcShape[:, i, newaxis])
+            another.setCapTime(self.capTime.unit, self.capTime.rawDataSrcShape)
+            another.setCountRate(self.countRate.rawDataSrcShape[:, i, newaxis],
+                                 self.countRate.rawDataUSrcShape[:, i, newaxis])
             # reset config in order to fix callbacks
             another.setConfig(another.configType())
             lst.append(another)

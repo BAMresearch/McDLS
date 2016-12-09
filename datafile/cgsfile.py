@@ -8,7 +8,7 @@ import re
 import os.path
 from numpy import array as np_array
 from collections import OrderedDict
-from utils.units import Angle, Temperature, DynamicViscosity, Length, MSec
+from utils.units import Angle, Temperature, DynamicViscosity, Length, MSec, Sec
 from datafile import AsciiFile
 from utils import classproperty, isList
 from dataobj import DLSData
@@ -296,7 +296,9 @@ class CGSFile(AsciiFile):
         # correlation array
         dlsData.setTau(self._tauUnit, self.correlation[:, 0])
         dlsData.setCorrelation(self.correlation[:, 1:])
-        dlsData.setConfig(dlsData.configType()) # FIXME: move this to constructor
+        dlsData.setCapTime(Sec, self.countRate[:, 0])
+        dlsData.setCountRate(self.countRate[:, 1:])
+        dlsData.setConfig(dlsData.configType()) # has to be called after setup
         return dlsData
 
 CGSFile.setPropertyGetters()
