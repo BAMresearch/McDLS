@@ -460,8 +460,10 @@ class PlotResults(object):
         title(u"Measured vs. Fitted {name}".format(name = dataset.f.name),
               fontproperties = self._textfont, size = 'large')
         # reapply limits, necessary for some reason:
-        xlim(xLim)
-        ylim(yLim)
+        qAxis.set_xlim(xLim)
+        # make the background line visible
+        delta = np.diff(yLim) * .02 # 2% of y-axis range
+        qAxis.set_ylim(min(yLim)-delta, max(yLim)+delta)
         qAxis.format_coord = CoordinateFormat(
                 dataset.x0.name, dataset.x0.unit,
                 dataset.f.name, dataset.f.unit)
