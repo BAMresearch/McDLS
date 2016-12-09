@@ -17,8 +17,6 @@ import log
 from main import makeAbsolutePath
 from dataobj import SASData
 
-#from utils.devtools import DBG
-
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
     # actually, we're using the TkAgg backend via matplotlibrc (Windows/Linux)
