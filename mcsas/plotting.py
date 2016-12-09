@@ -346,6 +346,8 @@ class PlotResults(object):
         charWidth, charHeight = getTextSize(fig, self._textfont)
         charWidth, charHeight = (charWidth / (cellWidth * fig.dpi),
                                  charHeight / (cellHeight * fig.dpi))
+        self._charHeight = charHeight
+        self._charWidth = charWidth
         #DBG("text size (%):", charWidth, charHeight)
         gs = gridspec.GridSpec(2 * numRows, numCols,
                 height_ratios = np.tile([1,6], numRows))
