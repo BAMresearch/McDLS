@@ -333,7 +333,7 @@ class NoUnit(Unit):
 K = Temperature(u"K")
 Vis = DynamicViscosity(u"mPa s")
 MSec = Time(u"ms")
-Sec = Time(u"ns")
+Sec = Time(u"s")
 NM = Length(u"nm")
 
 if __name__ == "__main__":
