@@ -435,22 +435,21 @@ class PlotResults(object):
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
         # plot original data
-        errorbar(xOrigin, yOrigin, uOrigin, zorder = 2,
-                 label = u"Measured {name}".format(name = dataset.f.name),
-                 **self._errorBarOpts)
+        qAxis.errorbar(xOrigin, yOrigin, uOrigin, zorder = 2,
+                       label = u"Measured {name}".format(name = dataset.f.name),
+                       **self._errorBarOpts)
         self.plotGrid(qAxis)
         # plot fit data
-        plot(dataset.x0.unit.toDisplay(fitX0),
-             dataset.f.unit.toDisplay(fitMeasVal), 'r-',
-                lw = 3, label = u"MC Fit {name}".format(name = dataset.f.name),
-                zorder = 4)
+        qAxis.plot(dataset.x0.unit.toDisplay(fitX0),
+                   dataset.f.unit.toDisplay(fitMeasVal),
+                   'r-', lw = 3, zorder = 4,
+                   label = u"MC Fit {name}".format(name = dataset.f.name))
         try: # try to plot the background level
-            plot(dataset.x0.unit.toDisplay(fitX0),
-                 dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
-                 'g-', linewidth = 3,
-                 label = "MC Background level:\n"
-                         "        ({0:03.3g})".format(
-                            self._BG[0]), zorder = 3)
+            qAxis.plot(dataset.x0.unit.toDisplay(fitX0),
+                       dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
+                       'g-', linewidth = 3, zorder = 3,
+                       label = "MC Background level:\n"
+                               "        ({0:03.3g})".format(self._BG[0]))
         except:
             logging.error("could not plot background")
             pass
@@ -556,16 +555,12 @@ class PlotResults(object):
                     width = histXWidth[validi[0:-1]], color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
                     label = 'MC size histogram')
-        cPlot, = suppAx.plot(
-                histXMean, 
-                HistCDF, '-', color = 'grey',
-                linewidth = 2, zorder = 5, 
-                label = 'Cumulative distribution function')
-        # suppAx["right"].label.set_color(cPlot.get_color())
+        suppAx.plot(histXMean, HistCDF, '-', color = 'grey', linewidth = 2,
+                    zorder = 5, label = 'Cumulative distribution function')
         # plot observability limit
         hAxis.plot(histXMean, HistMinReq, 'ro', 
-                ms = 5, markeredgecolor = 'r',
-                label = 'Minimum visibility limit', zorder = 3)
+                   ms = 5, markeredgecolor = 'r',
+                   label = 'Minimum visibility limit', zorder = 3)
         # plot active uncertainties
         hAxis.errorbar(histXMean[validi[0:-1]], HistYMean[validi[0:-1]], 
             HistYStd[validi[0:-1]],
