@@ -475,8 +475,10 @@ class PlotResults(object):
         # reapply limits, necessary for some reason:
         qAxis.set_xlim(xLim)
         # make the background line visible
-        delta = np.diff(yLim) * .02 # 2% of y-axis range
-        qAxis.set_ylim(min(yLim)-delta, max(yLim)+delta)
+        qAxis.set_ylim(yLim)
+        if self._AxDict['yscale'] == 'linear':
+            delta = np.diff(yLim) * .02 # 2% of y-axis range
+            qAxis.set_ylim(min(yLim)-delta, max(yLim)+delta)
         qAxis.format_coord = CoordinateFormat(
                 dataset.x0.name, dataset.x0.unit,
                 dataset.f.name, dataset.f.unit)
