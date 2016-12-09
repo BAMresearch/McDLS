@@ -353,7 +353,7 @@ class PlotResults(object):
         self._subPlotPars = dict(
                 left  =    charWidth*11./numCols, bottom =    charHeight*4.,
                 right = 1.-charWidth* 7./numCols, top    = 1.-charHeight*1.5,
-                wspace =   charWidth*20.,         hspace =    charHeight*7.)
+                wspace =   charWidth*20.,         hspace =    charHeight*12.)
         gs.update(**self._subPlotPars)
 
         textAxDict = {
