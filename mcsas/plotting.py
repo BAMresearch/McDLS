@@ -436,17 +436,19 @@ class PlotResults(object):
         qAxis = self.setAxis(qAxis)
         # plot original data
         qAxis.errorbar(xOrigin, yOrigin, uOrigin, zorder = 2,
-                       label = u"Measured {name}".format(name = dataset.f.name),
+                       label = u"Measured {name}"
+                               .format(name = dataset.f.name),
                        **self._errorBarOpts)
         self.plotGrid(qAxis)
         # plot fit data
         qAxis.plot(dataset.x0.unit.toDisplay(fitX0),
                    dataset.f.unit.toDisplay(fitMeasVal),
                    'r-', lw = 3, zorder = 4,
-                   label = u"MC Fit {name}".format(name = dataset.f.name))
+                   label = u"MC Fit {name}"
+                            .format(name = dataset.f.name))
         try: # try to plot the background level
-            qAxis.plot(dataset.x0.unit.toDisplay(fitX0),
-                       dataset.f.unit.toDisplay(self._BG[0] + 0*fitX0),
+            qAxis.plot(dataset.x0.unit.toDisplay(fitX0), np.full_like(fitX0,
+                       dataset.f.unit.toDisplay(self._BG[0])),
                        'g-', linewidth = 3, zorder = 3,
                        label = "MC Background level:\n"
                                "        ({0:03.3g})".format(self._BG[0]))
