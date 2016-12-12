@@ -210,6 +210,13 @@ class DLSData(DataObj):
     # define DataObj interface
 
     @property
+    def seriesKey(self):
+        values = [Angle(u"°").toDisplay(a) for a in self.angles]
+        if len(values) == 1:
+            values = values[0]
+        return values
+
+    @property
     def tau(self):
         return self.x0
 
