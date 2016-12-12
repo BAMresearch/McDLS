@@ -31,12 +31,13 @@ class OptimizationWidget(AlgorithmWidget):
         self.setLayout(hlayout)
 
         self.defaults = DefaultSettings(self, widgets = tuple(self.makeWidgets(
-            "convergenceCriterion", "numReps", "autoClose", "seriesStats")))
+            "convergenceCriterion", "numReps", "autoClose")))
         # creating an ui entry with settings persistence via store/restore
         self.advanced = self._makeEntry("showAdvanced", bool, False,
             widgetType = AdvancedSettings, widgets = tuple(self.makeWidgets(
                 "numContribs", "compensationExponent", 
-                "findBackground", "maxIterations", "showIncomplete")))
+                "findBackground", "maxIterations", "showIncomplete",
+                "seriesStats")))
         hlayout.addWidget(self.defaults)
         hlayout.addWidget(self.advanced)
         self.sigValueChanged.connect(self.advanced.updateWidgets)
