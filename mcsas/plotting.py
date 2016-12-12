@@ -602,7 +602,9 @@ class PlotResults(object):
         attribute, this does nothing."""
         countRate = None
         capTime = None
-        try:
+        try: # works for DLSData only
+            if not dataset.config.plotCountRate():
+                return None
             countRate = dataset.countRate
             capTime = dataset.capTime
         except AttributeError:

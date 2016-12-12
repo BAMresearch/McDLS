@@ -17,7 +17,9 @@ from collections import OrderedDict
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty)
 from utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
-from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle)
+from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
+                         NoUnit)
+from bases.algorithm import Parameter
 from dataobj import DataObj, DataVector, DataConfig
 from models import DLSModel
 
@@ -36,6 +38,14 @@ def _propSetterName(propName):
     return "set" + propName[0].upper() + propName[1:]
 
 class DLSConfig(DataConfig):
+    parameters = (
+        Parameter("plotCountRate", True, unit = NoUnit(),
+            displayName = "plot count rate",
+            description = "Plots the mean count rate with an error bar for the "
+                "standard deviation of multiple measurements. "
+                "It appears behind the correlation plot."),
+    )
+
     def __init__(self):
         super(DLSConfig, self).__init__()
         self.nBin.setValue(0)
