@@ -87,7 +87,7 @@
     },
     "seriesStats" : {
         "displayName" : "Calc. series statistics",
-        "description" : "Plots the moments for each configured histogram against the selected data and stores them in a separate file.",
+        "description" : "Plots the mean of each configured histogram range per selected dataset and writes all distribution moments to file.",
         "default" : false,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
