@@ -584,7 +584,10 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                 continue
             if data is not None:
                 lastItem = self.add(data)
-                lastItem.setAlignment(alignment)
+                try:
+                    lastItem.setAlignment(alignment)
+                # sometime PySide return a QTreeWidgetItem instead of a DataItem
+                except AttributeError: pass
             if progress is not None and progress.update():
                 break
         if progress is not None:
