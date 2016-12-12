@@ -452,12 +452,15 @@ class PlotResults(object):
             logging.error("could not plot background")
             pass
 
+        titleAlignment = 'center'
         titleHandler = qAxis.set_title(u"Measured vs. Fitted {name}"
                                        .format(name = dataset.f.name),
                                        fontproperties = self._textfont,
-                                       size = 'large')
+                                       size = 'large', loc = titleAlignment)
 
+        # set up the legend
         legendHandle, legendLabel = qAxis.get_legend_handles_labels()
+
         qAxis.legend(legendHandle, legendLabel,
                      loc = 1, fancybox = True, prop = self._textfont)
         # reapply limits, necessary for some reason:
