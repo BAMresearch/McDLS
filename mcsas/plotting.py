@@ -452,12 +452,15 @@ class PlotResults(object):
             logging.error("could not plot background")
             pass
 
+        suppAx = self.plotCountRate(qAxis, dataset)
+
+        titleAlignment = 'center'
+        if suppAx is not None:
+            titleAlignment = 'left'
         titleHandler = qAxis.set_title(u"Measured vs. Fitted {name}"
                                        .format(name = dataset.f.name),
                                        fontproperties = self._textfont,
-                                       size = 'large', loc = 'left')
-
-        suppAx = self.plotCountRate(qAxis, dataset)
+                                       size = 'large', loc = titleAlignment)
 
         # set up the combined legend
         legendHandle, legendLabel = qAxis.get_legend_handles_labels()
