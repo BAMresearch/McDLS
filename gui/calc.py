@@ -12,6 +12,7 @@ import logging
 import time
 import os.path
 import codecs
+from collections import OrderedDict
 try: 
     import configparser
 except ImportError: 
@@ -22,7 +23,8 @@ import pickle
 from gui.qt import QtCore
 from QtCore import QUrl
 from bases.dataset import DataSet
-from utils import isList, isString, testfor, isMac, fixFilename, mcopen
+from utils import (isList, isString, isNumber, testfor, isMac, fixFilename,
+                   mcopen)
 from utils.lastpath import LastPath
 from utils.units import Angle
 from datafile import PDHFile, AsciiFile
@@ -32,7 +34,7 @@ from mcsas.mcsas import McSAS
 from utils.parameter import Histogram, Moments, isActiveParam
 from dataobj import SASData
 from utils.hdf import HDFMixin
-
+from mcsas.plotting import PlotSeriesStats
 
 DEFAULTSECT = configparser.DEFAULTSECT
 
@@ -115,29 +117,6 @@ class OutputFilename(object):
             QUrl.fromLocalFile(fnUrl).toEncoded()))
         return fn
 
-def plotStats(stats):
-    """Simple 1D plotting of series statistics."""
-    # need a simple (generic) plotting method in mcsas.plotting
-    # kind of a dirty hack for now ...
-    from matplotlib.pyplot import (figure, show, subplot, plot,
-                                   errorbar, axes, legend, title,
-                                   xlabel, ylabel)
-    fig = figure(figsize = (7, 7), dpi = 80,
-                 facecolor = 'w', edgecolor = 'k')
-    fig.canvas.set_window_title("series: " + stats["title"])
-    a = subplot()
-    plot(stats["angle"], stats["mean"], 'r-', label = stats["cfg"])
-    xlabel("angle")
-    ylabel("mean")
-    title(stats["title"])
-    errorbar(stats["angle"], stats["mean"], stats["meanStd"],
-             marker = '.', linestyle = "None")
-    axes(a)
-    legend(loc = 1, fancybox = True)
-    fig.canvas.draw()
-    fig.show()
-    show()
-
 class Calculator(HDFMixin):
     _algo = None  # McSAS algorithm instance
     _outFn = None # handles output file names, creates directories
@@ -195,7 +174,7 @@ class Calculator(HDFMixin):
     def prepare(self):
         """Resets series data. Supposed to be called before each run of
         multiple __call__() invokations."""
-        self._series = dict()
+        self._series = OrderedDict()
 
     def __call__(self, dataset):
         if self.model is None:
@@ -256,46 +235,54 @@ class Calculator(HDFMixin):
     def _updateSeries(self, data, model):
         if not self.algo.seriesStats():
             return
-        if not hasattr(data, 'angles'):
-            return
-        def addSeriesData(key, hist, angles):
-            if key not in self._series:
-                self._series[key] = []
-            self._series[key].append((angles, hist.moments.fields))
-        def makeKey(data, hist):
-            """Derive a unique key for each pair of sample and histogram."""
-            key = (data.sampleName,
+        def addSeriesData(uid, hist, seriesKey):
+            if uid not in self._series:
+                self._series[uid] = []
+            self._series[uid].append((seriesKey, hist.moments.fields))
+        def makeId(data, hist):
+            """Derive a unique identifier for each pair of sample and
+            histogram."""
+            uid = (data.sampleName,
                    (hist.param.name(),)
                    + tuple(hist.param.unit().toDisplay(x) for x in h.xrange)
                    + (h.yweight,))
-            return key
+            return uid
 
         for p in model.activeParams():
             for h in p.histograms():
-                angles = tuple((Angle(u"°").toDisplay(a)
-                                for a in data.angles))
-                addSeriesData(makeKey(data, h), h, angles)
+                addSeriesData(makeId(data, h), h, data.seriesKey)
 
     def postProcess(self):
         if not self.algo.seriesStats():
             return
-        def processSeriesStats(sampleName, histCfg, valuePairs):
+
+        def processSeries(series):
+            seriesPlot = PlotSeriesStats()
+            for seriesItem in series.items():
+                processSeriesStats(seriesItem, seriesPlot)
+            seriesPlot.show()
+
+        # TODO: store series stats in one file, requires paramName to be stored
+        # as well; filename will be just 2016-12-12_18-50-16_seriesStats.dat
+        # because it may contain multiple params, ranges or weights
+        def processSeriesStats(seriesItem, seriesPlot):
             # similar to _writeStatistics() but not using parameters
             stats = dict()
-            columnNames = (("lower", "upper", "weighting", "angle")
+            columnNames = (("lower", "upper", "weighting", "seriesKey")
                             + Moments.fieldNames())
-            pname, lo, hi, weight = histCfg
-            valuePairs.sort(key = lambda x: x[0])
-            for angles, moments in valuePairs:
-                values = (lo, hi, weight, angles,) + moments
+            (sampleName, (pname, lo, hi, weight)), valuePairs = seriesItem
+            for seriesKey, moments in valuePairs:
+                values = (lo, hi, weight, seriesKey,) + moments
                 for name, value in zip(columnNames, values):
                     if name not in stats:
                         stats[name] = []
                     # for plotting below, no float-str conversion here
                     stats[name].append(value)
+            if len(sampleName): # prevent leading space for empty sampleNames
+                sampleName += " "
             class fakeDataSet(object):
                 # file name formatting
-                title = u"{name} {param} [{lo},{hi}] {w}".format(
+                title = u"{name}{param} [{lo},{hi}] {w}".format(
                         name = sampleName, param = pname,
                         lo = lo, hi = hi, w = weight)
             # since we are the last writer, changing outFn doesn't hurt
@@ -317,15 +304,14 @@ class Calculator(HDFMixin):
             stats["cfg"] = u"{param} [{lo},{hi}] {w}".format(param = pname,
                                                 lo = lo, hi = hi, w = weight)
             stats["title"] = sampleName
-            if isMac():
-                plotStats(stats)
-            else:
-                from multiprocessing import Process
-                proc = Process(target = plotStats, args = (stats,))
-                proc.start()
-        for key, valuePairs in self._series.items():
-            sampleName, histCfg = key
-            processSeriesStats(sampleName, histCfg, valuePairs)
+            seriesPlot.plot(stats)
+
+        if isMac():
+            processSeries(self._series)
+        else:
+            from multiprocessing import Process
+            proc = Process(target = processSeries, args = (self._series,))
+            proc.start()
 
     def _writeStatistics(self, param):
         """Gathers the statistics column-wise first and converts them to a

@@ -11,7 +11,7 @@ import inspect
 import os.path
 import numpy as np # For arrays
 import matplotlib
-from utils import isList, isString, isMac
+from utils import isList, isString, isMac, isNumber
 from utils.units import Unit, NoUnit
 import log
 from main import makeAbsolutePath
@@ -251,6 +251,7 @@ class PlotResults(object):
         if autoClose:
             close(self._fig)
 
+    @classmethod
     def plotGrid(self, figh):
         #make axis active:
         axes(figh)
@@ -660,5 +661,36 @@ class PlotResults(object):
                         ecolor = 'lavender', # or 'thistle' ?
                         label = suppAx.get_ylabel())
         return suppAx
+
+class PlotSeriesStats(object):
+    """Simple 1D plotting of series statistics."""
+    _figure = None
+    _axes = None
+
+    def __init__(self):
+        self._figure = figure(figsize = (7, 7), dpi = 80,
+                              facecolor = 'w', edgecolor = 'k')
+        self._axes = subplot()
+
+    def plot(self, stats):
+        xvec = stats["seriesKey"]
+        if not all((isNumber(x) for x in xvec)):
+            xvecNew = range(len(xvec))
+            self._axes.set_xticks(xvecNew)
+            self._axes.set_xticklabels(xvec, rotation = 15)
+            xvec = xvecNew
+        self._axes.errorbar(xvec, stats["mean"], stats["meanStd"],
+                            label = stats["cfg"])
+        self._axes.set_ylabel("mean")
+        self._axes.set_title(stats["title"])
+
+    def show(self):
+        self._axes.legend(loc = 1, fancybox = True)
+        PlotResults.plotGrid(self._axes)
+        self._figure.canvas.set_window_title(
+                "series: " + self._axes.get_title())
+        self._figure.canvas.draw()
+        self._figure.show()
+        show()
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

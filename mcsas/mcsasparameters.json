@@ -86,8 +86,8 @@
         "isActive" : false
     },
     "seriesStats" : {
-        "displayName" : "Combined statistics for each sample (DLS)",
-        "description" : "Writes an output file containing the moments of an histogram per sample, also plots them against the scattering angle (for DLS).",
+        "displayName" : "Calc. series statistics",
+        "description" : "Plots the moments for each configured histogram against the selected data and stores them in a separate file.",
         "default" : false,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",
