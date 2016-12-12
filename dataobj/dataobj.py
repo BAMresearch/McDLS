@@ -84,7 +84,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
 
     @property
     def sampleName(self):
-        return None
+        return ""
 
     @property
     def filename(self):
@@ -96,6 +96,10 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         if fn is None or not os.path.isfile(fn):
             return
         self._filename = os.path.abspath(fn)
+
+    @property
+    def seriesKey(self):
+        return self.title
 
     @abstractproperty
     def count(self):
