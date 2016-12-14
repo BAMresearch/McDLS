@@ -98,7 +98,7 @@ class OutputFilename(object):
         current timestamp. It's created once so that all output files have
         the same base name and timestamp."""
         fn = [self._basename]
-        if isString(kind):
+        if isString(kind) and len(kind):
             fn += ["_", kind]
         if isString(extension):
             fn += extension
@@ -255,54 +255,51 @@ class Calculator(HDFMixin):
     def postProcess(self):
         if not self.algo.seriesStats():
             return
+        # works similar to _writeStatistics() but not using parameters
+
+        class DummyDataSet(object):
+            """Just for the file name formatting."""
+            title = u"series statistics"
 
         def processSeries(series):
             seriesPlot = PlotSeriesStats()
+            # data formatted for file output, gathered across histograms
+            fileData = dict()
+            columnNames = ( # columns appearing in the output file header
+                ("seriesKey", "param", "lower", "upper", "weighting")
+                + Moments.fieldNames())
             for seriesItem in series.items():
-                processSeriesStats(seriesItem, seriesPlot)
+                processSeriesStats(seriesItem, seriesPlot, fileData, columnNames)
+            # since we are the last writer, changing outFn doesn't hurt
+            self._outFn = OutputFilename(DummyDataSet, createDir = False)
+            self._writeResultHelper(fileData, "", "series statistics",
+                                    columnNames, extension = '.dat')
             seriesPlot.show()
 
-        # TODO: store series stats in one file, requires paramName to be stored
-        # as well; filename will be just 2016-12-12_18-50-16_seriesStats.dat
-        # because it may contain multiple params, ranges or weights
-        def processSeriesStats(seriesItem, seriesPlot):
-            # similar to _writeStatistics() but not using parameters
+        def processSeriesStats(seriesItem, seriesPlot, fileData, columnNames):
+            # gather data values indexed by columns names first
             stats = dict()
-            columnNames = (("lower", "upper", "weighting", "seriesKey")
-                            + Moments.fieldNames())
             (sampleName, (pname, lo, hi, weight)), valuePairs = seriesItem
             for seriesKey, moments in valuePairs:
-                values = (lo, hi, weight, seriesKey,) + moments
+                values = (seriesKey, pname, lo, hi, weight) + moments
                 for name, value in zip(columnNames, values):
                     if name not in stats:
                         stats[name] = []
                     # for plotting below, no float-str conversion here
                     stats[name].append(value)
-            if len(sampleName): # prevent leading space for empty sampleNames
-                sampleName += " "
-            class fakeDataSet(object):
-                # file name formatting
-                title = u"{name}{param} [{lo},{hi}] {w}".format(
-                        name = sampleName, param = pname,
-                        lo = lo, hi = hi, w = weight)
-            # since we are the last writer, changing outFn doesn't hurt
-            self._outFn = OutputFilename(fakeDataSet, createDir = False)
-            # convert numerical stats to proper formatted text
-            statsStr = dict()
+            # convert numerical stats to proper formatted text for file output
             for key, values in stats.items():
                 # proper float-str formatting for text file output
-                statsStr[key] = []
+                if key not in fileData:
+                    fileData[key] = []
                 for value in values:
                     if isList(value):
                         value = ";".join([AsciiFile.formatValue(v)
                                           for v in value])
-                    statsStr[key].append(AsciiFile.formatValue(value))
-            self._writeResultHelper(statsStr, "seriesStats",
-                                    "series statistics",
-                                    columnNames, extension = '.dat')
+                    fileData[key].append(AsciiFile.formatValue(value))
             # simple statistics plotting, kind of a prototype for now ...
-            stats["cfg"] = u"{param} [{lo},{hi}] {w}".format(param = pname,
-                                                lo = lo, hi = hi, w = weight)
+            stats["cfg"] = u"{param} [{lo},{hi}] {w}".format(
+                            param = pname, lo = lo, hi = hi, w = weight)
             stats["title"] = sampleName
             seriesPlot.plot(stats)
 
