@@ -210,13 +210,6 @@ class DLSData(DataObj):
     # define DataObj interface
 
     @property
-    def seriesKey(self):
-        values = [Angle(u"°").toDisplay(a) for a in self.angles]
-        if len(values) == 1:
-            values = values[0]
-        return values
-
-    @property
     def tau(self):
         return self.x0
 
@@ -281,6 +274,18 @@ class DLSData(DataObj):
         return u";".join((
             str(fmt).format(unit.toDisplay(a), unit.displayMagnitudeName)
                     for a in self.angles))
+
+    @property
+    def seriesKey(self):
+        return "anglesToDisplay"
+
+    @property
+    def anglesToDisplay(self):
+        """Scattering angles"""
+        values = [self.anglesUnit.toDisplay(a) for a in self.angles]
+        if len(values) == 1:
+            values = values[0]
+        return values
 
     # temperature, viscosity, refractiveIndex, wavelength including std.err
 
