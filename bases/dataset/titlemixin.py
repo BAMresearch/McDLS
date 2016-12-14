@@ -5,6 +5,9 @@ from builtins import object
 from utils import isString
 
 class TitleMixin(object):
+    """
+    Manages a title of this object for display in a GUI.
+    """
     _title = None
 
     def __init__(self, title = None, **kwargs):
@@ -13,9 +16,7 @@ class TitleMixin(object):
 
     @property
     def title(self):
-        """
-        Returns the title of this object for display in a GUI.
-        """
+        """Data object title"""
         return self._title
 
     @title.setter

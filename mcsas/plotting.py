@@ -681,6 +681,7 @@ class PlotSeriesStats(object):
             xvec = xvecNew
         self._axes.errorbar(xvec, stats["mean"], stats["meanStd"],
                             label = stats["cfg"])
+        self._axes.set_xlabel(stats["seriesKeyName"])
         self._axes.set_ylabel("mean")
         self._axes.set_title(stats["title"])
 
