@@ -97,12 +97,6 @@ class FileList(DataList):
                           showProgress = False,
                           processSourceFunc = lambda x: x)
 
-    def configFromLast(self):
-        """Get the data config of the last item in the list."""
-        if self.isEmpty():
-            return None
-        return self.data(len(self)-1)[0].config
-
     def itemDoubleClicked(self, item, column):
         if not hasattr(item.data(), "sphericalSizeEst"):
             return
