@@ -240,7 +240,7 @@ class Calculator(HDFMixin):
         def makeId(data, hist):
             """Derive a unique identifier for each pair of sample and
             histogram."""
-            uid = (data.sampleName,
+            uid = (data.sampleName, data.seriesKeyName,
                    (hist.param.name(),)
                    + tuple(hist.param.unit().toDisplay(x) for x in h.xrange)
                    + (h.yweight,))
@@ -248,7 +248,7 @@ class Calculator(HDFMixin):
 
         for p in model.activeParams():
             for h in p.histograms():
-                addSeriesData(makeId(data, h), h, data.seriesKey)
+                addSeriesData(makeId(data, h), h, data.seriesKeyValue)
 
     def postProcess(self):
         if not self.algo.seriesStats():
@@ -264,8 +264,8 @@ class Calculator(HDFMixin):
             # data formatted for file output, gathered across histograms
             fileData = dict()
             columnNames = ( # columns appearing in the output file header
-                ("seriesKey", "param", "lower", "upper", "weighting")
-                + Moments.fieldNames())
+                ["seriesKey", "param", "lower", "upper", "weighting"]
+                + list(Moments.fieldNames()))
             for seriesItem in series.items():
                 processSeriesStats(seriesItem, seriesPlot, fileData, columnNames)
             # since we are the last writer, changing outFn doesn't hurt
@@ -277,7 +277,9 @@ class Calculator(HDFMixin):
         def processSeriesStats(seriesItem, seriesPlot, fileData, columnNames):
             # gather data values indexed by columns names first
             stats = dict()
-            (sampleName, (pname, lo, hi, weight)), valuePairs = seriesItem
+            ((sampleName, seriesKeyName, (pname, lo, hi, weight)),
+              valuePairs) = seriesItem
+            columnNames[0] = seriesKeyName.replace(" ", "_")
             for seriesKey, moments in valuePairs:
                 values = (seriesKey, pname, lo, hi, weight) + moments
                 for name, value in zip(columnNames, values):
@@ -296,6 +298,8 @@ class Calculator(HDFMixin):
                                           for v in value])
                     fileData[key].append(AsciiFile.formatValue(value))
             # simple statistics plotting, kind of a prototype for now ...
+            stats["seriesKeyName"] = seriesKeyName
+            stats["seriesKey"] = stats[columnNames[0]]
             stats["cfg"] = u"{param} [{lo},{hi}] {w}".format(
                             param = pname, lo = lo, hi = hi, w = weight)
             stats["title"] = sampleName

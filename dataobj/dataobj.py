@@ -99,7 +99,26 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
 
     @property
     def seriesKey(self):
-        return self.title
+        """The Name of the DataObj property to use as series key,
+        hard-coded for now, assuming it exists.
+        It allows to let the user chose from a generated list of properties
+        (todo)."""
+        return "title"
+
+    @property
+    def seriesKeyName(self):
+        """Returns the docstring of the property defined by self.seriesKeyProp.
+        """
+        try:
+            return getattr(type(self), self.seriesKey, None).__doc__
+        except AttributeError:
+            raise
+        return ""
+
+    @property
+    def seriesKeyValue(self):
+        """Returns the value of the property defined by self.seriesKeyProp."""
+        return getattr(self, self.seriesKey, None)
 
     @abstractproperty
     def count(self):
