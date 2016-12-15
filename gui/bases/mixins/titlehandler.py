@@ -5,7 +5,7 @@ from __future__ import absolute_import # PEP328
 from gui.qt import QtCore, QtGui
 from QtCore import QObject
 from QtGui import QWidget
-from bases.dataset import HierarchicalDataSet, TitleMixin
+from bases.dataset import TitleMixin
 from utils import isString, isCallable
 
 class TitleHandler(TitleMixin):
@@ -32,8 +32,6 @@ class TitleHandler(TitleMixin):
 
     def update(self, obj):
         title = obj
-        if isinstance(obj, HierarchicalDataSet):
-            title = obj.fullTitle()
         if not isString(title):
             return
         TitleMixin.title.fset(self, title)

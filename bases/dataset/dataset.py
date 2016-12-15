@@ -6,7 +6,6 @@ from builtins import object
 from abc import ABCMeta, abstractproperty
 from .titlemixin import TitleMixin
 from .rawarraymixin import RawArrayMixin
-from .hierarchicalmixin import HierarchicalMixin
 from utils import isString, classproperty
 from future.utils import with_metaclass
 from functools import reduce
@@ -55,32 +54,5 @@ class DataSet(TitleMixin, RawArrayMixin):
 
     def __init__(self, **kwargs):
         super(DataSet, self).__init__(**kwargs)
-
-class HierarchicalDataSet(DataSet, HierarchicalMixin):
-
-    def addChild(self, dataset, position = None):
-        assert isinstance(dataset, DataSet)
-        dataset.setParent(self)
-        if position is None:
-            self._children.append(dataset)
-        else:
-            self._children.insert(position, dataset)
-        return dataset
-
-    def fullTitle(self, titleFormat = None):
-        """TitleFormat defines how parent titles will be concatenated with
-        children titles"""
-        if not isString(titleFormat):
-            titleFormat = "{0} > {1}"
-        def parents():
-            dataset = self
-            while dataset is not None:
-                yield dataset
-                dataset = dataset.parent
-        return reduce(lambda a, b: titleFormat.format(b, a),
-                      [ds.title for ds in parents()])
-
-    def __init__(self, *args, **kwargs):
-        super(HierarchicalDataSet, self).__init__(**kwargs)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
