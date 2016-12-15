@@ -14,6 +14,8 @@ from past.utils import old_div
 import logging
 import copy
 from collections import OrderedDict
+from itertools import groupby
+from operator import itemgetter
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty)
 from utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
@@ -197,13 +199,26 @@ class DLSData(DataObj):
 
     @property
     def measIndicesStr(self):
+        # http://stackoverflow.com/questions/2154249
+        def groupIndices(indices):
+            """Identify groups of continuous numbers in a list."""
+            ranges = []
+            for key, group in groupby(enumerate(indices),
+                                      lambda (i, x): i - x):
+                group = map(itemgetter(1), group)
+                if len(group) > 1:
+                    ranges.append("{0}-{1}".format(group[0], group[-1]))
+                else:
+                    ranges.append(str(group[0]))
+            return ranges
+
         summary = OrderedDict()
         for g, i in self.measIndices:
             if g not in summary:
                 summary[g] = []
             summary[g].append(i)
         res = ";".join(["{group}: {indices}".format(group = g,
-            indices = ",".join([str(i) for i in lst]))
+            indices = ",".join(groupIndices(lst)))
                 for g, lst in summary.items()])
         return res
 
