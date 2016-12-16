@@ -250,11 +250,14 @@ class RangeList(DataList):
                 continue
 
     def updateHistograms(self):
-        """Called after UI update by sigModelChanged in MainWindow."""
-        self.clear()
+        """Called after UI update by sigRangeChanged and/or sigModelChanged in
+        MainWindow."""
         lst = []
         for p in self._calculator.model.activeParams():
             lst += [h for h in p.histograms()]
+        if set(self.data()) == set(lst):
+            return # no update if same hists exist already, order may differ
+        self.clear()
         self.append(lst)
 
     def append(self, histList):
