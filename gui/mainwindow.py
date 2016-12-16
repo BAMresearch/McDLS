@@ -270,7 +270,6 @@ class MainWindow(MainWindowBase):
                                      calculator = self.calculator,
                                      title = "Post-fit Analysis",
                                      withBtn = False, nestedItems = False)
-        self.modelWidget.setStatsWidget(self.statsWidget)
         self.modelWidget.sigModelChanged.connect(self.statsWidget.updateHistograms)
         return self.statsWidget
 

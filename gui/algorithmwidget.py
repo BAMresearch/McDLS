@@ -248,11 +248,6 @@ class AlgorithmWidget(SettingsWidget):
         # enable signals again after ui updates
         self.sigValueChanged.connect(self.updateParam)
 
-    def setStatsWidget(self, statsWidget):
-        """Sets the statistics widget to use for updating ranges."""
-        assert(isinstance(statsWidget, DataList))
-        self._statsWidget = statsWidget
-
     @staticmethod
     def _makeLabel(name):
         lbl = QLabel(name + ":")
