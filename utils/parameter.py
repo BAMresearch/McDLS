@@ -483,9 +483,10 @@ class Histogram(DataSet, DisplayMixin):
     __repr__ = __str__
 
     def hdfWrite(self, hdf):
+        props = list(self.integralProps())
+        props.remove("param") # we need its name only
         hdf.writeAttribute("param", self.param.name())
-        hdf.writeMembers(self, "lower", "upper", "binCount", "xscale",
-                               "yweight", "autoFollow")
+        hdf.writeMembers(self, *props)
 
     def __hash__(self):
         value = 0
@@ -501,6 +502,13 @@ class Histogram(DataSet, DisplayMixin):
 
     def __neq__(self, other):
         return not self.__eq__(other)
+
+    @classmethod
+    def integralProps(self):
+        """All properties needed to properly serialize and restore this
+        histogram. Same order expected by the constructor."""
+        return ("param", "lower", "upper", "binCount", "xscale", "yweight",
+                "autoFollow")
 
     def __init__(self, param, lower, upper, binCount = 50,
                  xscale = None, yweight = None, autoFollow = True):
