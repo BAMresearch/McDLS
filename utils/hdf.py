@@ -11,6 +11,7 @@ import logging
 import inspect
 import os.path
 import h5py
+import numpy as np
 from utils import isCallable, isString, isList, isNumber, isInteger, classname
 
 HDFString = str # Python 3 default
@@ -135,6 +136,8 @@ class HDFWriter(object):
             return
         if isString(value):
             value = HDFString(value)
+        elif type(value) == type(True): # filter boolean
+            value = np.int8(value)
         self.log("attribute '{loc}/{k}': '{v}'"
                  .format(loc = self.location.rstrip('/'), k = key, v = value))
         self._writeLocation().attrs[key] = value
@@ -174,7 +177,8 @@ class HDFWriter(object):
             memberName = str(memberName)
         else:
             member = getattr(obj, memberName, None)
-#        DBG(member)
+#        DBG(memberName, member, type(member), isCallable(member),
+#            isList(member), isString(member), isNumber(member))
         if member is None:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + u"It is empty or does not exist (=None).")
