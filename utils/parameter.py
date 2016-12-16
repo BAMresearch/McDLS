@@ -182,7 +182,7 @@ class Histogram(DataSet, DisplayMixin):
     """
     _param      = None # the FitParameter this histogram belongs to
     _binCount   = None # list of bin counts
-    _autoFollow = True # follows model parameter setting or not. 
+    _autoFollow = None # follows model parameter setting or not.
     _xscale     = None # list of scalings
     _yweight    = None # list of weightings
     _xrange     = None # list of tuples/pairs
@@ -503,7 +503,7 @@ class Histogram(DataSet, DisplayMixin):
         return not self.__eq__(other)
 
     def __init__(self, param, lower, upper, binCount = 50,
-                 xscale = None, yweight = None):
+                 xscale = None, yweight = None, autoFollow = True):
         """Creates an histogram with default bin count, will be updated later."""
         logging.debug('Hist init: {} [{}, {}]'
                 .format(param.name(), lower, upper))
@@ -515,6 +515,7 @@ class Histogram(DataSet, DisplayMixin):
         # setter chose the first option available for invalid options
         self.xscale = xscale
         self.yweight = yweight
+        self.autoFollow = autoFollow
 
     # TODO: Function toString() or toJson() or similar which makes it
     # serializable and also a classmethod which constructs it from serial data
