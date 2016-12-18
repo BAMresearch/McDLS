@@ -3,6 +3,7 @@
 
 from builtins import str
 from builtins import object
+
 class DropWidget(object):
     """
     Drag&Drop support for widgets which inherit from this.

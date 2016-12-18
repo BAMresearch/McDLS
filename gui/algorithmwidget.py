@@ -14,7 +14,7 @@ from QtGui import (QWidget, QHBoxLayout, QPushButton,
                    QLabel, QLayout, QGridLayout)
 from gui.bases.datalist import DataList
 from gui.bases.settingswidget import SettingsWidget
-from gui.bases.mixins.titlehandler import TitleHandler
+from gui.bases.mixins import TitleHandler, AppSettings
 from bases.algorithm import AlgorithmBase, ParameterFloat # instance for test
 from utils import isList, isString, testfor
 from utils.parameter import (ParameterNumerical, FitParameterBase)
@@ -43,15 +43,15 @@ def rearrangeWidgets(layout, widgets, targetWidth):
     for i, w in enumerate(widgets):
         layout.addWidget(w, old_div(i, numCols), i % numCols, Qt.AlignTop)
 
-class AlgorithmWidget(SettingsWidget):
+class AlgorithmWidget(SettingsWidget, AppSettings):
     _algo = None
-    _appSettings = None
     sigRangeChanged = Signal()
     sigBackendUpdated = Signal()
 
-    def __init__(self, parent, algorithm):
+    def __init__(self, parent, algorithm, appSettings):
         super(AlgorithmWidget, self).__init__(parent)
         self.algorithm = algorithm
+        self.appSettings = appSettings
         self.sigValueChanged.connect(self.updateParam)
         self.sigBackendUpdated.connect(self.onBackendUpdate)
 
@@ -66,16 +66,6 @@ class AlgorithmWidget(SettingsWidget):
         assert algo is None or isinstance(algo, AlgorithmBase)
         self._algo = algo
 
-    @property
-    def appSettings(self):
-        return self._appSettings
-
-    @appSettings.setter
-    def appSettings(self, settings):
-        assert isinstance(settings, QSettings)
-        self._appSettings = settings
-
-    # create inputs for a subset of algorithm parameters
     # allowed parameters could be configurable from file too
     def makeWidgets(self, *args):
         for p in args:
@@ -410,11 +400,11 @@ class SettingsGridWidget(AlgorithmWidget):
     """Base class for displaying simple input boxes of various settings
     arranged on a grid dynamically based on the width of the window."""
 
-    def __init__(self, parent, algorithm, showParams = None):
+    def __init__(self, parent, algorithm, appSettings = None, showParams = None):
         """Additional arguments: *showParams* is a list of parameter names to
         show in this widget. If not specified it shows all available parameters
         by default."""
-        super(SettingsGridWidget, self).__init__(parent, algorithm)
+        super(SettingsGridWidget, self).__init__(parent, algorithm, appSettings)
         self.title = TitleHandler.setup(self, self.algorithm.name())
         layout = QGridLayout(self)
         layout.setObjectName("configLayout")
