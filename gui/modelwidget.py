@@ -104,6 +104,7 @@ class ModelWidget(AlgorithmWidget):
         if self.appSettings is None or self.model is None:
             return
         model = self.model.name()
+        self.setRootGroup()
         self.appSettings.beginGroup(self.objectName())
         self.appSettings.setValue("model", model)
         super(ModelWidget, self).storeSession(model)

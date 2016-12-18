@@ -62,4 +62,11 @@ class OptimizationWidget(AlgorithmWidget):
             self._tempCompExp = self.get("compensationExponent", None)
             self.set("compensationExponent", 1.0) # fix its value
 
+    def storeSession(self, *args, **kwargs):
+        self.setRootGroup()
+        super(OptimizationWidget, self).storeSession(*args, **kwargs)
+
+    def restoreSession(self, *args, **kwargs):
+        super(OptimizationWidget, self).restoreSession(*args, **kwargs)
+
 # vim: set ts=4 sts=4 sw=4 tw=0:
