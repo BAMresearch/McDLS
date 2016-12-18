@@ -63,6 +63,7 @@ def hasReceivers(qobject, signalName):
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
+    _statsWidget = None # RangeList for (re-)storing histogram settings
 
     def __init__(self, parent, calculator, *args):
         super(ModelWidget, self).__init__(parent, None, *args)
@@ -80,6 +81,11 @@ class ModelWidget(AlgorithmWidget):
         paramLayout = QVBoxLayout(self.modelWidget)
         self.modelWidget.setLayout(paramLayout)
         layout.addWidget(self.modelWidget)
+
+    def setStatsWidget(self, statsWidget):
+        """Sets the statistics widget to use for updating ranges."""
+        assert(isinstance(statsWidget, AppSettings))
+        self._statsWidget = statsWidget
 
     def onDataSelected(self, dataobj):
         """Gets the data which is currently selected in the UI and rebuilds
@@ -108,6 +114,7 @@ class ModelWidget(AlgorithmWidget):
         self.appSettings.beginGroup(self.objectName())
         self.appSettings.setValue("model", model)
         super(ModelWidget, self).storeSession(model)
+        self._statsWidget.storeSession(model)
         self.appSettings.endGroup()
 
     def restoreSession(self, model = None):
@@ -127,6 +134,7 @@ class ModelWidget(AlgorithmWidget):
         else:
             self.appSettings.beginGroup(self.objectName())
             super(ModelWidget, self).restoreSession(model)
+            self._statsWidget.restoreSession(model)
             self.appSettings.endGroup()
 
     def _selectModelSlot(self, key = None):

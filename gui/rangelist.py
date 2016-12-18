@@ -5,16 +5,16 @@ from __future__ import absolute_import # PEP328
 from builtins import zip
 import logging
 
-from numpy import inf as numpy_inf
 from gui.qt import QtCore, QtGui
 from QtCore import Qt, QFileInfo, QMargins
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QComboBox, QPalette, QDialog, QSpinBox,
                    QCheckBox)
+import numpy as np
 from gui.bases.datalist import DataList
 from gui.bases.mixins import AppSettings
 from utils import isList, testfor
-from utils.parameter import (ParameterNumerical, Histogram)
+from utils.parameter import (ParameterBase, ParameterNumerical, Histogram, isActiveParam)
 from gui.calc import Calculator
 
 # do not remove, dialog will not work without this
@@ -286,6 +286,62 @@ class RangeList(DataList, AppSettings):
         newHist.param.histograms().append(newHist) # hmm, funny here
         # update the GUI based on that
         self.updateHistograms()
+
+    def storeSession(self, section):
+        if self.appSettings is None:
+            return
+        self.appSettings.beginGroup(section)
+        self.appSettings.beginGroup("histograms")
+        for i, h in enumerate(self.data()):
+            self.appSettings.beginGroup(str(i))
+            for key in h.integralProps():
+                value = getattr(h, key, None)
+                if isinstance(value, ParameterBase):
+                    value = value.name()
+                if isinstance(value, float):
+                    # avoid issues on restore with unequal floats
+                    value = repr(value)
+                self.appSettings.setValue(key, value)
+            self.appSettings.endGroup()
+        self.appSettings.endGroup()
+        self.appSettings.endGroup()
+
+    def restoreSession(self, section):
+        """Load last known user settings from persistent app settings."""
+        if self.appSettings is None:
+            return
+
+        def parseHistogram(settings):
+            initProps = []
+            param = None
+            for key in Histogram.integralProps():
+                value = settings.value(key, None)
+                if key == "param":
+                    param = getattr(self._calculator.model, value, None)
+                    if param is None:
+                        return None
+                    if not isActiveParam(param):
+                        return None
+                    value = param
+                initProps.append(value)
+            param.histograms().append(Histogram(*initProps))
+            return initProps
+
+        self.appSettings.beginGroup(section)
+        self.appSettings.beginGroup("histograms")
+        for iKey in self.appSettings.childGroups():
+            i = -1
+            try:
+                i = int(iKey)
+            except ValueError:
+                continue
+            if i < 0 or str(i) != iKey:
+                continue
+            self.appSettings.beginGroup(iKey)
+            parseHistogram(self.appSettings)
+            self.appSettings.endGroup()
+        self.appSettings.endGroup()
+        self.appSettings.endGroup()
 
     def setupUi(self):
         setBackgroundStyleSheet(self, "./resources/background_ranges.svg")
