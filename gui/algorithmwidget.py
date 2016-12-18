@@ -68,10 +68,14 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
 
     # allowed parameters could be configurable from file too
     def makeWidgets(self, *args):
+        lst = []
         for p in args:
             p = getattr(self.algorithm, p, None)
             if p is None: continue
-            yield self.makeSetting(p)
+            w = self.makeSetting(p)
+            if w is not None:
+                lst.append(w)
+        return lst
 
     @property
     def inputWidgets(self):
@@ -99,8 +103,7 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
 
     @property
     def keys(self):
-        for w in self.inputWidgets:
-            yield w.objectName()
+        return [w.objectName() for w in self.inputWidgets]
 
     def storeSession(self, section = None):
         """Stores current UI configuration to persistent application settings.
