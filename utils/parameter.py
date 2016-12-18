@@ -517,12 +517,15 @@ class Histogram(DataSet, DisplayMixin):
                 .format(param.name(), lower, upper))
         super(Histogram, self).__init__(title = "({0}, {1})".format(lower, upper))
         # add it to the parameter here
-        self.param = param # parameter we belong to is mandatory
-        self.binCount = binCount # bin count is mandatory
-        self.xrange = (lower, upper)
+        if isinstance(param, ParameterBase):
+            self.param = param # parameter we belong to is mandatory
+        self.binCount = int(binCount) # bin count is mandatory
+        self.xrange = (float(lower), float(upper))
         # setter chose the first option available for invalid options
         self.xscale = xscale
         self.yweight = yweight
+        if not isinstance(autoFollow, bool):
+            autoFollow = (autoFollow.title() == "True")
         self.autoFollow = autoFollow
 
     # TODO: Function toString() or toJson() or similar which makes it
