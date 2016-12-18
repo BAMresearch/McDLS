@@ -22,6 +22,7 @@ class AppSettings(object):
             self._appSettings = settings
 
     def setRootGroup(self):
+        """Resets any QSettings group(s) currently set."""
         if self.appSettings is None:
             return
         while len(self.appSettings.group()):
