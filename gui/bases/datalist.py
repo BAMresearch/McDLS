@@ -208,7 +208,6 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
     >>> sl.selectionChangedSlot()
 
     """
-    sigSelectedIndex = Signal((int, int))
     sigSelectedData = Signal((object,))
     sigUpdatedData = Signal((object,))
     sigRemovedData = Signal(list)
@@ -368,7 +367,6 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
 
     def selectionChanged(self):
         index, data = self.currentSelection()
-        self.sigSelectedIndex.emit(len(self), index)
         self.sigSelectedData.emit(data)
         self._updateContextMenu()
 
