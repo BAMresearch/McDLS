@@ -12,6 +12,7 @@ from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QComboBox, QPalette, QDialog, QSpinBox,
                    QCheckBox)
 from gui.bases.datalist import DataList
+from gui.bases.mixins import AppSettings
 from utils import isList, testfor
 from utils.parameter import (ParameterNumerical, Histogram)
 from gui.calc import Calculator
@@ -217,13 +218,14 @@ class RangeDialog(QDialog):
         hist.autoFollow = self.autoRange.isChecked()
         return hist
 
-class RangeList(DataList):
+class RangeList(DataList, AppSettings):
     _calculator = None
 
-    def __init__(self, calculator = None, **kwargs):
+    def __init__(self, calculator = None, appSettings = None, **kwargs):
         DataList.__init__(self, **kwargs)
         assert isinstance(calculator, Calculator)
         self._calculator = calculator
+        self.appSettings = appSettings
         self.sigRemovedData.connect(self.onRemoval)
         self.listWidget.mouseDoubleClickEvent = self.mouseDoubleClickEvent
 

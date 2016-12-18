@@ -10,7 +10,7 @@ import logging
 from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
 from QtGui import (QWidget, QVBoxLayout, QComboBox)
-from gui.bases.mixins.titlehandler import TitleHandler
+from gui.bases.mixins import TitleHandler, AppSettings
 from utils import isString
 
 from gui.scientrybox import SciEntryBox
@@ -66,8 +66,8 @@ class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
 
-    def __init__(self, parent, calculator):
-        super(ModelWidget, self).__init__(parent, None)
+    def __init__(self, parent, calculator, *args):
+        super(ModelWidget, self).__init__(parent, None, *args)
         self._calculator = calculator
         self.title = TitleHandler.setup(self, "Model")
 

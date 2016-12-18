@@ -11,8 +11,9 @@ from gui.utils.appversion import QAppVersion
 from gui.utils.translate import tr
 from gui.utils.signal import Signal
 from gui.bases.mainwindow.ui_mainwindow import Ui_MainWindow
+from gui.bases.mixins import AppSettings
 
-class MainWindow(QMainWindow, Ui_MainWindow):
+class MainWindow(QMainWindow, Ui_MainWindow, AppSettings):
     """
     Main window base class.
 
@@ -21,16 +22,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     """
     onStartupSignal = Signal()
     _appversion = None # QAppVersion
-    _appsettings = None # AppSettings
 
     def __init__(self, appversion, parent = None):
         QMainWindow.__init__(self, parent)
-        self.setupUi(self)
         assert QAppVersion.isValid(appversion), "Please provide a valid QAppVersion."
-        self._appversion = appversion
         self.setWindowTitle("{name} {number}"
                 .format(name = appversion.name(),
                         number = appversion.number()))
+        self.appSettings = QSettings(appversion.organizationName(),
+                                     appversion.settingsKey())
+        self._appversion = appversion
+        self.setupUi(self)
         self.restoreSettings()
 
     def getCommandlineArguments(self):
@@ -50,37 +52,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.storeSettings()
         QMainWindow.closeEvent(self, event)
 
-    def appSettings(self):
-        return self._appsettings
-
     def storeSettings(self):
-        if self._appsettings is None:
+        if self.appSettings is None:
             return
         geometry = self.saveGeometry()
         windowState = self.saveState()
         # print >>sys.__stderr__, geometry.toBase64()
         # print >>sys.__stderr__, windowState.toBase64()
-        self._appsettings.setValue("geometry", geometry)
-        self._appsettings.setValue("windowState", windowState)
+        self.setRootGroup()
+        self.appSettings.setValue("geometry", geometry)
+        self.appSettings.setValue("windowState", windowState)
 
     def restoreSettings(self):
         """
         Load defaults for settings if missing and available.
         """
-        if self._appsettings is None:
-            self._appsettings = QSettings(
-                    self._appversion.organizationName(),
-                    self._appversion.settingsKey())
+        if self.appSettings is None:
+            return
         defaultSettings = self._appversion.defaultSettings()
         logmsg = "Loaded settings."
         if defaultSettings is not None:
             # loading default settings if not set previously
             custom, default = [], []
             for key, value in defaultSettings.items():
-                if self._appsettings.contains(key):
+                if self.appSettings.contains(key):
                     custom.append(key)
                 else: # qsettings doesn't contain the key, add it
-                    self._appsettings.setValue(key, 
+                    self.appSettings.setValue(key,
                             QByteArray.fromBase64(value))
                     default.append(key)
             if len(default) > 0:
@@ -92,9 +90,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for key, func in (('geometry', self.restoreGeometry),
                           ('windowState', self.restoreState)):
             try: #QVariant
-                func(self._appsettings.value(key).toByteArray())
+                func(self.appSettings.value(key).toByteArray())
             except AttributeError:
-                func(self._appsettings.value(key))
+                func(self.appSettings.value(key))
 
 # TODO: tests?
 

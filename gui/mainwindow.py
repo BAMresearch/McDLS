@@ -309,13 +309,13 @@ class MainWindow(MainWindowBase):
 
     def _setupOptimWidget(self):
         """Set up property widget with settings."""
-        self.optimWidget = OptimizationWidget(self, self.calculator.algo)
+        self.optimWidget = OptimizationWidget(self, self.calculator.algo, self.appSettings)
         self.fileWidget.sigSelectedData.connect(self.optimWidget.onDataSelected)
         return self.optimWidget
 
     def _setupModelWidget(self):
         """Set up property widget with settings."""
-        self.modelWidget = ModelWidget(self, self.calculator)
+        self.modelWidget = ModelWidget(self, self.calculator, self.appSettings)
         self.fileWidget.sigSphericalSizeRange.connect(
                 self._onSphericalSizeRange)
         self.fileWidget.sigSelectedData.connect(self.modelWidget.onDataSelected)
@@ -330,6 +330,7 @@ class MainWindow(MainWindowBase):
         # setup similar to the file widget
         self.statsWidget = RangeList(parent = self,
                                      calculator = self.calculator,
+                                     appSettings = self.appSettings,
                                      title = "Post-fit Analysis",
                                      withBtn = False, nestedItems = False)
         self.modelWidget.sigModelChanged.connect(self.statsWidget.updateHistograms)
@@ -365,31 +366,31 @@ class MainWindow(MainWindowBase):
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
-        settings = self.appSettings()
         for settingsWidget in self.optimWidget, self.modelWidget:
-            settingsWidget.appSettings = self.appSettings()
             settingsWidget.restoreSession()
+        if self.appSettings is None:
+            return
         try:
-            value = str(settings.value("lastpath").toString())
+            value = str(self.appSettings.value("lastpath").toString())
         except AttributeError: # QVariant
-            value = str(settings.value("lastpath"))
+            value = str(self.appSettings.value("lastpath"))
         if os.path.isdir(value):
             LastPath.set(value)
 
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
-        settings = self.appSettings()
         for settingsWidget in self.optimWidget, self.modelWidget:
             settingsWidget.storeSession()
-        settings.setValue("lastpath", LastPath.get())
-        settings.sync()
+        if self.appSettings is not None:
+            self.appSettings.setValue("lastpath", LastPath.get())
+            self.appSettings.sync()
         return
         # test for additionally storing settings to file
         tempSettings = QSettings("/tmp/qsettings.test", QSettings.IniFormat)
-        for key in settings.allKeys():
+        for key in self.appSettings.allKeys():
             if key in ('geometry', 'windowState', 'lastpath'):
                 continue
-            tempSettings.setValue(key, settings.value(key))
+            tempSettings.setValue(key, self.appSettings.value(key))
         tempSettings.sync()
 
     def fileDialog(self):
