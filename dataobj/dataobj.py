@@ -268,7 +268,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         #  It stops calling back in _onLimitsUpdate() because the clipping
         #  value does not change further (no update needed)
         # -> vice versa at the end of _onLimitsUpdate() above
-        if self.x0.sanitized.min() < self.config.x0Low():
+        if len(self.x0.sanitized) and self.x0.sanitized.min() < self.config.x0Low():
             self.config.x0Low.setValue(self.x0.sanitized.min())
 
     def _reBin(self):
