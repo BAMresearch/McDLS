@@ -52,7 +52,7 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
         super(AlgorithmWidget, self).__init__(parent)
         self.algorithm = algorithm
         self.appSettings = appSettings
-        self.sigValueChanged.connect(self.updateParam)
+        self.sigValueChanged.connect(self.updateWidget)
         self.sigBackendUpdated.connect(self.onBackendUpdate)
 
     @property
@@ -142,85 +142,83 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
             p = None
         return p
 
-    def updateParamRange(self, param, newRange):
-        if (not isNotNone(newRange) or
-            not isinstance(param, FitParameterBase) or
-            not param.isActive()):
-            return None
-        displayRange = None
-        try:
-            param.setDisplayActiveRange(newRange)
-            displayRange = param.displayActiveRange() # get updated values
-        except AttributeError:
-            param.setActiveRange(newRange)
-            displayRange = param.activeRange()
-        param.histograms().updateRanges()
-        return displayRange
-
-    def updateParam(self, widget, emitBackendUpdated = True):
-        """Write UI settings back to the algorithm."""
+    def updateWidget(self, widget, emitBackendUpdated = True):
+        """Write UI settings back to the algorithm. Gets the parameter
+        associated with a certain widget and processes all related widgets as
+        well."""
         if widget in self.uiWidgets:
             return # skip ui input widgets without a Parameter backend
-        p = self._paramFromWidget(widget)
-        if p is None:
+        param = self._paramFromWidget(widget)
+        if param is None:
             logging.error("updateParam({}) could not find associated parameter!"
                           .format(widget.objectName()))
             return
-        # disable signals during ui updates
-        self.sigValueChanged.disconnect(self.updateParam)
-        # persistent name due to changes to the class instead of instance
-        key = p.name()
         # get the parent of the updated widget and other input for this param
-        parent = widget.parent()
-        valueWidget = parent.findChild(QWidget, key)
-        minWidget = parent.findChild(QWidget, key+"min")
-        maxWidget = parent.findChild(QWidget, key+"max")
-        # get changed value range if any
-        minValue = self.get(key+"min")
-        maxValue = self.get(key+"max")
-        # update value range for numerical parameters
-        newRange = self.updateParamRange(p, (minValue, maxValue))
-        if isNotNone(newRange):
-            minWidget.setValue(min(newRange))
-            maxWidget.setValue(max(newRange))
+        self.updateParam(param, emitBackendUpdated)
+
+    def updateParam(self, param, emitBackendUpdated = True):
+        """Write UI settings back to the algorithm. Processes all input
+        widgets which belong to a certain parameter."""
+        if param is None:
+            return
+        key = param.name()
+        valueWidget = self.getWidget(key)
+        if valueWidget is None: # no input widgets for this parameter
+            return
+        # disable signals during ui updates
+        tryDisconnect(self.sigValueChanged, self.updateWidget)
         # update the value input widget itself
-        newValue = self.get(key)
+        newValue = self.getValue(valueWidget)
         if newValue is not None:
             # clipping function in bases.algorithm.parameter def
-            p.setDisplayValue(newValue)
-            clippedVal = p.displayValue()
-            try: 
-                valueWidget.setValue(clippedVal)
-            except AttributeError:
-                pass
-        # fit parameter related updates
-        newActive = self.get(key+"active")
-        if isinstance(newActive, bool): # None for non-fit parameters
-            # update active state for fit parameters
-            p.setActive(newActive)
-            if p.isActive():
-                valueWidget.hide()
-                minWidget.show()
-                maxWidget.show()
-        if not isinstance(newActive, bool) or not newActive:
-            valueWidget.show()
-            try:
-                minWidget.hide()
-                maxWidget.hide()
-            except: pass
+            param.setDisplayValue(newValue)
+            # set the possibly clipped value
+            self.setValue(valueWidget, param.displayValue())
+        self._updateFitParam(param, valueWidget)
         # enable signals again after ui updates
-        self.sigValueChanged.connect(self.updateParam)
+        self.sigValueChanged.connect(self.updateWidget)
         # param internals could have changed, update ui accordingly
         if emitBackendUpdated:
             self.sigBackendUpdated.emit() # update other widgets possibly
-        if isNotNone(newRange):
             # the range was updated
-            self.sigRangeChanged.emit()
+
+    def _updateFitParam(self, param, valueWidget):
+        if not isinstance(param, FitParameterBase):
+            return
+        keymin, keymax = param.name() + "min", param.name() + "max"
+        minWidget = self.getWidget(keymin)
+        maxWidget = self.getWidget(keymax)
+        # get changed value range if any
+        minValue = self.getValue(minWidget)
+        maxValue = self.getValue(maxWidget)
+        # update value range for numerical parameters
+        if None not in (minValue, maxValue):
+            param.setDisplayActiveRange((minValue, maxValue))
+            displayRange = param.displayActiveRange() # get updated values
+            if isList(displayRange) and None not in displayRange:
+                self.setValue(minWidget, min(displayRange))
+                self.setValue(maxWidget, max(displayRange))
+        newActive = self.get(param.name() + "active")
+        if not isinstance(newActive, bool): # None for non-fit parameters
+            return
+        # update active state for fit parameters
+        param.setActive(newActive)
+        if None in (valueWidget, minWidget, maxWidget):
+            return
+        if param.isActive():
+            valueWidget.hide()
+            minWidget.show()
+            maxWidget.show()
+        else:
+            valueWidget.show()
+            minWidget.hide()
+            maxWidget.hide()
+
 
     def updateAll(self):
         """Called in MainWindow on calculation start."""
-        for w in self.inputWidgets:
-            self.updateParam(w, emitBackendUpdated = False)
+        for p in self.algorithm.params():
+            self.updateParam(p, emitBackendUpdated = False)
         # emit sigBackendUpdated after updating all widgets,
         # because they may be removed in the meantime
         self.sigBackendUpdated.emit()
@@ -233,13 +231,13 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
         if self.algorithm is None:
             return
         # disable signals during ui updates
-        self.sigValueChanged.disconnect(self.updateParam)
+        tryDisconnect(self.sigValueChanged, self.updateWidget)
         for p in self.algorithm.params():
             if self.get(p.name()) in (p.displayValue(), None):
                 continue
             self.set(p.name(), p.displayValue())
         # enable signals again after ui updates
-        self.sigValueChanged.connect(self.updateParam)
+        self.sigValueChanged.connect(self.updateWidget)
 
     @staticmethod
     def _makeLabel(name):
@@ -365,7 +363,7 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
             w.parameterName = param.name()
         # configure UI accordingly (hide/show widgets)
         # no backend update, ui was just built, data is still in sync
-        self.updateParam(widgets[-1], emitBackendUpdated = False)
+        self.updateParam(param, emitBackendUpdated = False)
         return widget
 
     @staticmethod
