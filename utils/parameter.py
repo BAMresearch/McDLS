@@ -539,6 +539,11 @@ class Histograms(list):
             return
         super(Histograms, self).append(value)
 
+    def clear(self):
+        if not len(self):
+            return
+        self[:] = [] # delete all histograms
+
     def updateRanges(self):
         """Updates ranges of all histograms."""
         # work directly on the histograms, no copy
