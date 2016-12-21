@@ -567,7 +567,7 @@ class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
     bases.algorithm.parameter to introduce more specific fit
     related attributes."""
-    ParameterBase.addAttributes(locals(), histograms = None,
+    ParameterBase.addAttributes(locals(), histograms = Histograms(),
             activeValues = list(), activeRange = None)
 
     def hdfStoreAsMember(self):
@@ -576,11 +576,16 @@ class FitParameterBase(ParameterBase):
 
     def __init__(self):
         super(FitParameterBase, self).__init__()
-        # point the parameter reference to this instance now
-        # (instead of the type previously)
-        if self.isActive():
-            for i in range(len(self.histograms())):
-                self.histograms()[i].param = self
+        # create a copy of histograms
+        # otherwise all instances share the class attribute
+        oldHists = self.histograms()
+        if isList(oldHists):
+            self.setHistograms(Histograms())
+            for h in oldHists:
+                # point the parameter reference to this instance now
+                # (instead of the type previously)
+                h.param = self
+                self.histograms().append(h)
         # copy activeValues as well
         oldActiveValues = self.activeValues()
         if isList(oldActiveValues):
@@ -589,8 +594,7 @@ class FitParameterBase(ParameterBase):
     @mixedmethod
     def setValueRange(selforcls, newRange):
         super(FitParameterBase, selforcls).setValueRange(newRange)
-        if isinstance(selforcls.histograms(), Histograms):
-            selforcls.histograms().updateRanges()
+        selforcls.histograms().updateRanges()
 
     @mixedmethod
     def isActive(selforcls):
@@ -604,7 +608,6 @@ class FitParameterBase(ParameterBase):
         Temporary in replacement of setIsActive(). Can be removed later if
         histgram setup for each parameter is implemented elsewhere"""
         if isActive and not selforcls.isActive():
-            # set only if there is no histogram defined already
             if selforcls.activeRange() is None or None in selforcls.activeRange():
                 lo, hi = selforcls.valueRange()
             else:
@@ -615,7 +618,7 @@ class FitParameterBase(ParameterBase):
             # or in Histogram.__init__ defaults
             selforcls.histograms().append(Histogram(selforcls, lo, hi))
         elif not isActive:
-            selforcls.setHistograms(None)
+            selforcls.histograms().clear()
 
     @mixedmethod
     def activeVal(selforcls, val, index = None):
@@ -672,8 +675,7 @@ class FitParameterBase(ParameterBase):
         newRange = selforcls.clip(newRange)
         # sets range for active fitting parameter limits
         selforcls._activeRange = (min(newRange), max(newRange))
-        if isinstance(selforcls.histograms(), Histograms):
-            selforcls.histograms().updateRanges()
+        selforcls.histograms().updateRanges()
 
     @mixedmethod
     def activeRange(selforcls):
