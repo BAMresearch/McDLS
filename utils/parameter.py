@@ -581,6 +581,10 @@ class FitParameterBase(ParameterBase):
         if self.isActive():
             for i in range(len(self.histograms())):
                 self.histograms()[i].param = self
+        # copy activeValues as well
+        oldActiveValues = self.activeValues()
+        if isList(oldActiveValues):
+            self.setActiveValues(oldActiveValues[:])
 
     @mixedmethod
     def setValueRange(selforcls, newRange):
@@ -620,6 +624,7 @@ class FitParameterBase(ParameterBase):
         with each array storing the parameter values of a successful run.
         If index is supplied, only the array at that list index is returned, 
         otherwise the entire list is returned.
+        Used to store the fit results in each parameter.
         """
         if index is None:
             return selforcls.activeValues()
@@ -637,23 +642,24 @@ class FitParameterBase(ParameterBase):
         number.
         If the list is not long enough to accommodate the value, it will be 
         extended.
+        Used to store the fit results in each parameter.
         """
-        if index is None:
-            # append to end
-            index = len(selforcls.activeValues())
-
-        while len(selforcls.activeValues()) < (index + 1):
-            # expand list to allow storage of value
-            tempVal = selforcls.activeValues()
-            tempVal.append(None)
-            selforcls.setActiveValues(tempVal)
-
         if not selforcls.isActive():
-            logging.error(
-            'value of parameter cannot be set, parameter not active')
+            logging.error("Value of parameter cannot be set, "
+                          "parameter not active!")
             return
 
         tempVal = selforcls.activeValues()
+        if index is None:
+            index = len(tempVal) # append to end by default
+        elif index < 0:
+            # index == -1 means the last, not yet existing entry
+            index = len(tempVal) + index + 1
+
+        while len(tempVal) <= index:
+            # expand list to allow storage of value
+            tempVal.append(None)
+
         tempVal[index] = val
         selforcls.setActiveValues(tempVal)
     
