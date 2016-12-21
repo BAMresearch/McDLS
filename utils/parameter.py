@@ -603,6 +603,41 @@ class FitParameterBase(ParameterBase):
 
     setActive = setIsActive # alias
 
+    @mixedmethod
+    def setActiveRange(selforcls, newRange):
+        # tests nicked from above
+        testfor(len(newRange) == 2, ValueRangeError,
+                "Active ranges have to consist of two values!")
+        # always clip range settings to min/max values:
+        newRange = selforcls.clip(newRange)
+        # sets range for active fitting parameter limits
+        selforcls._activeRange = (min(newRange), max(newRange))
+        selforcls.histograms().updateRanges()
+
+    @mixedmethod
+    def activeRange(selforcls):
+        if selforcls._activeRange is None:
+            return selforcls.valueRange() # fallback
+        else:
+            return selforcls._activeRange
+
+    @mixedmethod
+    def displayActiveRange(selforcls):
+        """value bounds in display units used for parameter generator"""
+        vRange = selforcls.activeRange()
+        try:
+            vRange = (selforcls.toDisplay(min(vRange)),
+                      selforcls.toDisplay(max(vRange)))
+        except AttributeError:
+            pass # toDisplay() only in ParameterFloat
+        return vRange
+
+    @mixedmethod
+    def setDisplayActiveRange(selforcls, newRange):
+        """sets value range after converting input from display to SI units"""
+        newRange = (selforcls.toSi(min(newRange)),
+                    selforcls.toSi(max(newRange)))
+        selforcls.setActiveRange(newRange)
 
     @mixedmethod
     def activeVal(selforcls, val, index = None):
@@ -650,42 +685,6 @@ class FitParameterBase(ParameterBase):
         tempVal[index] = val
         selforcls.setActiveValues(tempVal)
     
-    @mixedmethod
-    def setActiveRange(selforcls, newRange):
-        # tests nicked from above
-        testfor(len(newRange) == 2, ValueRangeError,
-                "Active ranges have to consist of two values!")
-        # always clip range settings to min/max values:
-        newRange = selforcls.clip(newRange)
-        # sets range for active fitting parameter limits
-        selforcls._activeRange = (min(newRange), max(newRange))
-        selforcls.histograms().updateRanges()
-
-    @mixedmethod
-    def activeRange(selforcls):
-        if selforcls._activeRange is None:
-            return selforcls.valueRange() # fallback
-        else:
-            return selforcls._activeRange
-
-    @mixedmethod
-    def displayActiveRange(selforcls):
-        """value bounds in display units used for parameter generator"""
-        vRange = selforcls.activeRange()
-        try:
-            vRange = (selforcls.toDisplay(min(vRange)),
-                      selforcls.toDisplay(max(vRange)))
-        except AttributeError:
-            pass # toDisplay() only in ParameterFloat
-        return vRange
-
-    @mixedmethod
-    def setDisplayActiveRange(selforcls, newRange):
-        """sets value range after converting input from display to SI units""" 
-        newRange = (selforcls.toSi(min(newRange)),
-                    selforcls.toSi(max(newRange)))
-        selforcls.setActiveRange(newRange)
-
 class FitParameterString(FitParameterBase, ParameterString):
     pass
 
