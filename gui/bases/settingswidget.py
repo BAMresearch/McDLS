@@ -41,16 +41,23 @@ class SettingsWidget(QWidget):
         return self._inputWidget.get(datatype, QLineEdit)
 
     def get(self, key, defaultValue = None):
-        child = self.findChild(QWidget, key)
+        """Retrieves the values for a given key name."""
+        return self.getValue(self.getWidget(key), defaultValue)
+
+    def getWidget(self, key):
+        return self.findChild(QWidget, key)
+
+    def getValue(self, widget, defaultValue = None):
+        """Retrieves the values for a given widget."""
         value = defaultValue
-        if child is None:
+        if widget is None:
             return value
         propValue = None
         for attr in "value", "checked", "text":
             try:
-                valueGetter = getattr(child, attr)
+                valueGetter = getattr(widget, attr)
             except:
-                value = child.property(attr)
+                value = widget.property(attr)
             else:
                 try: # float conversion may fail
                     value = valueGetter()
@@ -64,20 +71,20 @@ class SettingsWidget(QWidget):
         return value
 
     def set(self, key, value):
-        if value is None:
-            return
-        child = self.findChild(QWidget, key)
-        if child is None:
+        self.setValue(self.getWidget(key), value)
+
+    def setValue(self, widget, value):
+        if None in (widget, value):
             return
         setter, dtype = None, None
         for attr in "checked", "value", "text":
             setterName = "set" + attr.title()
             try:
-                setter = getattr(child, setterName)
+                setter = getattr(widget, setterName)
                 try:
-                    oldValue = getattr(child, attr)()
+                    oldValue = getattr(widget, attr)()
                 except:
-                    oldValue = child.property(attr)
+                    oldValue = widget.property(attr)
                 dtype = type(oldValue)
             except AttributeError:
                 continue
@@ -94,8 +101,8 @@ class SettingsWidget(QWidget):
             raise IndexError("Could not set widget '{0}' to '{1}'!: ".
                              format(key, value) + str(e).title())
         else:
-            self.getEditingFinishedSignal(child).emit()
-            child.update()
+            self.getEditingFinishedSignal(widget).emit()
+            widget.update()
 
     def _connect(self, widget):
         self._connectInputWidget(widget)
