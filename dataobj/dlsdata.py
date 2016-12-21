@@ -17,7 +17,7 @@ from collections import OrderedDict
 from itertools import groupby
 from operator import itemgetter
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
-                   flipud, concatenate, empty)
+                   flipud, concatenate, empty, zeros_like)
 from utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
 from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
                          NoUnit)
@@ -249,6 +249,8 @@ class DLSData(DataObj):
 
     def setCorrelation(self, inArray, inArrayU = None):
         self._verifyDataMember(inArray, inArrayU)
+        if inArrayU is None:
+            inArrayU = zeros_like(inArray)
         self.f = MultiDataVector(u"G_2(τ)-1", inArray, rawU = inArrayU)
 
     def setCapTime(self, timeUnit, inArray):
@@ -257,6 +259,8 @@ class DLSData(DataObj):
 
     def setCountRate(self, inArray, inArrayU = None):
         self._verifyDataMember(inArray, inArrayU)
+        if inArrayU is None:
+            inArrayU = zeros_like(inArray)
         self._countRate = MultiDataVector("Cnt(t)", inArray, rawU = inArrayU)
 
     @property
@@ -304,19 +308,19 @@ class DLSData(DataObj):
 
     # temperature, viscosity, refractiveIndex, wavelength including std.err
 
-    def setTemperature(self, temp, stddev = None):
+    def setTemperature(self, temp, stddev = 0.):
         self._temperature = (temp, stddev)
         self._calcGammaDivR()
 
-    def setViscosity(self, vis, stddev = None):
+    def setViscosity(self, vis, stddev = 0.):
         self._viscosity = (vis, stddev)
         self._calcGammaDivR()
 
-    def setRefractiveIndex(self, refIdx, stddev = None):
+    def setRefractiveIndex(self, refIdx, stddev = 0.):
         self._refractiveIndex = (refIdx, stddev)
         self._calcScatteringVector()
 
-    def setWavelength(self, wavelen, stddev = None):
+    def setWavelength(self, wavelen, stddev = 0.):
         self._wavelength = (wavelen, stddev)
         self._calcScatteringVector()
 
