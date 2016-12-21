@@ -567,8 +567,9 @@ class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from
     bases.algorithm.parameter to introduce more specific fit
     related attributes."""
-    ParameterBase.addAttributes(locals(), histograms = Histograms(),
-            activeValues = list(), activeRange = None)
+    ParameterBase.addAttributes(locals(), isActive = False,
+            activeRange = None, histograms = Histograms(),
+            activeValues = list())
 
     def hdfStoreAsMember(self):
         return (super(FitParameterBase, self).hdfStoreAsMember()
@@ -597,28 +598,11 @@ class FitParameterBase(ParameterBase):
         selforcls.histograms().updateRanges()
 
     @mixedmethod
-    def isActive(selforcls):
-        """Tests if there is an histogram defined.
-        Provided for convenience."""
-        return isList(selforcls.histograms())
+    def setIsActive(selforcls, isActive):
+        selforcls._isActive = bool(isActive)
 
-    @mixedmethod
-    def setActive(selforcls, isActive):
-        """Sets this parameter as active. It will be fitted.
-        Temporary in replacement of setIsActive(). Can be removed later if
-        histgram setup for each parameter is implemented elsewhere"""
-        if isActive and not selforcls.isActive():
-            if selforcls.activeRange() is None or None in selforcls.activeRange():
-                lo, hi = selforcls.valueRange()
-            else:
-                lo, hi = selforcls.activeRange()
-            selforcls.setHistograms(Histograms()) # init histogram list
-            # add a default histogram
-            # NOTE: apply default bin count from MCSASParameters here
-            # or in Histogram.__init__ defaults
-            selforcls.histograms().append(Histogram(selforcls, lo, hi))
-        elif not isActive:
-            selforcls.histograms().clear()
+    setActive = setIsActive # alias
+
 
     @mixedmethod
     def activeVal(selforcls, val, index = None):
