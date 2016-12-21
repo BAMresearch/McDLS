@@ -8,7 +8,7 @@ import sys
 import logging
 
 from gui.qt import QtCore, QtGui
-from gui.utils.signal import Signal
+from gui.utils.signal import Signal, tryDisconnect
 from QtGui import (QWidget, QVBoxLayout, QComboBox)
 from gui.bases.mixins import TitleHandler, AppSettings
 from utils import isString
@@ -49,16 +49,6 @@ try:
     Text = unicode # fails with Python 3
 except NameError:
     pass
-
-def getQMethodSignature(qobject, methodName):
-    metaobject = qobject.metaObject()
-    for i in range(metaobject.methodCount()):
-        if (metaobject.method(i).signature().startswith(methodName)):
-            return metaobject.method(i).signature()
-    return None
-
-def hasReceivers(qobject, signalName):
-    return qobject.receivers(getQMethodSignature(qobject, signalName))
 
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
@@ -138,9 +128,8 @@ class ModelWidget(AlgorithmWidget):
             self.appSettings.endGroup()
 
     def _selectModelSlot(self, key = None):
-        # rebuild the UI without early signals
-        if hasReceivers(self, "sigRangeChanged"):
-            self.sigRangeChanged.disconnect(self.sigModelChanged)
+        # rebuild the UI without early signals, try to disconnect first
+        tryDisconnect(self.sigRangeChanged, self.sigModelChanged)
         model = MODELS.get(str(key), None)
         if model is None or not issubclass(model, ScatteringModel):
             return

@@ -8,7 +8,7 @@ from builtins import range
 import logging
 
 from gui.qt import QtCore, QtGui
-from gui.utils.signal import Signal
+from gui.utils.signal import Signal, tryDisconnect
 from QtCore import Qt, QSettings, QRegExp
 from QtGui import (QWidget, QHBoxLayout, QPushButton,
                    QLabel, QLayout, QGridLayout)
