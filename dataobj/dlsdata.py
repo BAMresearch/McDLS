@@ -204,8 +204,8 @@ class DLSData(DataObj):
             """Identify groups of continuous numbers in a list."""
             ranges = []
             for key, group in groupby(enumerate(indices),
-                                      lambda (i, x): i - x):
-                group = map(itemgetter(1), group)
+                                      lambda x: x[0] - x[1]):
+                group = list(map(itemgetter(1), group))
                 if len(group) > 1:
                     ranges.append("{0}-{1}".format(group[0], group[-1]))
                 else:
