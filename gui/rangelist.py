@@ -14,7 +14,8 @@ import numpy as np
 from gui.bases.datalist import DataList
 from gui.bases.mixins import AppSettings
 from utils import isList, testfor
-from utils.parameter import (ParameterBase, ParameterNumerical, Histogram, isActiveParam)
+from utils.parameter import (ParameterBase, ParameterNumerical, Histogram,
+                             isFitParam, isActiveFitParam)
 from gui.calc import Calculator
 
 # do not remove, dialog will not work without this

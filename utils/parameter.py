@@ -558,10 +558,13 @@ class Histograms(list):
     def hdfWrite(self, hdf):
         hdf.writeMembers(self, *list(range(len(self))))
 
-def isActiveParam(param):
+def isFitParam(param):
+    return isinstance(param, FitParameterBase)
+
+def isActiveFitParam(param):
     """Checks any type of parameter for activeness.
     Shorter than that below or a try/except clause."""
-    return isinstance(param, FitParameterBase) and param.isActive()
+    return isFitParam(param) and param.isActive()
 
 class FitParameterBase(ParameterBase):
     """Deriving parameters for curve fitting from

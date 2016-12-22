@@ -19,7 +19,7 @@ logging.basicConfig(level = logging.INFO)
 from utils import isList 
 from bases.dataset import DataSet
 from bases.algorithm import AlgorithmBase
-from utils.parameter import isActiveParam
+from utils.parameter import isActiveFitParam
 from utils.tests import isMac
 from models.scatteringmodel import ScatteringModel
 from models.sphere import Sphere
@@ -168,7 +168,7 @@ class McSAS(AlgorithmBase):
             return
         logging.info(
                 "\n".join([u"Analysing parameters: "] +
-                    [str(p) + u", active: " + str(isActiveParam(p))
+                    [str(p) + u", active: " + str(isActiveFitParam(p))
                         for p in self.model.params()])
         )
         self.analyse()
@@ -196,7 +196,7 @@ class McSAS(AlgorithmBase):
         numContribs = self.numContribs()
         numReps = self.numReps()
         minConvergence = self.convergenceCriterion()
-        if not any([isActiveParam(p) for p in self.model.params()]):
+        if not any([isActiveFitParam(p) for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
         contributions = zeros((numContribs, 
