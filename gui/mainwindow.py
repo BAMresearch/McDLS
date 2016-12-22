@@ -334,7 +334,7 @@ class MainWindow(MainWindowBase):
                                      title = "Post-fit Analysis",
                                      withBtn = False, nestedItems = False)
         self.modelWidget.setStatsWidget(self.statsWidget)
-        self.modelWidget.sigModelChanged.connect(self.statsWidget.updateHistograms)
+        self.modelWidget.sigBackendUpdated.connect(self.statsWidget.updateHistograms)
         return self.statsWidget
 
     def _setupLogWidget(self):
