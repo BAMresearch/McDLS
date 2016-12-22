@@ -103,8 +103,8 @@ class ModelWidget(AlgorithmWidget):
         self.appSettings.beginGroup(self.objectName())
         self.appSettings.setValue("model", model)
         super(ModelWidget, self).storeSession(model)
-        self._statsWidget.storeSession(model)
         self.appSettings.endGroup()
+        self._statsWidget.storeSession()
 
     def restoreSession(self, model = None):
         """Load last known user settings from persistent app settings."""
@@ -123,8 +123,8 @@ class ModelWidget(AlgorithmWidget):
         else:
             self.appSettings.beginGroup(self.objectName())
             super(ModelWidget, self).restoreSession(model)
-            self._statsWidget.restoreSession(model)
             self.appSettings.endGroup()
+            self._statsWidget.restoreSession()
 
     def _selectModelSlot(self, key = None):
         # rebuild the UI without early signals, try to disconnect first

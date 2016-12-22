@@ -252,22 +252,14 @@ class RangeList(DataList, AppSettings):
             except AttributeError:
                 continue
 
-    def updateHistograms(self):
-        """Called after UI update by sigRangeChanged and/or sigModelChanged in
-        MainWindow."""
-        lst = []
-        for p in self._calculator.model.activeParams():
-            lst += [h for h in p.histograms()]
-        if set(self.data()) == set(lst):
-            return # no update if same hists exist already, order may differ
-        self.clear()
-        self.append(lst)
-
     def append(self, histList):
         if histList is None:
             return
         if not isList(histList):
             histList = [histList]
+        if not len(histList):
+            return
+        # put a copy of histograms into the ui list, otherwise comparison fails
         DataList.loadData(self, sourceList = histList, showProgress = False,
                 processSourceFunc = lambda x: x)
         self.fitColumnsToContents()
@@ -288,12 +280,44 @@ class RangeList(DataList, AppSettings):
         # update the GUI based on that
         self.updateHistograms()
 
-    def storeSession(self, section):
+    def _getParams(self):
+        return self._calculator.model.params()
+
+    def updateHistograms(self):
+        """Called after UI update by sigBackendUpdated from an AlgorithmWidget."""
+        lst = []
+        for p in self._getParams():
+            if not isActiveFitParam(p):
+                continue # show the active fit parameters only
+            lst += p.histograms()
+        # finally, the RangeList gets the same hist instances which are in the
+        # parameters, no copy, therefore just rebuild the UI to get in sync
+        # comparison doesn't work: set(self.data()) == set(lst)
+        # the data item has to same instance stored which comes in here
+        self.clear()
+        self.append(lst)
+
+    def _beginHistogramGroup(self, model):
+        """Sets the AppSettings group for the current model where histograms
+        can be stored."""
+        self.setRootGroup()
+        self.appSettings.beginGroup("Model")
+        self.appSettings.beginGroup(model.name())
+        self.appSettings.beginGroup("histograms")
+
+    def storeSession(self):
         if self.appSettings is None:
             return
-        self.appSettings.beginGroup(section)
-        self.appSettings.beginGroup("histograms")
-        for i, h in enumerate(self.data()):
+        self._beginHistogramGroup(self._calculator.model)
+        # remove all existing histograms from persistent storage
+        for child in self.appSettings.childGroups():
+            self.appSettings.remove(child)
+        # store current histograms from parameters which may not be visible
+        hists = []
+        for p in self._getParams():
+            if not isFitParam(p): continue # get all fitable parameters
+            hists += p.histograms()
+        for i, h in enumerate(hists):
             self.appSettings.beginGroup(str(i))
             for key in h.integralProps():
                 value = getattr(h, key, None)
@@ -304,10 +328,9 @@ class RangeList(DataList, AppSettings):
                     value = repr(value)
                 self.appSettings.setValue(key, value)
             self.appSettings.endGroup()
-        self.appSettings.endGroup()
-        self.appSettings.endGroup()
+        self.setRootGroup()
 
-    def restoreSession(self, section):
+    def restoreSession(self):
         """Load last known user settings from persistent app settings."""
         if self.appSettings is None:
             return
@@ -319,17 +342,16 @@ class RangeList(DataList, AppSettings):
                 value = settings.value(key, None)
                 if key == "param":
                     param = getattr(self._calculator.model, value, None)
-                    if param is None:
-                        return None
-                    if not isActiveParam(param):
+                    # get FitParameters which might not be active
+                    if param is None or not isFitParam(param):
                         return None
                     value = param
                 initProps.append(value)
-            param.histograms().append(Histogram(*initProps))
-            return initProps
+            return Histogram(*initProps)
 
-        self.appSettings.beginGroup(section)
-        self.appSettings.beginGroup("histograms")
+        self.clear()
+        self._beginHistogramGroup(self._calculator.model)
+        histCfg = dict()
         for iKey in self.appSettings.childGroups():
             i = -1
             try:
@@ -339,10 +361,22 @@ class RangeList(DataList, AppSettings):
             if i < 0 or str(i) != iKey:
                 continue
             self.appSettings.beginGroup(iKey)
-            parseHistogram(self.appSettings)
+            # append the histogram to the temporary list of a parameter
+            hist = parseHistogram(self.appSettings)
             self.appSettings.endGroup()
-        self.appSettings.endGroup()
-        self.appSettings.endGroup()
+            if None not in (hist, hist.param):
+                if hist.param.name() not in histCfg:
+                    histCfg[hist.param.name()] = []
+                histCfg[hist.param.name()].append(hist)
+        self.setRootGroup()
+        for pname, histLst in histCfg.items():
+            if not len(histLst):
+                continue
+            param = histLst[0].param
+            # parseHistogram() above return FitParameters only
+            param.histograms().clear()
+            param.histograms().extend(histLst)
+        self.updateHistograms()
 
     def setupUi(self):
         setBackgroundStyleSheet(self, "./resources/background_ranges.svg")
