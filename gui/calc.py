@@ -31,7 +31,7 @@ from datafile import PDHFile, AsciiFile
 from gui.utils.displayexception import DisplayException
 import log
 from mcsas.mcsas import McSAS
-from utils.parameter import Histogram, Moments, isActiveParam
+from utils.parameter import Histogram, Moments, isActiveFitParam
 from dataobj import SASData
 from utils.hdf import HDFMixin
 from mcsas.plotting import PlotSeriesStats
@@ -391,7 +391,7 @@ class Calculator(HDFMixin):
         sectionName = "Model Settings"
         config.add_section(sectionName)
         for p in self.modelParams():
-            if isActiveParam(p):
+            if isActiveFitParam(p):
                 config.set(sectionName, p.name()+"_min", p.min())
                 config.set(sectionName, p.name()+"_max", p.max())
             else:

@@ -14,7 +14,7 @@ from future.utils import with_metaclass
 from numpy import arange, zeros, argmax, hstack
 from utils import isList, isNumber, mixedmethod, testfor, classname
 from bases.algorithm import AlgorithmBase
-from utils.parameter import isActiveParam
+from utils.parameter import isActiveFitParam
 
 class ModelData(object):
     _cumInt = None
@@ -203,7 +203,7 @@ class ScatteringModel(with_metaclass(ABCMeta, AlgorithmBase)):
         lst = zeros((count, self.activeParamCount()))
         for idx, param in enumerate(self.activeParams()):
             # generate numbers in different range for each active parameter
-            if isActiveParam(param):
+            if isActiveFitParam(param):
                 lst[:, idx] = param.generate(count = count)
         # output count-by-nParameters array
         return lst
@@ -218,7 +218,7 @@ class ScatteringModel(with_metaclass(ABCMeta, AlgorithmBase)):
     @mixedmethod
     def activeParams(setforcls):
         """returns all "active" parameters of this algorithm"""
-        aPars = [par for par in setforcls.params() if isActiveParam(par)]
+        aPars = [par for par in setforcls.params() if isActiveFitParam(par)]
         return tuple(aPars)
 
     @mixedmethod
