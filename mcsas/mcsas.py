@@ -374,7 +374,7 @@ class McSAS(AlgorithmBase):
                 logging.info("rep {rep}/{reps}, good iter {it}: "
                              "Chisqr= {cs:f}/{conv:.2f}, aGoFs= {opt}\r"
                              .format(it = numIter, cs = conval,
-                                 conv = minConvergence, rep = nRun,
+                                 conv = minConvergence, rep = nRun+1,
                                  reps = self.numReps(), opt = aGoFs))
                 numMoves += 1
 
