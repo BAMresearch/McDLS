@@ -45,7 +45,6 @@ def rearrangeWidgets(layout, widgets, targetWidth):
 
 class AlgorithmWidget(SettingsWidget, AppSettings):
     _algo = None
-    sigRangeChanged = Signal()
     sigBackendUpdated = Signal()
 
     def __init__(self, parent, algorithm, appSettings):
@@ -180,7 +179,6 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
         # param internals could have changed, update ui accordingly
         if emitBackendUpdated:
             self.sigBackendUpdated.emit() # update other widgets possibly
-            # the range was updated
 
     def _updateFitParam(self, param, valueWidget):
         if not isinstance(param, FitParameterBase):
@@ -213,7 +211,6 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
             valueWidget.show()
             minWidget.hide()
             maxWidget.hide()
-
 
     def updateAll(self):
         """Called in MainWindow on calculation start."""

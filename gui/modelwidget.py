@@ -51,7 +51,6 @@ except NameError:
     pass
 
 class ModelWidget(AlgorithmWidget):
-    sigModelChanged = Signal()
     _calculator = None
     _statsWidget = None # RangeList for (re-)storing histogram settings
 
@@ -129,7 +128,6 @@ class ModelWidget(AlgorithmWidget):
 
     def _selectModelSlot(self, key = None):
         # rebuild the UI without early signals, try to disconnect first
-        tryDisconnect(self.sigRangeChanged, self.sigModelChanged)
         model = MODELS.get(str(key), None)
         if model is None or not issubclass(model, ScatteringModel):
             return
@@ -146,8 +144,6 @@ class ModelWidget(AlgorithmWidget):
         layout.addStretch()
         # restore user settings for this model
         self.restoreSession(self.model.name())
-        self.sigRangeChanged.connect(self.sigModelChanged)
-        self.sigModelChanged.emit()
 
     def selectModel(self, model):
         """*model*: string containing the name of the model to select.
