@@ -28,6 +28,12 @@ from gui.qt import QtSvg, QtXml, pluginDirs
 from gui.liststyle import setBackgroundStyleSheet
 from main import makeAbsolutePath
 
+def getItemIndex(comboBox, text):
+    for i in range(comboBox.count()):
+        if comboBox.itemText(i) == text:
+            return i
+    return -1 # select none, usually
+
 class RangeDialog(QDialog):
     """Creates a modal dialog window to ask the user for a range to be
     added."""
@@ -132,6 +138,9 @@ class RangeDialog(QDialog):
         sentry = QComboBox(self)
         for name in Histogram.xscaling():
             sentry.addItem(name)
+        # select a default x scaling, for DataObj aware settings, RangeList has
+        # to be connected to DataList in MainWindow by an onDataSelected() slot
+        sentry.setCurrentIndex(getItemIndex(sentry, "lin"))
         self.sentry = sentry
         return sentry
 
