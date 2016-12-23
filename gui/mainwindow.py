@@ -342,9 +342,14 @@ class MainWindow(MainWindowBase):
         self.fileWidget.loadData(getattr(self._args, "fnames", []))
         self.onStartStopClick(getattr(self._args, "start", False))
 
-    def _updateWidgets(self):
+    def _updateWidgetsFinally(self):
         for w in self.findChildren(AlgorithmWidget):
             w.updateAll()
+        if not len(self.statsWidget.data()):
+            # make sure there is an histogram range defined,
+            # otherwise ask the user for one
+            self.toolbox.setCurrentWidget(self.statsWidget)
+            self.statsWidget.loadData()
 
     def onStartStopClick(self, checked):
         processEventLoop()
@@ -353,7 +358,7 @@ class MainWindow(MainWindowBase):
             # self.hdfStore("test3.h5")
             self.startStopBtn.setText("stop")
             self.startStopBtn.setChecked(True)
-            self._updateWidgets() # get latest input in case sth didn't update
+            self._updateWidgetsFinally() # get latest input in case sth didn't update
             self.calc()
         # run this also for 'start' after calculation
         self.calculator.stop()
