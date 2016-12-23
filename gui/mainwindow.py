@@ -37,7 +37,26 @@ from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
 from main import makeAbsolutePath
 
+# other changes:
+# - storing bool as numpy.int8 to HDF5 fixes data type issues
+# - general mechanism for handling access to permanent app settings
+# - fixes to parameter UI for more stability and less crashes
+#   - removed duplicate and obsolete signals
+# - a FitParameter always has an histogram list now,
+#   regardless of being active or not
+# - separate FitParameter attribute stores if it is active or not
+# - no default histogram created anymore
+#   - the user is asked to create an histogram if none is defined at calc. start
 INFOTEXT = (u"""
+<strong>major changes in McDLS Mk.X:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>plot DLS count rate vs. capture time behind the correlation plot</li>
+<li></li>
+<li></li>
+<li>grouping of measurement indices</li>
+<li>numerical results of series analysis written to a single file for all active parameters</li>
+<li></li>
+</ul>
 <strong>major changes in McDLS Mk.IX:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>alternative Goodness-of-Fit indicator output added</li>

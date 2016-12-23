@@ -6,7 +6,7 @@ from gui.utils.appversion import QAppVersion
 
 version = QAppVersion(
     programName = "McSAS",
-    versionNumber = "DLS Edition Mk.IX",
+    versionNumber = "DLS Edition Mk.X",
     organizationName = "BAM",
     defaultSettings = dict(
         geometry = "AdnQywABAAAAAAIyAAAA+gAABG8AAANMAAACMwAAARIAAARuAAADSwAAAAAAAA==")
