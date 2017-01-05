@@ -321,7 +321,7 @@ class MainWindow(MainWindowBase):
 
     def _setupDataWidget(self):
         """Set up property widget with settings."""
-        self.dataWidget = DataWidget(self)
+        self.dataWidget = DataWidget(self, self.appSettings)
         self.dataWidget.sigConfig.connect(self.fileWidget.setDataConfig)
         self.fileWidget.sigSelectedData.connect(self.dataWidget.onDataSelected)
         return self.dataWidget
@@ -386,7 +386,8 @@ class MainWindow(MainWindowBase):
 
     def restoreSettings(self):
         MainWindowBase.restoreSettings(self)
-        for settingsWidget in self.optimWidget, self.modelWidget:
+        for settingsWidget in (self.optimWidget, self.modelWidget):
+            # no self.dataWidget, it is restored on demand internally
             settingsWidget.restoreSession()
         if self.appSettings is None:
             return
@@ -399,7 +400,8 @@ class MainWindow(MainWindowBase):
 
     def storeSettings(self):
         MainWindowBase.storeSettings(self)
-        for settingsWidget in self.optimWidget, self.modelWidget:
+        for settingsWidget in (self.optimWidget, self.modelWidget,
+                               self.dataWidget):
             settingsWidget.storeSession()
         if self.appSettings is not None:
             self.appSettings.setValue("lastpath", LastPath.get())
