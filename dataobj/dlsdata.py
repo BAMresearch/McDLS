@@ -40,6 +40,7 @@ def _propSetterName(propName):
     return "set" + propName[0].upper() + propName[1:]
 
 class DLSConfig(DataConfig):
+    shortName = "DLS data configuration"
     parameters = (
         Parameter("plotCountRate", True, unit = NoUnit(),
             displayName = "plot count rate",
