@@ -10,6 +10,8 @@ import numpy # For arrays
 from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,
                   isnan, newaxis)
+# useful for debugging numpy RuntimeWarnings
+# numpy.seterr(all = "raise", under = "ignore")
 from scipy import optimize
 import time # Timekeeping and timing of objects
 import copy
@@ -261,6 +263,9 @@ class McSAS(AlgorithmBase):
                     .format(nr+1, numReps, tottime, avetime, remtime))
 
         # store in output dict
+        scalingsDDoF = 0
+        if len(scalings) > 1: # prevent division by zero in numpy.std()
+            scalingsDDoF = 1
         self.result.append(dict(
             contribs = contributions, # Rrep
             # what about modelDataMean? ...
@@ -272,8 +277,10 @@ class McSAS(AlgorithmBase):
             dataMean = self.data.f.binnedData,
             dataStd = self.data.f.binnedDataU,
             # background details:
-            scaling = (scalings.mean(), scalings.std(ddof = 1)),
-            background = (backgrounds.mean(), backgrounds.std(ddof = 1)),
+            scaling = (scalings.mean(),
+                       scalings.std(ddof = scalingsDDoF)),
+            background = (backgrounds.mean(),
+                          backgrounds.std(ddof = scalingsDDoF)),
             times = times,
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
@@ -316,8 +323,9 @@ class McSAS(AlgorithmBase):
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
-        sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(),
-                          data.f.limit[0]])
+        sc = numpy.array((1.0, data.f.limit[0]))
+        if modelData.cumInt.max() != 0.0: # avoid numerical errors
+            sc[0] = data.f.limit[1] / modelData.cumInt.max()
 #        sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground(),
                                             self.fixed1stPoint())
