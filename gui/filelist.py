@@ -44,11 +44,15 @@ class FileList(DataList):
         # Populate the data list widget with items based on loaddataobj()
         DataList.loadData(self, sourceList = fileList, showProgress = False,
                           processSourceFunc = loaddataobj)
+        # select the newly loaded data which triggers construction
+        # of a DataWidget which in turn restores the last DataConfig settings
+        self.selectionChanged()
         self.postProcess(nextIdx)
         # put the config of the last to all recently loaded
-        self.setDataConfig(self.configFromLast())
-        if self.configFromLast() is not None:
-            self.configFromLast().overrideDefaults()
+        config = self.configFromLast()
+        self.setDataConfig(config)
+        if config is not None:
+            config.overrideDefaults()
         self.selectionChanged()
 
     def configFromLast(self):
