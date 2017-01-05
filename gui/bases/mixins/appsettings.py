@@ -6,8 +6,6 @@ from __future__ import absolute_import # PEP328
 from gui.qt import QtCore
 from QtCore import QSettings
 
-from utils.devtools import DBG
-
 class AppSettings(object):
     _appSettings = None
 
@@ -17,7 +15,6 @@ class AppSettings(object):
 
     @appSettings.setter
     def appSettings(self, settings):
-        DBG(type(settings), isinstance(settings, QSettings))
         if isinstance(settings, QSettings):
             self._appSettings = settings
 
