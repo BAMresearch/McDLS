@@ -46,7 +46,7 @@ class DLSSphere(DLSModel):
         return self._ffSphere() * self.volume()**self.compensationExponent
 
     def formfactor(self, data):
-        return exp( old_div(data.tauGamma.sanitized, self.radius()) )
+        return exp( data.tauGamma.sanitized / self.radius() )
 
 DLSSphere.factory()
 

@@ -348,8 +348,8 @@ class DLSData(DataObj):
             return
         q2 = self._scatteringVector * self._scatteringVector
         # 0.5 ensures the necessary sqrt() within the model
-        self._gammaDivR = ( old_div((- q2 * self.temperature[0] * KB),
-                                    (6. * pi * self.viscosity[0])) )
+        self._gammaDivR = (  (- q2 * self.temperature[0] * KB)
+                           / (6. * pi * self.viscosity[0]) )
         self._calcTauGamma()
 
     def _calcTauGamma(self):
