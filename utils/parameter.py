@@ -112,11 +112,14 @@ class Moments(object):
             krt[ri] = ( sum( (rset-mu[ri])**4 * frac )
                      / (sum(frac) * sigma**4))
 
-        self._total    = (val.mean(), val.std(ddof = 1))
-        self._mean     = ( mu.mean(),  mu.std(ddof = 1))
-        self._variance = (var.mean(), var.std(ddof = 1))
-        self._skew     = (skw.mean(), skw.std(ddof = 1))
-        self._kurtosis = (krt.mean(), krt.std(ddof = 1))
+        DDoF = 0
+        if numReps > 1: # prevent division by zero in numpy.std()
+            DDoF = 1
+        self._total    = (val.mean(), val.std(ddof = DDoF))
+        self._mean     = ( mu.mean(),  mu.std(ddof = DDoF))
+        self._variance = (var.mean(), var.std(ddof = DDoF))
+        self._skew     = (skw.mean(), skw.std(ddof = DDoF))
+        self._kurtosis = (krt.mean(), krt.std(ddof = DDoF))
 
     #partial intensities not parameter-specific. Move to model/histogram?
     def _calcPartialIntensities(self, contribs, scalingFactors, algo):

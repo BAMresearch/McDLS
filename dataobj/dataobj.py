@@ -304,6 +304,9 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
             fBin[bini], fuBin[bini], x0Bin[bini] = None, None, None # default
             fMask = ((sanX >= xEdges[bini]) & (sanX < xEdges[bini + 1]))
             fInBin, fuInBin = self.f.sanitized[fMask], self.f.sanitizedU[fMask]
+            fInBinDDoF = 0
+            if len(fInBin) > 1: # prevent division by zero in numpy.std()
+                fInBinDDoF = 1
             x0InBin = self.x0.sanitized[fMask]
             if fMask.sum() == 1:
                 fBin[bini], fuBin[bini], x0Bin[bini] = fInBin, fuInBin, x0InBin
@@ -313,7 +316,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
                 validMask[bini] = True
                 # uncertainties are a bit more elaborate:
                 fuBin[bini] = np.maximum(
-                        fInBin.std(ddof = 1) / np.sqrt(1. * fMask.sum()), # SEM
+                        fInBin.std(ddof = fInBinDDoF) / np.sqrt(1. * fMask.sum()), # SEM
                         np.sqrt( (fuInBin**2).sum() / fMask.sum() ) #propagated. unc.
                         )
 
