@@ -47,6 +47,13 @@ class DLSConfig(DataConfig):
             description = "Plots the mean count rate with an error bar for the "
                 "standard deviation of multiple measurements. "
                 "It appears behind the correlation plot."),
+        Parameter("doAverage", True, unit = NoUnit(),
+            displayName = "average each angle",
+            description = "For multiple measurement files of the same sample "
+                "it averages the correlation data for each angle. Finally, "
+                "there will be a single data object for each angle which "
+                "contains the correlation mean and its standard deviation "
+                "interpreted as measurement uncertainty."),
     )
 
     def __init__(self):
