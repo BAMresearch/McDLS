@@ -324,6 +324,7 @@ class MainWindow(MainWindowBase):
         self.dataWidget = DataWidget(self, self.appSettings)
         self.dataWidget.sigConfig.connect(self.fileWidget.setDataConfig)
         self.fileWidget.sigSelectedData.connect(self.dataWidget.onDataSelected)
+        self.fileWidget.sigEmpty.connect(self.dataWidget.onEmptyDataList)
         return self.dataWidget
 
     def _setupOptimWidget(self):
