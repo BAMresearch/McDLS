@@ -54,6 +54,12 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
         self.sigValueChanged.connect(self.updateWidget)
         self.sigBackendUpdated.connect(self.onBackendUpdate)
 
+    def blockSigValueChanged(self):
+        tryDisconnect(self.sigValueChanged, self.updateWidget)
+
+    def unblockSigValueChanged(self):
+        self.sigValueChanged.connect(self.updateWidget)
+
     @property
     def algorithm(self):
         """Retrieves AlgorithmBase object containing all parameters
@@ -165,7 +171,7 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
         if valueWidget is None: # no input widgets for this parameter
             return
         # disable signals during ui updates
-        tryDisconnect(self.sigValueChanged, self.updateWidget)
+        self.blockSigValueChanged()
         # update the value input widget itself
         newValue = self.getValue(valueWidget)
         if newValue is not None:
@@ -175,7 +181,7 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
             self.setValue(valueWidget, param.displayValue())
         self._updateFitParam(param, valueWidget)
         # enable signals again after ui updates
-        self.sigValueChanged.connect(self.updateWidget)
+        self.unblockSigValueChanged()
         # param internals could have changed, update ui accordingly
         if emitBackendUpdated:
             self.sigBackendUpdated.emit() # update other widgets possibly
@@ -228,13 +234,13 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
         if self.algorithm is None:
             return
         # disable signals during ui updates
-        tryDisconnect(self.sigValueChanged, self.updateWidget)
+        self.blockSigValueChanged()
         for p in self.algorithm.params():
             if self.get(p.name()) in (p.displayValue(), None):
                 continue
             self.set(p.name(), p.displayValue())
         # enable signals again after ui updates
-        self.sigValueChanged.connect(self.updateWidget)
+        self.unblockSigValueChanged()
 
     @staticmethod
     def _makeLabel(name):
