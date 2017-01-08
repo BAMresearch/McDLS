@@ -82,7 +82,13 @@ class FileList(DataList):
             samples[key].append(d)
         newData = [] # accumulate data objects if possible
         for dummy, lst in samples.items():
-            avg = lst[0].accumulate(lst)
+            if not len(lst):
+                continue
+            avg = None
+            d = lst[0]
+            if hasattr(lst[0].config, "doAverage"):
+                if lst[0].config.doAverage():
+                    avg = lst[0].accumulate(lst)
             if avg is None:
                 newData.extend(lst)
             else:

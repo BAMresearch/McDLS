@@ -425,6 +425,7 @@ class DLSData(DataObj):
                                  self.countRate.rawDataUSrcShape[:, i, newaxis])
             # reset config in order to fix callbacks
             another.setConfig(another.configType())
+            another.config.update(self.config) # forward settings
             lst.append(another)
         return lst
 
