@@ -209,8 +209,9 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
 
     """
     sigSelectedData = Signal((object,))
-    sigUpdatedData = Signal((object,))
-    sigRemovedData = Signal(list)
+    sigUpdatedData  = Signal((object,))
+    sigRemovedData  = Signal(list)
+    sigEmpty        = Signal()
     sigReceivedUrls = Signal(list)
     sigEditingFinished = Signal()
     _nestedItems = None # are nested items allowed? (plain list behaviour)
@@ -369,6 +370,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         index, data = self.currentSelection()
         self.sigSelectedData.emit(data)
         self._updateContextMenu()
+        if self.isEmpty():
+            self.sigEmpty.emit()
 
     def removeItems(self, indexList):
         """Deletes items specified in the given list of indices."""

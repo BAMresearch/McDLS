@@ -81,6 +81,10 @@ class DataWidget(QWidget, AppSettings):
         # fileWidget.sigUpdatedData disabled in MainWindow
         self.sigConfig.emit(self._widgets[0].algorithm)
 
+    def onEmptyDataList(self):
+        """Forgets which data settings were already restored."""
+        self._restored = set()
+
     def storeSession(self):
         if not len(self._widgets):
             return
