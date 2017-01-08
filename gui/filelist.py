@@ -15,6 +15,7 @@ from utils.units import ScatteringVector, ScatteringIntensity
 from utils import isList
 from datafile import loaddatafile
 from dataobj import DataObj
+from dataobj import DLSData
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
@@ -47,7 +48,7 @@ class FileList(DataList):
         # select the newly loaded data which triggers construction
         # of a DataWidget which in turn restores the last DataConfig settings
         self.selectionChanged()
-        self.postProcess(nextIdx)
+        self.preProcess(nextIdx)
         # put the config of the last to all recently loaded
         config = self.configFromLast()
         self.setDataConfig(config)
@@ -61,48 +62,17 @@ class FileList(DataList):
             return None
         return self.data(len(self)-1)[0].config
 
-    def postProcess(self, firstIdx):
-        """Starts accumulation of related data sets among the currently loaded
-        ones. Finally, removes such source data sets and adds the new combined
-        one. firstIdx is the index of the first newly loaded entries."""
+    def preProcess(self, firstIdx):
+        """Replaces initially loaded data objects with the pre-processing
+        result. firstIdx is the index of the first newly loaded entries."""
         # allow accumulation of items based on the last item loaded
         newData = self.data()[firstIdx:]
+        newData = DLSData.preProcess(newData)
         if not isList(newData) or not len(newData):
-            return # nothing to do
-        samples = OrderedDict()
-        def makeKey(data):
-            key = (data.title,)
-            if hasattr(data, "angles"):
-                key += tuple(data.angles)
-            return key
-        for d in newData: # group data objects by their title
-            key = makeKey(d)
-            if key not in samples:
-                samples[key] = []
-            samples[key].append(d)
-        newData = [] # accumulate data objects if possible
-        for dummy, lst in samples.items():
-            if not len(lst):
-                continue
-            avg = None
-            d = lst[0]
-            if hasattr(lst[0].config, "doAverage"):
-                if lst[0].config.doAverage():
-                    avg = lst[0].accumulate(lst)
-            if avg is None:
-                newData.extend(lst)
-            else:
-                newData.append(avg)
+            return
         # remove the single data sets which where just loaded
         self.removeItems(list(range(firstIdx, len(self))))
-        # add the combined dls data split up per angle
-        def splitUp(d):
-            try: # perhaps test for isinstance(d, DLSData) instead
-                return d.splitPerAngle()
-            except AttributeError:
-                return (d,)
-        newData = [s for dl in (splitUp(d) for d in newData) for s in dl]
-        # use loadData() to communicate new data finally via signal
+        # base class loadData() communicates new data via signal finally
         DataList.loadData(self, sourceList = newData,
                           showProgress = False,
                           processSourceFunc = lambda x: x)

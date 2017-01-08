@@ -429,6 +429,46 @@ class DLSData(DataObj):
             lst.append(another)
         return lst
 
+    @staticmethod
+    def preProcess(dataList):
+        """Starts accumulation of related data sets among the currently loaded
+        ones. Finally, removes such source data sets and adds the new combined
+        one."""
+        if not isList(dataList) or not len(dataList):
+            return # nothing to do
+        samples = OrderedDict()
+        def makeKey(data):
+            key = (data.title,)
+            if hasattr(data, "angles"):
+                key += tuple(data.angles)
+            return key
+        for d in dataList: # group data objects by their title
+            key = makeKey(d)
+            if key not in samples:
+                samples[key] = []
+            samples[key].append(d)
+        dataList = [] # accumulate data objects if possible
+        for dummy, lst in samples.items():
+            if not len(lst):
+                continue
+            avg = None
+            if (hasattr(lst[0], "accumulate")
+                and hasattr(lst[0].config, "doAverage")
+                and lst[0].config.doAverage()):
+                avg = lst[0].accumulate(lst)
+            if avg is None:
+                dataList.extend(lst)
+            else:
+                dataList.append(avg)
+        # add the combined dls data split up per angle
+        def splitUp(d):
+            try: # perhaps test for isinstance(d, DLSData) instead
+                return d.splitPerAngle()
+            except AttributeError:
+                return (d,)
+        dataList = [s for dl in (splitUp(d) for d in dataList) for s in dl]
+        return dataList
+
     def ids(self):
         """Returns a text containing the objects ids of the embedded data
         objects. (for debugging purposes)"""
