@@ -126,6 +126,7 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
     def restoreSession(self, section = None):
         if self.appSettings is None:
             return
+        self.blockSigValueChanged() # block signals, update UI only first
         if section is None:
             section = self.objectName()
         self.appSettings.beginGroup(section)
@@ -136,6 +137,8 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
             except Exception as e:
                 logging.warn(e)
         self.appSettings.endGroup()
+        self.unblockSigValueChanged() # unblock signals
+        self.updateAll() # update backend data from UI, emits sigBackendUpdated
 
     def _paramFromWidget(self, widget):
         if self.algorithm is None:
