@@ -220,6 +220,14 @@ class AlgorithmBase(object):
         hdf.writeAttributes(name = self.name(), cls = classname(self))
         hdf.writeMembers(self, *[p.name() for p in self.params()])
 
+    def update(self, other):
+        """Copy parameter values from another algorithm of the same type."""
+        if not isinstance(other, type(self)):
+            return
+        for p in self.params():
+            otherP = getattr(other, p.name())
+            p.setValue(otherP.value()) # possibly runs value callback
+
 if __name__ == "__main__":
     pass
 
