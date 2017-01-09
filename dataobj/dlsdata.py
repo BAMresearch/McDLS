@@ -49,8 +49,9 @@ class DLSConfig(DataConfig):
                 "It appears behind the correlation plot."),
         Parameter("doAverage", True, unit = NoUnit(),
             displayName = "average each angle",
-            description = "For multiple measurement files of the same sample "
-                "it averages the correlation data for each angle. Finally, "
+            description = "When loading DLS data files, average the "
+                "correlation data of each angle if there are multiple "
+                "measurements of the same sample. <br />Finally, "
                 "there will be a single data object for each angle which "
                 "contains the correlation mean and its standard deviation "
                 "interpreted as measurement uncertainty."),
