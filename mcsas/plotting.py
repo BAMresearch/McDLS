@@ -469,8 +469,8 @@ class PlotResults(object):
         legendHandle, legendLabel = qAxis.get_legend_handles_labels()
         if suppAx is not None:
             handle, label = suppAx.get_legend_handles_labels()
-            legendHandle += handle
-            legendLabel += label
+            legendHandle += reversed(handle)
+            legendLabel += reversed(label)
             # move the title above the upper x axis
             # check self._subPlotPars['hspace'] as well
             xpos, ypos = titleHandler.get_position()
@@ -662,6 +662,9 @@ class PlotResults(object):
         suppAx.errorbar(xvec, yvec, uvec, zorder = 2, color = 'grey',
                         ecolor = 'lavender', # or 'thistle' ?
                         label = suppAx.get_ylabel())
+        ymean = yvec.mean()
+        suppAx.plot(suppAx.get_xlim(), (ymean, ymean), '-', zorder = 2, lw = 2,
+                    color = 'grey', label = "Count Rate Mean")
         return suppAx
 
 class PlotSeriesStats(object):
