@@ -226,7 +226,10 @@ class DLSData(DataObj):
             if g not in summary:
                 summary[g] = []
             summary[g].append(i)
-        res = ";".join(["{group}: {indices}".format(group = g,
+        # output format example: "0'1-3,5 1'2-4,6,8"
+        # from group 0, indices 1,2,3,5 and from group 1, indices 2,3,4,6,8
+        # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+        res = " ".join(["{grp}'{indices}".format(grp = g,
             indices = ",".join(groupIndices(lst)))
                 for g, lst in summary.items()])
         return res
