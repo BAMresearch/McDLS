@@ -410,7 +410,9 @@ class DLSData(DataObj):
         assert len(self.capTime.siData) == len(self.countRate.siData), \
             "Dimensions of flattened data arrays do not match!"
         # reset config in order to fix callbacks
+        oldConfig = self.config
         self.setConfig(self.configType())
+        self.config.update(oldConfig)
         return self
 
     def splitPerAngle(self):
