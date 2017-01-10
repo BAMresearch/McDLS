@@ -466,6 +466,7 @@ class PlotResults(object):
 
         # set up the combined legend
         legendHandle, legendLabel = qAxis.get_legend_handles_labels()
+        legendAlpha = None # opaque legend usually
         if suppAx is not None:
             handle, label = suppAx.get_legend_handles_labels()
             legendHandle += reversed(handle)
@@ -474,10 +475,11 @@ class PlotResults(object):
             # check self._subPlotPars['hspace'] as well
             xpos, ypos = titleHandler.get_position()
             titleHandler.set_position((xpos, ypos + self._charHeight*2.2))
+            legendAlpha = 0.7
             suppAx.set_axis_bgcolor(qAxis.get_axis_bgcolor())
 
-        qAxis.legend(legendHandle, legendLabel,
-                     loc = 1, fancybox = True, prop = self._textfont)
+        qAxis.legend(legendHandle, legendLabel, loc = 1, fancybox = True,
+                     framealpha = legendAlpha, prop = self._textfont)
         # reapply limits, necessary for some reason:
         qAxis.set_xlim(xLim)
         # make the background line visible
