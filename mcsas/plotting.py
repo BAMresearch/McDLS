@@ -474,6 +474,7 @@ class PlotResults(object):
             # check self._subPlotPars['hspace'] as well
             xpos, ypos = titleHandler.get_position()
             titleHandler.set_position((xpos, ypos + self._charHeight*2.2))
+            suppAx.set_axis_bgcolor(qAxis.get_axis_bgcolor())
 
         qAxis.legend(legendHandle, legendLabel,
                      loc = 1, fancybox = True, prop = self._textfont)
