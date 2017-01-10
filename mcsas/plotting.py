@@ -621,7 +621,7 @@ class PlotResults(object):
 #        suppAx.set_visible(False) # for testing
         # put suppAx behind otherAxis, make otherAxis transparent
         suppAx.set_zorder(otherAxis.get_zorder() - 1)
-        suppAx.set_ylabel('Count Rate', size = 'small',
+        suppAx.set_ylabel('Count Rate (CR)', size = 'small',
                           fontproperties = self._textfont)
         xvec = capTime.unit.toDisplay(capTime.binnedData)
         yvec = countRate.unit.toDisplay(countRate.binnedData)
@@ -663,7 +663,7 @@ class PlotResults(object):
                         ecolor = 'lavender', # or 'thistle' ?
                         label = suppAx.get_ylabel())
         hLineArgs = dict(linestyle = '-', zorder = 2, lw = 2, color = 'grey',
-                         label = "Count Rate Mean")
+                         label = "CR Mean")
         self._plotHLine(suppAx, yvec.mean(), **hLineArgs)
         return suppAx
 
