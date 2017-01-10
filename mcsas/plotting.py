@@ -664,10 +664,17 @@ class PlotResults(object):
         suppAx.errorbar(xvec, yvec, uvec, zorder = 2, color = 'grey',
                         ecolor = 'lavender', # or 'thistle' ?
                         label = suppAx.get_ylabel())
-        ymean = yvec.mean()
-        suppAx.plot(suppAx.get_xlim(), (ymean, ymean), '-', zorder = 2, lw = 2,
-                    color = 'grey', label = "Count Rate Mean")
+        hLineArgs = dict(linestyle = '-', zorder = 2, lw = 2, color = 'grey',
+                         label = "Count Rate Mean")
+        self._plotHLine(suppAx, yvec.mean(), **hLineArgs)
         return suppAx
+
+    @staticmethod
+    def _plotHLine(axes, yval, **kwargs):
+        """Plot an horizontal line at y = *yval* with the given arguments."""
+        kwargs.update(
+            label = kwargs.get("label", "") + ": {0:.1f}".format(yval))
+        axes.plot(axes.get_xlim(), (yval, yval), **kwargs)
 
 class PlotSeriesStats(object):
     """Simple 1D plotting of series statistics."""
