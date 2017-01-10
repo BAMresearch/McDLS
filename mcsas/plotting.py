@@ -665,6 +665,14 @@ class PlotResults(object):
         hLineArgs = dict(linestyle = '-', zorder = 2, lw = 2, color = 'grey',
                          label = "CR Mean")
         self._plotHLine(suppAx, yvec.mean(), **hLineArgs)
+        if (hasattr(dataset.config, "meanCountRate")
+            and len(dataset.angles) == 1): # useful for single measurements only
+            angle = dataset.angles[0]
+            meanCountRate = dataset.config.meanCountRate
+            if meanCountRate is not None and angle in meanCountRate:
+                meanValues = np.array(meanCountRate[angle].values())
+                hLineArgs.update(color = 'plum', label = "CR Median")
+                self._plotHLine(suppAx, np.median(meanValues), **hLineArgs)
         return suppAx
 
     @staticmethod
