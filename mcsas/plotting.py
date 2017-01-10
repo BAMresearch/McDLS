@@ -154,10 +154,9 @@ class PlotResults(object):
         if isinstance(dataset, SASData):
             yscale = 'log'
         # set general axes settings:
-        self._AxDict = {'axis_bgcolor' : (.95, .95, .95), 
-                'xscale' : 'log', 
-                'yscale' : yscale,
-                }
+        self._AxDict = dict(
+                axis_bgcolor = (.97, .97, .97),
+                xscale = "log", yscale = yscale)
 
         # number of histograms:
         self._nHists = len(modelData['histograms'])
