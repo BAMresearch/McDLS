@@ -631,9 +631,7 @@ class PlotResults(object):
         ymin, ymax = (yvec - uvec).min(), (yvec + uvec).max()
         ystep = (np.ceil(ymax) - np.floor(ymin)) // 4
         yticks_ = np.arange(np.floor(ymin), np.ceil(ymax) + ystep, ystep)
-#        yticks_ = np.append(yticks_, yvec.mean())
-        suppAx.set_yticks(yticks_)
-        suppAx.set_yticklabels(["{0:.1f}".format(t) for t in yticks_])
+        self._setYTicks(suppAx, yticks_)
         delta = (ymax - ymin) * .02 # 2% of y-axis range
         suppAx.set_ylim(ymin - delta, ymax + delta)
         suppAx.get_yaxis().set_label_position('right')
@@ -670,11 +668,18 @@ class PlotResults(object):
         return suppAx
 
     @staticmethod
+    def _setYTicks(axes, tickValues):
+        axes.set_yticks(tickValues)
+        axes.set_yticklabels(["{0:.1f}".format(t) for t in tickValues])
+
+    @staticmethod
     def _plotHLine(axes, yval, **kwargs):
         """Plot an horizontal line at y = *yval* with the given arguments."""
         kwargs.update(
             label = kwargs.get("label", "") + ": {0:.1f}".format(yval))
         axes.plot(axes.get_xlim(), (yval, yval), **kwargs)
+        # additional ticks may overlap and become unreadable
+        # PlotResults._setYTicks(axes, np.append(axes.get_yticks(), yval))
 
 class PlotSeriesStats(object):
     """Simple 1D plotting of series statistics."""
