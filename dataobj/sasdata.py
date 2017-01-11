@@ -164,20 +164,15 @@ class SASData(DataObj):
         # (should be moved to DataObj but the DataVectors have to be set earlier)
         self.setConfig(self.configType())
 
-    def setConfig(self, config):
-        if not super(SASData, self).setConfig(config):
-            return # no update, nothing todo
-        # self.config.updateEMin()
+    def updateConfig(self):
+        super(SASData, self).updateConfig()
+        self.config.register("x0limits", self._prepareShannonChannelEst)
+        self.config.register("eMin", self._prepareUncertainty)
         # prepare
         self.locs = self.config.prepareSmearing(self.x0.binnedData)
         # suggested upgrade for 2d smearing:
         # self.locs = self.config.prepareSmearing(
         #                           self.x0.siData, self.x1.siData)
-
-    def updateConfig(self):
-        super(SASData, self).updateConfig()
-        self.config.register("x0limits", self._prepareShannonChannelEst)
-        self.config.register("eMin", self._prepareUncertainty)
 
     @property
     def configType(self):
