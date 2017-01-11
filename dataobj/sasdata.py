@@ -162,7 +162,7 @@ class SASData(DataObj):
         # init config as early as possible to get properties ready which
         # depend on it (qlow/qhigh?)
         # (should be moved to DataObj but the DataVectors have to be set earlier)
-        self.setConfig(self.configType())
+        self.initConfig()
 
     def updateConfig(self):
         super(SASData, self).updateConfig()

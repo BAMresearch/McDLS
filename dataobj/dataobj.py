@@ -138,24 +138,38 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
     def accumulate(self, others):
         return None
 
+    @abstractproperty
+    def configType(self):
+        """Returns a compatible DataConfig type."""
+        raise NotImplementedError
+
     @property
     def config(self):
         return self._config
 
+    def initConfig(self):
+        """Initializes a new data configuration and sets the sample name which
+        is used to differentiate different data objects of the same type later
+        on."""
+        config = self.configType()
+        # important to pass the check in setConfig()
+        config.sampleName = self.sampleName
+        self.setConfig(config)
+
     def setConfig(self, config = None):
-        """Set the extended configuration for this data and returns true if
-        the configuration was different and an update was necessary."""
+        """Set the configuration of this data object if the type matches."""
         if not isinstance(config, self.configType):
-            return False
+            return # ignore configurations of other types
+        if self.config is not None and self.config.sampleName != config.sampleName:
+            return # ignore data configurations of other samples
         # always replacing the config if it's valid, it originates from here
         self._config = config
         self.updateConfig()
-        return True
 
     def updateConfig(self):
         """Updates the config object based on this data set. All callbacks are
         run right after this method in setConfig()."""
-        self.config.sampleName = self.sampleName
+#        self.config.sampleName = self.sampleName # moved to initConfig()
         self.config.is2d = self.is2d # forward if we are 2d or not
         self.config.register("x0limits", self._onLimitsUpdate)
         self.config.register("x0Clipping", self._onClippingUpdate)
@@ -191,11 +205,6 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         # TODO: what about x0LowClip possibly set by other DataObj in list?
         if self.config.x0LowClip() < validX0Idx:
             self.config.x0LowClip.setValue(validX0Idx)
-
-    @abstractproperty
-    def configType(self):
-        """Returns a compatible DataConfig type."""
-        raise NotImplementedError
 
     @abstractproperty
     def modelType(self):
