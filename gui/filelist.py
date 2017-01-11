@@ -85,10 +85,6 @@ class FileList(DataList):
         def setConfigToData(data, config = None):
             """Helper to call the appropriate method in the class hierarchy of
             the dataset."""
-            # set this only for equal sample names,
-            # -> None == None for SASData (no sample name yet)
-            if data.sampleName != config.sampleName:
-                return
             data.setConfig(config)
         self.updateData(updateFunc = setConfigToData, config = dataConfig,
                         showProgress = False)
