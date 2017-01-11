@@ -416,9 +416,9 @@ class DLSData(DataObj):
         self.setCountRate(stacked.mean(-1), stacked.std(-1))
         assert len(self.capTime.siData) == len(self.countRate.siData), \
             "Dimensions of flattened data arrays do not match!"
-        # reset config in order to fix callbacks
+        # reset config in order to fix callbacks, but maintain option values
         oldConfig = self.config
-        self.setConfig(self.configType())
+        self.initConfig()
         self.config.update(oldConfig)
         return self
 
@@ -436,8 +436,8 @@ class DLSData(DataObj):
             another.setCapTime(self.capTime.unit, self.capTime.rawDataSrcShape)
             another.setCountRate(self.countRate.rawDataSrcShape[:, i, newaxis],
                                  self.countRate.rawDataUSrcShape[:, i, newaxis])
-            # reset config in order to fix callbacks
-            another.setConfig(another.configType())
+            # reset config in order to fix callbacks, but maintain option values
+            another.initConfig()
             another.config.update(self.config) # forward settings
             lst.append(another)
         return lst
@@ -451,7 +451,7 @@ class DLSData(DataObj):
             return # nothing to do
         samples = OrderedDict()
         def makeKey(data):
-            key = (data.title,)
+            key = (data.title,) # == self.sampleName in CGSFile
             if hasattr(data, "angles"):
                 key += tuple(data.angles)
             return key
@@ -493,11 +493,21 @@ class DLSData(DataObj):
     def __init__(self, **kwargs):
         super(DLSData, self).__init__(**kwargs)
 
-    def setConfig(self, config):
-        if not super(DLSData, self).setConfig(config):
-            return # no update, nothing todo
+    def setConfig(self, config = None):
+        """Overrides DataObj.setConfig() to forward some general settings to
+        all configurations before the sampleName filter kicks in."""
+        if not isinstance(config, self.configType):
+            return # ignore configurations of other types
+        if self.config is not None:
+            self.config.doAverage.setValue(config.doAverage())
+            self.config.plotCountRate.setValue(config.plotCountRate())
+        super(DLSData, self).setConfig(config)
+
+    def updateConfig(self):
+        # this has to be set before base class updateConfig()
         self.config.x0Low.setUnit(self.tau.unit)
         self.config.x0High.setUnit(self.tau.unit)
+        super(DLSData, self).updateConfig()
         self._analyseCountRate()
 
     def _analyseCountRate(self):

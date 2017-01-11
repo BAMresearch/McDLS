@@ -298,7 +298,7 @@ class CGSFile(AsciiFile):
         dlsData.setCorrelation(self.correlation[:, 1:])
         dlsData.setCapTime(Sec, self.countRate[:, 0])
         dlsData.setCountRate(self.countRate[:, 1:])
-        dlsData.setConfig(dlsData.configType()) # has to be called after setup
+        dlsData.initConfig() # has to be called after setup
         return dlsData
 
 CGSFile.setPropertyGetters()
