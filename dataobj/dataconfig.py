@@ -189,6 +189,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
             limits = min(x0.min(), limits[0]), max(x0.max(), limits[1])
         self.x0Low.setValueRange(limits)
         self.x0High.setValueRange(limits)
+        self.x0LowClip.setValueRange((0, len(x0)))
 
     def onUpdatedX1(self, x1):
         pass
