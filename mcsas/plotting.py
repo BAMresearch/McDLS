@@ -659,20 +659,19 @@ class PlotResults(object):
         suppAx.set_xlim(np.floor(min(xvec)), np.ceil(max(xvec)))
         # finally, draw the count rate in the background,
         # use unobstrusive colors
-        suppAx.errorbar(xvec, yvec, uvec, zorder = 2, color = 'grey',
+        suppAx.errorbar(xvec, yvec, uvec, zorder = 2, lw = 2, color = 'grey',
                         ecolor = 'lavender', # or 'thistle' ?
                         label = suppAx.get_ylabel())
         hLineArgs = dict(linestyle = '-', zorder = 2, lw = 2, color = 'grey',
                          label = "CR Mean")
         self._plotHLine(suppAx, yvec.mean(), **hLineArgs)
-        if (hasattr(dataset.config, "meanCountRate")
+        if (hasattr(dataset.config, "medianCountRate")
             and len(dataset.angles) == 1): # useful for single measurements only
             angle = dataset.angles[0]
-            meanCountRate = dataset.config.meanCountRate
-            if meanCountRate is not None and angle in meanCountRate:
-                meanValues = np.array(meanCountRate[angle].values())
+            medianCountRate = dataset.config.medianCountRate
+            if medianCountRate is not None and angle in medianCountRate:
                 hLineArgs.update(color = 'plum', label = "CR Median")
-                self._plotHLine(suppAx, np.median(meanValues), **hLineArgs)
+                suppAx.plot(xvec, medianCountRate[angle], **hLineArgs)
         return suppAx
 
     @staticmethod
