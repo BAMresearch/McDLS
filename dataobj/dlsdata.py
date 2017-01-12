@@ -525,14 +525,17 @@ class DLSData(DataObj):
         # median over stacking axis, extend array shape by one dim
         median = np.median(stacked, axis = -1)[:,:,None]
         diff = np.sqrt(np.sum((stacked - median)**2, axis = 0)) # sum along tau
+        self.config.filterMask = np.ones(diff.shape, dtype = bool)
+        self.config.medianCountRate = dict()
+        self.config.outlierMap = dict()
         # median along observations, for each angle
         medAbsDev = np.median(diff, axis = -1)[:,None]
+        if any(medAbsDev == 0.):
+            return
         modifiedZScore = 0.6745 * diff / medAbsDev
         goodData = modifiedZScore < self.config.outlierThreshold()
         # store the median for plotting later
-        self.config.medianCountRate = dict()
         self.config.filterMask = goodData
-        self.config.outlierMap = dict()
         for a, angle in enumerate(self.angles):
             self.config.medianCountRate[angle] = np.squeeze(median[:,a])
             # for each angle, store illegal measIndices
