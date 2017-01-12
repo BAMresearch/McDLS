@@ -517,7 +517,7 @@ class DLSData(DataObj):
         return dataList
 
     def analyseOutliers(self, dataList):
-        if dataList is None or not len(dataList):
+        if dataList is None or len(dataList) < 2:
             return
         # outlier detection by median absolute deviation from:
         # http://stackoverflow.com/q/22354094
