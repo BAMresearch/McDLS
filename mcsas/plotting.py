@@ -660,7 +660,7 @@ class PlotResults(object):
         # finally, draw the count rate in the background,
         # use unobstrusive colors
         suppAx.errorbar(xvec, yvec, uvec, zorder = 2, lw = 2, color = 'grey',
-                        ecolor = 'lavender', # or 'thistle' ?
+                        ecolor = 'thistle',
                         label = suppAx.get_ylabel())
         hLineArgs = dict(linestyle = '-', zorder = 2, lw = 2, color = 'grey',
                          label = "CR Mean")
