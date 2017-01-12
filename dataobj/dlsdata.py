@@ -404,13 +404,16 @@ class DLSData(DataObj):
                     o.sampleName == self.sampleName]
         if not len(others):
             return None
+        ddof = 1
+        if len(others) == 1:
+            ddof = 0 # prevent division by zero in numpy.std()
         # average basic properties
         for prop in ("temperature", "viscosity",
                      "refractiveIndex", "wavelength"):
             arr = array([getattr(o, prop)[0] for o in others])
             setFunc = getattr(self, _propSetterName(prop))
             if isCallable(setFunc):
-                setFunc(arr.mean(), arr.std())
+                setFunc(arr.mean(), arr.std(ddof = ddof))
         # combine all measurement indices
         self.setMeasIndices(tuple((mi for o in others for mi in o.measIndices)))
         # angles unchanged, but ensure they're identical everywhere
@@ -429,7 +432,7 @@ class DLSData(DataObj):
                 # different count of good data for each angle average
                 noOutliers = stacked[:,a,self.config.filterMask[a]]
                 corr[:,a]  = noOutliers.mean(-1)
-                corrU[:,a] = noOutliers.std(-1)
+                corrU[:,a] = noOutliers.std(-1, ddof = ddof)
                 if (self.config.outlierMap is None
                     or angle not in self.config.outlierMap
                     or not len(self.config.outlierMap[angle])):
@@ -437,7 +440,7 @@ class DLSData(DataObj):
                 logging.warn("Not averaging outliers: "
                              + str(sorted(list(self.config.outlierMap[angle]))))
         else:
-            corr, corrU = stacked.mean(-1), stacked.std(-1)
+            corr, corrU = stacked.mean(-1), stacked.std(-1, ddof = ddof)
         # combine the mean across all data sets with the existing tau
         # combine the std. deviation with the existing tau
         self.setCorrelation(corr, corrU)
@@ -445,7 +448,7 @@ class DLSData(DataObj):
             "Dimensions of flattened data arrays do not match!"
         # same for count rate data
         stacked = dstack((o.countRate.rawDataSrcShape for o in others))
-        self.setCountRate(stacked.mean(-1), stacked.std(-1))
+        self.setCountRate(stacked.mean(-1), stacked.std(-1, ddof = ddof))
         assert len(self.capTime.siData) == len(self.countRate.siData), \
             "Dimensions of flattened data arrays do not match!"
         # reset config in order to fix callbacks, but maintain option values
