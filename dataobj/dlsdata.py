@@ -56,6 +56,12 @@ class DLSConfig(DataConfig):
                 "there will be a single data object for each angle which "
                 "contains the correlation mean and its standard deviation "
                 "interpreted as measurement uncertainty."),
+        Parameter("outlierThreshold", 3., unit = NoUnit(),
+            displayName = "outlier threshold",
+            valueRange = (0., 1e3),
+            description = "Modified Z-score above which measurements are "
+                "rejected as outliers by using the median absolute deviation "
+                "of all measurements for the same angle."),
     )
     medianCountRate = None
     # filterMask and outlierMap are complementary
@@ -521,8 +527,7 @@ class DLSData(DataObj):
         # median along observations, for each angle
         medAbsDev = np.median(diff, axis = -1)[:,None]
         modifiedZScore = 0.6745 * diff / medAbsDev
-        threshold = 3.5
-        goodData = modifiedZScore < threshold
+        goodData = modifiedZScore < self.config.outlierThreshold()
         # store the median for plotting later
         self.config.medianCountRate = dict()
         self.config.filterMask = goodData
