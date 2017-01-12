@@ -16,6 +16,7 @@ import copy
 from collections import OrderedDict
 from itertools import groupby
 from operator import itemgetter
+import numpy as np
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty, zeros_like)
 from utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
@@ -56,7 +57,10 @@ class DLSConfig(DataConfig):
                 "contains the correlation mean and its standard deviation "
                 "interpreted as measurement uncertainty."),
     )
-    meanCountRate = None
+    medianCountRate = None
+    # filterMask and outlierMap are complementary
+    filterMask = None # for selecting good data during accumulate()
+    outlierMap = None # for marking bad data in plotting
 
     def __init__(self):
         super(DLSConfig, self).__init__()
@@ -76,7 +80,9 @@ class DLSConfig(DataConfig):
         """Override AlgorithmBase.update() to copy DataConfig values as well.
         """
         super(DLSConfig, self).update(other)
-        self.meanCountRate = other.meanCountRate
+        self.medianCountRate = other.medianCountRate
+        self.filterMask = other.filterMask
+        self.outlierMap = other.outlierMap
 
 DLSConfig.factory()
 
@@ -406,9 +412,28 @@ class DLSData(DataObj):
                "Scattering angles differ between all DLS data to be combined!"
         # calculate average correlation values and their standard deviation
         stacked = dstack((o.correlation.rawDataSrcShape for o in others))
+        # filter outliers, possibly
+        corr, corrU = None, None
+        if (self.config.filterMask is not None
+            and self.config.filterMask.shape == (len(self.angles), len(others))):
+            # use prepared filter mask if shapes match
+            corr = corrU = np.zeros(stacked.shape[0:2])
+            for a, angle in enumerate(self.angles):
+                # different count of good data for each angle average
+                noOutliers = stacked[:,a,self.config.filterMask[a]]
+                corr[:,a]  = noOutliers.mean(-1)
+                corrU[:,a] = noOutliers.std(-1)
+                if (self.config.outlierMap is None
+                    or angle not in self.config.outlierMap
+                    or not len(self.config.outlierMap[angle])):
+                    continue
+                logging.warn("Not averaging outliers: "
+                             + str(sorted(list(self.config.outlierMap[angle]))))
+        else:
+            corr, corrU = stacked.mean(-1), stacked.std(-1)
         # combine the mean across all data sets with the existing tau
         # combine the std. deviation with the existing tau
-        self.setCorrelation(stacked.mean(-1), stacked.std(-1))
+        self.setCorrelation(corr, corrU)
         assert len(self.x0.siData) == len(self.f.siData), \
             "Dimensions of flattened data arrays do not match!"
         # same for count rate data
@@ -464,6 +489,8 @@ class DLSData(DataObj):
         for dummy, lst in samples.items():
             if not len(lst):
                 continue
+            if hasattr(lst[0], "analyseOutliers"):
+                lst[0].analyseOutliers(lst)
             avg = None
             if (hasattr(lst[0], "accumulate")
                 and hasattr(lst[0].config, "doAverage")
@@ -481,6 +508,30 @@ class DLSData(DataObj):
                 return (d,)
         dataList = [s for dl in (splitUp(d) for d in dataList) for s in dl]
         return dataList
+
+    def analyseOutliers(self, dataList):
+        if dataList is None or not len(dataList):
+            return
+        # outlier detection by median absolute deviation from:
+        # http://stackoverflow.com/q/22354094
+        stacked = dstack((d.countRate.rawDataSrcShape for d in dataList))
+        # median over stacking axis, extend array shape by one dim
+        median = np.median(stacked, axis = -1)[:,:,None]
+        diff = np.sqrt(np.sum((stacked - median)**2, axis = 0)) # sum along tau
+        # median along observations, for each angle
+        medAbsDev = np.median(diff, axis = -1)[:,None]
+        modifiedZScore = 0.6745 * diff / medAbsDev
+        threshold = 3.5
+        goodData = modifiedZScore < threshold
+        # store the median for plotting later
+        self.config.medianCountRate = dict()
+        self.config.filterMask = goodData
+        self.config.outlierMap = dict()
+        for a, angle in enumerate(self.angles):
+            self.config.medianCountRate[angle] = np.squeeze(median[:,a])
+            # for each angle, store illegal measIndices
+            self.config.outlierMap[angle] = set([d.measIndices[0]
+                for i, d in enumerate(dataList) if not goodData[a][i]])
 
     def ids(self):
         """Returns a text containing the objects ids of the embedded data
@@ -508,7 +559,7 @@ class DLSData(DataObj):
         self.config.x0Low.setUnit(self.tau.unit)
         self.config.x0High.setUnit(self.tau.unit)
         super(DLSData, self).updateConfig()
-        self._analyseCountRate()
+#        self._analyseCountRate()
 
     def _analyseCountRate(self):
         """Analyses the count rate of a single measurement compared the other
