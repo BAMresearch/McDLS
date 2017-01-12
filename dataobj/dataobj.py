@@ -287,22 +287,24 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         For now, this will rebin using the x0 vector as a base, although the
         binning vector can theoretically be chosen freely.
         """
-        if not len(self.x0.sanitized):
-            return
-        logging.info("Initiating binning procedure")
-        nBin = self.config.nBin.value()
-        # self._binned = DataVector() once binning finishes.. dataVector can be set once.
         sanX = self.x0.sanitized
-        x0Bin = np.zeros(nBin)
-        fBin  = np.zeros(nBin)
-        fuBin  = np.zeros(nBin)
-        validMask = np.zeros(nBin, dtype = bool) #default false
+        if not len(sanX):
+            return
 
+        nBin = self.config.nBin.value()
         if not(nBin > 0):
             self.x0.binnedData = None # reset to none if set
             self.f.binnedData = None
             self.f.binnedDataU = None
             return # no need to do the actual rebinning. values stay None.
+
+        logging.info("Initiating binning procedure for {} bins".format(nBin))
+
+        # self._binned = DataVector() once binning finishes.. dataVector can be set once.
+        x0Bin = np.zeros(nBin)
+        fBin  = np.zeros(nBin)
+        fuBin  = np.zeros(nBin)
+        validMask = np.zeros(nBin, dtype = bool) #default false
 
         # prepare bin edges, log-spaced
         xEdges = np.logspace(
