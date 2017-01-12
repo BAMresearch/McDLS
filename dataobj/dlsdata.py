@@ -565,32 +565,6 @@ class DLSData(DataObj):
         self.config.x0Low.setUnit(self.tau.unit)
         self.config.x0High.setUnit(self.tau.unit)
         super(DLSData, self).updateConfig()
-#        self._analyseCountRate()
-
-    def _analyseCountRate(self):
-        """Analyses the count rate of a single measurement compared the other
-        measurements of the same sample at the same angle."""
-        # count rate analysis
-        if len(self.measIndices) != 1 or len(self.angles) != 1:
-            return
-        if hasattr(self.config, "meanCountRate"):
-            if self.config.meanCountRate is None:
-                self.config.meanCountRate = dict()
-            # store the mean of each angle and measurement
-            angle, idx = self.angles[0], self.measIndices[0]
-            if angle not in self.config.meanCountRate:
-                self.config.meanCountRate[angle] = dict()
-            self.config.meanCountRate[angle][idx] = self.countRate.binnedData.mean()
-
-    def meanCountRatesStr(self):
-        """Returns the currently stored mean count rates per angle as text
-        tuples for debug output."""
-        out = []
-        for angle, indices in self.config.meanCountRate.items():
-            out.append(("angle", str(self.anglesUnit.toDisplay(angle))))
-            for idx, mean in indices.items():
-                out.append((" ", str(idx), str(mean)))
-        return out
 
     def __str__(self):
         out = [u"## {0} '{1}'".format(self.__class__.__name__, self.title)]
