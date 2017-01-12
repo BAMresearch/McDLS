@@ -423,7 +423,8 @@ class DLSData(DataObj):
         if (self.config.filterMask is not None
             and self.config.filterMask.shape == (len(self.angles), len(others))):
             # use prepared filter mask if shapes match
-            corr = corrU = np.zeros(stacked.shape[0:2])
+            corr  = np.zeros(stacked.shape[0:2])
+            corrU = np.zeros(stacked.shape[0:2])
             for a, angle in enumerate(self.angles):
                 # different count of good data for each angle average
                 noOutliers = stacked[:,a,self.config.filterMask[a]]
