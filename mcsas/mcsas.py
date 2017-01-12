@@ -324,7 +324,8 @@ class McSAS(AlgorithmBase):
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
         sc = numpy.array((1.0, data.f.limit[0]))
-        if modelData.cumInt.max() != 0.0: # avoid numerical errors
+        if len(modelData.cumInt) and modelData.cumInt.max() != 0.0:
+            # avoid numerical errors
             sc[0] = data.f.limit[1] / modelData.cumInt.max()
 #        sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground(),
@@ -546,6 +547,8 @@ class McSAS(AlgorithmBase):
             rset = contribs[:, :, ri] # single set of R for this calculation
             # compensated volume for each sphere vset:
             modelData = self.model.calc(data, rset, self.compensationExponent())
+            if not len(modelData.cumInt):
+                continue
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
             sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])

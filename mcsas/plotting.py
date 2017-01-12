@@ -414,6 +414,9 @@ class PlotResults(object):
         xOrigin = dataset.x0.unit.toDisplay(dataset.x0.binnedData)
         yOrigin = dataset.f.unit.toDisplay(dataset.f.binnedData)
         uOrigin = dataset.f.unit.toDisplay(dataset.f.binnedDataU)
+        if not len(xOrigin):
+            logging.error("No data to plot!")
+            return
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
                 xOrigin.max() * (1 + self._axisMargin))
