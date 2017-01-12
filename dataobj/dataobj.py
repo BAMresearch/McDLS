@@ -241,6 +241,8 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         # apply explicit clipping first
         end = max(0, self.config.x0LowClip())
         self._validMask[0:end] = False
+        # apply upper bound as well, as long as there is no x0HighClip
+        self._validMask &= (self.x0.siData <= self.config.x0High())
 
     def _applyLimits(self):
         # clip to q bounds
