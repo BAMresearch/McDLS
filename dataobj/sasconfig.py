@@ -11,7 +11,7 @@ from scipy import stats
 from bases.algorithm import AlgorithmBase
 from utils.parameter import Parameter
 from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
-                         Fraction, NoUnit)
+                         NoUnit)
 from utils import clip
 from dataobj import DataConfig
 from future.utils import with_metaclass
@@ -267,25 +267,12 @@ class SASConfig(DataConfig):
     _smearing = None
     shortName = "SAS data configuration"
 
-    parameters = (
-        Parameter("eMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
-            displayName = "minimum uncertainty estimate",
-            valueRange = (0., 1.), decimals = 9),
-    )
-
     @property
     def showParams(self):
         lst = super(SASConfig, self).showParams
         lst.remove("fMaskZero")
         lst.remove("fMaskNeg")
         return lst
-
-    @property
-    def callbackSlots(self):
-        return super(SASConfig, self).callbackSlots | set(("eMin",))
-
-    def updateEMin(self):
-        self.callback("eMin", self.eMin())
 
     def onUpdatedX0(self, x0):
         """Sets available range of loaded data."""
@@ -365,7 +352,6 @@ class SASConfig(DataConfig):
         if self.smearing is not None:
             self.register("x0limits", self.smearing.updateQLimits)
             self.register("x1limits", self.smearing.updatePLimits)
-        self.eMin.setOnValueUpdate(self.updateEMin)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
