@@ -147,8 +147,11 @@ class Moments(object):
             # a set of volume fractions
             partialIntensities[ri, :] = it.flatten() * scalingFactors[0, ri]
 
+        ddof = 0
+        if len(partialIntensities) > 1:
+            ddof = 1
         self._intensity = (partialIntensities.mean(axis = 0),
-                           partialIntensities.std(axis = 0))
+                           partialIntensities.std(axis = 0, ddof = ddof))
 
 class VectorResult(object):
     """Stores multiple populations of a single result data vector.
@@ -175,7 +178,10 @@ class VectorResult(object):
         assert vecResult.ndim == 2 # 2 dim input
         self._full = vecResult
         self._mean = self._full.mean(axis = 1)
-        self._std = self._full.std(axis = 1)
+        ddof = 0
+        if len(self._full) > 1:
+            ddof = 1
+        self._std = self._full.std(axis = 1, ddof = ddof)
 
 # put this sketch here, for the moment can be placed in a separate file later
 class Histogram(DataSet, DisplayMixin):
