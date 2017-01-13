@@ -673,7 +673,7 @@ class PlotResults(object):
             angle = dataset.angles[0]
             medianCountRate = dataset.config.medianCountRate
             if medianCountRate is not None and angle in medianCountRate:
-                hLineArgs.update(color = 'plum', label = "CR Median")
+                hLineArgs.update(color = 'violet', label = "CR Median")
                 suppAx.plot(xvec, medianCountRate[angle], **hLineArgs)
         return suppAx
 
