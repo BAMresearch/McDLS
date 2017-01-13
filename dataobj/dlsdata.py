@@ -561,7 +561,7 @@ class DLSData(DataObj):
         if dataList is None or len(dataList) < 2:
             return
         # outlier detection by median absolute deviation from:
-        # http://stackoverflow.com/q/22354094
+        # http://stackoverflow.com/a/22357811
         stacked = dstack((d.countRate.rawDataSrcShape for d in dataList))
         # median over stacking axis, extend array shape by one dim
         median = np.median(stacked, axis = -1)[:,:,None]
