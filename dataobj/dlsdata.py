@@ -14,7 +14,7 @@ from past.utils import old_div
 import logging
 import copy
 from collections import OrderedDict
-from itertools import groupby
+from itertools import groupby, chain
 from operator import itemgetter
 import numpy as np
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
@@ -214,16 +214,32 @@ class DLSData(DataObj):
     def setSampleDescription(self, descr):
         self._description = descr
 
-    def setMeasIndices(self, measIndices):
+    def setMeasIndices(self, measIndices, a = None):
         """Sets the measurement index of this data set. Expects a list of
         tuples containing two integers of the measurement group index and the
-        measurement index within that group."""
+        measurement index within that group.
+        Stores the indices on a per angle basis which differs for each angle.
+        """
         def verifyMeasIndex(measIndex):
             assert isList(measIndex) and len(measIndex) == 2
             assert all([isInteger(i) for i in measIndex])
         assert isList(measIndices)
         [verifyMeasIndex(mi) for mi in measIndices]
-        self._measIndices = measIndices
+        # using tuples; setAngles() tests for tuple and hash(tuple()) works
+        measIndices = tuple(measIndices)
+        if isList(self.angles):
+            try: # try to set the indices of a specific angle
+                a = max(0, min(int(a), len(self.angles)-1))
+                self._measIndices[a] = measIndices
+                # sync length of measIndices with count of angles
+                if len(self._measIndices) > len(self.angles):
+                    del self._measIndices[len(self.angles):]
+                elif len(self._measIndices) < len(self.angles):
+                    self._measIndices[len(self._measIndices):len(self.angles)] = [()]
+            except TypeError: # idx == None? set all angles to the same idx
+                self._measIndices = [measIndices for i in range(len(self.angles))]
+        else: # no angles yet
+            self._measIndices = measIndices
 
     @property
     def measIndicesStr(self):
@@ -240,8 +256,9 @@ class DLSData(DataObj):
                     ranges.append(str(group[0]))
             return ranges
 
+        measIndices = set(chain(*self.measIndices))
         summary = OrderedDict()
-        for g, i in self.measIndices:
+        for g, i in sorted(list(measIndices)):
             if g not in summary:
                 summary[g] = []
             summary[g].append(i)
@@ -305,6 +322,17 @@ class DLSData(DataObj):
         formatting."""
         self._angles = angles.copy() # make them contiguous for hashing
         self._anglesUnit = anglesUnit
+        # update measIndices using tuples, see setMeasIndices()
+        # setAngles() tests for tuple and hash(tuple()) works
+        measIndices = self.measIndices
+        if isinstance(measIndices, tuple):
+            # set the same measIndices for all angles
+            self.setMeasIndices(measIndices)
+        elif isinstance(measIndices, list):
+            # contains already an idx tuple per angle
+            for i in range(len(self.angles)):
+                if i < len(measIndices):
+                    self.setMeasIndices(measIndices[i], i)
         self._calcScatteringVector()
 
     @property
@@ -414,11 +442,15 @@ class DLSData(DataObj):
             setFunc = getattr(self, _propSetterName(prop))
             if isCallable(setFunc):
                 setFunc(arr.mean(), arr.std(ddof = ddof))
-        # combine all measurement indices
-        self.setMeasIndices(tuple((mi for o in others for mi in o.measIndices)))
         # angles unchanged, but ensure they're identical everywhere
         assert array([self.angles == o.angles for o in others]).all(), \
                "Scattering angles differ between all DLS data to be combined!"
+        # combine all measurement indices, usually one index for each o in others
+        mis = set()
+        for mi in [o.measIndices for o in others]:
+            for i in chain(*mi):
+                mis.add(i)
+        self.setMeasIndices(tuple(sorted(list(mis))))
         # calculate average correlation values and their standard deviation
         stacked = dstack((o.correlation.rawDataSrcShape for o in others))
         # filter outliers, possibly
@@ -437,6 +469,8 @@ class DLSData(DataObj):
                     or angle not in self.config.outlierMap
                     or not len(self.config.outlierMap[angle])):
                     continue
+                mis = set(self.measIndices[a]) - self.config.outlierMap[angle]
+                self.setMeasIndices(tuple(sorted(list(mis))), a)
                 logging.warn("Not averaging outliers: "
                              + str(sorted(list(self.config.outlierMap[angle]))))
         else:
@@ -461,9 +495,11 @@ class DLSData(DataObj):
         lst = []
         if self.numAngles == 1:
             return [self]
+        measIndices = copy.copy(self.measIndices)
         for i in range(self.numAngles):
             another = copy.copy(self)
             another.setAngles(self.anglesUnit, self.angles[i, newaxis])
+            another.setMeasIndices(measIndices[i])
             another.setTau(self.tau.unit, self.tau.rawDataSrcShape)
             another.setCorrelation(
                     self.correlation.rawDataSrcShape[:, i, newaxis],
@@ -542,7 +578,7 @@ class DLSData(DataObj):
         for a, angle in enumerate(self.angles):
             self.config.medianCountRate[angle] = np.squeeze(median[:,a])
             # for each angle, store illegal measIndices
-            self.config.outlierMap[angle] = set([d.measIndices[0]
+            self.config.outlierMap[angle] = set([d.measIndices[a][0]
                 for i, d in enumerate(dataList) if not goodData[a][i]])
 
     def ids(self):
@@ -582,6 +618,8 @@ class DLSData(DataObj):
         value = hash(self.title) ^ hash(self.filename)
         for p in self._properties:
             propData = getattr(self, _privPropName(p))
+            if isinstance(propData, list): # fixes measIndices hashing
+                propData = tuple(propData)
             try:
                 value ^= hash(propData)
             except TypeError: # numpy.ndarray
