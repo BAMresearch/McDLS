@@ -338,6 +338,11 @@ if __name__ == "__main__":
             ("resources/icon/mcsas.ico", "resources/icon/mcsas.ico"),
             "dejavuserif.ttf", "dejavumono.ttf",
     ]
+    # python3 compatibility fix
+    import lib2to3
+    lib23_path = os.path.dirname(lib2to3.__file__)
+    INCLUDEFILES.append(lib23_path)
+
     if isLinux():
         INCLUDEFILES += [
             "/usr/lib/liblapack.so.3",
@@ -362,6 +367,7 @@ if __name__ == "__main__":
         compressed = False,
         include_files = INCLUDEFILES,
         packages = [],
+        excludes = ["lib2to3"], # python3 compatibility fix
         includes = ["PySide", "PySide.QtCore", "PySide.QtGui",
                     "PySide.QtSvg", "PySide.QtXml",
                     "multiprocessing",
@@ -372,7 +378,8 @@ if __name__ == "__main__":
                     "matplotlib.backends.backend_qt4agg",
                     # savefig dependencies?
                     "matplotlib.backends.backend_tkagg", "Tkinter", "FileDialog",
-                    "h5py"
+                    "h5py",
+                    "UserList", "UserString",
                     ],
         # Icons for Windows using this approach:
         # https://stackoverflow.com/a/10819673
@@ -403,7 +410,7 @@ if __name__ == "__main__":
         BUILDOPTIONS.pop("icon")
         # tcl/tk is installed by default
         BUILDOPTIONS["bin_excludes"] = ["Tcl", "Tk", "libgcc_s.1.dylib"]
-        BUILDOPTIONS["excludes"] = ["Tkinter"]
+        BUILDOPTIONS["excludes"] += ["Tkinter"]
         os.environ["DYLD_FRAMEWORK_PATH"] = ":".join((
                 "/Library/Frameworks", "/System/Library/Frameworks"))
         os.environ["DYLD_LIBRARY_PATH"] = ":".join((
