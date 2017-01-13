@@ -15,7 +15,6 @@ from dataobj import DataObj
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
-import sys
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))
