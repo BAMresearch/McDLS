@@ -219,9 +219,18 @@ class McSAS(AlgorithmBase):
             # do that MC thing! 
             convergence = inf
             while convergence > minConvergence:
+                if nt > self.maxRetries():
+                    # this is not a coincidence.
+                    # We have now tried maxRetries+2 times
+                    logging.warning("Could not reach optimization criterion "
+                                    "within {0} attempts, exiting..."
+                                    .format(self.maxRetries() + 2))
+                    if self.showIncomplete():
+                        break
+                    else:
+                        return
                 # retry in the case we were unlucky in reaching
                 # convergence within MaximumIterations.
-                nt += 1
                 (contributions[:, :, nr], contribMeasVal[:, :, nr],
                  convergence, details) = self.mcFit(
                                 numContribs, minConvergence,
@@ -235,16 +244,7 @@ class McSAS(AlgorithmBase):
                         break
                     else:
                         return
-                if nt > self.maxRetries():
-                    # this is not a coincidence.
-                    # We have now tried maxRetries+2 times
-                    logging.warning("Could not reach optimization criterion "
-                                    "within {0} attempts, exiting..."
-                                    .format(self.maxRetries() + 2))
-                    if self.showIncomplete():
-                        break
-                    else:
-                        return
+                nt += 1
             # in minutes:
             # keep track of how many iterations were needed to reach converg.
             numIter[nr] = details.get('numIterations', 0)
