@@ -10,7 +10,7 @@ import numpy
 from bases.algorithm import AlgorithmBase
 from bases.algorithm import Parameter # not defined in utils.parameter
 from utils.mixedmethod import mixedmethod
-from utils.units import NoUnit
+from utils.units import NoUnit, Fraction
 from utils import isCallable, classname
 
 def funcNotInFuncList(f, flst):
@@ -98,6 +98,9 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         Parameter("fMaskNeg", False, unit = NoUnit(),
             displayName = "Mask negative {f} values", description =
             "Renders negative intensity values invalid for fitting"),
+        Parameter("fuMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
+            displayName = "minimum uncertainty estimate",
+            valueRange = (0., 1.), decimals = 9),
         Parameter("nBin", 100, unit = NoUnit(),
             displayName = "target number of bins \n (0 = no re-binning)",
             description = "Sets the number of bins to rebin the data into. \n May be smaller than target value.", 
@@ -114,7 +117,10 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
 
     @property
     def callbackSlots(self):
-        return set(("x0limits", "x1limits", "x0Clipping", "fMasks"))
+        return set(("x0limits", "x1limits", "x0Clipping", "fMasks", "fuMin"))
+
+    def updateFuMin(self):
+        self.callback("fuMin", self.fuMin())
 
     @property
     def is2d(self):
@@ -141,6 +147,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         self.x1High.setOnValueUpdate(self.updateX1Limits)
         self.fMaskZero.setOnValueUpdate(self.updateFMasks)
         self.fMaskNeg.setOnValueUpdate(self.updateFMasks)
+        self.fuMin.setOnValueUpdate(self.updateFuMin)
 
     def updateX0Limits(self):
         self._onLimitUpdate("x0limits", self.x0Low, self.x0High)

@@ -174,6 +174,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         self.config.register("x0limits", self._onLimitsUpdate)
         self.config.register("x0Clipping", self._onClippingUpdate)
         self.config.register("fMasks", self._onFMasksUpdate)
+        self.config.register("fuMin", self._prepareUncertainty)
         self.config.x0Low.formatDisplayName(x0 = self.x0.name)
         self.config.x0LowClip.formatDisplayName(x0 = self.x0.name)
         self.config.x0High.formatDisplayName(x0 = self.x0.name)
@@ -205,6 +206,33 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         # TODO: what about x0LowClip possibly set by other DataObj in list?
         if self.config.x0LowClip() < validX0Idx:
             self.config.x0LowClip.setValue(validX0Idx)
+
+    def _prepareUncertainty(self, *dummy):
+        """Modifies the uncertainty of the whole range of measured data to be
+        above a previously set minimum threshold *fuMin*."""
+        minUncertaintyPercent = self.config.fuMin() * 100.
+        if not self.hasUncertainties:
+            logging.warning("No error column provided! Using {}% of intensity."
+                            .format(minUncertaintyPercent))
+            self.f.siDataU = self.config.fuMin() * self.f.siData
+        else:
+            upd = np.maximum(self.f.unit.toSi(self.f.rawDataU),
+                             self.config.fuMin() * self.f.siData)
+            count = sum(self.f.siData < upd)
+            if count > 0:
+                logging.warning("Minimum uncertainty ({}% of intensity) set "
+                                "for {} datapoints.".format(
+                                minUncertaintyPercent, count))
+            self.f.siDataU = upd
+        # reset invalid uncertainties to np.inf
+        invInd = (True - np.isfinite(self.f.siDataU))
+        self.f.siDataU[invInd] = np.inf
+
+    @property
+    def hasUncertainties(self):
+        """Returns True if this data set has an error bar for its
+        intensities."""
+        return self.f.rawDataU is not None or all(self.f.rawDataU == 0.)
 
     @abstractproperty
     def modelType(self):

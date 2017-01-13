@@ -74,12 +74,6 @@ class SASData(DataObj):
     def count(self):
         return len(self.x0.binnedData) # used to be sanitized
 
-    @property
-    def hasError(self):
-        """Returns True if this data set has an error bar for its
-        intensities."""
-        return self.rawArray.shape[1] > 2
-
     # general info texts for the UI
 
     @property
@@ -167,7 +161,6 @@ class SASData(DataObj):
     def updateConfig(self):
         super(SASData, self).updateConfig()
         self.config.register("x0limits", self._prepareShannonChannelEst)
-        self.config.register("eMin", self._prepareUncertainty)
         # prepare
         self.locs = self.config.prepareSmearing(self.x0.binnedData)
         # suggested upgrade for 2d smearing:
@@ -181,27 +174,6 @@ class SASData(DataObj):
     @property
     def modelType(self):
         return SASModel
-
-    def _prepareUncertainty(self, *dummy):
-        """Modifies the uncertainty of the whole range of measured data to be
-        above a previously set minimum threshold *eMin*."""
-        minUncertaintyPercent = self.config.eMin() * 100.
-        if not self.hasError:
-            logging.warning("No error column provided! Using {}% of intensity."
-                            .format(minUncertaintyPercent))
-            self.f.siDataU = self.config.eMin() * self.f.siData
-        else:
-            upd = np.maximum(self.f.siDataU,
-                    self.config.eMin() * self.f.siData)
-            count = sum(self.f.siData < upd )
-            if count > 0:
-                logging.warning("Minimum uncertainty ({}% of intensity) set "
-                                "for {} datapoints.".format(
-                                minUncertaintyPercent, count))
-            self.f.siDataU = upd
-        # reset invalid uncertainties to np.inf
-        invInd = (True - np.isfinite(self.f.siDataU))
-        self.f.siDataU[invInd] = np.inf
 
     def _propagateMask(self, *args):
         super(SASData, self)._propagateMask(*args)
