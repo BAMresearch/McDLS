@@ -50,16 +50,22 @@ from main import makeAbsolutePath
 INFOTEXT = (u"""
 <strong>major changes in McDLS Mk.X:</strong><ul>
 <style>li { margin: .5em; }</style>
+<li>outlier filtering of DLSData based on median absolute deviation</li>
+<ul><li>see http://stackoverflow.com/a/22357811</li></ul>
 <li>plot DLS count rate vs. capture time behind the correlation plot</li>
-<li></li>
-<li></li>
+<ul><li>plot median of all measurements for each angle of a sample</li></ul>
 <li>grouping of measurement indices</li>
+<ul><li>filtered measurement indices omitted in UI for each angle</li></ul>
 <li>numerical results of series analysis written to a single file for all active parameters</li>
-<li></li>
+<li>remembered histogram ranges for each model between program sessions</li>
+<ul><li>no default histogram ranges, user is asked for a range if none is defined</li></ul>
+<li>... many small fixes and internal rearrangements to get this working</li>
+<li>internal UI improvements, removed unused/obsolete/redundant code </li>
 </ul>
 <strong>major changes in McDLS Mk.IX:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>alternative Goodness-of-Fit indicator output added</li>
+<ul><li>see [Henn 2016]: http://dx.doi.org/10.1107/S2053273316013206</li></ul>
 </ul>
 <strong>major changes in McDLS Mk.VIII:</strong><ul>
 <style>li { margin: .5em; }</style>
