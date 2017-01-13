@@ -471,8 +471,10 @@ class DLSData(DataObj):
                     continue
                 mis = set(self.measIndices[a]) - self.config.outlierMap[angle]
                 self.setMeasIndices(tuple(sorted(list(mis))), a)
-                logging.warn("Not averaging outliers: "
-                             + str(sorted(list(self.config.outlierMap[angle]))))
+                logging.warn("outliers for {a:.0f}{u}: {o}".format(
+                                a = self.anglesUnit.toDisplay(angle),
+                                u = self.anglesUnit.displayMagnitudeName,
+                                o = sorted(list(self.config.outlierMap[angle]))))
         else:
             corr, corrU = stacked.mean(-1), stacked.std(-1, ddof = ddof)
         # combine the mean across all data sets with the existing tau
