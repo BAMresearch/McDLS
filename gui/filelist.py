@@ -52,8 +52,6 @@ class FileList(DataList):
             config = self.configFromLast()
         # put the config of the last to all recently loaded
         self.setDataConfig(config)
-        if config is not None:
-            config.overrideDefaults()
         self.selectionChanged()
 
     def configFromLast(self):

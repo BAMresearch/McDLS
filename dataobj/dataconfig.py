@@ -191,12 +191,6 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def onUpdatedX1(self, x1):
         pass
 
-    def overrideDefaults(self):
-        """Override the default settings of a DataConfig type.
-        It is called at the right time after a data object was loaded and it
-        got its callbacks configured. To be overridden in sub classes."""
-        pass
-
     def hdfWrite(self, hdf):
         super(DataConfig, self).hdfWrite(hdf)
         hdf.writeMembers(self, 'sampleName', 'is2d')
