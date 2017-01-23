@@ -172,11 +172,9 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
 #        self.config.sampleName = self.sampleName # moved to initConfig()
         self.config.is2d = self.is2d # forward if we are 2d or not
         self.config.register("x0limits", self._onLimitsUpdate)
-        self.config.register("x0Clipping", self._onClippingUpdate)
         self.config.register("fMasks", self._onFMasksUpdate)
         self.config.register("fuMin", self._prepareUncertainty)
         self.config.x0Low.formatDisplayName(x0 = self.x0.name)
-        self.config.x0LowClip.formatDisplayName(x0 = self.x0.name)
         self.config.x0High.formatDisplayName(x0 = self.x0.name)
         self.config.updateX0Unit(self.x0.unit)
         self.config.fMaskZero.formatDisplayName(f = self.f.name)
@@ -203,9 +201,6 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         validX0Idx = 0 # get the first data point index above 0
         while self.x0.siData[validX0Idx] <= 0.0:
             validX0Idx += 1
-        # TODO: what about x0LowClip possibly set by other DataObj in list?
-        if self.config.x0LowClip() < validX0Idx:
-            self.config.x0LowClip.setValue(validX0Idx)
 
     def _prepareUncertainty(self, *dummy):
         """Modifies the uncertainty of the whole range of measured data to be
@@ -265,13 +260,6 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         if self.config.fMaskNeg():
             self._validMask &= (self.f.siData > 0.0)
 
-    def _applyClipping(self):
-        # apply explicit clipping first
-        end = max(0, self.config.x0LowClip())
-        self._validMask[0:end] = False
-        # apply upper bound as well, as long as there is no x0HighClip
-        self._validMask &= (self.x0.siData <= self.config.x0High())
-
     def _applyLimits(self):
         # clip to q bounds
         self._validMask &= (self.x0.siData >= self.config.x0Low())
@@ -294,21 +282,6 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         self._applyFMasks()
         self._applyLimits()
         self._propagateMask()
-        # update dependent configuration values
-        if len(self.x0.validIndices):
-            self.config.x0LowClip.setValue(self.x0.validIndices.min())
-
-    def _onClippingUpdate(self, *args):
-        self._initMask()
-        self._applyFMasks()
-        self._applyClipping()
-        self._propagateMask()
-        # Parameter.setValue() calls the limits callback only once:
-        #  It stops calling back in _onLimitsUpdate() because the clipping
-        #  value does not change further (no update needed)
-        # -> vice versa at the end of _onLimitsUpdate() above
-        if len(self.x0.sanitized) and self.x0.sanitized.min() < self.config.x0Low():
-            self.config.x0Low.setValue(self.x0.sanitized.min())
 
     def _reBin(self):
         """Rebinning method, to be run (f.ex.) upon every "Start" buttonpress.
