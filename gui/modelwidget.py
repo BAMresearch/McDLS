@@ -6,58 +6,33 @@ from builtins import str
 from builtins import range
 import sys
 import logging
+import imp
+import os
 
 from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal, tryDisconnect
 from QtGui import (QWidget, QVBoxLayout, QComboBox)
 from gui.bases.mixins import TitleHandler, AppSettings
 from utils import isString
-
-from gui.scientrybox import SciEntryBox
-
+from utils.findmodels import FindModels
 from models.scatteringmodel import ScatteringModel
-from models.sphere import Sphere
-from models.kholodenko import Kholodenko
-from models.gaussianchain import GaussianChain
-from models.lmadensesphere import LMADenseSphere
-from models.cylindersisotropic import CylindersIsotropic
-from models.cylindersradiallyisotropic import CylindersRadiallyIsotropic
-from models.ellipsoidsisotropic import EllipsoidsIsotropic
-from models.ellipsoidalcoreshell import EllipsoidalCoreShell
-from models.sphericalcoreshell import SphericalCoreShell
-from collections import OrderedDict
-
-MODELS = OrderedDict((
-    (Sphere.name(), Sphere),
-    (CylindersIsotropic.name(), CylindersIsotropic),
-    (CylindersRadiallyIsotropic.name(), CylindersRadiallyIsotropic),
-    (EllipsoidsIsotropic.name(), EllipsoidsIsotropic),
-    (EllipsoidalCoreShell.name(), EllipsoidalCoreShell),
-    (SphericalCoreShell.name(), SphericalCoreShell),
-    (GaussianChain.name(), GaussianChain),
-    (LMADenseSphere.name(), LMADenseSphere),
-    (Kholodenko.name(), Kholodenko),
-))
-FIXEDWIDTH = 120
-
+from gui.scientrybox import SciEntryBox
 from gui.algorithmwidget import AlgorithmWidget
 from dataobj import DataObj
 
-# py2&3 data type for signals text arguments
-Text = str
-try:
-    Text = unicode # fails with Python 3
-except NameError:
-    pass
+FIXEDWIDTH = 240
 
 class ModelWidget(AlgorithmWidget):
     _calculator = None
     _statsWidget = None # RangeList for (re-)storing histogram settings
+    _models = None
 
     def __init__(self, parent, calculator, *args):
         super(ModelWidget, self).__init__(parent, None, *args)
         self._calculator = calculator
         self.title = TitleHandler.setup(self, "Model")
+        # get all loadable ScatteringModels from model directory
+        self._models = FindModels()
 
         layout = QVBoxLayout(self)
         layout.setObjectName("modelLayout")
@@ -82,16 +57,24 @@ class ModelWidget(AlgorithmWidget):
         if not isinstance(dataobj, DataObj):
             return
         try:
-            self.modelBox.currentIndexChanged[Text].disconnect()
+            self.modelBox.currentIndexChanged[int].disconnect()
         except:
             pass
         self.modelBox.clear()
-        for name, cls in MODELS.items():
+        # build selection list of available models
+        for modelid in self._models:
+            cls, dummy = self._models[modelid]
             if cls is None or not issubclass(cls, dataobj.modelType):
                 continue
-            self.modelBox.addItem(name)
+            category = modelid.split('.')[0:-2]
+            if category[0] == self._models.rootName:
+                del category[0]
+            # set up the display name of the model, may contain category
+            displayName = " / ".join(category + [cls.name(),])
+            # store the unique model identifier alongside its title
+            self.modelBox.addItem(displayName, modelid)
         self.modelBox.setCurrentIndex(-1) # select none first
-        self.modelBox.currentIndexChanged[Text].connect(self._selectModelSlot)
+        self.modelBox.currentIndexChanged[int].connect(self._selectModelSlot)
         # trigger signal by switching from none -> 0
         self.modelBox.setCurrentIndex(0)
 
@@ -127,13 +110,16 @@ class ModelWidget(AlgorithmWidget):
             self._statsWidget.restoreSession()
 
     def _selectModelSlot(self, key = None):
-        # rebuild the UI without early signals, try to disconnect first
-        model = MODELS.get(str(key), None)
+        # get the model by its unique name in the items data field
+        modelid = self.modelBox.itemData(key)
+        if modelid not in self._models:
+            return
+        model, dummy = self._models[modelid]
         if model is None or not issubclass(model, ScatteringModel):
             return
         # store current settings before changing the model
         self.storeSession()
-        self._calculator.model = model()
+        self._calculator.model = model() # instantiate the model class
         # remove parameter widgets from layout
         layout = self.modelWidget.layout()
         self.removeWidgets(self.modelWidget)
