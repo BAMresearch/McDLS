@@ -13,54 +13,26 @@ from QtGui import (QWidget, QVBoxLayout, QComboBox)
 from gui.bases.mixins.titlehandler import TitleHandler
 from utils import isString
 from utils.findmodels import FindModels
-
-from gui.scientrybox import SciEntryBox
-from collections import OrderedDict
-
-"""
 from models.scatteringmodel import ScatteringModel
-from models.sphere import Sphere
-from models.kholodenko import Kholodenko
-from models.gaussianchain import GaussianChain
-from models.lmadensesphere import LMADenseSphere
-from models.cylindersisotropic import CylindersIsotropic
-from models.cylindersradiallyisotropic import CylindersRadiallyIsotropic
-from models.ellipsoidsisotropic import EllipsoidsIsotropic
-from models.ellipsoidalcoreshell import EllipsoidalCoreShell
-from models.sphericalcoreshell import SphericalCoreShell
-
-MODELS = OrderedDict((
-    (Sphere.name(), Sphere),
-    (CylindersIsotropic.name(), CylindersIsotropic),
-    (CylindersRadiallyIsotropic.name(), CylindersRadiallyIsotropic),
-    (EllipsoidsIsotropic.name(), EllipsoidsIsotropic),
-    (EllipsoidalCoreShell.name(), EllipsoidalCoreShell),
-    (SphericalCoreShell.name(), SphericalCoreShell),
-    (GaussianChain.name(), GaussianChain),
-    (LMADenseSphere.name(), LMADenseSphere),
-    (Kholodenko.name(), Kholodenko),
-))
-"""
-MODELS = OrderedDict()
-
-FIXEDWIDTH = 120
-
+from gui.scientrybox import SciEntryBox
 from gui.algorithmwidget import AlgorithmWidget
 from dataobj import DataObj
+
+FIXEDWIDTH = 240
+
+from utils.devtools import DBG
 
 class ModelWidget(AlgorithmWidget):
     sigModelChanged = Signal()
     _calculator = None
-    _modelNames = OrderedDict()
-    _modelPaths = OrderedDict()
+    _models = None
 
     def __init__(self, parent, calculator):
         super(ModelWidget, self).__init__(parent, None)
-        FindModels()
-        self._modelPaths = FindModels._orderedModelFiles
-        self.importModels()
         self._calculator = calculator
         self.title = TitleHandler.setup(self, "Model")
+        # get all loadable ScatteringModels from model directory
+        self._models = FindModels()
 
         layout = QVBoxLayout(self)
         layout.setObjectName("modelLayout")
@@ -74,35 +46,6 @@ class ModelWidget(AlgorithmWidget):
         self.modelWidget.setLayout(paramLayout)
         layout.addWidget(self.modelWidget)
 
-    def importModels(self):
-        # tries to import an ordered dict of models
-        for mName in self._modelPaths.keys():
-            print("trying to import mName: {} from path: {}".format(mName, self._modelPaths[mName]))
-            # try importing
-            mFunc = self.importModel(mName, self._modelPaths[mName])
-            if mFunc is not None:
-                print("importing mFunc: {}, using mName: {}".format(mFunc, mName))
-                # MODELS.update({mFunc.name(): mFunc}) # complains it has no attribute "name"
-                MODELS.update({mName: mFunc})
-        
-
-    def importModel(self, modelName, uri):
-        path, fname = os.path.split(uri)
-
-        fp, pathname, description = imp.find_module(modelName.lower(), [path])
-
-        try:
-            package = imp.load_module(modelName, fp, pathname, description)
-            print("success trying to import model: {} from {}".format(modelName, fp))
-        except:
-            package = None
-            print("failed trying to import model: {}".format(modelName))
-        finally:
-            if fp:
-                fp.close()
-
-        return package
-
     def onDataSelected(self, dataobj):
         """Gets the data which is currently selected in the UI and rebuilds
         the model selection box based on compatible models."""
@@ -113,12 +56,21 @@ class ModelWidget(AlgorithmWidget):
         except:
             pass
         self.modelBox.clear()
-        for name, cls in MODELS.iteritems():
+        # build selection list of available models
+        for modelid in self._models:
+            DBG(modelid)
+            cls, dummy = self._models[modelid]
             if cls is None or not issubclass(cls, dataobj.modelType):
                 continue
-            self.modelBox.addItem(name)
+            category = modelid.split('.')[0:-2]
+            if category[0] == self._models.rootName:
+                del category[0]
+            # set up the display name of the model, may contain category
+            displayName = " / ".join(category + [cls.name(),])
+            # store the unique model identifier alongside its title
+            self.modelBox.addItem(displayName, modelid)
         self.modelBox.setCurrentIndex(-1) # select none first
-        self.modelBox.currentIndexChanged[str].connect(self._selectModelSlot)
+        self.modelBox.currentIndexChanged[int].connect(self._selectModelSlot)
         # trigger signal by switching from none -> 0
         self.modelBox.setCurrentIndex(0)
 
@@ -155,12 +107,16 @@ class ModelWidget(AlgorithmWidget):
         try:
             self.sigRangeChanged.disconnect(self.sigModelChanged)
         except: sys.exc_clear()
-        model = MODELS.get(str(key), None)
+        # get the model by its unique name in the items data field
+        modelid = self.modelBox.itemData(key)
+        if modelid not in self._models:
+            return
+        model, dummy = self._models[modelid]
         if model is None or not issubclass(model, ScatteringModel):
             return
         # store current settings before changing the model
         self.storeSession()
-        self._calculator.model = model()
+        self._calculator.model = model() # instantiate the model class
         # remove parameter widgets from layout
         layout = self.modelWidget.layout()
         self.removeWidgets(self.modelWidget)
