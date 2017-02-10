@@ -19,7 +19,6 @@ from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveParam
 from utils.tests import isMac
 from models.scatteringmodel import ScatteringModel
-from models.sphere import Sphere
 from gui.utils import processEventLoop
 from mcsas.backgroundscalingfit import BackgroundScalingFit
 
@@ -152,12 +151,15 @@ class McSAS(AlgorithmBase):
 
         assert(self.data is not None)
 
-        if (McSASParameters.model is None or
-            not isinstance(McSASParameters.model, ScatteringModel)):
-            McSASParameters.model = Sphere() # create instance
-            logging.info("Default model not provided, setting to: {0}"
-                    .format(str(McSASParameters.model.name())))
         if self.model is None:
+            # verify default model in case no model was provided
+            if (McSASParameters.model is None or
+                not isinstance(McSASParameters.model, ScatteringModel)):
+                # load the model here, because it was reloaded by FindModels
+                from models.sphere import Sphere
+                McSASParameters.model = Sphere() # create instance
+                logging.info("Default model not provided, setting to: {0}"
+                        .format(str(McSASParameters.model.name())))
             self.model = McSASParameters.model
         logging.info("Using model: {0}".format(str(self.model.name())))
         if not self.model.paramCount():
