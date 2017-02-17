@@ -336,8 +336,6 @@ class Calculator(HDFMixin):
     def _writeFit(self, mcResult):
         columnNames = ('fitX0', 'dataMean', 'dataStd',
                        'fitMeasValMean', 'fitMeasValStd')
-        if isinstance(self.algo.data, SASData):
-            columnNames = ('fitX0', 'fitMeasValMean', 'fitMeasValStd')
         self._writeResultHelper(mcResult, "fit", "fit data",
             columnNames,
             extension = '.dat'
