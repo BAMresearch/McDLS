@@ -76,13 +76,16 @@ If convergence is not reached, the following can be attempted:
 
 CHANGESTEXT = (u"""
 
-Changes in v.1.2: 
+Changes in v1.3:
+- ??
+
+Changes in v1.2:
 - Smearing added for pinhole systems as well
 - Trapezoidal and Gaussian beam profiles can be used
 - Datapoints can be clipped from the beginning of the dataset
-bugfixes
+- some bug fixes
 
-Changes in v.1.1:
+Changes in v1.1:
 - Slit-smearing added for Kratky-cameras
 - Q-limits added
 
