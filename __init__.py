@@ -6,7 +6,7 @@ General documentation of the complete McSAS module.
 """
 from __future__ import absolute_import
 
-from .mcsas.mcsas import McSAS, Sphere
+from .mcsas.mcsas import McSAS
 from .utils.binning import binningArray, binning1d, binningWeighted1d
 from .utils.loadstore import pickleLoad, pickleStore
 from .mcsas import PlotResults
