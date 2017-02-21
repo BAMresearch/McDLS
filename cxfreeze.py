@@ -173,6 +173,7 @@ import os
 import subprocess
 import hashlib
 import platform
+import tempfile
 from cx_Freeze import setup, Executable
 from gui.version import version
 from utils import isWindows, isLinux, isMac, testfor, mcopen
@@ -329,6 +330,9 @@ if __name__ == "__main__":
 
     TARGETNAME = version.name() + EXEC_SUFFIX
 
+    # make an empty file for dummy file usage
+    fd, emptyFilePath = tempfile.mkstemp()
+    os.close(fd)
     # (source, target) pairs
     # without a target the file is placed in the top level directory of the package
     INCLUDEFILES = [
@@ -337,6 +341,8 @@ if __name__ == "__main__":
             ("resources/background_ranges.svg", "resources/background_ranges.svg"),
             ("resources/icon/mcsas.ico", "resources/icon/mcsas.ico"),
             "dejavuserif.ttf", "dejavumono.ttf",
+            (emptyFilePath, "models/__init__.py"),
+            ("models/scatteringmodel.py", "models/scatteringmodel.py"),
     ]
     # python3 compatibility fix
     import lib2to3
