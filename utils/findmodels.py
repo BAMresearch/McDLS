@@ -48,7 +48,7 @@ def findFiles(searchPath, extension):
     generator for files ending in .py
     code from: http://stackoverflow.com/questions/2186525
     """
-    return [ os.path.join(dirpath, filename)
+    return [ (searchPath, os.path.join(dirpath, filename)[len(searchPath)+1:])
             for dirpath, dirnames, filenames in os.walk(searchPath)
                 for filename in filenames
                     if filename.endswith(extension)
@@ -75,7 +75,6 @@ class FindModels(object):
     from searchPath. searchPath defaults to the root mcsas pwd + "models".
     returns a list of full paths, and a list of associated model names
     """
-    _searchPath = None
     _modelFiles = {}
     _priorityModels = ( # ordered list of default models appear first
             "Sphere",
@@ -94,32 +93,39 @@ class FindModels(object):
     def rootName(self):
         return self._rootName
 
-    def __init__(self, searchPath = None):
+    @classmethod
+    def libraryPath(cls):
+        return os.path.dirname(os.path.dirname(__file__))
+
+    def __init__(self, *searchPaths):
         self._models = OrderedDict()
-        self._searchPath = searchPath
-        if self._searchPath is None:
+        if not len(searchPaths):
             # base all relative paths on directory of main.py
-            self._searchPath = makeAbsolutePath(self.rootName)
-            logging.info("Start path for model finding not supplied, "
-                         "using default: '{}'".format(self._searchPath))
-        for filename in findFiles(self._searchPath, '.py'):
-            validModelClasses = self._getModelClasses(filename)
-            if not isList(validModelClasses):
-                continue
-            for cls in validModelClasses:
-                # get full class hierachy name, use that as key
-                # there may be multiple models per file/module
-                key = '.'.join((cls.__module__, cls.__name__))
-                self._models[key] = (cls, filename)
+            searchPaths = list(set((
+                makeAbsolutePath(self.rootName),
+                os.path.join(self.libraryPath(), self.rootName))))
+        logging.info("Using paths for model finding:")
+        for searchPath in searchPaths:
+            logging.info("    '{}'".format(searchPath))
+        for searchPath in searchPaths:
+            for path, relFile in findFiles(searchPath, '.py'):
+                filepath = os.path.join(path, relFile)
+                validModelClasses = self._getModelClasses(path, relFile)
+                if not isList(validModelClasses):
+                    continue
+                for cls in validModelClasses:
+                    # get full class hierachy name, use that as key
+                    # there may be multiple models per file/module
+                    key = '.'.join((cls.__module__, cls.__name__))
+                    self._models[key] = (cls, filepath)
         self._models = reorder(self._models, self._priorityModels)
         logging.debug("Ordered model files: {}".format(self._models))
 
-    def _getTailDirs(self, dirpath):
-        """Returns the directory names following the self._searchPath base
+    def _getTailDirs(self, rel):
+        """Returns the directory names following the *searchPath* base
         path as reversed list.
         Returns an empty list if the given *dirpath* equals the search path.
         """
-        rel = os.path.relpath(dirpath, self._searchPath).strip()
         if not len(rel) or rel == ".":
             return []
         lst = []
@@ -128,23 +134,23 @@ class FindModels(object):
             lst.append(tail)
         return reversed(lst)
 
-    def _getModelClasses(self, filePath):
+    def _getModelClasses(self, searchPath, relFilePath):
         """extract the model class name from the module file
         """
-        dirpath, filename = os.path.split(filePath)
+        relPath, filename = os.path.split(relFilePath)
         moduleName, ext = os.path.splitext(filename)
         if "scatteringmodel" in moduleName:
             # do not attempt to reload ScatteringModel class
             # otherwise issubclass() checks will fail (other obj ID)
             return []
         modName = self.rootName # base name for all models full package name
-        # treat each sub dir found as module, import if necessary
-        for name in self._getTailDirs(dirpath):
+        # treat each sub dir as module, import if necessary
+        for name in self._getTailDirs(relPath):
             modName += "." + name
             if modName not in sys.modules:
                 sys.modules[modName] = imp.new_module(modName)
         moduleName = modName + "." + moduleName
-        dirpath = [ os.path.dirname(self._searchPath) ]
+        dirpath = [ os.path.dirname(searchPath) ]
         mod = None
         for modName in moduleName.split('.'):
             try:
