@@ -51,8 +51,7 @@ def findFiles(searchPath, extension):
     return [ (searchPath, os.path.join(dirpath, filename)[len(searchPath)+1:])
             for dirpath, dirnames, filenames in os.walk(searchPath)
                 for filename in filenames
-                    if filename.endswith(extension)
-                        and not filename.startswith("__init__")]
+                    if filename.endswith(extension)]
 
 def reorder(indata, priorityKeys):
     def getMatchingKeys(inmap, partialKey):
@@ -119,6 +118,8 @@ class FindModels(object):
     def __init__(self, *searchPaths):
         self._models = OrderedDict()
         for path, relFile in self.candidateFiles():
+            if os.path.split(relFile)[-1].startswith("__init__"):
+                continue
             filepath = os.path.join(path, relFile)
             validModelClasses = self._getModelClasses(path, relFile)
             if not isList(validModelClasses):
