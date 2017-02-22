@@ -11,7 +11,7 @@ import os
 import sys
 import imp
 from collections import OrderedDict
-from models.scatteringmodel import ScatteringModel
+from bases.model import ScatteringModel
 from main import makeAbsolutePath
 from utils import isList
 

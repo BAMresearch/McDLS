@@ -21,7 +21,7 @@ from gui.calc import Calculator
 # do not remove, dialog will not work without this
 from gui.scientrybox import SciEntryBox
 
-from models.scatteringmodel import ScatteringModel
+from bases.model import ScatteringModel
 
 # required for svg graphics support
 from gui.qt import QtSvg, QtXml, pluginDirs

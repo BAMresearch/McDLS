@@ -1,97 +1,16 @@
 # -*- coding: utf-8 -*-
-# models/scatteringmodel.py
+# bases/model/scatteringmodel.py
 
 from builtins import zip
-from builtins import object
 import os.path
 import logging
-import inspect
-from math import sqrt
-import numpy as np
 from abc import ABCMeta, abstractmethod
 from future.utils import with_metaclass
 
 from numpy import arange, zeros, argmax, hstack
-from utils import isList, isNumber, mixedmethod, testfor, classname
+from utils import isList, mixedmethod, testfor, classname
 from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveFitParam
-
-class ModelData(object):
-    _cumInt = None
-    _vset = None
-    _wset = None
-    _sset = None
-    _numParams = 0
-
-    def hdfWrite(self, hdf):
-        hdf.writeMembers(self, "cumInt", "vset", "wset", "volumeFraction")
-
-    @property
-    def cumInt(self):
-        """Returns the cumulated model intensity or signal."""
-        return self._cumInt
-
-    @property
-    def chisqrInt(self):
-        """Make the model intensity comparable to the measured intensity. The
-        difference of both will be calculated in BackgroundScalingFit in order
-        to perform the chi-square test."""
-        return self.cumInt
-
-    @property
-    def vset(self):
-        """Returns the associated set of volumes."""
-        return self._vset
-
-    @property
-    def wset(self):
-        """Returns the associated set of weights."""
-        return self._wset
-
-    @property
-    def sset(self):
-        """Returns the associated set of surfaces."""
-        return self._sset
-
-    @property
-    def numParams(self):
-        """Returns the number of active (fitted) parameters."""
-        return self._numParams
-
-    def __init__(self, cumInt, vset, wset, sset, numParams):
-        assert cumInt is not None
-        assert vset is not None
-        assert wset is not None
-        assert sset is not None
-        self._cumInt = cumInt.flatten()
-        self._vset = vset.flatten()
-        self._wset = wset.flatten()
-        self._sset = sset.flatten()
-        self._numParams = abs(numParams)
-
-    def volumeFraction(self, scaling):
-        """Returns the volume fraction based on the provided scaling factor to
-        match this model data to the measured data. Assumes that the weights
-        'self.wset' contain the scatterer volume squared."""
-        return (self.wset * scaling / self.vset).flatten()
-
-class SASModelData(ModelData):
-    pass
-
-class DLSModelData(ModelData):
-
-    @property
-    def chisqrInt(self):
-        """Normalize and square the cumulated model intensities before passing
-        them to the chi-square test. This is g1(tau)², the first-order
-        correlation function squared."""
-        return (self.cumInt / sum(self.wset))**2
-
-    def volumeFraction(self, scaling):
-        """Using the square root of the scaling factor to determine the volume
-        fraction because the model intensities are squared after cumulation and
-        normalization during post-processing."""
-        return super(DLSModelData, self).volumeFraction(sqrt(scaling))
 
 class ScatteringModel(with_metaclass(ABCMeta, AlgorithmBase)):
     @abstractmethod
@@ -231,7 +150,7 @@ class ScatteringModel(with_metaclass(ABCMeta, AlgorithmBase)):
         for param in setforcls.activeParams():
             namelist.append(param.displayName())
         return namelist
-        
+
     # helpers for model testing below
 
     @mixedmethod
@@ -321,75 +240,5 @@ class ScatteringModel(with_metaclass(ABCMeta, AlgorithmBase)):
                             delta.reshape(-1, 1)))[max(0, dmax-4):dmax+5]
                         )
                 )
-
-class SASModel(with_metaclass(ABCMeta, ScatteringModel)):
-    canSmear = False # Indicates a model function which supports smearing...
-
-    def modelDataType(self):
-        return SASModelData
-
-    def __init__(self):
-        # just checking:
-        super(SASModel, self).__init__()
-        logging.debug("SASData init method called")
-
-    def getQ(self, dataset):
-        """ This is a function that returns Q. In case of smearing, dataset itself
-        is a 2D matrix of Q-values. When smearing is not enabled, dataset.q contains
-        a 1D vector of q. 
-
-        I do realize that this is not a good way of doing things. This should be 
-        replaced at a given point in time by a better solution within sasdata. 
-        """
-
-        if isinstance(dataset, np.ndarray):
-            q = dataset
-        else:
-            q = dataset.q
-        return q
-    
-    def weight(self):
-        r"""Calculates an intensity weighting used during fitting. It is based
-        on the scatterers volume. It can be modified by a user-defined
-        compensation exponent *c*. The default value is :math:`c={2 \over 3}`
-
-        :math:`w(r) = v(r)^{2c}`
-        """
-        return self.volume()**(2 * self.compensationExponent)
-
-    def calcIntensity(self, data, compensationExponent = None):
-        r"""Returns the intensity *I*, the volume :math:`v_{abs}` and the
-        intensity weights *w* for a single parameter contribution over all *q*:
-
-        :math:`I(q,r) = F^2(q,r) \cdot w(r)`
-        """
-        v = self._volume(compensationExponent = compensationExponent)
-        w = self._weight(compensationExponent = compensationExponent)
-        s = self.surface()
-
-        if ((data.config.smearing is not None) and 
-                self.canSmear and 
-                data.config.smearing.doSmear() and # serves same purpose as first
-                data.config.smearing.inputValid()):
-            # inputValid can be removed once more appropriate limits are set in GUI
-
-            # TODO: fix after change from x0Fit to x0: 
-            locs = data.locs # [data.x0.validIndices] # apply xlimits
-            # the ff functions might only accept one-dimensional q arrays
-            # kansas = locs.shape
-            # locs = locs.reshape((locs.size))
-            ff = self._formfactor(locs) # .reshape(kansas)
-            qOffset, weightFunc = data.config.smearing.prepared
-#            import sys
-#            print >>sys.__stderr__, "prepared"
-#            print >>sys.__stderr__, unicode(data.config.smearing)
-            it = 2 * np.trapz(ff**2 * w * weightFunc, 
-                    x = qOffset, axis = 1) 
-        else:
-            # calculate their form factors
-            ff = self._formfactor(data)
-            # a set of intensities
-            it = ff**2 * w
-        return it, v, w, s
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

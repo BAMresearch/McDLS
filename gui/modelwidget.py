@@ -15,7 +15,7 @@ from QtGui import (QWidget, QVBoxLayout, QComboBox)
 from gui.bases.mixins import TitleHandler, AppSettings
 from utils import isString
 from utils.findmodels import FindModels
-from models.scatteringmodel import ScatteringModel
+from bases.model import ScatteringModel
 from gui.scientrybox import SciEntryBox
 from gui.algorithmwidget import AlgorithmWidget
 from dataobj import DataObj
