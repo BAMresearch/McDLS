@@ -23,7 +23,7 @@ from bases.dataset import DataSet
 from bases.algorithm import AlgorithmBase
 from utils.parameter import isActiveFitParam
 from utils.tests import isMac
-from models.scatteringmodel import ScatteringModel
+from bases.model import ScatteringModel
 from gui.utils import processEventLoop
 from mcsas.backgroundscalingfit import BackgroundScalingFit
 

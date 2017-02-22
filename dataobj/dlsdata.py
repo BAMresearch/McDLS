@@ -24,7 +24,7 @@ from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
                          NoUnit)
 from bases.algorithm import Parameter
 from dataobj import DataObj, DataVector, DataConfig
-from models import DLSModel
+from bases.model import DLSModel
 
 # Boltzmann constant in m²·kg·s⁻²·K⁻¹ (SI units)
 KB = 1.38064852 * 1e-23

@@ -4,7 +4,7 @@
 import numpy
 from utils import mixedmethod
 from utils.parameter import FitParameter, Parameter
-from models import SASModel
+from bases.model import SASModel
 from bases.algorithm import RandomUniform, RandomExponential
 from utils.units import Length, SLD, NoUnit
 

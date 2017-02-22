@@ -6,8 +6,8 @@ from past.utils import old_div
 import numpy
 from numpy import pi, exp, sqrt, sin, cos
 from bases.algorithm import RandomUniform
+from bases.model import DLSModel
 from utils.parameter import FitParameter, Parameter
-from .scatteringmodel import DLSModel
 from utils.units import NM
 
 class DLSSphere(DLSModel):

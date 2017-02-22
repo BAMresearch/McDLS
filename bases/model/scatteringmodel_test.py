@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# models/scatteringmodel_test.py
+# bases/model/scatteringmodel_test.py
 
-from models.scatteringmodel import SASModel
+from bases.model import SASModel
 from utils.parameter import FitParameter
 
 class DummyModel(SASModel):
