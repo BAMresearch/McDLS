@@ -14,8 +14,10 @@ From the McSAS source tree, run it like that:
 
 import sys
 import re
-import os.path
+import os
 import math
+
+sys.path.append(os.getcwd())
 
 from gui.version import version
 
