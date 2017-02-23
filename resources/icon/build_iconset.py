@@ -60,9 +60,10 @@ def prepareIco(iconName):
         return reversed((16, 32, 48, 256))
 
     # find all required files
-    path = os.getcwd()
+    path = os.path.dirname(iconName)
     files = getSourceFiles(path, resolutions())
     convert = findCommand("convert")
+    iconName = os.path.basename(iconName)
     targetDir = createTempDir(path, iconName.lower() + ".ico.dir")
     for r in resolutions():
         src = files[r]
@@ -101,8 +102,9 @@ def prepareIconset(iconName):
     for r in res.keys():
         res[r] = (r, r*2)
     # find all required files
-    path = os.getcwd()
+    path = os.path.dirname(iconName)
     files = getSourceFiles(path, sum(res.values(), ()))
+    iconName = os.path.basename(iconName)
     targetDir = createTempDir(path, iconName.lower() + ".iconset")
     # copy source images to their appropriate places&names
     for r, srcRes in res.iteritems():
@@ -122,7 +124,7 @@ def createIcns(iconName):
     srcDir = prepareIconset(iconName)
     subprocess.call([iconutil, "-c", "icns", srcDir])
 
-def createIconSet(filename):
+def buildIconSet(filename):
     iconName, iconExt = os.path.splitext(filename)
     assert len(iconName) and len(iconExt), (
         "Please provide a proper icon file name including an extension!")
@@ -134,6 +136,6 @@ def createIconSet(filename):
 if __name__ == "__main__":
     assert len(sys.argv) > 1, (
         "Please provide a icon file name to be created!")
-    createIconSet(sys.argv[1])
+    buildIconSet(sys.argv[1])
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
