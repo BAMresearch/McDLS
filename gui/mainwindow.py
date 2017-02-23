@@ -79,7 +79,24 @@ If convergence is not reached, the following can be attempted:
 CHANGESTEXT = (u"""
 
 Changes in v1.3:
-- ??
+- Adjustable rebinning method for input data prior to fit process
+- Optional lower and/or upper clipping of input data
+- User extensible models: All models are dynamically loaded from
+  the *models* directory on startup. Just drop your own custom .PY
+  model file in there. Please, see the existing models for examples.
+- Complete fit configuration is written to HDF5 file .mh5
+- Added intensity (vol²) and surface weighted histograms
+- No default histogram ranges anymore, the user is asked for a range
+  if none is defined
+- Remembered histogram ranges for each model between program sessions
+- Alternative Goodness-of-Fit indicator output added,
+  see [Henn 2016]: http://dx.doi.org/10.1107/S2053273316013206
+- Current repetition included in progress log message
+- Numerical results of series analysis written to a single file
+  for all active parameters
+- Internal UI improvements, removed unused/obsolete/redundant code
+- Many bug fixes and small improvements
+- Python3 compatibility, but standalone packages still use Python2
 
 Changes in v1.2:
 - Smearing added for pinhole systems as well
