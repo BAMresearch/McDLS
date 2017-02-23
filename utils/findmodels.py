@@ -62,6 +62,7 @@ def reorder(indata, priorityKeys):
         keys = getMatchingKeys(indata, name)
         if not len(keys):
             continue
+        keys.sort(key = lambda k: len(k)) # get the shortest key
         key = keys[0]
         outdata[key] = indata.pop(key)
     # finally get the remaining entries
