@@ -418,6 +418,7 @@ if __name__ == "__main__":
             "matplotlib.backends.backend_qt4agg",
             "scipy.integrate.vode",
             "scipy.integrate.lsoda",
+            "h5py", "UserList", "UserString",
         ]
         BUILDOPTIONS.pop("icon")
         # tcl/tk is installed by default
