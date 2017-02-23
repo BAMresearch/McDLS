@@ -1,4 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 """
 Creates icons for OSX .ICNS and Windows .ICO based on an existing set of
@@ -121,17 +122,18 @@ def createIcns(iconName):
     srcDir = prepareIconset(iconName)
     subprocess.call([iconutil, "-c", "icns", srcDir])
 
-if __name__ == "__main__":
-
-    assert len(sys.argv) > 1, (
-        "Please provide a icon file name to be created!")
-    iconFn = sys.argv[1]
-    iconName, iconExt = os.path.splitext(iconFn)
+def createIconSet(filename):
+    iconName, iconExt = os.path.splitext(filename)
     assert len(iconName) and len(iconExt), (
         "Please provide a proper icon file name including an extension!")
     if "icns" in iconExt:
         createIcns(iconName)
     elif "ico" in iconExt:
         createIco(iconName)
+
+if __name__ == "__main__":
+    assert len(sys.argv) > 1, (
+        "Please provide a icon file name to be created!")
+    createIconSet(sys.argv[1])
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
