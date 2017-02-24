@@ -13,7 +13,7 @@ import imp
 from collections import OrderedDict
 from bases.model import ScatteringModel
 from main import makeAbsolutePath
-from utils import isList
+from utils import isList, classproperty
 
 def _getValidClasses(mod, isTopLevel = True):
     if not inspect.ismodule(mod):
@@ -51,8 +51,7 @@ def findFiles(searchPath, extension):
     return [ (searchPath, os.path.join(dirpath, filename)[len(searchPath)+1:])
             for dirpath, dirnames, filenames in os.walk(searchPath)
                 for filename in filenames
-                    if filename.endswith(extension)
-                        and not filename.startswith("__init__")]
+                    if filename.endswith(extension)]
 
 def reorder(indata, priorityKeys):
     def getMatchingKeys(inmap, partialKey):
@@ -63,6 +62,7 @@ def reorder(indata, priorityKeys):
         keys = getMatchingKeys(indata, name)
         if not len(keys):
             continue
+        keys.sort(key = lambda k: len(k)) # get the shortest key
         key = keys[0]
         outdata[key] = indata.pop(key)
     # finally get the remaining entries
@@ -89,35 +89,47 @@ class FindModels(object):
     _rootName = "models"
     _models = None
 
-    @property
-    def rootName(self):
-        return self._rootName
+    @classproperty
+    @classmethod
+    def rootName(cls):
+        return cls._rootName
 
     @classmethod
     def libraryPath(cls):
         return os.path.dirname(os.path.dirname(__file__))
 
-    def __init__(self, *searchPaths):
-        self._models = OrderedDict()
+    @classmethod
+    def getSearchPaths(cls):
+        # base all relative paths on directory of main.py
+        return list(set((
+            makeAbsolutePath(cls.rootName),
+            os.path.join(cls.libraryPath(), cls.rootName))))
+
+    @classmethod
+    def candidateFiles(cls, *searchPaths):
         if not len(searchPaths):
-            # base all relative paths on directory of main.py
-            searchPaths = list(set((
-                makeAbsolutePath(self.rootName),
-                os.path.join(self.libraryPath(), self.rootName))))
+            searchPaths = cls.getSearchPaths()
         logging.info("Using paths for model finding:")
         for searchPath in searchPaths:
             logging.info("    '{}'".format(searchPath))
         for searchPath in searchPaths:
-            for path, relFile in findFiles(searchPath, '.py'):
-                filepath = os.path.join(path, relFile)
-                validModelClasses = self._getModelClasses(path, relFile)
-                if not isList(validModelClasses):
-                    continue
-                for cls in validModelClasses:
-                    # get full class hierachy name, use that as key
-                    # there may be multiple models per file/module
-                    key = '.'.join((cls.__module__, cls.__name__))
-                    self._models[key] = (cls, filepath)
+            for cand in findFiles(searchPath, '.py'):
+                yield cand
+
+    def __init__(self, *searchPaths):
+        self._models = OrderedDict()
+        for path, relFile in self.candidateFiles():
+            if os.path.split(relFile)[-1].startswith("__init__"):
+                continue
+            filepath = os.path.join(path, relFile)
+            validModelClasses = self._getModelClasses(path, relFile)
+            if not isList(validModelClasses):
+                continue
+            for cls in validModelClasses:
+                # get full class hierachy name, use that as key
+                # there may be multiple models per file/module
+                key = '.'.join((cls.__module__, cls.__name__))
+                self._models[key] = (cls, filepath)
         self._models = reorder(self._models, self._priorityModels)
         logging.debug("Ordered model files: {}".format(self._models))
 

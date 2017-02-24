@@ -137,26 +137,28 @@ This suite and method are detailed in:
   http://dx.doi.org/10.1107/S0021889813001295
 
 <br /><strong>What to do in case of unsuccessful fits:</strong>
-If convergence is not reached no output is generated, and only this log is 
-stored in a file. On success, the resulting size distribution and data 
-fit are stored to files with uncertainties.
+If convergence is not reached no output is generated, and only this
+log is stored in a file. On success, the resulting size distribution
+and data fit are stored to files with uncertainties.
 
 If convergence is not reached, the following can be attempted:
 
 1) Adjust the convergence criterion to a larger value. 
-   The convergence criterion can be adjusted by the user, to support data 
-   whose uncertainties are too large or too small. 
-2) Verify that the parameter range of the model is appropriate. Very wide 
-   ranges may prevent the correct solution from appearing within the limited
-   number of iterations attempted by the program.
-3) Start with a simple model. The unidirectional degeneracy of scattering 
-   behaviour means that most scattering patterns can be fit using spheres. 
-   Start with spheres, and move to more complex shapes afterwards. 
-   Furthermore, when choosing complex models, ensure that there is evidence
-   for the necessity of these complex models from alternative techniques. 
-   For example, only choose "rods" when there is evidence for rods in your 
-   sample (e.g. from TEM images). If a model fits your scattering pattern, 
-   it does not mean it is *the* model. 
+   The convergence criterion can be adjusted by the user, to support
+   data whose uncertainties are too large or too small.
+2) Verify that the parameter range of the model is appropriate. Very
+   wide ranges may prevent the correct solution from appearing within
+   the limited number of iterations attempted by the program.
+3) Start with a simple model. The unidirectional degeneracy of
+   scattering behaviour means that most scattering patterns can be fit
+   using spheres.
+   Start with spheres, and move to more complex shapes afterwards.
+   Furthermore, when choosing complex models, ensure that there is
+   evidence for the necessity of these complex models from alternative
+   techniques.
+   For example, only choose "rods" when there is evidence for rods in
+   your sample (e.g. from TEM images). If a model fits your scattering
+   pattern, it does not mean it is *the* model.
 
 [ For more information, please see http://www.mcsas.net ]
 """)
@@ -164,7 +166,24 @@ If convergence is not reached, the following can be attempted:
 CHANGESTEXT = (u"""
 
 Changes in v1.3:
-- ??
+- Adjustable rebinning method for input data prior to fit process
+- Optional lower and/or upper clipping of input data
+- User extensible models: All models are dynamically loaded from
+  the *models* directory on startup. Just drop your own custom .PY
+  model file in there. Please, see the existing models for examples.
+- Complete fit configuration is written to HDF5 file .mh5
+- Added intensity (vol²) and surface weighted histograms
+- No default histogram ranges anymore, the user is asked for a range
+  if none is defined
+- Remembered histogram ranges for each model between program sessions
+- Alternative Goodness-of-Fit indicator output added,
+  see [Henn 2016]: http://dx.doi.org/10.1107/S2053273316013206
+- Current repetition included in progress log message
+- Numerical results of series analysis written to a single file
+  for all active parameters
+- Internal UI improvements, removed unused/obsolete/redundant code
+- Many bug fixes and small improvements
+- Python3 compatibility, but standalone packages still use Python2
 
 Changes in v1.2:
 - Smearing added for pinhole systems as well
@@ -182,7 +201,8 @@ Changes in v1.0.1:
 
 Changes in v1.0:
 - Compiled versions available for Linux, Mac OS X and Windows.
-- Histogram ranges automatically follow parameter ranges (can be disabled)
+- Histogram ranges automatically follow parameter ranges
+  (can be disabled)
 - Shannon channel estimate shown in the file dialog
 - Tooltips shown when hovering over an input window
 - All output stored in directories
@@ -193,8 +213,10 @@ Changes in v1.0:
 - Improved division of GUI items into vertical tabs
 - More information shown in data list
 - Correct handling when fitting multiple files
-- Range estimate now uses minimum Q by itself, no longer considers Q-spacing
-- LMA Dense Spheres, spherical and ellipsoidal core shell models work again
+- Range estimate now uses minimum Q by itself,
+  no longer considers Q-spacing
+- LMA Dense Spheres, spherical and ellipsoidal core shell models
+  work again
 - Extended internal parameter functionality, using JSON defaults file
 - Improvements towards implementing RangeInfo in the GUI
 

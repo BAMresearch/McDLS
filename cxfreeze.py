@@ -177,6 +177,7 @@ import tempfile
 from cx_Freeze import setup, Executable
 from gui.version import version
 from utils import isWindows, isLinux, isMac, testfor, mcopen
+from utils.findmodels import FindModels
 
 def sanitizeVersionNumber(number):
     """Removes non-digits to be compatible with pywin32"""
@@ -304,6 +305,13 @@ class ArchiverZip(Archiver):
             fnPackage = None
         return fnPackage
 
+def includeModels(includeFilesLst):
+    modelsDir = FindModels.rootName
+    for path, relFile in FindModels.candidateFiles():
+        src = os.path.join(path, relFile)
+        dst = os.path.join(modelsDir, relFile)
+        includeFilesLst.append((src, dst))
+
 if __name__ == "__main__":
 
     # using zip by default, its preinstalled everywhere
@@ -330,9 +338,6 @@ if __name__ == "__main__":
 
     TARGETNAME = version.name() + EXEC_SUFFIX
 
-    # make an empty file for dummy file usage
-    fd, emptyFilePath = tempfile.mkstemp()
-    os.close(fd)
     # (source, target) pairs
     # without a target the file is placed in the top level directory of the package
     INCLUDEFILES = [
@@ -341,13 +346,13 @@ if __name__ == "__main__":
             ("resources/background_ranges.svg", "resources/background_ranges.svg"),
             ("resources/icon/mcsas.ico", "resources/icon/mcsas.ico"),
             "dejavuserif.ttf", "dejavumono.ttf",
-            (emptyFilePath, "models/__init__.py"),
-            ("models/scatteringmodel.py", "models/scatteringmodel.py"),
     ]
     # python3 compatibility fix
     import lib2to3
     lib23_path = os.path.dirname(lib2to3.__file__)
     INCLUDEFILES.append(lib23_path)
+    # testing
+    includeModels(INCLUDEFILES)
 
     if isLinux():
         INCLUDEFILES += [
@@ -373,7 +378,8 @@ if __name__ == "__main__":
         compressed = False,
         include_files = INCLUDEFILES,
         packages = [],
-        excludes = ["lib2to3"], # python3 compatibility fix
+        excludes = ["lib2to3", # python3 compatibility fix
+                    "models.sphere"], # source file added for dyn. loading
         includes = ["PySide", "PySide.QtCore", "PySide.QtGui",
                     "PySide.QtSvg", "PySide.QtXml",
                     "multiprocessing",
@@ -412,6 +418,7 @@ if __name__ == "__main__":
             "matplotlib.backends.backend_qt4agg",
             "scipy.integrate.vode",
             "scipy.integrate.lsoda",
+            "h5py", "UserList", "UserString",
         ]
         BUILDOPTIONS.pop("icon")
         # tcl/tk is installed by default

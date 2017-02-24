@@ -13,11 +13,12 @@ import inspect
 import os, os.path
 import tempfile
 import codecs
+import logging
 
 prefix = os.path.splitext(os.path.basename(__file__))[0] + "_"
 _logfd, _logfn = tempfile.mkstemp(prefix = prefix)
 os.close(_logfd) # not used/needed
-print("DBGF() to: '{}'".format(_logfn), file = sys.__stderr__)
+logging.info("DBGF() to: '{}'".format(_logfn))
 
 def DBGF(*args):
     with codecs.open(_logfn, 'a', encoding = 'utf8') as fd:

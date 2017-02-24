@@ -20,8 +20,6 @@ try:
 except NameError:
     pass
 
-# from utils.devtools import DBG
-
 def getCallerInfo(referenceType = None, stackOffset = 0):
     """*referenceType*: Stop the search for a frame when this type for a local
     'self' is found.
@@ -153,7 +151,6 @@ class HDFWriter(object):
                  .format(loc = self.location.rstrip('/'),
                          name = name, shape = shape))
         writeLocation = self._writeLocation()
-#        DBG("loc: ", writeLocation)
         if name in writeLocation:
             del writeLocation[name]
         try:
@@ -177,8 +174,6 @@ class HDFWriter(object):
             memberName = str(memberName)
         else:
             member = getattr(obj, memberName, None)
-#        DBG(memberName, member, type(member), isCallable(member),
-#            isList(member), isString(member), isNumber(member))
         if member is None:
             self.log(u"skipped " + self._warningPrefix(obj, memberName)
                      + u"It is empty or does not exist (=None).")
@@ -211,7 +206,6 @@ class HDFMixin(object):
     def hdfStore(self, filename, rootLocation = None):
         """Writes itself to an HDF file at the given position or group."""
         with HDFWriter.open(filename, rootLocation) as hdf:
-#            DBG(hdf)
             self._hdfWrite(hdf)
 
     def _hdfWrite(self, hdf):
@@ -219,7 +213,6 @@ class HDFMixin(object):
         Allows to handle common preprocessing without requiring to call the
         method in the parent class."""
         assert isinstance(hdf, HDFWriter)
-#        DBG(hdf.location)
         self.hdfWrite(hdf)
 
     def hdfWrite(self, hdf):
