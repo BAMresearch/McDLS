@@ -70,12 +70,10 @@ class DLSConfig(DataConfig):
 
     def __init__(self):
         super(DLSConfig, self).__init__()
-        self.nBin.setValue(0)
 
     @property
     def showParams(self):
         lst = super(DLSConfig, self).showParams
-        lst.remove("nBin")
         return lst
 
     def update(self, other):
