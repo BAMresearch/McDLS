@@ -1,0 +1,7 @@
+*.pyc
+*.swp
+doc/build
+doc/_build
+.hg*
+lmfit*
+testdata/* *-*-*_*-*-*/

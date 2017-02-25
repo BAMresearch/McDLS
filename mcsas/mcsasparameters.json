@@ -1,0 +1,96 @@
+{
+    "numContribs" : {
+        "displayName" : "number of contributions",
+        "description" : "Total number of contributions making up a scattering pattern",
+        "valueRange" : [1,1e6],
+        "default" : 300,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "numReps" : {
+        "displayName" : "number of repetitions",
+        "description" : "Number of independent McSAS results to compute, from which averages and uncertainties are estimated",
+        "default" : 10,
+        "valueRange" : [1,1e6],
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "maxIterations" : {
+        "displayName" : "maximum iterations",
+        "valueRange" : [1,1e100],
+	    "default" : 1e5,
+        "description" : "Maximum number of iterations allowed before failing.",
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "compensationExponent" : {
+        "displayName" : "weighting compensation",
+        "valueRange" : [-Infinity,Infinity],
+	    "default" : 0.6666666,
+        "description" : "Compensates the weighting of contributions, default volume-weighted (2/3).",
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "convergenceCriterion" : {
+        "displayName" : "convergence criterion",
+        "valueRange" : [0,Infinity],
+        "description" : "Reduced Chi-squared value to reach for optimisation success.",
+        "default" : 1.00,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "findBackground" : {
+        "displayName" : "Find background level?",
+        "description" : "Adds a constant background level to the model fitting.",
+        "default" : true,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "startFromMinimum" : {
+        "displayName" : "depreciated",
+        "description" : "Sets the initial guess to minimal values rather than a uniform dist.",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "maxRetries" : {
+        "displayName" : "Maximum no. of allowed retries",
+        "valueRange" : [1,100],
+	    "default" : 5,
+        "description" : "When the MC method cannot reach convergence, it will try again this number of times.",
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "autoClose" : {
+        "displayName" : "Automatically close result windows",
+        "description" : "Prevents cluttering the screen with many windows if series are fitted",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "seriesStats" : {
+        "displayName" : "Calc. series statistics",
+        "description" : "Plots the mean of each configured histogram range per selected dataset and writes all distribution moments to file.",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
+    "showIncomplete" : {
+        "displayName" : "Plot unsuccessful / incomplete results",
+        "description" : "After an interrupted run or an optimization that did not reach convergence, show results anyway.",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    }
+}
