@@ -75,6 +75,12 @@ class Unit(object):
                             displayMagnitudeName = self.displayMagnitudeName,
                             magnitudeConversion = self.magnitudeConversion)
 
+    def hdfLoad(self, hdf):
+        "should go something like this, here, hold my beer."
+        # classname(self) = hdf.readAttribute("type") # heh. 
+        self.displayMagnitudeName = hdf.readAttribute("displayMagnitudeName")
+        self.magnitudeConversion = hdf.readAttribute("displayMagnitudeName")
+
     @classproperty
     @classmethod
     # see _siMagnitudeName and thus cls.siMagnitudeName is defined for each subclass
