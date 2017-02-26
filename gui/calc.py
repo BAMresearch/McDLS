@@ -12,6 +12,7 @@ import logging
 import time
 import os.path
 import codecs
+import inspect
 from collections import OrderedDict
 try: 
     import configparser
@@ -135,9 +136,7 @@ class Calculator(HDFMixin):
         hdf.writeMember(self, "algo")
         hdf.writeMember(self.algo, "data")
         hdf.writeMember(self, "model")
-        # for p in self.model.params():
-        #     logging.debug("Writing model parameter: {} value: {} to HDF5".format(p.name(), p.value()))
-        #     hdf.writeMember(self.model, p.name())
+        hdf.writeDataset("modelCode", inspect.getsourcelines(self.model)[0])
 
     def hdfLoad(self, filehandle):
         """ load a calculator configuration """
