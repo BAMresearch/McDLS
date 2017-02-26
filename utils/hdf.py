@@ -64,8 +64,8 @@ def HDFCleanup(infile):
         outfile.close()
     # shutil.move is more flexible than os.rename, and can move across disks.
     origfname = infile.filename
-    tempfname = "{}.mh5".format(str(uuid.uuid4().hex)) # generate a temporary file for the original backup
-    tempofname = "{}.mh5".format(str(uuid.uuid4().hex)) # temporary output filename
+    tempfname = "{}.hdf5".format(str(uuid.uuid4().hex)) # generate a temporary file for the original backup
+    tempofname = "{}.hdf5".format(str(uuid.uuid4().hex)) # temporary output filename
     shutil.copy(origfname, tempfname) # backup copy
     try: 
         hdfDeepCopy(infile, tempofname) # copy internals

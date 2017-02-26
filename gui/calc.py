@@ -207,7 +207,7 @@ class Calculator(HDFMixin):
         try:
             self.hdfStore(self._outFn.filenameVerbose(
                 "hdf5archive", "Complete state of the calculation",
-                extension = '.mh5'), rootLocation = "mcsasentry")
+                extension = '.hdf5'), rootLocation = "mcsasentry")
         except Exception as e:
             import traceback
             print(traceback.format_exc())
