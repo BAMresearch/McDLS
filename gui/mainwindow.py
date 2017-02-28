@@ -48,6 +48,13 @@ from main import makeAbsolutePath
 # - no default histogram created anymore
 #   - the user is asked to create an histogram if none is defined at calc. start
 INFOTEXT = (u"""
+<strong>major changes in McDLS Mk.XI:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>synchronized to McSAS 1.3</li>
+<li>user customizable models</li>
+<li>no re-binning of DLS data allowed (raises error on trying)</li>
+<li>lower uncertainty limit eMin enabled for DLS data</li>
+</ul>
 <strong>major changes in McDLS Mk.X:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>outlier filtering of DLSData based on median absolute deviation</li>
