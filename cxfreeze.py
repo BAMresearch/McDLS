@@ -158,13 +158,14 @@ Internals
 """
 
 import sys
+import logging
 import gui.version
 
 OLDVERSIONNUM = gui.version.version.number()
 if len(sys.argv) > 2 and __name__ == "__main__":
     alternateVersion = "-".join(sys.argv[2:])
     del sys.argv[2:]
-    print "Using an alternate version: '{0}'".format(alternateVersion)
+    logging.info("Using an alternate version: '{0}'".format(alternateVersion))
     gui.version.version.updateFile(gui.version, alternateVersion)
     reload(gui.version)
 
