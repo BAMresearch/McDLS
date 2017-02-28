@@ -266,7 +266,8 @@ class Archiver7z(Archiver):
         with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call(
                 [self._path, "a", "-t" + self._type, "-mx=9",
-                 fnPackage, targetPath],
+                 os.path.relpath(fnPackage),
+                 os.path.relpath(targetPath)],
                 stdout = fd,
                 stderr = fd)
         if not os.path.exists(fnPackage):
@@ -298,7 +299,8 @@ class ArchiverZip(Archiver):
         fnLog = os.path.abspath(self.getLogFilename())
         with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call([self._path, "-r9",
-                                       fnPackage, targetPath],
+                                       os.path.relpath(fnPackage),
+                                       os.path.relpath(targetPath)],
                                        stdout = fd,
                                        stderr = fd)
         if not os.path.exists(fnPackage):
