@@ -141,17 +141,21 @@ Requirements
 On a fresh installation of Ubuntu Linux 14.04 LTS the following packages
 are required:
 
-    - ``apt-get install git build-essential python-setuptools python-dev liblapack3-dev libfreetype6-dev tk-dev``
+    - ``apt-get install git build-essential python-setuptools python-dev liblapack-dev libfreetype6-dev tk-dev``
 
-    - PySide 1.2.1
+    - PySide 1.2.4
 
-    - NumPy 1.7.1
+    - NumPy 1.7.2
 
-    - SciPy 0.12.0
+    - SciPy 0.12.1
 
     - matplotlib 1.4.2
 
     - cx_Freeze 4.3.4
+
+    - future 0.16.1
+
+    - h5py 2.2.1
 
 Internals
 =========
@@ -362,11 +366,18 @@ if __name__ == "__main__":
             "/usr/lib/liblapack.so.3",
             "/usr/lib/libblas.so.3",
         ]
+        libdir = "/usr/lib/x86_64-linux-gnu"
+        if not os.path.isdir(libdir):
+            libdir = "/usr/lib/i386-linux-gnu"
         for lib in ("libgfortran.so.3", "libquadmath.so.0",
             "libpyside-python2.7.so.1.2", "libshiboken-python2.7.so.1.2",
             "libQtGui.so.4", "libQtCore.so.4", "libQtSvg.so.4", "libQtXml.so.4",
-            "libaudio.so.2"):
-            INCLUDEFILES.append(os.path.join("/usr/lib/x86_64-linux-gnu", lib))
+            "libaudio.so.2", "libhdf5.so.7", "libhdf5_hl.so.7"):
+            filepath = os.path.join(libdir, lib)
+            if not os.path.exists(filepath):
+                logging.warning("include not found: '{}'".format(filepath))
+            else:
+                INCLUDEFILES.append(filepath)
     if isWindows():
         INCLUDEFILES += [
             "Microsoft.VC90.CRT",
