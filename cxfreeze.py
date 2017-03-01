@@ -375,7 +375,9 @@ if __name__ == "__main__":
         for lib in ("libgfortran.so.3", "libquadmath.so.0",
             "libpyside-python2.7.so.1.2", "libshiboken-python2.7.so.1.2",
             "libQtGui.so.4", "libQtCore.so.4", "libQtSvg.so.4", "libQtXml.so.4",
-            "libaudio.so.2", "libhdf5.so.7", "libhdf5_hl.so.7"):
+            "libQtNetwork.so.4", "libQtDBus.so.4",
+            "libaudio.so.2", "libhdf5.so.7", "libhdf5_hl.so.7",
+            "libpng12.so.0", "libtk8.6.so", "libXss.so.1"):
             filepath = os.path.join(libdir, lib)
             if not os.path.exists(filepath):
                 logging.warning("include not found: '{}'".format(filepath))
