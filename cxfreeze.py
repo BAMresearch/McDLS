@@ -336,6 +336,9 @@ if __name__ == "__main__":
     TARGETDIR = "{pckg} for {plat}".format(
                     pckg = PACKAGENAME,
                     plat = platform.system().title())
+    if isLinux():
+        bitness, binfmt = platform.architecture()
+        TARGETDIR += " " + bitness
 
     BASE = None
     EXEC_SUFFIX = ""
