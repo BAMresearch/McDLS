@@ -163,8 +163,9 @@ Internals
 
 import sys
 import logging
-import gui.version
+logging.basicConfig(level = logging.INFO)
 
+import gui.version
 OLDVERSIONNUM = gui.version.version.number()
 if len(sys.argv) > 2 and __name__ == "__main__":
     alternateVersion = "-".join(sys.argv[2:])
@@ -179,6 +180,7 @@ import subprocess
 import hashlib
 import platform
 import tempfile
+import glob
 from cx_Freeze import setup, Executable
 from gui.version import version
 from utils import isWindows, isLinux, isMac, testfor, mcopen
@@ -333,9 +335,11 @@ if __name__ == "__main__":
                     name = version.name(),
                     ver = version.number())
     # target (temp) dir for mcsas package
-    TARGETDIR = "{pckg} for {plat}".format(
-                    pckg = PACKAGENAME,
-                    plat = platform.system().title())
+    sysname = platform.system().title()
+    if "darwin" in sysname.lower():
+        sysname = "MacOS"
+    TARGETDIR = "{pckg} for {sysname}".format(
+                    pckg = PACKAGENAME, sysname = sysname)
     if isLinux():
         bitness, binfmt = platform.architecture()
         TARGETDIR += " " + bitness
@@ -423,11 +427,12 @@ if __name__ == "__main__":
 
     # OSX bundle building
     MACOPTIONS = dict(
-        bundle_name = PACKAGENAME,
+        bundle_name = TARGETDIR,
         # creating icns for OSX: https://stackoverflow.com/a/20703594
         iconfile = "resources/icon/mcsas.icns"
     )
-    DMGOPTIONS = dict(volume_label = PACKAGENAME)
+    DMGOPTIONS = dict(volume_label = TARGETDIR,
+                      applications_shortcut = True)
     if isMac():
         BUILDOPTIONS.pop("build_exe") # bdist_mac expects plain 'build' directory
         BUILDOPTIONS["includes"] = [ # order in which they were requested
@@ -474,11 +479,6 @@ if __name__ == "__main__":
         executables = [Executable("main.py", base = BASE,
                                   targetName = TARGETNAME)])
 
-    # package the freezed program into an archive file
-    PACKAGEFN = archiver.archive(TARGETDIR)
-    if PACKAGEFN is None or not os.path.isfile(PACKAGEFN):
-        sys.exit(0) # nothing to do
-
     # calc a checksum of the package
     def hashFile(filename, hasher, blocksize = 65536):
         os.path.abspath(filename)
@@ -488,14 +488,39 @@ if __name__ == "__main__":
                 hasher.update(buf)
                 buf = fd.read(blocksize)
         return hasher.hexdigest(), os.path.basename(filename)
-    hashValue = hashFile(PACKAGEFN, hashlib.sha256())
 
-    # write the checksum to file
-    with mcopen(os.path.abspath(version.name() + ".sha"), 'w') as fd:
-        fd.write(" *".join(hashValue))
+    # package the freezed program into an archive file
+    PACKAGEFN = archiver.archive(TARGETDIR)
+    if PACKAGEFN is None and os.path.isdir("build"):
+        # find package created by bdist_mac or bdist_dmg commands
+        files = glob.glob("build/*.dmg")
+        if not len(files):
+            files = glob.glob("build/*.app")
+        if len(files):
+            PACKAGEFN = files[0]
+        # rename package possibly
+        fn, ext = os.path.splitext(PACKAGEFN)
+        if os.path.exists(PACKAGEFN) and fn != TARGETDIR:
+            try:
+                newfn = "".join((TARGETDIR, ext))
+                os.rename(PACKAGEFN, newfn)
+                PACKAGEFN = newfn
+            except OSError as e:
+                logging.exception("rename '{src}' -> '{dst}':"
+                                  .format(src = PACKAGEFN, dst = newfn))
+                pass
+    logging.info("Created package '{0}'.".format(PACKAGEFN))
 
-    # restore initially modified version
+    if PACKAGEFN is not None and os.path.isfile(PACKAGEFN):
+        hashValue = hashFile(PACKAGEFN, hashlib.sha256())
+        # write the checksum to file
+        with mcopen(os.path.abspath(PACKAGEFN + ".sha256"), 'w') as fd:
+            fd.write(" *".join(hashValue))
+
+    # always restore initially modified version
     if version.number() != OLDVERSIONNUM:
         version.updateFile(gui.version, OLDVERSIONNUM)
+
+    logging.info("done.")
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
