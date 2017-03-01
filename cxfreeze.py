@@ -141,30 +141,36 @@ Requirements
 On a fresh installation of Ubuntu Linux 14.04 LTS the following packages
 are required:
 
-    - ``apt-get install git build-essential python-setuptools python-dev liblapack3-dev libfreetype6-dev tk-dev``
+    - ``apt-get install git build-essential python-setuptools python-dev liblapack-dev libfreetype6-dev tk-dev``
 
-    - PySide 1.2.1
+    - PySide 1.2.4
 
-    - NumPy 1.7.1
+    - NumPy 1.7.2
 
-    - SciPy 0.12.0
+    - SciPy 0.12.1
 
     - matplotlib 1.4.2
 
     - cx_Freeze 4.3.4
+
+    - future 0.16.1
+
+    - h5py 2.2.1
 
 Internals
 =========
 """
 
 import sys
-import gui.version
+import logging
+logging.basicConfig(level = logging.INFO)
 
+import gui.version
 OLDVERSIONNUM = gui.version.version.number()
 if len(sys.argv) > 2 and __name__ == "__main__":
     alternateVersion = "-".join(sys.argv[2:])
     del sys.argv[2:]
-    print "Using an alternate version: '{0}'".format(alternateVersion)
+    logging.info("Using an alternate version: '{0}'".format(alternateVersion))
     gui.version.version.updateFile(gui.version, alternateVersion)
     reload(gui.version)
 
@@ -174,6 +180,7 @@ import subprocess
 import hashlib
 import platform
 import tempfile
+import glob
 from cx_Freeze import setup, Executable
 from gui.version import version
 from utils import isWindows, isLinux, isMac, testfor, mcopen
@@ -266,7 +273,8 @@ class Archiver7z(Archiver):
         with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call(
                 [self._path, "a", "-t" + self._type, "-mx=9",
-                 fnPackage, targetPath],
+                 os.path.relpath(fnPackage),
+                 os.path.relpath(targetPath)],
                 stdout = fd,
                 stderr = fd)
         if not os.path.exists(fnPackage):
@@ -298,7 +306,8 @@ class ArchiverZip(Archiver):
         fnLog = os.path.abspath(self.getLogFilename())
         with mcopen(fnLog, 'w') as fd:
             retcode = subprocess.call([self._path, "-r9",
-                                       fnPackage, targetPath],
+                                       os.path.relpath(fnPackage),
+                                       os.path.relpath(targetPath)],
                                        stdout = fd,
                                        stderr = fd)
         if not os.path.exists(fnPackage):
@@ -326,9 +335,14 @@ if __name__ == "__main__":
                     name = version.name(),
                     ver = version.number())
     # target (temp) dir for mcsas package
-    TARGETDIR = "{pckg} for {plat}".format(
-                    pckg = PACKAGENAME,
-                    plat = platform.system().title())
+    sysname = platform.system().title()
+    if "darwin" in sysname.lower():
+        sysname = "MacOS"
+    TARGETDIR = "{pckg} for {sysname}".format(
+                    pckg = PACKAGENAME, sysname = sysname)
+    if isLinux():
+        bitness, binfmt = platform.architecture()
+        TARGETDIR += " " + bitness
 
     BASE = None
     EXEC_SUFFIX = ""
@@ -359,11 +373,20 @@ if __name__ == "__main__":
             "/usr/lib/liblapack.so.3",
             "/usr/lib/libblas.so.3",
         ]
+        libdir = "/usr/lib/x86_64-linux-gnu"
+        if not os.path.isdir(libdir):
+            libdir = "/usr/lib/i386-linux-gnu"
         for lib in ("libgfortran.so.3", "libquadmath.so.0",
             "libpyside-python2.7.so.1.2", "libshiboken-python2.7.so.1.2",
             "libQtGui.so.4", "libQtCore.so.4", "libQtSvg.so.4", "libQtXml.so.4",
-            "libaudio.so.2"):
-            INCLUDEFILES.append(os.path.join("/usr/lib/x86_64-linux-gnu", lib))
+            "libQtNetwork.so.4", "libQtDBus.so.4",
+            "libaudio.so.2", "libhdf5.so.7", "libhdf5_hl.so.7",
+            "libpng12.so.0", "libtk8.6.so", "libXss.so.1"):
+            filepath = os.path.join(libdir, lib)
+            if not os.path.exists(filepath):
+                logging.warning("include not found: '{}'".format(filepath))
+            else:
+                INCLUDEFILES.append(filepath)
     if isWindows():
         INCLUDEFILES += [
             "Microsoft.VC90.CRT",
@@ -404,11 +427,12 @@ if __name__ == "__main__":
 
     # OSX bundle building
     MACOPTIONS = dict(
-        bundle_name = PACKAGENAME,
+        bundle_name = TARGETDIR,
         # creating icns for OSX: https://stackoverflow.com/a/20703594
         iconfile = "resources/icon/mcsas.icns"
     )
-    DMGOPTIONS = dict(volume_label = PACKAGENAME)
+    DMGOPTIONS = dict(volume_label = TARGETDIR,
+                      applications_shortcut = True)
     if isMac():
         BUILDOPTIONS.pop("build_exe") # bdist_mac expects plain 'build' directory
         BUILDOPTIONS["includes"] = [ # order in which they were requested
@@ -455,11 +479,6 @@ if __name__ == "__main__":
         executables = [Executable("main.py", base = BASE,
                                   targetName = TARGETNAME)])
 
-    # package the freezed program into an archive file
-    PACKAGEFN = archiver.archive(TARGETDIR)
-    if PACKAGEFN is None or not os.path.isfile(PACKAGEFN):
-        sys.exit(0) # nothing to do
-
     # calc a checksum of the package
     def hashFile(filename, hasher, blocksize = 65536):
         os.path.abspath(filename)
@@ -469,14 +488,39 @@ if __name__ == "__main__":
                 hasher.update(buf)
                 buf = fd.read(blocksize)
         return hasher.hexdigest(), os.path.basename(filename)
-    hashValue = hashFile(PACKAGEFN, hashlib.sha256())
 
-    # write the checksum to file
-    with mcopen(os.path.abspath(version.name() + ".sha"), 'w') as fd:
-        fd.write(" *".join(hashValue))
+    # package the freezed program into an archive file
+    PACKAGEFN = archiver.archive(TARGETDIR)
+    if PACKAGEFN is None and os.path.isdir("build"):
+        # find package created by bdist_mac or bdist_dmg commands
+        files = glob.glob("build/*.dmg")
+        if not len(files):
+            files = glob.glob("build/*.app")
+        if len(files):
+            PACKAGEFN = files[0]
+        # rename package possibly
+        fn, ext = os.path.splitext(PACKAGEFN)
+        if os.path.exists(PACKAGEFN) and fn != TARGETDIR:
+            try:
+                newfn = "".join((TARGETDIR, ext))
+                os.rename(PACKAGEFN, newfn)
+                PACKAGEFN = newfn
+            except OSError as e:
+                logging.exception("rename '{src}' -> '{dst}':"
+                                  .format(src = PACKAGEFN, dst = newfn))
+                pass
+    logging.info("Created package '{0}'.".format(PACKAGEFN))
 
-    # restore initially modified version
+    if PACKAGEFN is not None and os.path.isfile(PACKAGEFN):
+        hashValue = hashFile(PACKAGEFN, hashlib.sha256())
+        # write the checksum to file
+        with mcopen(os.path.abspath(PACKAGEFN + ".sha256"), 'w') as fd:
+            fd.write(" *".join(hashValue))
+
+    # always restore initially modified version
     if version.number() != OLDVERSIONNUM:
         version.updateFile(gui.version, OLDVERSIONNUM)
+
+    logging.info("done.")
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
