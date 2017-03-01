@@ -41,7 +41,11 @@ import argparse
 import logging
 import multiprocessing
 from log import replaceStdOutErr
-from utils import isMac
+from utils import isMac, isLinux
+
+if (isLinux() and hasattr(sys, "frozen")
+    and "LD_LIBRARY_PATH" not in os.environ):
+    os.environ["LD_LIBRARY_PATH"] = SCRIPT_PATH
 
 def makeAbsolutePath(relpath):
     return os.path.abspath(os.path.join(SCRIPT_PATH, relpath))
