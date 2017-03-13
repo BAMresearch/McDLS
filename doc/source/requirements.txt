@@ -4,4 +4,5 @@
 # at mcsas.readthedocs.io
 
 future
+requests
 

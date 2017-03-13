@@ -21,7 +21,6 @@ Contents:
    code/modules
    code/cxfreeze
    code/autobuild
-   code/compare
    code/mcsas_test
 
 
