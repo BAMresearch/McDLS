@@ -585,7 +585,7 @@ class FitParameterBase(ParameterBase):
 
     def hdfStoreAsMember(self):
         return (super(FitParameterBase, self).hdfStoreAsMember()
-                + ['histograms',])
+                + ['histograms', 'activeValues'])
 
     def __init__(self):
         super(FitParameterBase, self).__init__()

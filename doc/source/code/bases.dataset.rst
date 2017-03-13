@@ -7,7 +7,6 @@ Submodules
 .. toctree::
 
    bases.dataset.dataset
-   bases.dataset.hierarchicalmixin
    bases.dataset.rawarraymixin
    bases.dataset.titlemixin
 

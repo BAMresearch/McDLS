@@ -373,7 +373,7 @@ class RangeList(DataList, AppSettings):
             # append the histogram to the temporary list of a parameter
             hist = parseHistogram(self.appSettings)
             self.appSettings.endGroup()
-            if None not in (hist, hist.param):
+            if hist is not None and hist.param is not None:
                 if hist.param.name() not in histCfg:
                     histCfg[hist.param.name()] = []
                 histCfg[hist.param.name()].append(hist)

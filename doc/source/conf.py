@@ -79,6 +79,8 @@ class Mock(object):
     def connect(*args): pass
     @staticmethod
     def children(*args): return []
+    @staticmethod
+    def qRegisterResourceData(*args): pass
 
 Mock.pyqtSignal = Mock
 
@@ -88,7 +90,7 @@ for mod_name in ('numpy', 'numpy.ma',
                  'matplotlib', 'matplotlib.font_manager', 'matplotlib.pyplot',
                  'pylab',
                  'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'gui.qt',
-                 'requests', 'nose', 'nose.tools', 'cx_Freeze'):
+                 'requests', 'nose', 'nose.tools', 'cx_Freeze', 'h5py'):
     sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation

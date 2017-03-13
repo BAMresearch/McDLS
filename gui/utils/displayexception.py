@@ -38,7 +38,7 @@ class DisplayException(QMessageBox):
                 'warning':  logging.warning,
                 'critical': logging.error }
 
-    def __init__(self, exception, level = 'critical'):
+    def __init__(self, exception, level = 'critical', fmt = None):
         QMessageBox.__init__(self, parent = QApplication.activeWindow())
         icon = self._icons.get(level, QMessageBox.NoIcon)
         self.setIcon(icon)
@@ -46,10 +46,12 @@ class DisplayException(QMessageBox):
         self.setWindowTitle(title)
         okBtn = self.addButton("ok", QMessageBox.AcceptRole)
         self.setDefaultButton(okBtn)
+        if fmt is None:
+            fmt = u"<nobr>{e}</nobr>"
         className, methodName = self.classAndMethodName()
         excName, excMsg = type(exception).__name__, str(exception)
         text = u"{3}\n[ {2} in {0}.{1} ]".format(className, methodName, excName, excMsg)
-        self.setText(u"<nobr>{0}</nobr>".format(text.replace("\n", "<br />")))
+        self.setText(fmt.format(e = text.replace("\n", "<br />")))
         logfunc = self._logging.get(level, logging.error)
         logfunc(traceback.format_exc()) # log exception traceback
         self.exec_()
