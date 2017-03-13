@@ -6,6 +6,7 @@ Submodules
 
 .. toctree::
 
+   gui.bases.mixins.appsettings
    gui.bases.mixins.contextmenuwidget
    gui.bases.mixins.dropwidget
    gui.bases.mixins.titlehandler

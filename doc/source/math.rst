@@ -43,10 +43,10 @@ Where *q* is
 .. automethod:: models.sphere.Sphere.absVolume
     :noindex:
 
-.. automethod:: models.scatteringmodel.SASModel.weight
+.. automethod:: bases.model.SASModel.weight
     :noindex:
 
-.. automethod:: models.scatteringmodel.SASModel.calcIntensity
+.. automethod:: bases.model.SASModel.calcIntensity
     :noindex:
 
 .. vim: set ts=4 sts=4 sw=4 tw=0:
