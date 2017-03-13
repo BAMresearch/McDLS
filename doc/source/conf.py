@@ -90,7 +90,7 @@ for mod_name in ('numpy', 'numpy.ma',
                  'matplotlib', 'matplotlib.font_manager', 'matplotlib.pyplot',
                  'pylab',
                  'PySide', 'QtCore', 'QtGui', 'QtSvg', 'QtXml', 'gui.qt',
-                 'requests', 'nose', 'nose.tools', 'cx_Freeze', 'h5py'):
+                 'nose', 'nose.tools', 'cx_Freeze', 'h5py'):
     sys.modules[mod_name] = Mock()
 
 # set up the types of members to check for documentation
