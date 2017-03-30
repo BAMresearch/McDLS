@@ -121,12 +121,11 @@ def simulate(uc):
                     .format(dlsData.temperature, dlsData.viscosity,
                             dlsData.refractiveIndex, dlsData.wavelength))
     # init data for a single angle
-    dlsData.setAngles(Deg, Deg.toSi(np.array((138.,))))
+    dlsData.setAngles(Deg, Deg.toSi(np.array((90.,))))
     logging.info("    angle: {}".format(dlsData.angles))
     dlsData.setTau(Sec, uc[:, 0])
     dlsData.setCorrelation(np.zeros_like(uc[:,1]).reshape((-1, 1)))
     dlsData.initConfig()
-#    print(dlsData.tauGamma.sanitized)
     # set up the DLS model
     model = DLSSphere()
     model.radius.setActive(False)
@@ -134,7 +133,18 @@ def simulate(uc):
     # calculate finally
     modelData = model.calc(dlsData, np.array((0.,)).reshape((-1, 1)),
                            compensationExponent = 1.)
-    print(modelData.chisqrInt)
+    dlsData.setCorrelation(modelData.chisqrInt.reshape((-1, 1)), uc[:,1].reshape((-1, 1)))
+    from multiprocessing import Process, Queue
+    # multithreaded plotting also logs to file
+#    pkwargs["logToFile"] = True
+#    q = Queue() # allow communication between processes
+#    pkwargs["queue"] = q
+    # set up the result data, same as in the McSAS class
+    result = dict(fitX0 = dlsData.x0.binnedData,
+                  fitMeasValMean = np.zeros_like(uc[:,1]).reshape((1, -1)),
+                  times = np.array(()))
+    proc = Process(target = PlotResults, args = ((result,), dlsData))
+    proc.start()
 
 if __name__ == "__main__":
     assert len(sys.argv) > 1, (
@@ -152,9 +162,8 @@ if __name__ == "__main__":
         else:
             combined[:,1] = np.maximum(combined[:,1], uc[:,1])
         plot.plot(uc, fn[-1])
-    simulate(combined)
-    sys.exit()
     plot.plot(combined, "combined (maximum)")
-    plot.show()
+    simulate(combined)
+    #plot.show()
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
