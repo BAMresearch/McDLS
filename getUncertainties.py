@@ -103,6 +103,39 @@ def launchPlot(uc):
     proc = Process(target = plot, args = [uc])
     proc.start()
 
+def simulate(uc):
+    from models.dlssphere import DLSSphere
+    from dataobj import DLSData
+    from utils.units import K, Vis, NM, Deg, Sec
+    # set up the dummy DataObj
+    dlsData = DLSData(title = "simulated title")
+    dlsData.setSampleName("simulated sample")
+    dlsData.setFilename("simulated file")
+    # usual values from measurements
+    dlsData.setTemperature(K.toSi(296))
+    dlsData.setViscosity(Vis.toSi(0.932))
+    dlsData.setRefractiveIndex(1.33200)
+    dlsData.setWavelength(NM.toSi(632.8))
+    logging.info("setting up DLSData with:")
+    logging.info("    temp: {}, vis: {}, ref.ind.: {}, lambda: {}"
+                    .format(dlsData.temperature, dlsData.viscosity,
+                            dlsData.refractiveIndex, dlsData.wavelength))
+    # init data for a single angle
+    dlsData.setAngles(Deg, Deg.toSi(np.array((138.,))))
+    logging.info("    angle: {}".format(dlsData.angles))
+    dlsData.setTau(Sec, uc[:, 0])
+    dlsData.setCorrelation(np.zeros_like(uc[:,1]).reshape((-1, 1)))
+    dlsData.initConfig()
+#    print(dlsData.tauGamma.sanitized)
+    # set up the DLS model
+    model = DLSSphere()
+    model.radius.setActive(False)
+    model.radius.setDisplayValue(50.)
+    # calculate finally
+    modelData = model.calc(dlsData, np.array((0.,)).reshape((-1, 1)),
+                           compensationExponent = 1.)
+    print(modelData.chisqrInt)
+
 if __name__ == "__main__":
     assert len(sys.argv) > 1, (
         "Please provide a directory of DLS measurement and McDLS output files!")
@@ -111,9 +144,17 @@ if __name__ == "__main__":
     for fn in fitFiles:
         print(fn)
     plot = PlotUncertainty()
+    combined = None
     for fn in fitFiles[0:3]:
         uc = processFitFile(*fn)
+        if combined is None:
+            combined = uc.copy()
+        else:
+            combined[:,1] = np.maximum(combined[:,1], uc[:,1])
         plot.plot(uc, fn[-1])
+    simulate(combined)
+    sys.exit()
+    plot.plot(combined, "combined (maximum)")
     plot.show()
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
