@@ -253,12 +253,9 @@ class PlotResults(object):
             close(self._fig)
 
     @classmethod
-    def plotGrid(self, figh):
-        #make axis active:
-        axes(figh)
-        #plot grid
-        grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
-             dash_capstyle = 'round', zorder = -1)
+    def plotGrid(self, ax):
+        ax.grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
+                dash_capstyle = 'round', zorder = -1)
             
     def formatRangeInfo(self, parHist, RI, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
