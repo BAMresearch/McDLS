@@ -80,10 +80,12 @@ class OutputFilename(object):
             self._outDir = ""
         self._basename = u"{title} {ts}".format(
                 title = dataset.title, ts = log.timestamp())
-        if hasattr(dataset, "anglesToStr"):
-            self._basename += u" [{}]".format(dataset.anglesToStr)
-        if hasattr(dataset, "measIndicesStr"):
-            self._basename += u" ({})".format(dataset.measIndicesStr)
+        anglesStr = getattr(dataset, "anglesToStr", "")
+        if isString(anglesStr) and len(anglesStr):
+            self._basename += u" [{}]".format(anglesStr)
+        indicesStr = getattr(dataset, "measIndicesStr", "")
+        if isString(indicesStr) and len(indicesStr):
+            self._basename += u" ({})".format(indicesStr)
         if not createDir:
             return
         # create a directory for all output files
