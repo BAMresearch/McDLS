@@ -128,10 +128,15 @@ def simulate(uc):
     dlsData.initConfig()
     # set up the DLS model
     model = DLSSphere()
-    model.radius.setActive(False)
-    model.radius.setDisplayValue(50.)
+#    model.radius.setActive(False)
+#    model.radius.setDisplayValue(50.)
     # calculate finally
-    modelData = model.calc(dlsData, np.array((0.,)).reshape((-1, 1)),
+#    from scipy.stats import norm
+#    sizes = numpy.arange(200)
+#    distrib = numpy.array([norm.pdf(x, 50.) for x in sizes])
+#    sizes[distrib * sizes > 0.01]
+    contribs = np.array([NM.toSi(x) for x in (45., 50., 50., 55.)])
+    modelData = model.calc(dlsData, contribs.reshape((-1, 1)),
                            compensationExponent = 1.)
     dlsData.setCorrelation(modelData.chisqrInt.reshape((-1, 1)), uc[:,1].reshape((-1, 1)))
     from multiprocessing import Process, Queue
