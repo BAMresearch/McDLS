@@ -252,6 +252,8 @@ class DLSData(DataObj):
                     ranges.append(str(group[0]))
             return ranges
 
+        if self.measIndices is None:
+            return ""
         measIndices = set(chain(*self.measIndices))
         summary = OrderedDict()
         for g, i in sorted(list(measIndices)):
