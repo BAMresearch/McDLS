@@ -103,7 +103,7 @@ def launchPlot(uc):
     proc = Process(target = plot, args = [uc])
     proc.start()
 
-def simulate(uc):
+def simulate(uc, doPlot = True):
     from models.dlssphere import DLSSphere
     from dataobj import DLSData
     from utils.units import K, Vis, NM, Deg, Sec
@@ -139,36 +139,47 @@ def simulate(uc):
     modelData = model.calc(dlsData, contribs.reshape((-1, 1)),
                            compensationExponent = 1.)
     dlsData.setCorrelation(modelData.chisqrInt.reshape((-1, 1)), uc[:,1].reshape((-1, 1)))
-    from multiprocessing import Process, Queue
-    # multithreaded plotting also logs to file
-#    pkwargs["logToFile"] = True
-#    q = Queue() # allow communication between processes
-#    pkwargs["queue"] = q
-    # set up the result data, same as in the McSAS class
-    result = dict(fitX0 = dlsData.x0.binnedData,
-                  fitMeasValMean = np.zeros_like(uc[:,1]).reshape((1, -1)),
-                  times = np.array(()))
-    proc = Process(target = PlotResults, args = ((result,), dlsData))
-    proc.start()
+    if doPlot:
+        from multiprocessing import Process, Queue
+        # multithreaded plotting also logs to file
+    #    pkwargs["logToFile"] = True
+    #    q = Queue() # allow communication between processes
+    #    pkwargs["queue"] = q
+        # set up the result data, same as in the McSAS class
+        result = dict(fitX0 = dlsData.x0.binnedData,
+                      fitMeasValMean = np.zeros_like(uc[:,1]).reshape((1, -1)),
+                      times = np.array(()))
+        proc = Process(target = PlotResults, args = ((result,), dlsData))
+        proc.start()
+    from datafile.cgsfile import CGSFile
+    from gui.calc import OutputFilename
+    outFn = OutputFilename(dlsData, createDir = False)
+    fn = outFn.filenameVerbose("sim", "simulated DLS data")
+    fn = os.path.basename(fn)
+    print(fn)
+#    CGSFile.appendHeaderLine(fn, )
 
 if __name__ == "__main__":
     assert len(sys.argv) > 1, (
         "Please provide a directory of DLS measurement and McDLS output files!")
-    dataPath = sys.argv[1]
-    fitFiles = findFitOutput(dataPath)
+    fitFiles = []
+    for dataPath in sys.argv[1:]:
+        fitFiles += findFitOutput(dataPath)
     for fn in fitFiles:
         print(fn)
     plot = PlotUncertainty()
     combined = None
-    for fn in fitFiles[0:3]:
+    for fn in fitFiles[:]:
         uc = processFitFile(*fn)
         if combined is None:
             combined = uc.copy()
         else:
             combined[:,1] = np.maximum(combined[:,1], uc[:,1])
         plot.plot(uc, fn[-1])
-    plot.plot(combined, "combined (maximum)")
-    plot.show()
-    simulate(combined)
+    doPlot = False
+    if doPlot:
+        plot.plot(combined, "combined (maximum)")
+        plot.show()
+    simulate(combined, doPlot)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
