@@ -96,7 +96,7 @@ class PlotUncertainty(object):
         self._axes.legend(loc = 1, fancybox = True)
         pyplot.setp(pyplot.gca().get_legend().get_texts(), fontsize = 'small')
         PlotResults.plotGrid(self._axes)
-        pyplot.show()
+#        pyplot.show()
 
 def launchPlot(uc):
     from multiprocessing import Process, Queue
@@ -163,7 +163,7 @@ if __name__ == "__main__":
             combined[:,1] = np.maximum(combined[:,1], uc[:,1])
         plot.plot(uc, fn[-1])
     plot.plot(combined, "combined (maximum)")
+    plot.show()
     simulate(combined)
-    #plot.show()
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
