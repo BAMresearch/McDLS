@@ -182,6 +182,9 @@ if __name__ == "__main__":
     combined = None
     for fn in fitFiles[:]:
         uc = processFitFile(*fn)
+        minmax = uc[:,1].min(), uc[:,1].max()
+        uc[:,1] /= minmax[-1]
+        # TODO: normalize them & compare
         if combined is None:
             combined = uc.copy()
         else:
@@ -189,7 +192,7 @@ if __name__ == "__main__":
         plot.plot(uc, fn[-1])
     doPlot = False
     if doPlot:
-        plot.plot(combined, "combined (maximum)")
+#        plot.plot(combined, "combined (maximum)")
         plot.show()
     simulate(combined, doPlot)
 
