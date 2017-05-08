@@ -62,6 +62,8 @@ from mcsas.plotting import PlotResults
 class PlotUncertainty(object):
     _figure = None
     _axes = None
+    _cmap = None # colormap
+    _idx = None  # number of plots, counting
 
     @property
     def titleFigure(self): return "Uncertainties"
@@ -78,7 +80,7 @@ class PlotUncertainty(object):
     @property
     def labely(self): return "Uncertainty"
 
-    def __init__(self):
+    def __init__(self, count = 0):
         self._figure = pyplot.figure(figsize = (15, 8), dpi = 80,
                               facecolor = 'w', edgecolor = 'k')
         self._figure.canvas.set_window_title(self.titleFigure)
@@ -86,12 +88,20 @@ class PlotUncertainty(object):
         self._axes.set_title(self.titleAxes)
         self._axes.set_xlabel(self.labelx)
         self._axes.set_ylabel(self.labely)
+        if count > 0:
+            # https://matplotlib.org/examples/color/colormaps_reference.html
+            self._cmap = pyplot.cm.get_cmap("gist_ncar", count+1)
+        self._idx = 0
 
     def plot(self, uc, label):
         if not isinstance(uc, np.ndarray):
             return
         logging.info("plotting {} {}".format(type(uc), uc.shape))
-        self._axes.plot(uc[:,0], uc[:,1], label = label)
+        kwargs = dict(label = label)
+        if self._cmap is not None:
+            kwargs['color'] = self._cmap(self._idx)
+        self._axes.plot(uc[:,0], uc[:,1], **kwargs)
+        self._idx += 1
 
     def show(self):
         self._axes.legend(loc = 1, fancybox = True)
@@ -168,7 +178,7 @@ if __name__ == "__main__":
         fitFiles += findFitOutput(dataPath)
     for fn in fitFiles:
         print(fn)
-    plot = PlotUncertainty()
+    plot = PlotUncertainty(len(fitFiles))
     combined = None
     for fn in fitFiles[:]:
         uc = processFitFile(*fn)
