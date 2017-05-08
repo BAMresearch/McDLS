@@ -27,12 +27,18 @@ def timestampFormat():
     """
     return str(FORMATTER.datefmt).translate(str.maketrans(" :", "_-"))
 
-def timestamp():
+def timestampFormatted(ts = None):
     """Current local time.
     >>> timestamp() == time.strftime("%Y-%m-%d_%H-%M-%S")
     True
     """
-    return time.strftime(timestampFormat())
+    if ts is None:
+        ts = timestamp()
+    return time.strftime(timestampFormat(), ts)
+
+def timestamp():
+    """Current local time in seconds."""
+    return time.localtime()
 
 def replaceStdOutErr(sout = None, serr = None):
     """Replaces stdout/err with calls to logging.info/error."""
