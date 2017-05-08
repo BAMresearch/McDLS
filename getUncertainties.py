@@ -159,7 +159,7 @@ def simulate(uc, doPlot = True):
         # set up the result data, same as in the McSAS class
         result = dict(fitX0 = dlsData.x0.binnedData,
                       fitMeasValMean = np.zeros_like(uc[:,1]).reshape((1, -1)),
-                      times = np.array(()))
+                      times = None)
         proc = Process(target = PlotResults, args = ((result,), dlsData))
         proc.start()
     from datafile.cgsfile import CGSFile
