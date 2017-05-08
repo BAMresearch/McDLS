@@ -56,7 +56,7 @@ class DLSConfig(DataConfig):
                 "there will be a single data object for each angle which "
                 "contains the correlation mean and its standard deviation "
                 "interpreted as measurement uncertainty."),
-        Parameter("outlierThreshold", 3., unit = NoUnit(),
+        Parameter("outlierThreshold", 3.5, unit = NoUnit(),
             displayName = "outlier threshold",
             valueRange = (0., 1e3),
             description = "Modified Z-score above which measurements are "
