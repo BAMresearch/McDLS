@@ -8,6 +8,7 @@ import os
 import numpy as np
 import logging
 logging.basicConfig(level = logging.INFO)
+#np.seterr(all='raise', under = 'ignore')
 
 def findFitOutput(dataPath):
     if not os.path.isdir(dataPath):
