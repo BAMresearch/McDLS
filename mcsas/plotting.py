@@ -288,12 +288,14 @@ class PlotResults(object):
         oString += u'\n ( Scaling factor: {0:3.3g} {pm} {1:3.3g} )'.format(
                 self._SC[0], self._SC[1], pm = PM)
         times = self._result['times']
-        timesDDoF = 0
-        if len(times) > 1: # prevent division by zero in numpy.std()
-            timesDDoF = 1
-        oString += u'\n Timing: {0:d} repetitions of {1:3.3g} {pm} {2:3.3g} seconds'.format(
-                np.size(times), times.mean(), times.std(ddof = timesDDoF), pm = PM)
-
+        if isList(times) and len(times):
+            timesDDoF = 0
+            if len(times) > 1: # prevent division by zero in numpy.std()
+                timesDDoF = 1
+            oString += (u"\n Timing: {0:d} repetitions "
+                         "of {1:3.3g} {pm} {2:3.3g} seconds").format(
+                    np.size(times), times.mean(), times.std(ddof = timesDDoF),
+                    pm = PM)
         return oString
 
     def setAxis(self, ah):
