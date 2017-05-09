@@ -118,7 +118,7 @@ class PlotUncertainty(object):
     def plot(self, uc, label):
         if not isinstance(uc, np.ndarray):
             return
-        logging.info("plotting {} {}".format(type(uc), uc.shape))
+#        logging.info("plotting {} {}".format(type(uc), uc.shape))
         kwargs = dict(label = label)
         if self._cmap is not None:
             kwargs['color'] = self._cmap(self._idx)
