@@ -636,8 +636,13 @@ class PlotResults(object):
         suppAx.set_ylim(yvec.min(), yvec.max())
         # set up y axis, let all uncertainty error bars be visible
         ymin, ymax = (yvec - uvec).min(), (yvec + uvec).max()
-        ystep = (np.ceil(ymax) - np.floor(ymin)) // 4
-        yticks_ = np.arange(np.floor(ymin), np.ceil(ymax) + ystep, ystep)
+        yminFloor, ymaxCeil, i = 0., 0., 0
+        while (ymaxCeil - yminFloor) <= 0.:
+            yminFloor = np.floor(ymin*np.power(10., i))
+            ymaxCeil  = np.ceil(ymax*np.power(10., i))
+            i += 1
+        ystep = (ymaxCeil - yminFloor) / 4.
+        yticks_ = np.arange(yminFloor, ymaxCeil + ystep, ystep)
         self._setYTicks(suppAx, yticks_)
         delta = (ymax - ymin) * .02 # 2% of y-axis range
         suppAx.set_ylim(ymin - delta, ymax + delta)
