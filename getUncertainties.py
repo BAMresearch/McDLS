@@ -173,10 +173,15 @@ def simulate(uc, doPlot = True):
     from datafile.cgsfile import CGSFile
     from gui.calc import OutputFilename
     outFn = OutputFilename(dlsData, createDir = False)
-    fn = outFn.filenameVerbose("sim", "simulated DLS data")
+    fn = outFn.filenameVerbose("sim", "simulated DLS data", extension = ".ASC")
     fn = os.path.basename(fn)
+    import tempfile
+    dn = tempfile.gettempdir()
+    if os.path.isdir(dn):
+        fn = os.path.join(dn, fn)
     print(fn)
-#    CGSFile.appendHeaderLine(fn, )
+#    print(outFn.basename, outFn.timestamp)
+    #CGSFile.appendHeaderLine(fn, CGSFile.signatures()[-1])
 
 if __name__ == "__main__":
     assert len(sys.argv) > 1, (
@@ -198,7 +203,7 @@ if __name__ == "__main__":
         else:
             combined[:,1] = np.maximum(combined[:,1], uc[:,1])
         plot.plot(uc, fn[-1])
-    doPlot = False
+    doPlot = True
     if doPlot:
 #        plot.plot(combined, "combined (maximum)")
         plot.show()
