@@ -202,7 +202,7 @@ if __name__ == "__main__":
             combined = uc.copy()
         else:
             combined[:,1] = np.maximum(combined[:,1], uc[:,1])
-        plot.plot(uc, fn[-1])
+        plot.plot(uc, os.path.basename(fn[0]))
     doPlot = True
     if doPlot:
 #        plot.plot(combined, "combined (maximum)")
