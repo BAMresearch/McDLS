@@ -5,10 +5,18 @@
 
 import sys
 import os
+import re
 import numpy as np
 import logging
 logging.basicConfig(level = logging.INFO)
 #np.seterr(all='raise', under = 'ignore')
+
+def angleFromFilename(name):
+    match = re.findall('\[([^°\]]+)°\]', name)
+    try:
+        return float(match[0])
+    except (IndexError, ValueError):
+        return None
 
 def findFitOutput(dataPath):
     if not os.path.isdir(dataPath):
@@ -21,11 +29,11 @@ def findFitOutput(dataPath):
         for fn in filenames:
             if not fn.endswith("_fit.dat"):
                 continue
-            goodFiles.append((dirpath, fn))
+            goodFiles.append((dirpath, fn, angleFromFilename(fn)))
         fitFiles += goodFiles
     return fitFiles
 
-def processFitFile(dirpath, filename):
+def processFitFile(dirpath, filename, *args):
     logging.info("processing '{}'".format(os.path.join(dirpath, filename)))
     filepath = os.path.join(dirpath, filename)
     lines = None
