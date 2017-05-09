@@ -215,11 +215,15 @@ def plotFiles(files, doPlot = True, suffix = None):
             plot.plot(uc, os.path.basename(fn[0]))
     combined = np.median(np.vstack(curves), axis = 0)
     combined = np.vstack((tau, combined)).T
+    minmax = combined[:,1].min(), combined[:,1].max()
+    valueRange = minmax[1] - minmax[0]
     if doPlot and plot is not None:
-        plot.plot(combined, "median")
+        plot.plot(combined, "median (min: {0:.2e}, range: {1:.2e})"
+                            .format(minmax[0], valueRange))
         plot.show()
     # return the normalized summary plot
-    combined[:,1] /= combined[:,1].max()
+#    combined[:,1] -= minmax[0]
+#    combined[:,1] /= valueRange
     return combined, plot
 
 def fmtAngle(angle):
@@ -233,15 +237,16 @@ if __name__ == "__main__":
         fitFiles += findFitOutput(dataPath)
     # sort files by angle first, use orderedDict
     fitFiles.sort(key = lambda x: x[-1])
-    dataByAngle = OrderedDict()
+    filesByAngle = OrderedDict()
     for dn, fn, angle in fitFiles:
-        if angle not in dataByAngle:
-            dataByAngle[angle] = []
-        dataByAngle[angle].append((dn, fn, angle))
+        if angle not in filesByAngle:
+            filesByAngle[angle] = []
+        filesByAngle[angle].append((dn, fn, angle))
     # init the summary plot first
-    plots = [PlotUncertainty(len(dataByAngle),
-                             suffix = "of normalized median")]
-    for angle, lst in dataByAngle.items():
+    plots = [PlotUncertainty(len(filesByAngle),
+                             suffix = "of median")]
+    ucByAngle = OrderedDict()
+    for angle, lst in filesByAngle.items():
         combined, separatePlot = plotFiles(lst, doPlot = True,
                 suffix = "@" + fmtAngle(angle))
         if separatePlot is not None:
@@ -251,8 +256,10 @@ if __name__ == "__main__":
         if len(lst) == 1:
             label = os.path.basename(lst[0][0])
         plots[0].plot(combined, label)
+        ucByAngle[angle] = combined
     plots[0].show() # finalize the summary plot
     pyplot.show()
+    # use ucByAngle for simulation
 #    simulate(combined, doPlot)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
