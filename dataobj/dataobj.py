@@ -206,18 +206,21 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         """Modifies the uncertainty of the whole range of measured data to be
         above a previously set minimum threshold *fuMin*."""
         minUncertaintyPercent = self.config.fuMin() * 100.
+        siDataUMin = self.config.fuMin() * self.f.siData
         if not self.hasUncertainties:
             logging.warning("No error column provided! Using {}% of intensity."
                             .format(minUncertaintyPercent))
-            self.f.siDataU = self.config.fuMin() * self.f.siData
+            self.f.siDataU = siDataUMin
         else:
-            upd = np.maximum(self.f.unit.toSi(self.f.rawDataU),
-                             self.config.fuMin() * self.f.siData)
-            count = sum(self.f.siData < upd)
+            upd = np.maximum(self.f.unit.toSi(self.f.rawDataU), siDataUMin)
+            count = sum(upd <= siDataUMin)
             if count > 0:
-                logging.warning("Minimum uncertainty ({}% of intensity) set "
-                                "for {} datapoints.".format(
+                logging.warning("Minimum uncertainty of {}% intensity set "
+                                "for {} data points.".format(
                                 minUncertaintyPercent, count))
+            else:
+                logging.info("No data point falls behind minimum uncertainty "
+                         "of {}% intensity.".format(minUncertaintyPercent))
             self.f.siDataU = upd
         # reset invalid uncertainties to np.inf
         invInd = (True - np.isfinite(self.f.siDataU))
