@@ -450,19 +450,25 @@ class DLSData(DataObj):
                 mis.add(i)
         self.setMeasIndices(tuple(sorted(list(mis))))
         # calculate average correlation values and their standard deviation
-        stacked = dstack((o.correlation.rawDataSrcShape for o in others))
+        stacked   = dstack((o.correlation.rawDataSrcShape for o in others))
+        stackedCR = dstack((o.countRate.rawDataSrcShape for o in others))
         # filter outliers, possibly
-        corr, corrU = None, None
+        corr, corrU, cr, crU = None, None, None, None
         if (self.config.filterMask is not None
             and self.config.filterMask.shape == (len(self.angles), len(others))):
             # use prepared filter mask if shapes match
             corr  = np.zeros(stacked.shape[0:2])
             corrU = np.zeros(stacked.shape[0:2])
+            cr    = np.zeros(stackedCR.shape[0:2])
+            crU   = np.zeros(stackedCR.shape[0:2])
             for a, angle in enumerate(self.angles):
                 # different count of good data for each angle average
-                noOutliers = stacked[:,a,self.config.filterMask[a]]
-                corr[:,a]  = noOutliers.mean(-1)
-                corrU[:,a] = noOutliers.std(-1, ddof = ddof)
+                corrClean  = stacked[:,a,self.config.filterMask[a]]
+                corr[:,a]  = corrClean.mean(-1)
+                corrU[:,a] = corrClean.std(-1, ddof = ddof)
+                crClean  = stackedCR[:,a,self.config.filterMask[a]]
+                cr[:,a]  = crClean.mean(-1)
+                crU[:,a] = crClean.std(-1, ddof = ddof)
                 if (self.config.outlierMap is None
                     or angle not in self.config.outlierMap
                     or not len(self.config.outlierMap[angle])):
@@ -475,14 +481,14 @@ class DLSData(DataObj):
                                 o = sorted(list(self.config.outlierMap[angle]))))
         else:
             corr, corrU = stacked.mean(-1), stacked.std(-1, ddof = ddof)
+            cr, crU     = stackedCR.mean(-1), stackedCR.std(-1, ddof = ddof)
         # combine the mean across all data sets with the existing tau
         # combine the std. deviation with the existing tau
         self.setCorrelation(corr, corrU)
         assert len(self.x0.siData) == len(self.f.siData), \
             "Dimensions of flattened data arrays do not match!"
         # same for count rate data
-        stacked = dstack((o.countRate.rawDataSrcShape for o in others))
-        self.setCountRate(stacked.mean(-1), stacked.std(-1, ddof = ddof))
+        self.setCountRate(cr, crU)
         assert len(self.capTime.siData) == len(self.countRate.siData), \
             "Dimensions of flattened data arrays do not match!"
         # reset config in order to fix callbacks, but maintain option values
