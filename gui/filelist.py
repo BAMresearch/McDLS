@@ -57,7 +57,10 @@ class FileList(DataList):
             config = self.configFromLast()
         # put the config of the last to all recently loaded
         self.setDataConfig(config)
-        self.selectionChanged()
+        # update minimum uncertainty once, called too often in setConfig()
+        self.updateData(updateFunc = lambda data: data.config.updateFuMin(),
+                        showProgress = False)
+        self.selectionChanged() # emit the last data object finally
 
     def configFromLast(self):
         """Get the data config of the last item in the list."""
