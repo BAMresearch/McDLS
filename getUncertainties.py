@@ -6,10 +6,14 @@
 import sys
 import os
 import re
+from collections import OrderedDict
 import numpy as np
 import logging
 logging.basicConfig(level = logging.INFO)
 #np.seterr(all='raise', under = 'ignore')
+
+from utils import isString
+from utils.units import Deg
 
 def angleFromFilename(name):
     match = re.findall('\[([^°\]]+)°\]', name)
@@ -72,9 +76,14 @@ class PlotUncertainty(object):
     _axes = None
     _cmap = None # colormap
     _idx = None  # number of plots, counting
+    _suffix = None # title suffix
 
     @property
-    def titleFigure(self): return "Uncertainties"
+    def titleFigure(self):
+        title = "Uncertainties"
+        if isString(self._suffix):
+            title = "{} {}".format(title, self._suffix)
+        return title
 
     @property
     def titleAxes(self): return "extracted " + self.titleFigure.lower()
@@ -86,9 +95,14 @@ class PlotUncertainty(object):
     def labelx(self): return "tau"
 
     @property
-    def labely(self): return "Uncertainty"
+    def labely(self):
+        lbl = "Uncertainty"
+        if isString(self._suffix):
+            lbl = "{} {}".format(lbl, self._suffix)
+        return lbl
 
-    def __init__(self, count = 0):
+    def __init__(self, count = 0, suffix = None):
+        self._suffix = suffix
         self._figure = pyplot.figure(figsize = (15, 8), dpi = 80,
                               facecolor = 'w', edgecolor = 'k')
         self._figure.canvas.set_window_title(self.titleFigure)
@@ -183,30 +197,62 @@ def simulate(uc, doPlot = True):
 #    print(outFn.basename, outFn.timestamp)
     #CGSFile.appendHeaderLine(fn, CGSFile.signatures()[-1])
 
+def plotFiles(files, doPlot = True, suffix = None):
+    """Expecting a list of tuples."""
+    plot = None
+    if doPlot and len(files) > 1:
+        plot = PlotUncertainty(len(files)+1, suffix = suffix)
+    curves = []
+    tau = None
+    # plot files, sorted by name
+    for fn in sorted(files, key = lambda x: x[1]):
+        uc = processFitFile(*fn)
+#        minmax = uc[:,1].min(), uc[:,1].max()
+#        uc[:,1] /= minmax[-1] # normalize
+        curves.append(uc[:,1])
+        tau = uc[:,0]
+        if plot is not None:
+            plot.plot(uc, os.path.basename(fn[0]))
+    combined = np.median(np.vstack(curves), axis = 0)
+    combined = np.vstack((tau, combined)).T
+    if doPlot and plot is not None:
+        plot.plot(combined, "median")
+        plot.show()
+    # return the normalized summary plot
+    combined[:,1] /= combined[:,1].max()
+    return combined, plot
+
+def fmtAngle(angle):
+    return "{0:.0f}".format(angle) + Deg.displayMagnitudeName
+
 if __name__ == "__main__":
     assert len(sys.argv) > 1, (
         "Please provide a directory of DLS measurement and McDLS output files!")
     fitFiles = []
     for dataPath in sys.argv[1:]:
         fitFiles += findFitOutput(dataPath)
-    for fn in fitFiles:
-        print(fn)
-    plot = PlotUncertainty(len(fitFiles))
-    combined = None
-    for fn in fitFiles[:]:
-        uc = processFitFile(*fn)
-        minmax = uc[:,1].min(), uc[:,1].max()
-        uc[:,1] /= minmax[-1]
-        # TODO: normalize them & compare
-        if combined is None:
-            combined = uc.copy()
-        else:
-            combined[:,1] = np.maximum(combined[:,1], uc[:,1])
-        plot.plot(uc, os.path.basename(fn[0]))
-    doPlot = True
-    if doPlot:
-#        plot.plot(combined, "combined (maximum)")
-        plot.show()
-    simulate(combined, doPlot)
+    # sort files by angle first, use orderedDict
+    fitFiles.sort(key = lambda x: x[-1])
+    dataByAngle = OrderedDict()
+    for dn, fn, angle in fitFiles:
+        if angle not in dataByAngle:
+            dataByAngle[angle] = []
+        dataByAngle[angle].append((dn, fn, angle))
+    # init the summary plot first
+    plots = [PlotUncertainty(len(dataByAngle),
+                             suffix = "of normalized median")]
+    for angle, lst in dataByAngle.items():
+        combined, separatePlot = plotFiles(lst, doPlot = True,
+                suffix = "@" + fmtAngle(angle))
+        if separatePlot is not None:
+            plots.append(separatePlot)
+        # show the angle only, for more than one input
+        label = fmtAngle(angle)
+        if len(lst) == 1:
+            label = os.path.basename(lst[0][0])
+        plots[0].plot(combined, label)
+    plots[0].show() # finalize the summary plot
+    pyplot.show()
+#    simulate(combined, doPlot)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
