@@ -139,7 +139,7 @@ def launchPlot(uc):
 def simulate(uc, doPlot = True):
     from models.dlssphere import DLSSphere
     from dataobj import DLSData
-    from utils.units import K, Vis, NM, Deg, Sec
+    from utils.units import K, Vis, NM, Deg, Sec, MSec
     # set up the dummy DataObj
     dlsData = DLSData(title = "simulated title")
     dlsData.setSampleName("simulated sample")
@@ -156,7 +156,7 @@ def simulate(uc, doPlot = True):
     # init data for a single angle
     dlsData.setAngles(Deg, Deg.toSi(np.array((90.,))))
     logging.info("    angle: {}".format(dlsData.angles))
-    dlsData.setTau(Sec, uc[:, 0])
+    dlsData.setTau(MSec, MSec.toDisplay(uc[:, 0]))
     dlsData.setCorrelation(np.zeros_like(uc[:,1]).reshape((-1, 1)))
     dlsData.initConfig()
     # set up the DLS model
