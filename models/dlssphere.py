@@ -42,6 +42,8 @@ class DLSSphere(DLSModel):
     # idea: using a weight w/o compExp for normalization but with compExp in the model
     #   -> violates the specs but may lead to desired result ...
     def weight(self):
+        """The square root of the amplitude of the discrete DLS model
+        function g_1(tau) (first order correlation function)."""
         # a compExp. != 1 just changes the volume of a scatterer
         return self._ffSphere() * self.volume()**self.compensationExponent
 
