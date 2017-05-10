@@ -5,10 +5,13 @@ from __future__ import absolute_import # PEP328
 from builtins import range
 import logging
 
+import os.path
 from collections import OrderedDict
 from gui.utils.signal import Signal
 from gui.bases.datalist import DataList
-from gui.utils.filedialog import getOpenFiles
+from gui.utils.filedialog import getOpenFiles, getSaveDirectory
+from gui.utils.translate import tr
+from gui.utils import processEventLoop
 from datafile import getFileFilter
 from utils.lastpath import LastPath
 from utils.units import ScatteringVector, ScatteringIntensity
@@ -16,13 +19,40 @@ from utils import isList
 from datafile import loaddatafile
 from dataobj import DataObj
 from dataobj import DLSData
+from getUncertainties import getUncertainties
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
 
+from gui.qt import QtCore
+from QtCore import QTime
+
+def delay(msecs):
+    dieTime = QTime.currentTime().addMSecs(msecs)
+    while QTime.currentTime() < dieTime:
+        processEventLoop()
+
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))
     # sigShannonChannels = Signal(int) # sets warning level of "nbins"-field
+
+    def __init__(self, *args, **kwargs):
+        super(FileList, self).__init__(*args, **kwargs)
+        self.addMenuEntry(
+            name = "simulate", text = tr("add simulated"), menuStates = "*",
+            toolTip = tr("Add simulated data."),
+            callbacks = self.simulateData)
+
+    def simulateData(self):
+        print("simulateData")
+        path = getSaveDirectory(self,
+                    tr("Select a result directory."), LastPath.get())
+        delay(300) # wait for the file dialog to go away
+        if not os.path.isdir(path): return
+        print("paths:", path)
+        LastPath.set(os.path.dirname(path))
+        getUncertainties(path)
+        print("simulateData done")
 
     def loadData(self, fileList = None):
         if fileList is None or type(fileList) is bool:

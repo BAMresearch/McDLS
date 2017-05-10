@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level = logging.INFO)
 #np.seterr(all='raise', under = 'ignore')
 
-from utils import isString
+from utils import isString, isList
 from utils.units import Deg
 
 def angleFromFilename(name):
@@ -229,11 +229,11 @@ def plotFiles(files, doPlot = True, suffix = None):
 def fmtAngle(angle):
     return "{0:.0f}".format(angle) + Deg.displayMagnitudeName
 
-if __name__ == "__main__":
-    assert len(sys.argv) > 1, (
-        "Please provide a directory of DLS measurement and McDLS output files!")
+def getUncertainties(paths):
+    if not isList(paths):
+        paths = [paths]
     fitFiles = []
-    for dataPath in sys.argv[1:]:
+    for dataPath in paths:
         fitFiles += findFitOutput(dataPath)
     # sort files by angle first, use orderedDict
     fitFiles.sort(key = lambda x: x[-1])
@@ -261,5 +261,10 @@ if __name__ == "__main__":
     pyplot.show()
     # use ucByAngle for simulation
 #    simulate(combined, doPlot)
+
+if __name__ == "__main__":
+    assert len(sys.argv) > 1, (
+        "Please provide a directory of DLS measurement and McDLS output files!")
+    getUncertainties(sys.argv[1:])
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
