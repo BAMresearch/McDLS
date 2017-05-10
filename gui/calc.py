@@ -64,6 +64,7 @@ class OutputFilename(object):
     _outDir = None   # output directory
     _basename = None # base file name for all output files
     _indent = "    "
+    _timestamp = None # remember the creation time for multiple uses
 
     @property
     def basename(self):
@@ -73,18 +74,25 @@ class OutputFilename(object):
     def outDir(self):
         return self._outDir
 
+    @property
+    def timestamp(self):
+        return self._timestamp
+
     def __init__(self, dataset, createDir = True):
         self._outDir = LastPath.get()
         if not os.path.isdir(self._outDir):
             logging.warning("Output path '{}' does not exist!"
                             .format(self._outDir))
             self._outDir = ""
-        self._basename = u"{title} {ts}".format(
-                title = dataset.title, ts = log.timestamp())
-        if hasattr(dataset, "anglesToStr"):
-            self._basename += u" [{}]".format(dataset.anglesToStr)
-        if hasattr(dataset, "measIndicesStr"):
-            self._basename += u" ({})".format(dataset.measIndicesStr)
+        self._timestamp = log.timestamp()
+        self._basename = u"{title} {ts}".format(title = dataset.title,
+                ts = log.timestampFormatted(self.timestamp))
+        anglesStr = getattr(dataset, "anglesToStr", "")
+        if isString(anglesStr) and len(anglesStr):
+            self._basename += u" [{}]".format(anglesStr)
+        indicesStr = getattr(dataset, "measIndicesStr", "")
+        if isString(indicesStr) and len(indicesStr):
+            self._basename += u" ({})".format(indicesStr)
         if not createDir:
             return
         # create a directory for all output files

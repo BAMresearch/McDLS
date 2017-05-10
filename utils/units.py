@@ -340,6 +340,7 @@ Vis = DynamicViscosity(u"mPa s")
 MSec = Time(u"ms")
 Sec = Time(u"s")
 NM = Length(u"nm")
+Deg = Angle(u"°")
 
 if __name__ == "__main__":
     import doctest

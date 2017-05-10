@@ -137,6 +137,8 @@ class PlotResults(object):
         except AttributeError:
             self._figureTitle = ""
         self._modelData = modelData
+        if self._modelData is None:
+            self._modelData = dict()
         self._BG = self._result.get('background', (0., 0.))
         self._SC = self._result.get('scaling', (0., 0.))
 
@@ -159,11 +161,11 @@ class PlotResults(object):
                 xscale = "log", yscale = yscale)
 
         # number of histograms:
-        self._nHists = len(modelData['histograms'])
+        self._nHists = len(self._modelData.get('histograms', ()))
         self._nR = 1
         # number of ranges: 
         if False and self._nHists > 0: # disabled for testing
-            self._ranges = ( modelData['histograms'][0].ranges )
+            self._ranges = ( self._modelData.get('histograms')[0].ranges )
             self._nR = len( self._ranges )
 
         # initialise figure:
@@ -203,7 +205,7 @@ class PlotResults(object):
 
             # plot histograms
             # https://stackoverflow.com/a/952952
-            for hi, parHist in enumerate(modelData['histograms']):
+            for hi, parHist in enumerate(self._modelData.get('histograms', ())):
                 plotPar = parHist.param
                 # prep axes:
                 hAxis = self._ah[hi + (self._nHists + 1) + 1]
@@ -251,12 +253,9 @@ class PlotResults(object):
             close(self._fig)
 
     @classmethod
-    def plotGrid(self, figh):
-        #make axis active:
-        axes(figh)
-        #plot grid
-        grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
-             dash_capstyle = 'round', zorder = -1)
+    def plotGrid(self, ax):
+        ax.grid(lw = 2, color = 'black', alpha = .5, dashes = [1, 6],
+                dash_capstyle = 'round', zorder = -1)
             
     def formatRangeInfo(self, parHist, RI, weighti = 0):
         """Preformats the rangeInfo results ready for printing"""
@@ -283,18 +282,20 @@ class PlotResults(object):
         oString = u' Fitting of data$:$ {} '.format(self._figureTitle)
         oString += u'\n {}'.format(self._dataset.x0.limsString)
         oString += u'\n Active parameters$:$ {}, ranges: {} '.format(
-            self._modelData['activeParamCount'], self._nR)
+            self._modelData.get('activeParamCount', 0), self._nR)
         oString += u'\n Background level: {0:3.3g} {pm} {1:3.3g}'.format(
                 self._BG[0], self._BG[1], pm = PM)
         oString += u'\n ( Scaling factor: {0:3.3g} {pm} {1:3.3g} )'.format(
                 self._SC[0], self._SC[1], pm = PM)
         times = self._result['times']
-        timesDDoF = 0
-        if len(times) > 1: # prevent division by zero in numpy.std()
-            timesDDoF = 1
-        oString += u'\n Timing: {0:d} repetitions of {1:3.3g} {pm} {2:3.3g} seconds'.format(
-                np.size(times), times.mean(), times.std(ddof = timesDDoF), pm = PM)
-
+        if isList(times) and len(times):
+            timesDDoF = 0
+            if len(times) > 1: # prevent division by zero in numpy.std()
+                timesDDoF = 1
+            oString += (u"\n Timing: {0:d} repetitions "
+                         "of {1:3.3g} {pm} {2:3.3g} seconds").format(
+                    np.size(times), times.mean(), times.std(ddof = timesDDoF),
+                    pm = PM)
         return oString
 
     def setAxis(self, ah):
@@ -419,8 +420,10 @@ class PlotResults(object):
 
         xLim = (xOrigin.min() * (1 - self._axisMargin), 
                 xOrigin.max() * (1 + self._axisMargin))
-        yLim = (yOrigin[yOrigin != 0].min() * (1 - self._axisMargin), 
-                yOrigin.max() * (1 + self._axisMargin))
+        yLim = (-.5, .5)
+        if any(yOrigin != 0.):
+            yLim = (yOrigin[yOrigin != 0].min() * (1 - self._axisMargin),
+                    yOrigin.max() * (1 + self._axisMargin))
         qAxDict = self._AxDict.copy()
         qAxDict.update({
                 'xlim' : xLim, 'ylim' : yLim,
@@ -447,13 +450,14 @@ class PlotResults(object):
                    label = u"MC Fit {name}"
                             .format(name = dataset.f.name))
         try: # try to plot the background level
-            qAxis.plot(dataset.x0.unit.toDisplay(fitX0), np.full_like(fitX0,
-                       dataset.f.unit.toDisplay(self._BG[0])),
+            qAxis.plot(dataset.x0.unit.toDisplay(fitX0),
+                       np.ones_like(fitX0) * dataset.f.unit.toDisplay(self._BG[0]),
                        'g-', linewidth = 3, zorder = 3,
                        label = "MC Background level:\n"
                                "        ({0:03.3g})".format(self._BG[0]))
-        except:
+        except Exception as e:
             logging.error("could not plot background")
+#            logging.exception(e)
             pass
 
         titleAlignment = 'center'

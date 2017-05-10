@@ -3,8 +3,8 @@
 
 from __future__ import absolute_import
 import logging
-from .log import (timestampFormat, timestamp, replaceStdOutErr,
-                 replaceHandler, addHandler, removeHandler)
+from .log import (timestampFormat, timestamp, timestampFormatted,
+                  replaceStdOutErr, replaceHandler, addHandler, removeHandler)
 from .widgethandler import WidgetHandler
 
 log = logging.getLogger()

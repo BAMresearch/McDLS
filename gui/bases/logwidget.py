@@ -233,7 +233,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
             name, number = "", ""
             if self.appversion:
                 name, number = self.appversion.name(), self.appversion.number()
-            fnFormat = log.timestamp() + "_{0}-{1}_log.txt"
+            fnFormat = log.timestampFormatted() + "_{0}-{1}_log.txt"
             fn = fnFormat.format(name, number)
             fn = os.path.join(LastPath.get(), fn)
             fn = getSaveFile(self, "Select a file to save the log to.",
