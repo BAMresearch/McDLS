@@ -64,7 +64,7 @@ def getSaveFile(parent, labeltext, path, filefilter):
     fileList = QFileDialog.getSaveFileName(
         parent,
         caption = labeltext,
-        directory = path,
+        dir = path,
         filter = makeFilter(filefilter))
     return fileList
 
@@ -74,7 +74,7 @@ def getSaveDirectory(parent, labeltext, path):
     dirList = QFileDialog.getExistingDirectory(
         parent,
         caption = labeltext,
-        directory = path)
+        dir = path)
     return dirList
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
