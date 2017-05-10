@@ -137,6 +137,10 @@ def launchPlot(uc):
     proc.start()
 
 def simulate(uc, doPlot = True):
+    try:
+        assert len(uc.shape) == 2
+    except (AttributeError, AssertionError):
+        return None
     from models.dlssphere import DLSSphere
     from dataobj import DLSData
     from utils.units import K, Vis, NM, Deg, Sec, MSec
@@ -172,6 +176,9 @@ def simulate(uc, doPlot = True):
     modelData = model.calc(dlsData, contribs.reshape((-1, 1)),
                            compensationExponent = 1.)
     dlsData.setCorrelation(modelData.chisqrInt.reshape((-1, 1)), uc[:,1].reshape((-1, 1)))
+    return dlsData
+
+def dummy(doPlot):
     if doPlot:
         from multiprocessing import Process, Queue
         # multithreaded plotting also logs to file
@@ -259,6 +266,7 @@ def getUncertainties(paths):
         ucByAngle[angle] = combined
     plots[0].show() # finalize the summary plot
     pyplot.show()
+    return ucByAngle
     # use ucByAngle for simulation
 #    simulate(combined, doPlot)
 

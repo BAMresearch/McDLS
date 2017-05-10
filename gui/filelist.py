@@ -19,7 +19,7 @@ from utils import isList
 from datafile import loaddatafile
 from dataobj import DataObj
 from dataobj import DLSData
-from getUncertainties import getUncertainties
+from getUncertainties import getUncertainties, simulate
 
 # required for svg graphics support
 from gui.liststyle import setBackgroundStyleSheet                              
@@ -51,7 +51,12 @@ class FileList(DataList):
         if not os.path.isdir(path): return
         print("paths:", path)
         LastPath.set(os.path.dirname(path))
-        getUncertainties(path)
+        ucByAngle = getUncertainties(path)
+        print("angles found:", list(ucByAngle.keys()))
+        dlsData = simulate(ucByAngle[90.])
+        print(dlsData)
+        DataList.loadData(self, sourceList = [dlsData], showProgress = False,
+                          processSourceFunc = lambda x: x)
         print("simulateData done")
 
     def loadData(self, fileList = None):
