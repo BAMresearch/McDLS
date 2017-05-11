@@ -218,10 +218,14 @@ def plotFiles(files, doPlot = True, suffix = None):
     # plot files, sorted by name
     for fn in sorted(files, key = lambda x: x[1]):
         uc = processFitFile(*fn)
-#        minmax = uc[:,1].min(), uc[:,1].max()
-#        uc[:,1] /= minmax[-1] # normalize
-        curves.append(uc[:,1])
         tau = uc[:,0]
+        # FIXME: detect/filter curves with same shape but different TAU!
+        if len(curves) and curves[-1].shape != tau.shape:
+            logging.warn("Ignoring '{}'".format(os.path.join(fn[:1])))
+            logging.warn("Dimension mismatch: expected {}, got {}!"
+                         .format(curves[-1].shape, tau.shape))
+            continue
+        curves.append(uc[:,1])
         if plot is not None:
             plot.plot(uc, os.path.basename(fn[0]))
     combined = np.median(np.vstack(curves), axis = 0)
