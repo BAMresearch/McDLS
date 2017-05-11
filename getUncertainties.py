@@ -170,10 +170,18 @@ def simulate(uc, label, doPlot = True):
 #    sizes = numpy.arange(200)
 #    distrib = numpy.array([norm.pdf(x, 50.) for x in sizes])
 #    sizes[distrib * sizes > 0.01]
-    contribs = np.array([NM.toSi(x) for x in (45., 50., 50., 55.)])
-    modelData = model.calc(dlsData, contribs.reshape((-1, 1)),
+#    lst = [NM.toSi(x) for x in (13., 15., 15., 17.)] # RM8012, 15nm radius
+    lst = [NM.toSi(x) for x in (36., 40., 40., 44.)] # FD102, 20nm
+    for i in range(1,20): # excluding 20: len = 19
+        lst.extend([NM.toSi(x) for x in (9., 10., 10., 11.)]) # FD102, 80nm
+    logging.info("simulating {} contribs:\n{}".format(len(lst), lst))
+    modelData = model.calc(dlsData, np.array(lst).reshape((-1, 1)),
                            compensationExponent = 1.)
-    dlsData.setCorrelation(modelData.chisqrInt.reshape((-1, 1)), uc[:,1].reshape((-1, 1)))
+    corr = 0.1234 + 0.85465*modelData.chisqrInt.reshape((-1, 1))
+    corrU = uc[:,1].reshape((-1, 1))               # uncertainty from data
+#    corrU = np.ones_like(uc[:,1]).reshape((-1, 1)) # no uncertainty, =1
+#    corrU = None
+    dlsData.setCorrelation(corr, corrU)
     return dlsData
 
 def dummy(doPlot):
