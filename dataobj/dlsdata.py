@@ -617,7 +617,10 @@ class DLSData(DataObj):
     def __str__(self):
         out = [u"## {0} '{1}'".format(self.__class__.__name__, self.title)]
         for p in self._properties:
-            out.append(u"{0}: {1}".format(p, getattr(self, _privPropName(p))))
+            if "anglesUnit" in p: continue
+            value = getattr(self, _privPropName(p))
+            if "angles" in p: value = self.anglesToStr
+            out.append(u"{0}: {1}".format(p, value))
         return u"\n".join(out)
 
     def __hash__(self):
