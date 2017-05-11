@@ -244,6 +244,9 @@ def getUncertainties(paths):
     fitFiles = []
     for dataPath in paths:
         fitFiles += findFitOutput(str(dataPath))
+    if not len(fitFiles):
+        logging.error("No results found in path '{}'!".format(paths))
+        return None
     # sort files by angle first, use orderedDict
     fitFiles.sort(key = lambda x: x[-1])
     filesByAngle = OrderedDict()

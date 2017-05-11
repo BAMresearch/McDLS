@@ -52,6 +52,8 @@ class FileList(DataList):
         print("paths:", path)
         LastPath.set(os.path.dirname(path))
         ucByAngle = getUncertainties(path)
+        if ucByAngle is None:
+            return # nothing to do
         print("angles found:", list(ucByAngle.keys()))
         dlsData = simulate(*ucByAngle[90.])
         logging.info("Generated DLS data:\n" + str(dlsData))
