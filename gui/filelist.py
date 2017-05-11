@@ -54,7 +54,7 @@ class FileList(DataList):
         ucByAngle = getUncertainties(path)
         print("angles found:", list(ucByAngle.keys()))
         dlsData = simulate(ucByAngle[90.])
-        print(dlsData)
+        logging.info("Generated DLS data:\n" + str(dlsData))
         DataList.loadData(self, sourceList = [dlsData], showProgress = False,
                           processSourceFunc = lambda x: x)
         print("simulateData done")

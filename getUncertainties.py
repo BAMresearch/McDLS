@@ -157,13 +157,8 @@ def simulate(uc, doPlot = True):
     dlsData.setViscosity(Vis.toSi(0.932))
     dlsData.setRefractiveIndex(1.33200)
     dlsData.setWavelength(NM.toSi(632.8))
-    logging.info("setting up DLSData with:")
-    logging.info("    temp: {}, vis: {}, ref.ind.: {}, lambda: {}"
-                    .format(dlsData.temperature, dlsData.viscosity,
-                            dlsData.refractiveIndex, dlsData.wavelength))
     # init data for a single angle
     dlsData.setAngles(Deg, Deg.toSi(np.array((90.,))))
-    logging.info("    angle: {}".format(dlsData.angles))
     dlsData.setTau(MSec, MSec.toDisplay(uc[:, 0]))
     dlsData.setCorrelation(np.zeros_like(uc[:,1]).reshape((-1, 1)))
     dlsData.initConfig()
