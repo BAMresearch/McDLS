@@ -140,7 +140,7 @@ def launchPlot(uc):
     proc = Process(target = plot, args = [uc])
     proc.start()
 
-def simulate(uc, doPlot = True):
+def simulate(uc, label, doPlot = True):
     try:
         assert len(uc.shape) == 2
     except (AttributeError, AssertionError):
@@ -149,9 +149,8 @@ def simulate(uc, doPlot = True):
     from dataobj import DLSData
     from utils.units import K, Vis, NM, Deg, Sec, MSec
     # set up the dummy DataObj
-    dlsData = DLSData(title = "simulated title")
-    dlsData.setSampleName("simulated sample")
-    dlsData.setFilename("simulated file")
+    dlsData = DLSData(title = "simulated")
+    dlsData.setSampleDescription("{} uncertainty".format(label))
     # usual values from measurements
     dlsData.setTemperature(K.toSi(296))
     dlsData.setViscosity(Vis.toSi(0.932))
@@ -266,7 +265,7 @@ def getUncertainties(paths):
         if len(lst) == 1:
             label = os.path.basename(lst[0][0])
         plots[0].plot(combined, label)
-        ucByAngle[angle] = combined
+        ucByAngle[angle] = combined, label
     plots[0].show() # finalize the summary plot
     pyplot.show()
     return ucByAngle
