@@ -3,6 +3,10 @@
 # retrieves measurement uncertainties from McDLS result files and directories
 # which are possibly filtered, cropped and averaged by scattering angle
 
+from __future__ import absolute_import, unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import sys
 import os
 import re
@@ -241,7 +245,7 @@ def getUncertainties(paths):
         paths = [paths]
     fitFiles = []
     for dataPath in paths:
-        fitFiles += findFitOutput(dataPath)
+        fitFiles += findFitOutput(str(dataPath))
     # sort files by angle first, use orderedDict
     fitFiles.sort(key = lambda x: x[-1])
     filesByAngle = OrderedDict()
