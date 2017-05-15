@@ -697,6 +697,10 @@ class FitParameterBase(ParameterBase):
         tempVal[index] = val
         selforcls.setActiveValues(tempVal)
     
+    def hdfStoreAsMember(self):
+        return (super(FitParameterBase, self).hdfStoreAsMember()
+                + ["activeValues", "histograms"])
+
 class FitParameterString(FitParameterBase, ParameterString):
     pass
 
