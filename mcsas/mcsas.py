@@ -383,7 +383,7 @@ class McSAS(AlgorithmBase):
                 # updating unused data for completeness as well
                 vset[ri], sset[ri] = newModelData.vset, newModelData.sset
                 logging.info("rep {rep}/{reps}, good iter {it}: "
-                             "Chisqr= {cs:f}/{conv:.2f}, aGoFs= {opt}\r"
+                             "Chisqr= {cs:.3g}/{conv:.3g}, aGoFs= {opt:.3g}\r"
                              .format(it = numIter, cs = conval,
                                  conv = minConvergence, rep = nRun+1,
                                  reps = self.numReps(), opt = aGoFs))
