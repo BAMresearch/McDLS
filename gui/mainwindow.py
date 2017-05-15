@@ -50,6 +50,9 @@ from main import makeAbsolutePath
 INFOTEXT = (u"""
 <strong>major changes in McDLS Mk.XI:</strong><ul>
 <style>li { margin: .5em; }</style>
+<li>options to set uncertainty =1 or divided by G<sup>(2)</sup> (relative)</li>
+<li>fixed min. uncertainty % to be applied directly after loading files</li>
+<li>integrated uncertainty analysis &amp; DLS simulation</li>
 <li>synchronized to McSAS 1.3</li>
 <li>user customizable models</li>
 <li>no re-binning of DLS data allowed (raises error on trying)</li>
