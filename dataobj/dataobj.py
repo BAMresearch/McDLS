@@ -179,6 +179,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         self.config.updateX0Unit(self.x0.unit)
         self.config.fMaskZero.formatDisplayName(f = self.f.name)
         self.config.fMaskNeg.formatDisplayName(f = self.f.name)
+        self.config.fuRel.formatDisplayName(f = self.f.name)
         # FIXME: Problem with a many2one relation (many data sets, one config)
         #        -> What is the valid range supposed to be?
         #           Atm, the smallest common range wins. [ingo]
@@ -205,6 +206,14 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
     def _prepareUncertainty(self, *dummy):
         """Modifies the uncertainty of the whole range of measured data to be
         above a previously set minimum threshold *fuMin*."""
+        siDataU = self.f.unit.toSi(self.f.rawDataU)
+        if self.config.fuOne(): # set uncertainties == 1
+            logging.info("Setting uncertainties = 1.")
+            siDataU = np.ones_like(self.f.siDataU)
+        if self.config.fuRel(): # divide the uncertainties by the signal
+            logging.info("Dividing uncertainties by the measured signal.")
+            siDataU = siDataU / self.f.siData
+        # make sure, uncertainties meet the specified minimum
         minUncertaintyPercent = self.config.fuMin() * 100.
         siDataUMin = self.config.fuMin() * self.f.siData
         if not self.hasUncertainties:
@@ -212,7 +221,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
                             .format(minUncertaintyPercent))
             self.f.siDataU = siDataUMin
         else:
-            upd = np.maximum(self.f.unit.toSi(self.f.rawDataU), siDataUMin)
+            upd = np.maximum(siDataU, siDataUMin)
             count = sum(upd <= siDataUMin)
             if count > 0:
                 logging.warning("Minimum uncertainty of {}% intensity set "

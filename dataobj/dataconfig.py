@@ -98,6 +98,10 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         Parameter("fuMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
             displayName = "minimum uncertainty estimate",
             valueRange = (0., 1.), decimals = 9),
+        Parameter("fuOne", False, unit = NoUnit(),
+            displayName = "set uncertainty = 1"),
+        Parameter("fuRel", False, unit = NoUnit(),
+            displayName = u"use rel. uncertainty [σ/{f}]"),
         Parameter("nBin", 100, unit = NoUnit(),
             displayName = "target number of bins \n (0 = no re-binning)",
             description = "Sets the number of bins to rebin the data into. \n May be smaller than target value.", 
@@ -115,9 +119,6 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     @property
     def callbackSlots(self):
         return set(("x0limits", "x1limits", "fMasks", "fuMin"))
-
-    def updateFuMin(self):
-        self.callback("fuMin", self.fuMin())
 
     @property
     def is2d(self):
@@ -144,6 +145,8 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         self.fMaskZero.setOnValueUpdate(self.updateFMasks)
         self.fMaskNeg.setOnValueUpdate(self.updateFMasks)
         self.fuMin.setOnValueUpdate(self.updateFuMin)
+        self.fuOne.setOnValueUpdate(self.updateFuOne)
+        self.fuRel.setOnValueUpdate(self.updateFuRel)
 
     def updateX0Limits(self):
         self._onLimitUpdate("x0limits", self.x0Low, self.x0High)
@@ -160,6 +163,21 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
 
     def updateFMasks(self):
         self.callback("fMasks", (self.fMaskZero(), self.fMaskNeg()))
+
+    def updateFuMin(self):
+        self.callback("fuMin", self.fuMin())
+
+    def updateFuOne(self):
+        if self.fuOne():
+            self.fuRel.setValue(False)
+        # hand over to fuMin
+        self.updateFuMin()
+
+    def updateFuRel(self):
+        if self.fuRel():
+            self.fuOne.setValue(False)
+        # hand over to fuMin
+        self.updateFuMin()
 
     def updateX0Unit(self, newUnit):
         """Sets the unit of the x0 vector."""
