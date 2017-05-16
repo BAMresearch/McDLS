@@ -58,7 +58,7 @@ class NXcanSASFile(DataFile):
             logging.error("required uncertainties not found in NeXus file: {}"
                     .format(self.filename))
 
-    def readItem(self, element)
+    def readItem(self, element):
         with h5py.Open(self.filename, 'r') as h5f:
             if not element in h5f[self.dataRoot]:
                 logging.warning("NeXus element: {} not found in file: {} at location {}"

@@ -10,7 +10,8 @@ Submodules
    utils.classproperty
    utils.devtools
    utils.error
-   utils.inheritabledocstrings
+   utils.findmodels
+   utils.hdf
    utils.lastpath
    utils.loadstore
    utils.mixedmethod

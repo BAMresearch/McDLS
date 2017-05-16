@@ -18,6 +18,7 @@ from utils.findmodels import FindModels
 from bases.model import ScatteringModel
 from gui.scientrybox import SciEntryBox
 from gui.algorithmwidget import AlgorithmWidget
+from gui.utils.displayexception import DisplayException
 from dataobj import DataObj
 
 FIXEDWIDTH = 240
@@ -125,8 +126,18 @@ class ModelWidget(AlgorithmWidget):
         self.removeWidgets(self.modelWidget)
         # create new parameter widget based on current selection
         for p in self.model.params():
-            widget = self.makeSetting(p, activeBtns = True)
-            layout.addWidget(widget)
+            try:
+                widget = self.makeSetting(p, activeBtns = True)
+                layout.addWidget(widget)
+            except Exception as e:
+                DisplayException(e, fmt = u"An error occurred on building a "
+                    "UI for parameter '{p}' in model '{m}'."
+                    "<p><nobr>{e}</nobr></p>"
+                    "Please see the log for a traceback."
+                    .format(p = p.name(), m = self.model.name(), e = "{e}"))
+                self.removeWidgets(self.modelWidget)
+                self.modelBox.setCurrentIndex(0)
+                return
         layout.addStretch()
         # restore user settings for this model
         self.restoreSession(self.model.name())

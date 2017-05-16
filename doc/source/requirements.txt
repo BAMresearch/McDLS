@@ -1,0 +1,8 @@
+# doc/source/requirements.txt
+#
+# additional python requirements for building the McSAS documentation
+# at mcsas.readthedocs.io
+
+future
+requests
+

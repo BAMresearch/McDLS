@@ -16,8 +16,6 @@ Submodules
    models.gaussianchain
    models.kholodenko
    models.lmadensesphere
-   models.scatteringmodel
-   models.scatteringmodel_test
    models.sphere
    models.sphericalcoreshell
 

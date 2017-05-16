@@ -8,6 +8,7 @@ Subpackages
 
     bases.algorithm
     bases.dataset
+    bases.model
 
 Module contents
 ---------------

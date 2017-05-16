@@ -10,6 +10,7 @@ Submodules
    datafile.asciifile
    datafile.cgsfile
    datafile.datafile
+   datafile.nxcansasfile
    datafile.pdhfile
 
 Module contents

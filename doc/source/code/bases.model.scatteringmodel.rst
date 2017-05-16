@@ -1,7 +1,7 @@
-mcsas.utils.inheritabledocstrings module
+mcsas.bases.model.scatteringmodel module
 ========================================
 
-.. automodule:: utils.inheritabledocstrings
+.. automodule:: bases.model.scatteringmodel
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,7 +1,7 @@
-mcsas.models.scatteringmodel module
+mcsas.dataobj.sasconfig_test module
 ===================================
 
-.. automodule:: models.scatteringmodel
+.. automodule:: dataobj.sasconfig_test
     :members:
     :undoc-members:
     :show-inheritance:

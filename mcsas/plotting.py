@@ -450,13 +450,14 @@ class PlotResults(object):
                    label = u"MC Fit {name}"
                             .format(name = dataset.f.name))
         try: # try to plot the background level
-            qAxis.plot(dataset.x0.unit.toDisplay(fitX0), np.full_like(fitX0,
-                       dataset.f.unit.toDisplay(self._BG[0])),
+            qAxis.plot(dataset.x0.unit.toDisplay(fitX0),
+                       np.ones_like(fitX0) * dataset.f.unit.toDisplay(self._BG[0]),
                        'g-', linewidth = 3, zorder = 3,
                        label = "MC Background level:\n"
                                "        ({0:03.3g})".format(self._BG[0]))
-        except:
+        except Exception as e:
             logging.error("could not plot background")
+#            logging.exception(e)
             pass
 
         suppAx = self.plotCountRate(qAxis, dataset)
