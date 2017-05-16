@@ -583,10 +583,6 @@ class FitParameterBase(ParameterBase):
             activeRange = None, histograms = Histograms(),
             activeValues = list())
 
-    def hdfStoreAsMember(self):
-        return (super(FitParameterBase, self).hdfStoreAsMember()
-                + ['histograms', 'activeValues'])
-
     def __init__(self):
         super(FitParameterBase, self).__init__()
         # create a copy of histograms
@@ -697,6 +693,10 @@ class FitParameterBase(ParameterBase):
         tempVal[index] = val
         selforcls.setActiveValues(tempVal)
     
+    def hdfStoreAsMember(self):
+        return (super(FitParameterBase, self).hdfStoreAsMember()
+                + ["histograms", "activeValues"])
+
 class FitParameterString(FitParameterBase, ParameterString):
     pass
 
