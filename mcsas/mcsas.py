@@ -135,10 +135,10 @@ class McSAS(AlgorithmBase):
 
     """
 
-    # user provided data to work with
-    data = None
+    data = None    # user provided data to work with
     model = None
     result = None
+    _lastConv = None # remembers the last few goodness of fit values
 
     # there are several ways to accomplish this depending on where/when
     # McSASParameters() should be called: when creating an instance or
@@ -148,6 +148,14 @@ class McSAS(AlgorithmBase):
         # calling factory of parent class which is AlgorithmBase currently
         return super(McSAS, cls).factory("McSAS",
                                          *McSASParameters().parameters)
+    def __init__(self, *args, **kwargs):
+        super(McSAS, self).__init__(*args, **kwargs)
+        # assist the user by setting the minimum required goodness of fit
+        # variance to a useful value
+        def setDefaultVarianceLimit():
+            if self.testConvVariance():
+                self.convergenceCriterion.setValue(1e-14)
+        self.testConvVariance.setOnValueUpdate(setDefaultVarianceLimit)
 
     def calc(self, **kwargs):
         # initialize
@@ -191,6 +199,17 @@ class McSAS(AlgorithmBase):
     ####################### optimisation Functions #######################
     ######################################################################
 
+    def _convReached(self, conval):
+        minConvergence = self.convergenceCriterion()
+        if self.testConvVariance():
+            # all initial values have to be replaced and
+            # the variance of the last conv. values has to be very small
+            return (self._lastConv is not None
+                    and not any(self._lastConv < 0.)
+                    and self._lastConv.var() < minConvergence)
+        else:
+            return conval < minConvergence
+
     def analyse(self):
         """This function runs the Monte Carlo optimisation a multitude
         (*numReps*) of times. If convergence is not achieved, it will try 
@@ -199,7 +218,6 @@ class McSAS(AlgorithmBase):
         # get settings
         numContribs = self.numContribs()
         numReps = self.numReps()
-        minConvergence = self.convergenceCriterion()
         if not any([isActiveFitParam(p) for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
@@ -220,7 +238,8 @@ class McSAS(AlgorithmBase):
             nt = 0
             # do that MC thing! 
             convergence = inf
-            while convergence > minConvergence:
+            self._lastConv = None
+            while not self._convReached(convergence):
                 if nt > self.maxRetries():
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
@@ -235,7 +254,7 @@ class McSAS(AlgorithmBase):
                 # convergence within MaximumIterations.
                 (contributions[:, :, nr], contribMeasVal[:, :, nr],
                  convergence, details) = self.mcFit(
-                                numContribs, minConvergence,
+                                numContribs,
                                 outputMeasVal = True, outputDetails = True,
                                 nRun = nr)
                 if any(array(contributions.shape) == 0):
@@ -287,7 +306,7 @@ class McSAS(AlgorithmBase):
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
 
-    def mcFit(self, numContribs, minConvergence,
+    def mcFit(self, numContribs,
               outputMeasVal = False, outputDetails = False, nRun = None):
         """
         Object-oriented, shape-flexible core of the Monte Carlo procedure.
@@ -347,12 +366,14 @@ class McSAS(AlgorithmBase):
         start = time.time()
         # progress tracking:
         numMoves, numIter, lastUpdate = 0, 0, 0
+        # last successful chisqr
+        self._lastConv = numpy.ones(10) * -1.
         # running variable indicating which contribution to change
         ri = 0
         ftest = None
         #NOTE: keep track of uncertainties in MC procedure through epsilon
         while (len(wset) > 1 and # see if there is a distribution at all
-               conval > minConvergence and
+               not self._convReached(conval) and
                numIter < self.maxIterations.value() and
                not self.stop):
             rt = self.model.generateParameters()
@@ -382,11 +403,15 @@ class McSAS(AlgorithmBase):
                 ft, wset[ri] = testModelData.cumInt, newModelData.wset
                 # updating unused data for completeness as well
                 vset[ri], sset[ri] = newModelData.vset, newModelData.sset
+                self._lastConv[numMoves%len(self._lastConv)] = conval
+                text = "/{0:.3g}".format(self.convergenceCriterion())
+                if self.testConvVariance():
+                    text = ", var= {0:.3g}".format(self._lastConv.var()) + text
                 logging.info("rep {rep}/{reps}, good iter {it}: "
-                             "Chisqr= {cs:.3g}/{conv:.3g}, aGoFs= {opt:.3g}\r"
+                             "Chisqr= {cs:.3g}{t}, aGoFs= {opt:.3g}\r"
                              .format(it = numIter, cs = conval,
-                                 conv = minConvergence, rep = nRun+1,
-                                 reps = self.numReps(), opt = aGoFs))
+                                     t = text, rep = nRun+1,
+                                     reps = self.numReps(), opt = aGoFs))
                 numMoves += 1
 
             if time.time() - lastUpdate > 0.25:
@@ -415,7 +440,8 @@ class McSAS(AlgorithmBase):
         elapsed = time.time() - start + 1e-3
         logging.info("Number of iterations per second: {0}".format(
                         numIter/elapsed))
-        logging.info("Number of valid moves: {0}".format(numMoves))
+        logging.info("Number of valid moves: {0} out of {1} iterations."
+                     .format(numMoves, numIter))
         logging.info("Final Chi-squared value: {0}".format(conval))
         details.update({'numIterations': numIter,
             'numMoves': numMoves,

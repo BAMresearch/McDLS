@@ -31,7 +31,7 @@ class OptimizationWidget(AlgorithmWidget):
         self.setLayout(hlayout)
 
         self.defaults = DefaultSettings(self, widgets = tuple(self.makeWidgets(
-            "convergenceCriterion", "numReps", "autoClose")))
+            "convergenceCriterion", "testConvVariance", "numReps", "autoClose")))
         # creating an ui entry with settings persistence via store/restore
         self.advanced = self._makeEntry("showAdvanced", bool, False,
             widgetType = AdvancedSettings, widgets = tuple(self.makeWidgets(
