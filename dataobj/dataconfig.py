@@ -170,12 +170,16 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def updateFuOne(self):
         if self.fuOne():
             self.fuRel.setValue(False)
+        # disable minimum uncertainty to avoid accidental overwriting
+        self.fuMin.setValue(0.0)
         # hand over to fuMin
         self.updateFuMin()
 
     def updateFuRel(self):
         if self.fuRel():
             self.fuOne.setValue(False)
+        # disable minimum uncertainty to avoid accidental overwriting
+        self.fuMin.setValue(0.0)
         # hand over to fuMin
         self.updateFuMin()
 
