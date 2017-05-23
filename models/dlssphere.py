@@ -19,7 +19,7 @@ class DLSSphere(DLSModel):
                     valueRange = (0., numpy.inf),
                     activeRange = NM.toSi((1., 1000.)),
                     generator = RandomUniform,
-                    decimals = 1), 
+                    decimals = 3),
                   Parameter("withFF", True,
                     displayName = "Include the SAS sphere form factor?"),
                   )
