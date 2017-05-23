@@ -208,8 +208,8 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
         above a previously set minimum threshold *fuMin*."""
         siDataU = self.f.unit.toSi(self.f.rawDataU)
         if self.config.fuOne(): # set uncertainties == 1
-            logging.info("Setting uncertainties = 1.")
-            siDataU = np.ones_like(self.f.siDataU)
+            siDataU = np.ones_like(self.f.siDataU) * 0.1
+            logging.info("Setting uncertainties = {0:.2g}.".format(siDataU.mean()))
         if self.config.fuRel(): # divide the uncertainties by the signal
             logging.info("Dividing uncertainties by the measured signal.")
             siDataU = siDataU / self.f.siData
