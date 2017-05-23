@@ -96,15 +96,24 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
             displayName = "Mask negative {f} values", description =
             "Renders negative intensity values invalid for fitting"),
         Parameter("fuMin", Fraction(u"%").toSi(1.), unit = Fraction(u"%"),
-            displayName = "minimum uncertainty estimate",
+            displayName = "minimum uncertainty estimate", description =
+            "Ensures that the uncertainties of the data are greater than the "
+            "given fraction of the measured signal.",
             valueRange = (0., 1.), decimals = 9),
-        Parameter("fuOne", False, unit = NoUnit(),
-            displayName = "set uncertainty = 1"),
+        Parameter("fuConst", False, unit = NoUnit(),
+            displayName = "set uncertainties constant", description =
+            "Sets all uncertainties of the data to the same value, "
+            "such as 0.1, resulting in equal weighting of all data points."
+            "(mutually exclusive with relative uncertainty)"),
         Parameter("fuRel", False, unit = NoUnit(),
-            displayName = u"use rel. uncertainty [σ/{f}]"),
+            displayName = u"use relative uncertainty [σ/{f}]", description =
+            "Divides all uncertainties of the data by the corresponding "
+            "data value to weigh it relatively."
+            "(mutually exclusive with constant uncertainty)"),
         Parameter("nBin", 100, unit = NoUnit(),
             displayName = "target number of bins \n (0 = no re-binning)",
-            description = "Sets the number of bins to rebin the data into. \n May be smaller than target value.", 
+            description = "Sets the number of bins to rebin the data into. \n"
+                          "May be smaller than target value.",
             valueRange = (0., 1000)),
     )
 
@@ -145,7 +154,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
         self.fMaskZero.setOnValueUpdate(self.updateFMasks)
         self.fMaskNeg.setOnValueUpdate(self.updateFMasks)
         self.fuMin.setOnValueUpdate(self.updateFuMin)
-        self.fuOne.setOnValueUpdate(self.updateFuOne)
+        self.fuConst.setOnValueUpdate(self.updateFuConst)
         self.fuRel.setOnValueUpdate(self.updateFuRel)
 
     def updateX0Limits(self):
@@ -167,8 +176,8 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
     def updateFuMin(self):
         self.callback("fuMin", self.fuMin())
 
-    def updateFuOne(self):
-        if self.fuOne():
+    def updateFuConst(self):
+        if self.fuConst():
             self.fuRel.setValue(False)
         # disable minimum uncertainty to avoid accidental overwriting
         self.fuMin.setValue(0.0)
@@ -177,7 +186,7 @@ class DataConfig(AlgorithmBase, CallbackRegistry):
 
     def updateFuRel(self):
         if self.fuRel():
-            self.fuOne.setValue(False)
+            self.fuConst.setValue(False)
         # disable minimum uncertainty to avoid accidental overwriting
         self.fuMin.setValue(0.0)
         # hand over to fuMin
