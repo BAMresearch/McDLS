@@ -15,9 +15,13 @@ import numpy as np
 import logging
 logging.basicConfig(level = logging.INFO)
 #np.seterr(all='raise', under = 'ignore')
+from multiprocessing import Process, Pipe
+import matplotlib
+import matplotlib.pyplot as pyplot
 
 from utils import isString, isList
 from utils.units import Deg
+from mcsas.plotting import PlotResults
 
 def angleFromFilename(name):
     match = re.findall('\[([^°\]]+)°\]', name)
@@ -71,10 +75,6 @@ def processFitFile(dirpath, filename, *args):
         return
     return np.array((xvec, yvec)).T
 
-import matplotlib
-import matplotlib.pyplot as pyplot
-from mcsas.plotting import PlotResults
-
 class PlotUncertainty(object):
     _figure = None
     _axes = None
@@ -105,7 +105,7 @@ class PlotUncertainty(object):
             lbl = "{} {}".format(lbl, self._suffix)
         return lbl
 
-    def __init__(self, count = 0, suffix = None):
+    def __init__(self, count = 0, suffix = None, conn = None):
         self._suffix = suffix
         self._figure = pyplot.figure(figsize = (15, 8), dpi = 80,
                               facecolor = 'w', edgecolor = 'k')
@@ -118,6 +118,15 @@ class PlotUncertainty(object):
             # https://matplotlib.org/examples/color/colormaps_reference.html
             self._cmap = pyplot.cm.get_cmap("gist_ncar", count+1)
         self._idx = 0
+        while True:
+            # waiting for commands to call plot() or show()
+            cmd, args, kwargs = conn.recv()
+            func = getattr(self, cmd, None)
+            if func is not None:
+                func(*args, **kwargs)
+                # show() stops the waiting here,
+                # pyplot in show() blocks itself (win&lin)
+                if "show" in cmd: break # done here
 
     def plot(self, uc, label):
         if not isinstance(uc, np.ndarray):
@@ -133,12 +142,24 @@ class PlotUncertainty(object):
         self._axes.legend(loc = 1, fancybox = True)
         pyplot.setp(pyplot.gca().get_legend().get_texts(), fontsize = 'small')
         PlotResults.plotGrid(self._axes)
-#        pyplot.show()
+        pyplot.show()
 
-def launchPlot(uc):
-    from multiprocessing import Process, Queue
-    proc = Process(target = plot, args = [uc])
-    proc.start()
+class PlotUncertaintyProcess(Process):
+    _parentConn = None
+    _childConn  = None
+
+    def __init__(self, *args, **kwargs):
+        self._parentConn, self._childConn = Pipe()
+        kwargs["conn"] = self._childConn
+        super(PlotUncertaintyProcess, self).__init__(target = PlotUncertainty,
+                                                     kwargs = kwargs)
+        self.start()
+
+    def plot(self, *args, **kwargs):
+        self._parentConn.send(("plot", args, kwargs))
+
+    def show(self, *args, **kwargs):
+        self._parentConn.send(("show", args, kwargs))
 
 def simulate(uc, label, doPlot = True):
     try:
@@ -214,7 +235,7 @@ def plotFiles(files, doPlot = True, suffix = None):
     """Expecting a list of tuples."""
     plot = None
     if doPlot and len(files) > 1:
-        plot = PlotUncertainty(len(files)+1, suffix = suffix)
+        plot = PlotUncertaintyProcess(len(files)+1, suffix = suffix)
     curves = []
     tau = None
     # plot files, sorted by name
@@ -263,8 +284,8 @@ def getUncertainties(paths):
             filesByAngle[angle] = []
         filesByAngle[angle].append((dn, fn, angle))
     # init the summary plot first
-    plots = [PlotUncertainty(len(filesByAngle),
-                             suffix = "of median")]
+    plots = [PlotUncertaintyProcess(len(filesByAngle),
+                                    suffix = "of median")]
     ucByAngle = OrderedDict()
     for angle, lst in filesByAngle.items():
         combined, separatePlot = plotFiles(lst, doPlot = True,
@@ -278,10 +299,7 @@ def getUncertainties(paths):
         plots[0].plot(combined, label)
         ucByAngle[angle] = combined, label
     plots[0].show() # finalize the summary plot
-    pyplot.show()
     return ucByAngle
-    # use ucByAngle for simulation
-#    simulate(combined, doPlot)
 
 if __name__ == "__main__":
     assert len(sys.argv) > 1, (
