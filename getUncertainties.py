@@ -20,7 +20,7 @@ import matplotlib
 import matplotlib.pyplot as pyplot
 
 from utils import isString, isList
-from utils.units import Deg
+from utils.units import Deg, NM3
 from mcsas.plotting import PlotResults
 
 def angleFromFilename(name):
@@ -161,6 +161,12 @@ class PlotUncertaintyProcess(Process):
     def show(self, *args, **kwargs):
         self._parentConn.send(("show", args, kwargs))
 
+def volume(pop):
+    """Returns the volume of a given list of radii (aka population)"""
+    def vol(r):
+        return 3./4. * np.pi * r**3
+    return sum(vol(r) for r in pop)
+
 def simulate(uc, label, doPlot = True):
     try:
         assert len(uc.shape) == 2
@@ -192,16 +198,48 @@ def simulate(uc, label, doPlot = True):
 #    distrib = numpy.array([norm.pdf(x, 50.) for x in sizes])
 #    sizes[distrib * sizes > 0.01]
 #    lst = [NM.toSi(x) for x in (13., 15., 15., 17.)] # RM8012, 15nm radius
-    lst = [NM.toSi(x) for x in (36., 40., 40., 44.)] # FD102, 20nm
-    for i in range(1,20): # excluding 20: len = 19
-        lst.extend([NM.toSi(x) for x in (9., 10., 10., 11.)]) # FD102, 80nm
-    logging.info("simulating {} contribs:\n{}".format(len(lst), lst))
-    modelData = model.calc(dlsData, np.array(lst).reshape((-1, 1)),
-                           compensationExponent = 1.)
-    corr = 0.1234 + 0.85465*modelData.chisqrInt.reshape((-1, 1))
-    corrU = uc[:,1].reshape((-1, 1))               # uncertainty from data
+    volRatio = 1./20 # desired volume ratio
+    populations = []
+    # FD102, 20nm
+    populations.append([NM.toSi(x) for x in ( 9., 10., 10., 11.)])
+    # FD102, 80nm
+    populations.append([NM.toSi(x) for x in (36., 40., 40., 44.)])
+    for i, pop in enumerate(populations):
+        logging.info("simulated population {}: {} ({})"
+                        .format(i, NM.toDisplay(pop), NM.displayMagnitudeName))
+    # calculate amount of each population to reach the desired ratio
+    volumes = [volume(pop) for pop in populations]
+    # assumes the small population first, the larger ones next
+    logging.info("population volumes: {} ({})".format(NM3.toDisplay(volumes),
+                                                      NM3.displayMagnitudeName))
+    factorSmall = (1./volRatio -1.) * volumes[1]/volumes[0]
+    logging.info("Adjusting smaller population count by {:.4g} "
+                 "to reach the desired volume ratio of {:.4g}."
+                 .format(factorSmall, volRatio))
+    # increase numbers of small population
+    decimals = factorSmall%1
+    tol = 1e-2
+    if decimals < tol or (1.-decimals) < tol:
+        populations[0] *= int(factorSmall)
+    else: # multiply all count by inverse tolerance
+        populations[0] *= int(factorSmall/tol)
+        populations[1] *= int(1./tol)
+    logging.info("Overall populations count: {}"
+                 .format(sum([len(pop) for pop in populations])))
+    volumes = []
+    for i, pop in enumerate(populations):
+        volumes.append(volume(pop))
+        logging.info("volume of population {}: {} {}".format(
+            i, NM3.toDisplay(volumes[-1]), NM3.displayMagnitudeName))
+    logging.info("volume ratio: {}".format(
+        ":".join(["{0:.4g}".format(v) for v in (np.array(volumes) / min(volumes))])))
+    modelData = model.calc(dlsData,
+            np.array([r for pop in populations for r in pop]).reshape((-1, 1)),
+            compensationExponent = 1.)
+    corr = modelData.chisqrInt.reshape((-1, 1))
+#    corrU = uc[:,1].reshape((-1, 1))               # uncertainty from data
 #    corrU = np.ones_like(uc[:,1]).reshape((-1, 1)) # no uncertainty, =1
-#    corrU = None
+    corrU = None
     dlsData.setCorrelation(corr, corrU)
     return dlsData
 
