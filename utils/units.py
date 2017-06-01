@@ -341,6 +341,7 @@ MSec = Time(u"ms")
 Sec = Time(u"s")
 NM = Length(u"nm")
 Deg = Angle(u"°")
+NM3 = Volume(u"nm³")
 
 if __name__ == "__main__":
     import doctest
