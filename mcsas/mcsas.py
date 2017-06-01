@@ -12,7 +12,6 @@ from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   isnan, newaxis)
 # useful for debugging numpy RuntimeWarnings
 # numpy.seterr(all = "raise", under = "ignore")
-from scipy import optimize
 import time # Timekeeping and timing of objects
 import copy
 import logging
@@ -32,9 +31,12 @@ from . import McSASParameters
 from dataobj import SASData
 
 class ConvBuffer(object):
-    _buffer = None
+    """Implements kind of a ring buffer to store a limited number
+    of (x,y) value pairs and calculate statistics of it continuously."""
     _minConv = None
     _testConvVariance = None
+    _y = None
+    _x = None
 
     def __init__(self, minConv, testConvVariance = False):
         self._minConv = minConv
@@ -42,22 +44,30 @@ class ConvBuffer(object):
         self.clear()
 
     def clear(self):
-        self._buffer = numpy.ones(10) * -1.
+        self._x = []
+        self._y = []
+
+    def __len__(self):
+        return len(self._x)
 
     def set(self, i, value):
-        self._buffer[i%len(self._buffer)] = value
+        self._x.append(i)
+        self._y.append(value)
+        if len(self) > 10: # limit the number of values to remember
+            del self._x[0] # remove the oldest, front
+            del self._y[0]
 
     @property
     def key(self):
-        return self._buffer.var()
+        # https://stackoverflow.com/a/9538936
+        # ((X*Y).mean(axis=1) - X.mean()*Y.mean(axis=1)) / ((X**2).mean() - (X.mean())**2)
+        return numpy.array(self._y).var()
 
     def reached(self, conval):
         if self._testConvVariance:
             # all initial values have to be replaced and
             # the variance of the last conv. values has to be very small
-            return (    self._buffer is not None
-                    and not any(self._buffer < 0.)
-                    and self.key < self._minConv)
+            return (len(self) > 1 and self.key < self._minConv)
         else:
             return conval < self._minConv
 
