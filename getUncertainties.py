@@ -212,24 +212,25 @@ def simulate(uc, label, doPlot = True):
     # assumes the small population first, the larger ones next
     logging.info("population volumes: {} ({})".format(NM3.toDisplay(volumes),
                                                       NM3.displayMagnitudeName))
-    factorSmall = (1./volRatio -1.) * volumes[1]/volumes[0]
-    logging.info("Adjusting smaller population count by {:.4g} "
-                 "to reach the desired volume ratio of {:.4g}."
-                 .format(factorSmall, volRatio))
-    # increase numbers of small population
-    decimals = factorSmall%1
-    tol = 1e-2
-    if decimals < tol or (1.-decimals) < tol:
-        populations[0] *= int(factorSmall)
-    else: # multiply all count by inverse tolerance
-        populations[0] *= int(factorSmall/tol)
-        populations[1] *= int(1./tol)
-    logging.info("Overall populations count: {}"
-                 .format(sum([len(pop) for pop in populations])))
+    if len(volumes) > 1:
+        factorSmall = (1./volRatio -1.) * volumes[1]/volumes[0]
+        logging.info("Adjusting smaller population count by factor {:.4g} "
+                     "to reach the desired volume ratio of {:.4g}:{}."
+                     .format(factorSmall, (1./volRatio -1.), "1"))
+        # increase numbers of small population
+        decimals = factorSmall%1
+        tol = 1e-2
+        if decimals < tol or (1.-decimals) < tol:
+            populations[0] *= int(factorSmall)
+        else: # multiply all count by inverse tolerance
+            populations[0] *= int(factorSmall/tol)
+            populations[1] *= int(1./tol)
+        logging.info("Overall populations count: {}"
+                     .format(sum([len(pop) for pop in populations])))
     volumes = []
     for i, pop in enumerate(populations):
         volumes.append(volume(pop))
-        logging.info("volume of population {}: {} {}".format(
+        logging.info("new volume of population {}: {} {}".format(
             i, NM3.toDisplay(volumes[-1]), NM3.displayMagnitudeName))
     logging.info("volume ratio: {}".format(
         ":".join(["{0:.4g}".format(v) for v in (np.array(volumes) / min(volumes))])))
