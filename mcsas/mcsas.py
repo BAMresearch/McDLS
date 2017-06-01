@@ -59,9 +59,19 @@ class ConvBuffer(object):
 
     @property
     def key(self):
+        return numpy.abs(self._slope()) # negative slope of chisqr usually
+#        return numpy.array(self._y).var() # variance
+
+    def _slope(self):
         # https://stackoverflow.com/a/9538936
         # ((X*Y).mean(axis=1) - X.mean()*Y.mean(axis=1)) / ((X**2).mean() - (X.mean())**2)
-        return numpy.array(self._y).var()
+        x = numpy.array(self._x)
+        y = numpy.array(self._y)
+        # calculate slope x vs. y values
+        d = ((x**2).mean() - x.mean()**2)
+        if d == 0.:
+            return 1e300
+        return ((x*y).mean() - x.mean()*y.mean()) / d
 
     def reached(self, conval):
         if self._testConvVariance:
