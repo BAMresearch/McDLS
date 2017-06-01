@@ -53,14 +53,14 @@ class ConvBuffer(object):
     def set(self, i, value):
         self._x.append(i)
         self._y.append(value)
-        if len(self) > 10: # limit the number of values to remember
+        if len(self) > 20: # limit the number of values to remember
             del self._x[0] # remove the oldest, front
             del self._y[0]
 
     @property
     def key(self):
-        return numpy.abs(self._slope()) # negative slope of chisqr usually
-#        return numpy.array(self._y).var() # variance
+#        return numpy.abs(self._slope()) # negative slope of chisqr usually
+        return numpy.array(self._y).var() # variance
 
     def _slope(self):
         # https://stackoverflow.com/a/9538936
