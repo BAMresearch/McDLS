@@ -31,6 +31,36 @@ from . import PlotResults
 from . import McSASParameters
 from dataobj import SASData
 
+class ConvBuffer(object):
+    _buffer = None
+    _minConv = None
+    _testConvVariance = None
+
+    def __init__(self, minConv, testConvVariance = False):
+        self._minConv = minConv
+        self._testConvVariance = testConvVariance
+        self.clear()
+
+    def clear(self):
+        self._buffer = numpy.ones(10) * -1.
+
+    def set(self, i, value):
+        self._buffer[i%len(self._buffer)] = value
+
+    @property
+    def key(self):
+        return self._buffer.var()
+
+    def reached(self, conval):
+        if self._testConvVariance:
+            # all initial values have to be replaced and
+            # the variance of the last conv. values has to be very small
+            return (    self._buffer is not None
+                    and not any(self._buffer < 0.)
+                    and self.key < self._minConv)
+        else:
+            return conval < self._minConv
+
 class McSAS(AlgorithmBase):
     r"""
     Main class containing all functions required to do Monte Carlo fitting.
@@ -138,7 +168,7 @@ class McSAS(AlgorithmBase):
     data = None    # user provided data to work with
     model = None
     result = None
-    _lastConv = None # remembers the last few goodness of fit values
+    _convBuffer = None # remembers the last few goodness of fit values
 
     # there are several ways to accomplish this depending on where/when
     # McSASParameters() should be called: when creating an instance or
@@ -199,17 +229,6 @@ class McSAS(AlgorithmBase):
     ####################### optimisation Functions #######################
     ######################################################################
 
-    def _convReached(self, conval):
-        minConvergence = self.convergenceCriterion()
-        if self.testConvVariance():
-            # all initial values have to be replaced and
-            # the variance of the last conv. values has to be very small
-            return (self._lastConv is not None
-                    and not any(self._lastConv < 0.)
-                    and self._lastConv.var() < minConvergence)
-        else:
-            return conval < minConvergence
-
     def analyse(self):
         """This function runs the Monte Carlo optimisation a multitude
         (*numReps*) of times. If convergence is not achieved, it will try 
@@ -230,6 +249,8 @@ class McSAS(AlgorithmBase):
         times = zeros(numReps)
         contribMeasVal = zeros([1, self.data.count, numReps])
 
+        self._convBuffer = ConvBuffer(self.convergenceCriterion(),
+                                      self.testConvVariance())
         # This is the loop that repeats the MC optimization numReps times,
         # after which we can calculate an uncertainty on the Results.
         for nr in range(numReps):
@@ -238,8 +259,8 @@ class McSAS(AlgorithmBase):
             nt = 0
             # do that MC thing! 
             convergence = inf
-            self._lastConv = None
-            while not self._convReached(convergence):
+            self._convBuffer.clear()
+            while not self._convBuffer.reached(convergence):
                 if nt > self.maxRetries():
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
@@ -367,13 +388,13 @@ class McSAS(AlgorithmBase):
         # progress tracking:
         numMoves, numIter, lastUpdate = 0, 0, 0
         # last successful chisqr
-        self._lastConv = numpy.ones(10) * -1.
+        self._convBuffer.clear()
         # running variable indicating which contribution to change
         ri = 0
         ftest = None
         #NOTE: keep track of uncertainties in MC procedure through epsilon
         while (len(wset) > 1 and # see if there is a distribution at all
-               not self._convReached(conval) and
+               not self._convBuffer.reached(conval) and
                numIter < self.maxIterations.value() and
                not self.stop):
             rt = self.model.generateParameters()
@@ -403,10 +424,10 @@ class McSAS(AlgorithmBase):
                 ft, wset[ri] = testModelData.cumInt, newModelData.wset
                 # updating unused data for completeness as well
                 vset[ri], sset[ri] = newModelData.vset, newModelData.sset
-                self._lastConv[numMoves%len(self._lastConv)] = conval
+                self._convBuffer.set(numMoves, conval)
                 text = "/{0:.3g}".format(self.convergenceCriterion())
                 if self.testConvVariance():
-                    text = ", var= {0:.3g}".format(self._lastConv.var()) + text
+                    text = ", var= {0:.3g}".format(self._convBuffer.key) + text
                 logging.info("rep {rep}/{reps}, good iter {it}: "
                              "Chisqr= {cs:.3g}{t}, aGoFs= {opt:.3g}\r"
                              .format(it = numIter, cs = conval,
