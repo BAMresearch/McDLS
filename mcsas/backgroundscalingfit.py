@@ -95,6 +95,7 @@ class BackgroundScalingFit(object):
         return (data * sc[0])
 
     def fitLM(self, dataMeas, dataErr, dataCalc, sc):
+        """Levenberg-Marquardt method"""
         func = self.chiNoBg
         if self._findBackground:
             func = self.chi
@@ -105,6 +106,7 @@ class BackgroundScalingFit(object):
         return sc
 
     def fitSimplex(self, dataMeas, dataErr, dataCalc, sc):
+        """Downhill Simplex (aka Nelder-Mead) method"""
         def residual(xsc):
             return self.chiSqr(dataMeas, dataErr, self.dataScaled(dataCalc, xsc))
         sc = optimize.fmin(residual, sc, full_output = False, disp = 0)
@@ -121,6 +123,8 @@ class BackgroundScalingFit(object):
             return sc, 1., dataCalc, 1.
 
         # different data fit approaches: speed vs. stability (?)
+        # find 2 values: scaling & background
+        # least squares optimize them to match model data with measurement
         if ver == 2:
             sc = self.fitLM(dataMeas, dataErr, dataCalc, sc)
         else:
