@@ -203,7 +203,7 @@ class McSAS(AlgorithmBase):
         # assist the user by setting the minimum required goodness of fit
         # variance to a useful value
         def setDefaultVarianceLimit():
-            if self.testConvVariance():
+            if self.testConvVariance() and self.convergenceCriterion() > .01:
                 self.convergenceCriterion.setValue(1e-14)
         self.testConvVariance.setOnValueUpdate(setDefaultVarianceLimit)
 
