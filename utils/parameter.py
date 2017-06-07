@@ -107,6 +107,8 @@ class Moments(object):
                 mu[ri] /= sum(frac)
             var[ri] = sum( (rset-mu[ri])**2 * frac )/sum(frac)
             sigma   = np.sqrt(abs(var[ri]))
+            if (sum(frac) * sigma) == 0.0:
+                continue # avoid div0 RuntimeWarnings and NaN values
             skw[ri] = ( sum( (rset-mu[ri])**3 * frac )
                      / (sum(frac) * sigma**3))
             krt[ri] = ( sum( (rset-mu[ri])**4 * frac )
