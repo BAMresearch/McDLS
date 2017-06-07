@@ -249,7 +249,15 @@ def simulate(uc, label, doPlot = True):
 def storePopulation(pop):
     fn = os.path.join(tempfile.gettempdir(),
                       "sim_population_{}".format(timestampFormatted()))
-    np.savetxt(fn, pop)
+    level = 0.2
+    if level > 0.:
+        err = np.random.uniform(-level, level, pop.shape) + 1.
+        logging.info("Storing population with an error of {:g}% "
+                     "by multiplying with values in [{:g},{:g}]."
+                     .format(level*100., err.min(), err.max()))
+        np.savetxt(fn, pop * err)
+    else:
+        np.savetxt(fn, pop)
     logging.info("Simulated population stored to 'file://{}'.".format(fn))
 
 def dummy(doPlot):
