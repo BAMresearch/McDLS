@@ -483,7 +483,10 @@ class McSAS(AlgorithmBase):
                         numIter/elapsed))
         logging.info("Number of valid moves: {0} out of {1} iterations."
                      .format(numMoves, numIter))
-        logging.info("Final Chi-squared value: {0}".format(conval))
+        chisqrInfo = ("Final Chi-squared value: {0}".format(conval))
+        if self.testConvVariance():
+            chisqrInfo += ", var= {0:.3g}".format(self._convBuffer.key)
+        logging.info(chisqrInfo)
         details.update({'numIterations': numIter,
             'numMoves': numMoves,
             'elapsed': elapsed})
