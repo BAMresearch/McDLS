@@ -386,9 +386,9 @@ class McSAS(AlgorithmBase):
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
         sc = numpy.array((1.0, data.f.limit[0]))
-        if len(modelData.cumInt) and modelData.cumInt.max() != 0.0:
+        if len(modelData.chisqrInt) and modelData.chisqrInt.max() != 0.0:
             # avoid numerical errors
-            sc[0] = data.f.limit[1] / modelData.cumInt.max()
+            sc[0] = data.f.limit[1] / modelData.chisqrInt.max()
 #        sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground(),
                                             self.fixed1stPoint())
@@ -623,7 +623,7 @@ class McSAS(AlgorithmBase):
                 continue
             ## TODO: same code than in mcfit pre-loop around line 1225 ff.
             # initial guess for the scaling factor.
-            sc = numpy.array([data.f.limit[1] / modelData.cumInt.max(), data.f.limit[0]])
+            sc = numpy.array([data.f.limit[1] / modelData.chisqrInt.max(), data.f.limit[0]])
             # optimize scaling and background for this repetition
             sc, conval, dummy, dummy2 = bgScalingFit.calc(data, modelData, sc)
             scalingFactors[:, ri] = sc # scaling and bgnd for this repetition.
@@ -653,7 +653,7 @@ class McSAS(AlgorithmBase):
                 # dividing by zero tends to go towards infinity,
                 # when chosing the minimum those can be ignored
                 weightedInt = data.f.binnedDataU * volumeFraction[c, ri]
-                partialCumIntScaled = sc[0] * partialModelData.cumInt
+                partialCumIntScaled = sc[0] * partialModelData.chisqrInt
                 indices = (partialCumIntScaled != 0.)
                 minReqVol[c, ri] = (
                     weightedInt[indices] / partialCumIntScaled[indices]).min()
@@ -710,7 +710,7 @@ class McSAS(AlgorithmBase):
             # ft, vset, wset = self.model.calc(data, rset, compensationExponent)
             modelData = self.model.calc(data, rset, compensationExponent)
             # Optimize the intensities and calculate convergence criterium
-            intAvg = (intAvg + modelData.cumInt*scalingFactors[0, ri]
+            intAvg = (intAvg + modelData.chisqrInt*scalingFactors[0, ri]
                              + scalingFactors[1, ri])
         # print "Initial conval V1", Conval1
         intAvg /= numReps
