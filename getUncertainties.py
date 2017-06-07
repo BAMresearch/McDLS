@@ -10,6 +10,7 @@ from builtins import str
 import sys
 import os
 import re
+import tempfile
 from collections import OrderedDict
 import numpy as np
 import logging
@@ -22,6 +23,7 @@ import matplotlib.pyplot as pyplot
 from utils import isString, isList
 from utils.units import Deg, NM3
 from mcsas.plotting import PlotResults
+from log import timestampFormatted
 
 def angleFromFilename(name):
     match = re.findall('\[([^°\]]+)°\]', name)
@@ -234,15 +236,21 @@ def simulate(uc, label, doPlot = True):
             i, NM3.toDisplay(volumes[-1]), NM3.displayMagnitudeName))
     logging.info("volume ratio: {}".format(
         ":".join(["{0:.4g}".format(v) for v in (np.array(volumes) / min(volumes))])))
-    modelData = model.calc(dlsData,
-            np.array([r for pop in populations for r in pop]).reshape((-1, 1)),
-            compensationExponent = 1.)
+    contrib = np.array([r for pop in populations for r in pop]).reshape((-1, 1))
+    storePopulation(contrib)
+    modelData = model.calc(dlsData, contrib, compensationExponent = 1.)
     corr = modelData.chisqrInt.reshape((-1, 1))
 #    corrU = uc[:,1].reshape((-1, 1))               # uncertainty from data
 #    corrU = np.ones_like(uc[:,1]).reshape((-1, 1)) # no uncertainty, =1
     corrU = None
     dlsData.setCorrelation(corr, corrU)
     return dlsData
+
+def storePopulation(pop):
+    fn = os.path.join(tempfile.gettempdir(),
+                      "sim_population_{}".format(timestampFormatted()))
+    np.savetxt(fn, pop)
+    logging.info("Simulated population stored to 'file://{}'.".format(fn))
 
 def dummy(doPlot):
     if doPlot:
