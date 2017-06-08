@@ -82,6 +82,7 @@ class PlotUncertainty(object):
     _axes = None
     _cmap = None # colormap
     _idx = None  # number of plots, counting
+    _prefix = None # title prefix
     _suffix = None # title suffix
 
     @property
@@ -89,6 +90,8 @@ class PlotUncertainty(object):
         title = "Uncertainties"
         if isString(self._suffix):
             title = "{} {}".format(title, self._suffix)
+        if isString(self._prefix):
+            title = "{} {}".format(self._prefix, title)
         return title
 
     @property
@@ -105,9 +108,12 @@ class PlotUncertainty(object):
         lbl = "Uncertainty"
         if isString(self._suffix):
             lbl = "{} {}".format(lbl, self._suffix)
+        if isString(self._prefix):
+            lbl = "{} {}".format(self._prefix, lbl)
         return lbl
 
-    def __init__(self, count = 0, suffix = None, conn = None):
+    def __init__(self, count = 0, prefix = None, suffix = None, conn = None):
+        self._prefix = prefix
         self._suffix = suffix
         self._figure = pyplot.figure(figsize = (15, 8), dpi = 80,
                               facecolor = 'w', edgecolor = 'k')
@@ -286,11 +292,30 @@ def dummy(doPlot):
 #    print(outFn.basename, outFn.timestamp)
     #CGSFile.appendHeaderLine(fn, CGSFile.signatures()[-1])
 
+from datafile import AsciiFile
+from gui.calc import OutputFilename
+
+class DummyDataSet(object):
+    """Just for proper output file formatting."""
+    title = u"uncertainties"
+
+def storePlotData(fileKey, dataDict):
+    outFn = OutputFilename(DummyDataSet, createDir = False)
+    fn = outFn.filenameVerbose(fileKey, fileKey, extension = ".dat")
+    columnNames = list(dataDict.viewkeys())
+    # write header:
+    AsciiFile.writeHeaderLine(fn, [' "{}"'.format(cn) for cn in columnNames])
+    # (additional header lines can be appended if necessary)
+    data = np.vstack([dataDict[cn] for cn in columnNames]).T
+    # append to the header, do not overwrite:
+    AsciiFile.appendFile(fn, data)
+
 def plotFiles(files, doPlot = True, suffix = None):
     """Expecting a list of tuples."""
     plot = None
     if doPlot and len(files) > 1:
         plot = PlotUncertaintyProcess(len(files)+1, suffix = suffix)
+    dataDict = OrderedDict()
     curves = []
     tau = None
     # plot files, sorted by name
@@ -304,16 +329,24 @@ def plotFiles(files, doPlot = True, suffix = None):
                          .format(curves[-1].shape, tau.shape))
             continue
         curves.append(uc[:,1])
+        lbl = os.path.basename(fn[0])
+        if not len(dataDict):
+            dataDict["tau"] = tau
+        dataDict[lbl] = curves[-1]
         if plot is not None:
-            plot.plot(uc, os.path.basename(fn[0]))
+            plot.plot(uc, lbl)
     combined = np.median(np.vstack(curves), axis = 0)
     combined = np.vstack((tau, combined)).T
     minmax = combined[:,1].min(), combined[:,1].max()
     valueRange = minmax[1] - minmax[0]
+    lbl = ("median (min: {0:.2e}, max: {0:.2e}, range: {1:.2e})"
+           .format(minmax[0], minmax[1], valueRange))
+    dataDict[lbl] = combined[:,1] # append the median
     if doPlot and plot is not None:
-        plot.plot(combined, "median (min: {0:.2e}, range: {1:.2e})"
-                            .format(minmax[0], valueRange))
+        plot.plot(combined, lbl)
         plot.show()
+    # store this data
+    storePlotData(suffix, dataDict)
     # return the normalized summary plot
 #    combined[:,1] -= minmax[0]
 #    combined[:,1] /= valueRange
@@ -339,9 +372,11 @@ def getUncertainties(paths):
             filesByAngle[angle] = []
         filesByAngle[angle].append((dn, fn, angle))
     # init the summary plot first
+    titlePrefix = "median of"
     plots = [PlotUncertaintyProcess(len(filesByAngle),
-                                    suffix = "of median")]
-    ucByAngle = OrderedDict()
+                                    prefix = titlePrefix)]
+    dataDict = OrderedDict()  # for file output
+    ucByAngle = OrderedDict() # for use in data simulation
     for angle, lst in filesByAngle.items():
         combined, separatePlot = plotFiles(lst, doPlot = True,
                 suffix = "@" + fmtAngle(angle))
@@ -353,6 +388,12 @@ def getUncertainties(paths):
             label = os.path.basename(lst[0][0])
         plots[0].plot(combined, label)
         ucByAngle[angle] = combined, label
+        if not len(dataDict):
+            dataDict["tau"] = combined[:, 0]
+        dataDict[label] = combined[:, 1]
+    if "median" in titlePrefix.lower():
+        titlePrefix = titlePrefix.split()[0]
+    storePlotData(titlePrefix, dataDict)
     plots[0].show() # finalize the summary plot
     return ucByAngle
 
