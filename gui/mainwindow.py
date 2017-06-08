@@ -48,6 +48,14 @@ from main import makeAbsolutePath
 # - no default histogram created anymore
 #   - the user is asked to create an histogram if none is defined at calc. start
 INFOTEXT = (u"""
+<strong>major changes in McDLS Mk.XII:</strong><ul>
+<style>li { margin: .5em; }</style>
+<li>option to use chisqr variance as convergence criterion, instead of a fixed chisqr value</li>
+<li>Optimization: removed obsolete <em>compensationExponent</em> option</li>
+<li>DataSettings: constant uncertainty == 0.1 avoids hiding the data plot</li>
+<li>simulation: fixed volume ratio of simulated particles</li>
+<li>some minor fixes, fixed stability issues</li>
+</ul>
 <strong>major changes in McDLS Mk.XI:</strong><ul>
 <style>li { margin: .5em; }</style>
 <li>options to set uncertainty =1 or divided by G<sup>(2)</sup> (relative)</li>
