@@ -35,7 +35,7 @@ class OptimizationWidget(AlgorithmWidget):
         # creating an ui entry with settings persistence via store/restore
         self.advanced = self._makeEntry("showAdvanced", bool, False,
             widgetType = AdvancedSettings, widgets = tuple(self.makeWidgets(
-                "numContribs", "compensationExponent", "findBackground",
+                "numContribs", "findBackground",
                 "fixed1stPoint", "maxIterations", "showIncomplete",
                 "seriesStats")))
         hlayout.addWidget(self.defaults)

@@ -26,10 +26,10 @@ class DLSModel(ScatteringModel):
     def scatteringVector(self):
         return self._scatteringVector
 
-    def calcIntensity(self, data, compensationExponent = None):
+    def calcIntensity(self, data, **kwargs):
         self._scatteringVector = data.scatteringVector
-        v = self._volume(compensationExponent = compensationExponent)
-        w = self._weight(compensationExponent = compensationExponent)
+        v = self._volume()
+        w = self._weight()
         s = self.surface()
         if self.ampSquared():
             w *= w # square the weight, i.e. amplitude

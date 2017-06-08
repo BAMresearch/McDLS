@@ -37,15 +37,10 @@ class DLSSphere(DLSModel):
         qr = self.scatteringVector * self.radius()
         return 3. * (sin(qr) - qr * cos(qr)) / (qr**3.) # usual sphere ff
 
-    # how to get adjustable size sensitivity by compensationEXponent?
-    # -> the SAXS way is by default not possible due to the normalized model == 1
-    # idea: using a weight w/o compExp for normalization but with compExp in the model
-    #   -> violates the specs but may lead to desired result ...
     def weight(self):
         """The square root of the amplitude of the discrete DLS model
         function g_1(tau) (first order correlation function)."""
-        # a compExp. != 1 just changes the volume of a scatterer
-        return self._ffSphere() * self.volume()**self.compensationExponent
+        return self._ffSphere() * self.volume()
 
     def formfactor(self, data):
         return exp( data.tauGamma.sanitized / self.radius() )
