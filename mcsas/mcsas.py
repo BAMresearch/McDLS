@@ -376,6 +376,10 @@ class McSAS(AlgorithmBase):
                 if mb == 0: # FIXME: compare with EPS eventually?
                     mb = pi / (data.x0.limit[1])
                 rset[:, idx] = numpy.ones(numContribs) * mb * .5
+            logging.info("Starting from min {pName} = {pVal:g} {pUnit}."
+                 .format(pName = param.name(),
+                         pVal = param.unit().toDisplay(rset[:, idx].mean()),
+                         pUnit = param.unit().displayMagnitudeName))
         else:
             rset = self.model.generateParameters(numContribs)
 
