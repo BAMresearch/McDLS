@@ -37,6 +37,7 @@ class ConvBuffer(object):
     _testConvVariance = None
     _y = None
     _x = None
+    _size = 20
 
     def __init__(self, minConv, testConvVariance = False):
         self._minConv = minConv
@@ -53,7 +54,7 @@ class ConvBuffer(object):
     def set(self, i, value):
         self._x.append(i)
         self._y.append(value)
-        if len(self) > 20: # limit the number of values to remember
+        if len(self) > self._size: # limit the number of values to remember
             del self._x[0] # remove the oldest, front
             del self._y[0]
 
@@ -77,7 +78,7 @@ class ConvBuffer(object):
         if self._testConvVariance:
             # all initial values have to be replaced and
             # the variance of the last conv. values has to be very small
-            return (len(self) > 1 and self.key < self._minConv)
+            return (len(self) == self._size and self.key < self._minConv)
         else:
             return conval < self._minConv
 
