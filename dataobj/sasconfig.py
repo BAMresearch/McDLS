@@ -344,8 +344,8 @@ class SASConfig(DataConfig):
         super(SASConfig, self).__init__()
         smearing = kwargs.pop("smearing", None)
         if smearing is None:
-            # smearing = TrapezoidSmearing()
-            smearing = GaussianSmearing()
+            smearing = TrapezoidSmearing()
+            # smearing = GaussianSmearing()
         if not isinstance(self.smearing, SmearingConfig):
             # is already set when unpickling
             self.smearing = smearing
