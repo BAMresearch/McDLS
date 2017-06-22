@@ -612,10 +612,17 @@ class PlotSeriesStats(object):
             self._axes.set_xticks(xvecNew)
             self._axes.set_xticklabels(xvec, rotation = 15)
             xvec = xvecNew
-        self._axes.errorbar(xvec, stats["mean"], stats["meanStd"],
-                            label = stats["cfg"])
+        paramUnit = stats["unit"]
+        lbl = u"{param} [{lo:3g}, {hi:3g}]({pu}) {w}".format(
+                param = stats["param"][0], w = stats["weighting"][0],
+                lo = paramUnit.toDisplay(stats["lower"][0]),
+                hi = paramUnit.toDisplay(stats["upper"][0]),
+                pu = paramUnit.displayMagnitudeName)
+        self._axes.errorbar(xvec, paramUnit.toDisplay(stats["mean"]),
+                                  paramUnit.toDisplay(stats["meanStd"]),
+                            label = lbl)
         self._axes.set_xlabel(stats["seriesKeyName"])
-        self._axes.set_ylabel("mean")
+        self._axes.set_ylabel("mean ({})".format(paramUnit.displayMagnitudeName))
         self._axes.set_title(stats["title"])
 
     def show(self):
