@@ -356,8 +356,13 @@ class DLSData(DataObj):
         return "anglesToDisplay"
 
     @property
+    def seriesKeyName(self):
+        return ("Scattering angle ({})"
+                .format(self.anglesUnit.displayMagnitudeName))
+
+    @property
     def anglesToDisplay(self):
-        """Scattering angles"""
+        """Formatted scattering angles"""
         values = [self.anglesUnit.toDisplay(a) for a in self.angles]
         if len(values) == 1:
             values = values[0]

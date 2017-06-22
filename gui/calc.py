@@ -247,15 +247,14 @@ class Calculator(HDFMixin):
             return
         def addSeriesData(uid, hist, seriesKey):
             if uid not in self._series:
-                self._series[uid] = []
+                # store param unit as first item
+                self._series[uid] = [hist.param.unit()]
             self._series[uid].append((seriesKey, hist.moments.fields))
         def makeId(data, hist):
             """Derive a unique identifier for each pair of sample and
             histogram."""
             uid = (data.sampleName, data.seriesKeyName,
-                   (hist.param.name(),)
-                   + tuple(hist.param.unit().toDisplay(x) for x in h.xrange)
-                   + (h.yweight,))
+                   (hist.param.name(),) + h.xrange + (h.yweight,))
             return uid
 
         for p in model.activeParams():
@@ -291,6 +290,8 @@ class Calculator(HDFMixin):
             stats = dict()
             ((sampleName, seriesKeyName, (pname, lo, hi, weight)),
               valuePairs) = seriesItem
+            paramUnit = valuePairs[0]   # strip the unit off of the values
+            valuePairs = valuePairs[1:]
             columnNames[0] = seriesKeyName.replace(" ", "_")
             for seriesKey, moments in valuePairs:
                 values = (seriesKey, pname, lo, hi, weight) + moments
@@ -312,8 +313,7 @@ class Calculator(HDFMixin):
             # simple statistics plotting, kind of a prototype for now ...
             stats["seriesKeyName"] = seriesKeyName
             stats["seriesKey"] = stats[columnNames[0]]
-            stats["cfg"] = u"{param} [{lo},{hi}] {w}".format(
-                            param = pname, lo = lo, hi = hi, w = weight)
+            stats["unit"] = paramUnit
             stats["title"] = sampleName
             seriesPlot.plot(stats)
 
