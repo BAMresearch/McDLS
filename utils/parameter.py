@@ -177,11 +177,11 @@ class VectorResult(object):
         return self._full
 
     def __init__(self, vecResult):
-        assert vecResult.ndim == 2 # 2 dim input
+        assert vecResult.ndim == 2 # 2 dim input, shape has 2 elements
         self._full = vecResult
         self._mean = self._full.mean(axis = 1)
         ddof = 0
-        if len(self._full) > 1:
+        if self._full.shape[1] > 1: # needs least 2 columns
             ddof = 1
         self._std = self._full.std(axis = 1, ddof = ddof)
 

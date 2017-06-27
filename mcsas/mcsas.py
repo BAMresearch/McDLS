@@ -38,6 +38,7 @@ class ConvBuffer(object):
     _y = None
     _x = None
     _size = 20
+    _huge = 9.9e199 # 1e200 is max in the GUI, but need _size buffer too
 
     def __init__(self, minConv, testConvVariance = False):
         self._minConv = minConv
@@ -61,7 +62,10 @@ class ConvBuffer(object):
     @property
     def key(self):
 #        return numpy.abs(self._slope()) # negative slope of chisqr usually
-        return numpy.array(self._y).var() # variance
+        if len(self._y) > 1:
+            return numpy.array(self._y).var() # variance, need at least 1 val
+        else:
+            return self._huge
 
     def _slope(self):
         # https://stackoverflow.com/a/9538936
@@ -71,7 +75,7 @@ class ConvBuffer(object):
         # calculate slope x vs. y values
         d = ((x**2).mean() - x.mean()**2)
         if d == 0.:
-            return 1e300
+            return self._huge
         return ((x*y).mean() - x.mean()*y.mean()) / d
 
     def reached(self, conval):
