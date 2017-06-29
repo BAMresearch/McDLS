@@ -16,6 +16,7 @@ import time # Timekeeping and timing of objects
 import copy
 import logging
 logging.basicConfig(level = logging.INFO)
+import subprocess, os, shutil, tempfile
 
 from utils import isList 
 from bases.dataset import DataSet
@@ -85,6 +86,111 @@ class ConvBuffer(object):
             return (len(self) == self._size and self.key < self._minConv)
         else:
             return conval < self._minConv
+
+class DistribRecorder(object):
+    """Records the probability distribution function during the optimization.
+    """
+    _pdfDir = "test_pdf" # directory created in OS TMP dir
+    _enabled = False
+    _xrange = None
+    _idx = None
+    _rejected = None # list of rejected candidate values
+
+    def reject(self, value):
+        if self._enabled:
+            self._rejected.append(value)
+
+    def capture(self, pValues, numIter, numMoves):
+        if not self._enabled:
+            return
+        def getPDF(values):
+            """Calculates the PDF function from a set of values."""
+            nBins = 30
+            if not len(values):
+                zeros = numpy.zeros(nBins)
+                return zeros, zeros
+            hist, binEdges = numpy.histogram(values, bins = nBins,
+                                             density = True)
+            binCenter = binEdges[:-1] + numpy.diff(binEdges)*.5
+            return binCenter, hist
+        if self._idx is None:
+            self._idx = 0
+        # store the PDF function to file
+        basename = "r{:03d}_{:05d}".format(self._numRep, self._idx)
+        fnData = os.path.join(self._pdfDir, basename+".txt")
+        fnImg  = os.path.join(self._pdfDir, basename+".png")
+        # get the PDF function
+        binsAcc, accepted = getPDF(self._param.unit().toDisplay(
+                                   pValues[:,0].flatten()))
+        binsRej, rejected = getPDF(self._param.unit().toDisplay(
+                                   numpy.array(self._rejected)))
+        numpy.savetxt(fnData, numpy.vstack(
+                      (binsAcc, accepted, binsRej, rejected)).T)
+        # plot the data from file, create one frame
+        # FIXME: set xrange in gnuplot to param min/max
+        cmd = ['[ -z "$(which gnuplot)" ] || \
+                [ -f \"{fnData}\" ] && \
+                gnuplot -e \'\
+                set terminal png size 1280,720 enhanced;\
+                set output \"{fnImg}\";\
+                set grid;\
+                set xrange [{xr}];\
+                set yrange [0:*];\
+                set title \"move {move}/{it}, rep {rep}/{numReps}\";\
+                plot \"{fnData}\" using 1:2 with lines lc \"blue\" \
+                                    title \"radii accepted\", \
+                     \"{fnData}\" using 3:4 with lines lc \"red\" \
+                                    title \"radii rejected\";\
+                \' && rm -f \"{fnData}\"'
+                .format(fnData = fnData, fnImg = fnImg,
+                        rep = self._numRep, numReps = self._numReps,
+                        move = numMoves, it = numIter,
+                        xr = self._xrange)
+                   .replace("\n","")]
+#            print("cmd:", cmd)
+#            return
+        process = subprocess.Popen(cmd, shell = True,
+                                   stdout = subprocess.PIPE)
+        self._idx += 1
+        # rename: num=0; for fn in *.png; do ln -s $fn "$(printf "l%05d.png" $num)"; num=$((num+1)); done
+        # video: cat *.png | avconv -framerate 10 -i l%05d.png -threads 4 -c:v libvpx test.webm
+        # cleanup remaining files first
+
+    def finalize(self):
+        if not os.path.exists(self._pdfDir):
+            return
+        cmd = ['[ -z "$(which avconv)" ] || (cd "{wd}" && \
+                avconv -r 10 -i r{rep:03d}_%05d.png -threads 4 \
+                       -c:v libvpx -crf 10 -b:v 2M \
+                       {outfn} > /dev/null 2>&1 &)'
+                .format(wd = self._pdfDir, rep = self._numRep,
+                        outfn = "test.webm")]
+        subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE)
+
+    def clear(self):
+        if not os.path.exists(self._pdfDir):
+            return
+        shutil.rmtree(self._pdfDir)
+#        subprocess.Popen("rm -f test_pdf_*", shell = True, stdout = subprocess.PIPE)
+
+    def setup(self):
+        if not self._enabled:
+            return
+        self.clear()
+        os.makedirs(self._pdfDir)
+        self._xrange = ":".join(("{:g}".format(v)
+                                for v in self._param.unit().toDisplay(
+                                self._param.activeRange())))
+        self._rejected = []
+
+    def __init__(self, params, numRep, numReps, enabled = False):
+        self._enabled = enabled
+        self._numRep  = numRep
+        self._numReps = numReps
+        self._pdfDir = os.path.join(tempfile.gettempdir(), "test_pdf")
+        if enabled and len(params):
+            self._param = params[0]
+            self.setup()
 
 class McSAS(AlgorithmBase):
     r"""
@@ -421,6 +527,12 @@ class McSAS(AlgorithmBase):
         # running variable indicating which contribution to change
         ri = 0
         ftest = None
+
+        pdfRecorder = DistribRecorder(self.model.activeParams(),
+                                      nRun+1, self.numReps())
+        # plot initial PDF
+        pdfRecorder.capture(rset, numIter, numMoves)
+
         #NOTE: keep track of uncertainties in MC procedure through epsilon
         while (len(wset) > 1 and # see if there is a distribution at all
                not self._convBuffer.reached(conval) and
@@ -454,6 +566,8 @@ class McSAS(AlgorithmBase):
                 # updating unused data for completeness as well
                 vset[ri], sset[ri] = newModelData.vset, newModelData.sset
                 self._convBuffer.set(numMoves, conval)
+                # output current distribution
+                pdfRecorder.capture(rset, numIter, numMoves)
                 text = "/{0:.3g}".format(self.convergenceCriterion())
                 if self.testConvVariance():
                     text = ", var= {0:.3g}".format(self._convBuffer.key) + text
@@ -463,6 +577,8 @@ class McSAS(AlgorithmBase):
                                      t = text, rep = nRun+1,
                                      reps = self.numReps(), opt = aGoFs))
                 numMoves += 1
+            else:
+                pdfRecorder.reject(rt) # store the rejected rset candidate
 
             if time.time() - lastUpdate > 0.25:
                 # update twice a sec max -> speedup for fast models
@@ -514,6 +630,7 @@ class McSAS(AlgorithmBase):
             #store results in parameter
             for idx, param in enumerate(self.model.activeParams()):
                 param.setActiveVal(rset[:, idx], index = nRun) 
+        pdfRecorder.finalize()
         # returning <rset, measVal, conval, details>
         return result
 
