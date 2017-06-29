@@ -10,6 +10,7 @@ import numpy # For arrays
 from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,
                   isnan, newaxis)
+from scipy.integrate import simps
 # useful for debugging numpy RuntimeWarnings
 # numpy.seterr(all = "raise", under = "ignore")
 import time # Timekeeping and timing of objects
@@ -26,6 +27,7 @@ from utils.tests import isMac
 from bases.model import ScatteringModel
 from gui.utils import processEventLoop
 from mcsas.backgroundscalingfit import BackgroundScalingFit
+from log import timestampFormatted
 
 from . import PlotResults
 from . import McSASParameters
@@ -95,12 +97,14 @@ class DistribRecorder(object):
     _xrange = None
     _idx = None
     _rejected = None # list of rejected candidate values
+    _dataMeas = None
+    _dataVec = None # positions at which the measured signal was captured
 
     def reject(self, value):
         if self._enabled:
             self._rejected.append(value)
 
-    def capture(self, pValues, numIter, numMoves):
+    def capture(self, pValues, modelData, numIter, numMoves):
         if not self._enabled:
             return
         def getPDF(values):
@@ -115,7 +119,7 @@ class DistribRecorder(object):
             return binCenter, hist
         if self._idx is None:
             self._idx = 0
-        # store the PDF function to file
+        # set up output file names
         basename = "r{:03d}_{:05d}".format(self._numRep, self._idx)
         fnData = os.path.join(self._pdfDir, basename+".txt")
         fnImg  = os.path.join(self._pdfDir, basename+".png")
@@ -124,28 +128,59 @@ class DistribRecorder(object):
                                    pValues[:,0].flatten()))
         binsRej, rejected = getPDF(self._param.unit().toDisplay(
                                    numpy.array(self._rejected)))
-        numpy.savetxt(fnData, numpy.vstack(
-                      (binsAcc, accepted, binsRej, rejected)).T)
+        pdfData = numpy.vstack((binsAcc, accepted, binsRej, rejected)).T
+        # get the measured and model signal
+        signalData = numpy.vstack(
+                (self._dataVec, self._dataMeas, modelData)).T
+        res = numpy.absolute(signalData[:,1]-signalData[:,2])
+        # fill up the distribution data to match the signal length
+        fillCount = signalData.shape[0] - pdfData.shape[0]
+        fillArr = numpy.full((fillCount, pdfData.shape[1]), numpy.nan)
+        pdfData = numpy.concatenate((pdfData, fillArr))
+        combined = numpy.concatenate((pdfData, signalData), axis = 1)
+        # store the distribution and the signal in a common file
+        numpy.savetxt(fnData, combined)
         # plot the data from file, create one frame
         # FIXME: set xrange in gnuplot to param min/max
         cmd = ['[ -z "$(which gnuplot)" ] || \
                 [ -f \"{fnData}\" ] && \
                 gnuplot -e \'\
-                set terminal png size 1280,720 enhanced;\
+                set terminal pngcairo size 1280,720 dashed enhanced;\
                 set output \"{fnImg}\";\
                 set grid;\
                 set xrange [{xr}];\
                 set yrange [0:*];\
-                set title \"move {move}/{it}, rep {rep}/{numReps}\";\
-                plot \"{fnData}\" using 1:2 with lines lc \"blue\" \
-                                    title \"radii accepted\", \
-                     \"{fnData}\" using 3:4 with lines lc \"red\" \
-                                    title \"radii rejected\";\
-                \' && rm -f \"{fnData}\"'
+                set multiplot layout 2, 1 \
+                    title \"move {move}/{it}, rep {rep}/{numReps}\" noenhanced;\
+                plot \"{fnData}\" using 3:4 with lines lc \"red\" lw 2 \
+                                    title \"radii rejected\",\
+                     \"{fnData}\" using 1:2 with lines lc \"blue\" lw 2 \
+                                    title \"radii accepted\";\
+                set logscale x; set format xy \"%g\"; set y2tics;\
+                unset xrange; set yrange [-0.05:1.05];\
+                plot \"{fnData}\" using 5:6 with points pt 7 ps 1\
+                        lc \"black\" title \"measured\",\
+                     \"{fnData}\" using 5:7 with lines lw 2\
+                        lc \"red\" title \"model\",\
+                     \"{fnData}\" using 5:(abs($6-$7)) axes x1y2\
+                        with lines lw 2\
+                        lc \"blue\" title \"residual\",\
+                     \"{fnData}\" using 5:({resMean}) axes x1y2 \
+                        with line dt \"-\" lw 2\
+                        lc \"blue\" title \"mean(residual) = {resMean:.2g}\",\
+                     \"{fnData}\" using 5:({resVar}) axes x1y2 \
+                        with line dt \"-.\" lw 2\
+                        lc \"blue\" title \"var(residual) = {resVar:.2g}\",\
+                     \"{fnData}\" using 5:({resArea}) axes x1y2 \
+                        with line dt \".\" lw 2\
+                        lc \"blue\" title \"area(residual) = {resArea:.2g}\";\
+                \' && echo rm -f \"{fnData}\"'
                 .format(fnData = fnData, fnImg = fnImg,
                         rep = self._numRep, numReps = self._numReps,
                         move = numMoves, it = numIter,
-                        xr = self._xrange)
+                        xr = self._xrange,
+                        resMean = res.mean(), resVar = res.var(), resArea =
+                        simps(res, x = signalData[:,0], even='first'))
                    .replace("\n","")]
 #            print("cmd:", cmd)
 #            return
@@ -164,7 +199,7 @@ class DistribRecorder(object):
                        -c:v libvpx -crf 10 -b:v 2M \
                        {outfn} > /dev/null 2>&1 &)'
                 .format(wd = self._pdfDir, rep = self._numRep,
-                        outfn = "test.webm")]
+                        outfn = "distrib+fit.webm")]
         subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE)
 
     def clear(self):
@@ -183,13 +218,19 @@ class DistribRecorder(object):
                                 self._param.activeRange())))
         self._rejected = []
 
-    def __init__(self, params, numRep, numReps, enabled = False):
+    def __init__(self, params, data, numRep, numReps, enabled = False):
         self._enabled = enabled
         self._numRep  = numRep
         self._numReps = numReps
-        self._pdfDir = os.path.join(tempfile.gettempdir(), "test_pdf")
-        if enabled and len(params):
+        self._pdfDir = os.path.join(tempfile.gettempdir(),
+                    timestampFormatted()+"_progress_r{:03d}".format(numRep))
+        if not len(params):
+            self._enabled = False
+        if self._enabled:
             self._param = params[0]
+            # get measured data for comparison, see BackgroundScalingFit.calc()
+            self._dataMeas = data.f.binnedData.flatten()
+            self._dataVec  = data.x0.binnedData.flatten()
             self.setup()
 
 class McSAS(AlgorithmBase):
@@ -528,10 +569,12 @@ class McSAS(AlgorithmBase):
         ri = 0
         ftest = None
 
-        pdfRecorder = DistribRecorder(self.model.activeParams(),
+        pdfRecorder = DistribRecorder(self.model.activeParams(), data,
                                       nRun+1, self.numReps())
         # plot initial PDF
-        pdfRecorder.capture(rset, numIter, numMoves)
+        pdfRecorder.capture(rset,
+            bgScalingFit.dataScaled(modelData.chisqrInt, sc),
+            numIter, numMoves)
 
         #NOTE: keep track of uncertainties in MC procedure through epsilon
         while (len(wset) > 1 and # see if there is a distribution at all
@@ -567,7 +610,9 @@ class McSAS(AlgorithmBase):
                 vset[ri], sset[ri] = newModelData.vset, newModelData.sset
                 self._convBuffer.set(numMoves, conval)
                 # output current distribution
-                pdfRecorder.capture(rset, numIter, numMoves)
+                pdfRecorder.capture(rset,
+                    bgScalingFit.dataScaled(testModelData.chisqrInt, sc),
+                    numIter, numMoves)
                 text = "/{0:.3g}".format(self.convergenceCriterion())
                 if self.testConvVariance():
                     text = ", var= {0:.3g}".format(self._convBuffer.key) + text
