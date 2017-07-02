@@ -199,7 +199,6 @@ class McSAS(AlgorithmBase):
         # get settings
         numContribs = self.numContribs()
         numReps = self.numReps()
-        minConvergence = self.convergenceCriterion()
         if not any([isActiveFitParam(p) for p in self.model.params()]):
             numContribs, numReps = 1, 1
         # find out how many values a shape is defined by:
@@ -220,7 +219,7 @@ class McSAS(AlgorithmBase):
             nt = 0
             # do that MC thing! 
             convergence = inf
-            while convergence > minConvergence:
+            while convergence > self.convergenceCriterion():
                 if nt > self.maxRetries():
                     # this is not a coincidence.
                     # We have now tried maxRetries+2 times
@@ -235,7 +234,7 @@ class McSAS(AlgorithmBase):
                 # convergence within MaximumIterations.
                 (contributions[:, :, nr], contribMeasVal[:, :, nr],
                  convergence, details) = self.mcFit(
-                                numContribs, minConvergence,
+                                numContribs, 
                                 outputMeasVal = True, outputDetails = True,
                                 nRun = nr)
                 if any(array(contributions.shape) == 0):
@@ -287,7 +286,7 @@ class McSAS(AlgorithmBase):
             # average number of iterations for all repetitions
             numIter = numIter.mean()))
 
-    def mcFit(self, numContribs, minConvergence,
+    def mcFit(self, numContribs,
               outputMeasVal = False, outputDetails = False, nRun = None):
         """
         Object-oriented, shape-flexible core of the Monte Carlo procedure.
@@ -352,7 +351,7 @@ class McSAS(AlgorithmBase):
         ftest = None
         #NOTE: keep track of uncertainties in MC procedure through epsilon
         while (len(wset) > 1 and # see if there is a distribution at all
-               conval > minConvergence and
+               conval > self.convergenceCriterion() and
                numIter < self.maxIterations.value() and
                not self.stop):
             rt = self.model.generateParameters()
@@ -385,7 +384,7 @@ class McSAS(AlgorithmBase):
                 logging.info("rep {rep}/{reps}, good iter {it}: "
                              "Chisqr= {cs:f}/{conv:.2f}, aGoFs= {opt}\r"
                              .format(it = numIter, cs = conval,
-                                 conv = minConvergence, rep = nRun+1,
+                                 conv = self.convergenceCriterion(), rep = nRun+1,
                                  reps = self.numReps(), opt = aGoFs))
                 numMoves += 1
 
