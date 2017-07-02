@@ -196,11 +196,12 @@ class McSAS(AlgorithmBase):
         (*numReps*) of times. If convergence is not achieved, it will try 
         again for a maximum of *maxRetries* attempts.
         """
+
         # get settings
-        numContribs = self.numContribs()
-        numReps = self.numReps()
         if not any([isActiveFitParam(p) for p in self.model.params()]):
             numContribs, numReps = 1, 1
+        else:
+            numContribs, numReps = self.numContribs(), self.numReps()
         # find out how many values a shape is defined by:
         contributions = zeros((numContribs, 
             self.model.activeParamCount(), 
