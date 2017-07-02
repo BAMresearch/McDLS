@@ -237,7 +237,7 @@ class McSAS(AlgorithmBase):
                                 numContribs, 
                                 outputMeasVal = True, outputDetails = True,
                                 nRun = nr)
-                if any(array(contributions.shape) == 0):
+                if not any([isActiveFitParam(p) for p in self.model.params()]):
                     break # nothing active, nothing to fit
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
