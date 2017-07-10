@@ -8,7 +8,7 @@ version = QAppVersion(
     programName = "McDLS",
     versionNumber = "1.0",
     organizationName = "BAM",
-    colors = "#29235c;#1d70b7;#1d70b7;#35a8e0", # inner, outer, circles, shell
+    colors = "#ff470e;#7c260b;#e55528;#ff6a3d", # inner, outer, circles, shell
     defaultSettings = dict(
         geometry = "AdnQywABAAAAAAIyAAAA+gAABG8AAANMAAACMwAAARIAAARuAAADSwAAAAAAAA==")
 )
