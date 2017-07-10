@@ -763,7 +763,7 @@ class McSAS(AlgorithmBase):
         volumeFraction = zeros((numContribs, numReps))
         # number fraction for each contribution
         numberFraction = zeros((numContribs, numReps))
-        volSqrFraction = zeros((numContribs, numReps))
+        volSqrFraction = zeros((numContribs, numReps)) # aka intensity
         surfaceFraction = zeros((numContribs, numReps))
         # volume frac. for each histogram bin
         minReqVol = zeros((numContribs, numReps)) 
@@ -845,7 +845,7 @@ class McSAS(AlgorithmBase):
 
         fractions = dict(vol = (volumeFraction, minReqVol),
                          num = (numberFraction, minReqNum),
-                         volsqr = (volSqrFraction, minReqVolSqr),
+                         int = (volSqrFraction, minReqVolSqr),
                          surf = (surfaceFraction, minReqSurface))
 
         # now we histogram over each variable

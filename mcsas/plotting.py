@@ -559,14 +559,14 @@ class PlotResults(object):
             'xscale' : xScale,
             'yscale' : 'linear',
             'ylabel' : '[Rel.] Fraction' })
-        if "volsqr" in parHist.yweight:
-            hAxDict['ylabel'] = u'[Rel.] Volume² Fraction'
+        if   "int" in parHist.yweight:
+            hAxDict['ylabel'] = u'[Rel.] Intensity Fraction'
         elif "vol" in parHist.yweight:
-            hAxDict['ylabel'] = '[Rel.] Volume Fraction'
+            hAxDict['ylabel'] = u'[Rel.] Volume Fraction'
         elif "num" in parHist.yweight:
-            hAxDict['ylabel'] = '[Rel.] Number Fraction'
+            hAxDict['ylabel'] = u'[Rel.] Number Fraction'
         elif "surf" in parHist.yweight:
-            hAxDict['ylabel'] = '[Rel.] Surface Fraction'
+            hAxDict['ylabel'] = u'[Rel.] Surface Fraction'
         # update axes settings:
         hAxis.update(hAxDict)
         # change axis settings not addressible through dictionary:
