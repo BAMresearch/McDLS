@@ -29,6 +29,7 @@ import sys
 import glob
 import shutil
 import subprocess
+import logging
 from collections import OrderedDict
 
 def getSourceFiles(path, resolutions):
@@ -50,8 +51,13 @@ def createTempDir(path, name):
     return targetDir
 
 def findCommand(name):
-    cmd = subprocess.check_output(["which", name]).splitlines()[0]
-    assert len(cmd) and os.path.isfile(cmd)
+    cmd = None
+    try:
+        cmd = subprocess.check_output(["which", name]).splitlines()[0]
+        assert len(cmd) and os.path.isfile(cmd)
+    except (subprocess.CalledProcessError, AssertionError):
+        logging.error("Command '{}' not found!".format(name))
+        return None
     return cmd
 
 def prepareIco(iconName):
@@ -63,6 +69,8 @@ def prepareIco(iconName):
     path = os.path.dirname(iconName)
     files = getSourceFiles(path, resolutions())
     convert = findCommand("convert")
+    if convert is None:
+        return
     iconName = os.path.basename(iconName)
     targetDir = createTempDir(path, iconName.lower() + ".ico.dir")
     for r in resolutions():
@@ -88,8 +96,12 @@ def prepareIco(iconName):
 
 def createIco(iconName):
     files = prepareIco(iconName)
+    if files is None:
+        return
     srcFiles = sum(files.values(), [])
     icotool = findCommand("icotool")
+    if icotool is None:
+        return
     subprocess.call([icotool, "-c", "-o", iconName + ".ico"] + srcFiles)
 
 def prepareIconset(iconName):
@@ -121,6 +133,8 @@ def prepareIconset(iconName):
 
 def createIcns(iconName):
     iconutil = findCommand("iconutil")
+    if iconutil is None:
+        return
     srcDir = prepareIconset(iconName)
     subprocess.call([iconutil, "-c", "icns", srcDir])
 
