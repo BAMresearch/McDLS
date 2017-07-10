@@ -75,6 +75,14 @@ def adjust(contents, size):
     matches = re.findall("(height=)\"([0-9]+)\"", contents)
     if len(matches):
         height = int(matches[0][-1])
+    # set the program name
+    nameFront, nameBack = version.name()[0:2], version.name()[2:]
+    contents = re.sub(
+        "(id=\"programNameFront\"\\s+.+>)[a-zA-Z]+(<[^>]+></text>)",
+        "\\g<1>{}\\g<2>".format(nameFront), contents, 1)
+    contents = re.sub(
+        "(id=\"programNameBack\"\\s+.+>)[a-zA-Z]+(<[^>]+></text>)",
+        "\\g<1>{}\\g<2>".format(nameBack), contents, 1)
     # set the current version number
     contents = re.sub(
         "(id=\"versionNumber\"\\s+.+>)[0-9]+\\.[0-9]+(<[^>]+></text>)",
