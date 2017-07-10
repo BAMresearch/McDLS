@@ -137,25 +137,23 @@
                    d="M 0,1183.322 0,0 1183.322,0 c 37.751,100.49 58.406,209.366 58.406,323.048 l 0,0 c 0,507.373 -411.306,918.681 -918.678,918.681 l 0,0 c -113.682,0 -222.559,-20.656 -323.05,-58.407"
                    style="fill:url(#radialGradient24);stroke:none"
                    id="path30"
-                   inkscape:connector-curvature="0" /></g></g></g></g><text
-           transform="matrix(1,0,0,-1,17.9824,583.9805)"
-           id="text48"><tspan
-             dx="0 20"
+                   inkscape:connector-curvature="0" /></g></g></g></g>
+<text
+           id="programNameFront"
+           transform="scale(1,-1)"
+           x="30"
+           y="-600"
+           style="letter-spacing:-20px"><tspan
              style="font-size:550px;font-variant:normal;font-weight:bold;font-stretch:normal;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Helvetica 55 Roman;-inkscape-font-specification:HelveticaNeue-Bold"
-             x="0 498.85001"
-             y="0"
              sodipodi:role="line"
              id="tspan50">Mc</tspan></text>
 <text
+           id="programNameBack"
            transform="scale(1,-1)"
-           id="text60"
-           x="17.982401"
-           y="-75.235397"
-           style="letter-spacing:0px"><tspan
-             dx="0 10 40"
-             style="font-size:550px;font-variant:normal;font-weight:bold;font-stretch:normal;letter-spacing:0px;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Helvetica 55 Roman;-inkscape-font-specification:HelveticaNeue-Bold"
-             x="17.982401 374.9324 751.68243"
-             y="-75.235397"
+           x="30"
+           y="-80"
+           style="letter-spacing:-20px"><tspan
+             style="font-size:550px;font-variant:normal;font-weight:bold;font-stretch:normal;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Helvetica 55 Roman;-inkscape-font-specification:HelveticaNeue-Bold"
              sodipodi:role="line"
              id="tspan62">SAS</tspan></text>
 </g><g
