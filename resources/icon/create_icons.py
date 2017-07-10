@@ -75,6 +75,18 @@ def adjust(contents, size):
     matches = re.findall("(height=)\"([0-9]+)\"", contents)
     if len(matches):
         height = int(matches[0][-1])
+    # update colors
+    colors = version.colors()
+    if len(colors) > 3:
+        innerColor, outerColor, cirlesColor, shellColor = colors
+        for num, color in (26, innerColor), (28, outerColor):
+            contents = re.sub("(#stop{}".format(num) +
+                "\\s+\\{[^\\}]*stop-color:\\s*)#[0-9a-zA-Z]+(\\s*;)",
+                "\\g<1>{}\\g<2>".format(color), contents, 1)
+        for elem, color in ("fill", cirlesColor), ("stroke", shellColor):
+            contents = re.sub("(#shell\\s+\\{[^\\}]*"
+                    + elem + ":\\s*)#[0-9a-zA-Z]+(\\s*;)",
+                "\\g<1>{}\\g<2>".format(color), contents, 1)
     # set the program name
     nameFront, nameBack = version.name()[0:2], version.name()[2:]
     contents = re.sub(

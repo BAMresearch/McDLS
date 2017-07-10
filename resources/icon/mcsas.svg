@@ -23,8 +23,9 @@
          rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata>
 <style>
-#stop28 { stop-color:#1d70b7; } /* #1d70b7 or #ff7f2a */
-#stop26 { stop-color:#29235c; } /* #29235c or #803300 */
+/* overwritten by update_icons.py and gui/version.py */
+#stop28 { stop-color:#1d70b7; }
+#stop26 { stop-color:#29235c; }
 #shell { fill:#1d70b7; stroke:#35a8e0; }
 </style>
 <defs

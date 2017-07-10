@@ -14,6 +14,7 @@ class AppVersion(object):
     """
     _name = None
     _number = None
+    _colors = None
     _organizationName = None
     _organizationDomain = None
     _defaultSettings = None
@@ -22,6 +23,7 @@ class AppVersion(object):
                        versionNumber = None,
                        organizationName = None,
                        organizationDomain = None,
+                       colors = None,
                        defaultSettings = None):
         assert isNonEmptyString(programName)
         self._name = programName
@@ -33,6 +35,9 @@ class AppVersion(object):
         if organizationDomain is not None:
             assert isNonEmptyString(organizationDomain)
             self._organizationDomain = organizationDomain
+        if colors is not None:
+            assert isNonEmptyString(colors)
+            self._colors = colors
         if defaultSettings is not None:
             assert type(defaultSettings) is dict
             assert len(defaultSettings) > 0
@@ -50,6 +55,11 @@ class AppVersion(object):
 
     def organizationDomain(self):
         return self._organizationDomain
+
+    def colors(self):
+        if self._colors is None:
+            return []
+        return self._colors.replace(",",";").split(";")
 
     def defaultSettings(self):
         return self._defaultSettings
