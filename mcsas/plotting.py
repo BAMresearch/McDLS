@@ -579,7 +579,7 @@ class PlotResults(object):
                     align = "edge", # align bar by left edge
                     label = 'MC size histogram')
         suppAx.plot(histXMean, HistCDF, '-', color = 'grey', linewidth = 2,
-                    zorder = 5, label = 'Cumulative distribution function')
+                    zorder = 5, label = 'Cumulative distrib.')
         # plot observability limit
         if isinstance(self._dataset, SASData):
             hAxis.plot(histXMean, HistMinReq, 'ro',
@@ -589,7 +589,12 @@ class PlotResults(object):
         hAxis.errorbar(histXMean[validi[0:-1]], HistYMean[validi[0:-1]], 
             HistYStd[validi[0:-1]],
                 zorder = 4, **self._errorBarOpts)
-        hAxis.legend(loc = 1, fancybox = True, prop = self._textfont)
+        legendHandle0, legendLabel0 = hAxis.get_legend_handles_labels()
+        legendHandle1, legendLabel1 = suppAx.get_legend_handles_labels()
+        legendHandle0 += legendHandle1
+        legendLabel0 += legendLabel1
+        hAxis.legend(legendHandle0, legendLabel0, loc = 1, fancybox = True,
+                     prop = self._textfont)
         title(plotTitle, fontproperties = self._textfont,
               size = 'large')
         xlim(xLim)
