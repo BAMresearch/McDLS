@@ -338,7 +338,7 @@ class Histogram(DataSet, DisplayMixin):
 
     @staticmethod
     def yweighting(index = None):
-        avail = ('vol', 'num', 'volsqr', 'surf')
+        avail = ('vol', 'num', 'int', 'surf')
         try:
             return avail[index]
         except:
