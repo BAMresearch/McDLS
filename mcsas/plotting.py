@@ -581,9 +581,10 @@ class PlotResults(object):
         suppAx.plot(histXMean, HistCDF, '-', color = 'grey', linewidth = 2,
                     zorder = 5, label = 'Cumulative distribution function')
         # plot observability limit
-        hAxis.plot(histXMean, HistMinReq, 'ro', 
-                   ms = 5, markeredgecolor = 'r',
-                   label = 'Minimum visibility limit', zorder = 3)
+        if isinstance(self._dataset, SASData):
+            hAxis.plot(histXMean, HistMinReq, 'ro',
+                       ms = 5, markeredgecolor = 'r',
+                       label = 'Minimum visibility limit', zorder = 3)
         # plot active uncertainties
         hAxis.errorbar(histXMean[validi[0:-1]], HistYMean[validi[0:-1]], 
             HistYStd[validi[0:-1]],
