@@ -37,118 +37,19 @@ from gui.modelwidget import ModelWidget
 from gui.filelist import FileList
 from main import makeAbsolutePath
 
-# other changes:
-# - storing bool as numpy.int8 to HDF5 fixes data type issues
-# - general mechanism for handling access to permanent app settings
-# - fixes to parameter UI for more stability and less crashes
-#   - removed duplicate and obsolete signals
-# - a FitParameter always has an histogram list now,
-#   regardless of being active or not
-# - separate FitParameter attribute stores if it is active or not
-# - no default histogram created anymore
-#   - the user is asked to create an histogram if none is defined at calc. start
 INFOTEXT = (u"""
-<strong>major changes in McDLS Mk.XII:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>option to use chisqr variance as convergence criterion, instead of a fixed chisqr value</li>
-<li>Optimization: removed obsolete <em>compensationExponent</em> option</li>
-<li>DataSettings: constant uncertainty == 0.1 avoids hiding the data plot</li>
-<li>simulation: fixed volume ratio of simulated particles</li>
-<li>some minor fixes, fixed stability issues</li>
-</ul>
-<strong>major changes in McDLS Mk.XI:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>options to set uncertainty =1 or divided by G<sup>(2)</sup> (relative)</li>
-<li>fixed min. uncertainty % to be applied directly after loading files</li>
-<li>integrated uncertainty analysis &amp; DLS simulation</li>
-<li>synchronized to McSAS 1.3</li>
-<li>user customizable models</li>
-<li>no re-binning of DLS data allowed (raises error on trying)</li>
-<li>lower uncertainty limit eMin enabled for DLS data</li>
-</ul>
-<strong>major changes in McDLS Mk.X:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>outlier filtering of DLSData based on median absolute deviation</li>
-<ul><li>see http://stackoverflow.com/a/22357811</li></ul>
-<li>plot DLS count rate vs. capture time behind the correlation plot</li>
-<ul><li>plot median of all measurements for each angle of a sample</li></ul>
-<li>grouping of measurement indices</li>
-<ul><li>filtered measurement indices omitted in UI for each angle</li></ul>
-<li>numerical results of series analysis written to a single file for all active parameters</li>
-<li>remembered histogram ranges for each model between program sessions</li>
-<ul><li>no default histogram ranges, user is asked for a range if none is defined</li></ul>
-<li>... many small fixes and internal rearrangements to get this working</li>
-<li>internal UI improvements, removed unused/obsolete/redundant code </li>
-</ul>
-<strong>major changes in McDLS Mk.IX:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>alternative Goodness-of-Fit indicator output added</li>
-<ul><li>see [Henn 2016]: http://dx.doi.org/10.1107/S2053273316013206</li></ul>
-</ul>
-<strong>major changes in McDLS Mk.VIII:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>fixed histogramming regarding calculated DLS amplitude</li>
-<li>option to square the amplitude or not (V²Phi² vs. V·Phi)</li>
-<li>option to fix the first point of the model to the measured data</li>
-<li>surface weighted histogram</li>
-<li>current repetition included in progress log message</li>
-<li>Windows: URL links in log window should work again</li>
-<li>mostly fixed overlapping histogram plots</li>
-<li>fit configuration written to HDF5</li>
-<li>some bug fixes</li>
-</ul>
-<strong>major changes in McDLS Mk.VII:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>fix for long path names on Windows, supposed to work with >260 characters now</li>
-<li>fixed one possible source for crashes in the UI</li>
-<ul><li><span style="text-decoration: underline;">Feel free to report any crashes!</span> At best with a short description of the last action done with the program:</li>
-<li>What triggered a crash?</li>
-<li>What was clicked last?</li>
-<li>Which program version on which Operating System?</li>
-</ul>
-</ul>
-<strong>major changes in McDLS Mk.VI:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>volume squared distribution, aka. intensity weighted</li>
-<li>fixes for loading one-angled DLS .ASC data, simulated by CNTb/CONTIN</li>
-</ul>
-<strong>major changes in McDLS Mk.V:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>stores also the averaged DLS data along with fit results</li>
-<li>scattering angle dependent form factor in DLSSphere model enabled by default</li>
-</ul>
-<strong>major changes in McDLS Mk.IV:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>fixed volume fraction calculus in histogramming for DLS</li>
-<li>weighting compensation has to be == 1! (still adjustable for testing)</li>
-<li>fixed scattering angle dependent form factor in DLSSphere model</li>
-<li>Skips the first 2 data points by default</li>
-<li>more informative plot labels in series analysis</li>
-</ul>
-
-<strong>Notes on DLS data handling:</strong><ul>
-<style>li { margin: .5em; }</style>
-<li>The program expects *.ASC data files, containing "ALV-7004 CGS-8F Data" in the first line of the file. It shows a warning otherwise.</li>
-
-<li>It is recommended to load multiple files from measurements of the same sample at once. They are averaged automatically in order to infer uncertainties for all values. In a second step, the averaged data set is separated in one data set for every angle. For example, loading six files of measurements at eight angles will result in eight averaged data sets being listed in the program.</li>
-
-<li>Files from more than one sample can be loaded, all files containing the same sample name and angles are averaged.</li>
-
-<li>The measurement numbers ("indices") are taken from the file name of each data file. They consist of a group index and a measurement index which are shown in the column "Measurements".</li>
-
-<li>The behaviour for selected data sets changed: The program processes and fits only those data sets which are selected. If none are selected it processes all data sets (old behaviour). The selection of all data sets can be toggled by <Ctrl-A> key presses or via context menu at the data set list (right mouse button). In previous versions, the selection of data sets did not change anything.</li>
-
-<li>The new menu "Data Settings" shows configuration options for the first of the selected data sets. Changes are transferred to all selected data sets of the same type (DLS or SAS).</li>
-
-<li>In the optimization menu there is a new option "combine statistics [...]". If enabled, it combines the distribution moments of all data sets in one output file ("[...]_seriesStats.dat") for each active parameter. Finally, it shows a simple plot of the mean and its standard deviation for all angles.</li>
-
-</ul><hr />
-McSAS: Software for the retrieval of model parameter distributions from scattering patterns.
-
-Output files of a Monte Carlo run are stored in a directory named after the input file followed with a timestamp to avoid overwriting existing results.
+{programName}:\
+ Software for the retrieval of model parameter distributions from\
+ dynamic light scattering data.""".format(programName = version.name())
++ u"""
+Output files of a Monte Carlo run are stored in a directory named after\
+ the input file followed with a timestamp to avoid overwriting existing\
+ results.
 
 <br /><strong>Literature:</strong>
 This suite and method are detailed in:
+- Bressler, I. et al, J. Appl. Cryst. 00: 000-111.
+  http://dx.doi.org/
 - Bressler, I. et al, J. Appl. Cryst. 48: 962-969.
   http://dx.doi.org/10.1107/S1600576715007347
 - Pauw, B. R. et al., J. Appl. Cryst. 46: 365-371.
@@ -167,114 +68,45 @@ If convergence is not reached, the following can be attempted:
 2) Verify that the parameter range of the model is appropriate. Very
    wide ranges may prevent the correct solution from appearing within
    the limited number of iterations attempted by the program.
-3) Start with a simple model. The unidirectional degeneracy of
-   scattering behaviour means that most scattering patterns can be fit
-   using spheres.
-   Start with spheres, and move to more complex shapes afterwards.
-   Furthermore, when choosing complex models, ensure that there is
-   evidence for the necessity of these complex models from alternative
-   techniques.
-   For example, only choose "rods" when there is evidence for rods in
-   your sample (e.g. from TEM images). If a model fits your scattering
-   pattern, it does not mean it is *the* model.
 
-[ For more information, please see http://www.mcsas.net ]
+<style>li { margin: .5em; }</style>
+<br /><strong>Notes on DLS data handling:</strong><ul>
+<li>The program expects *.ASC data files, containing "ALV-7004 CGS-8F Data"\
+ in the first line of the file. It shows a warning otherwise.</li>
+
+<li>It is recommended to load multiple files from measurements of the same\
+ sample at once. They are averaged automatically in order to infer\
+ uncertainties for all values. In a second step, the averaged data set is\
+ split into one data set for every angle. For example, loading six files of\
+ measurements at eight angles will result in eight averaged data sets being\
+ listed in the program.</li>
+
+<li>Files from more than one sample can be loaded, all files sharing\
+ the same sample name are averaged along matching angles.</li>
+
+<li>The measurement numbers ("indices") are taken from the file name of\
+ each data file. They consist of a group index and a measurement index which\
+ are shown in the column "Measurements".</li>
+
+<li>The program processes and fits only those data sets which are selected.\
+ If none are selected, it processes all data sets. The selection of all data\
+ sets can be toggled by <Ctrl-A> key presses or via context menu at the \
+ data set list (right mouse button).</li>
+
+<li>The menu "Data Settings" shows configuration options for the first of\
+ the selected data sets. Changes are transferred to all data sets sharing its\
+ sample name.</li>
+
+<li>The option "Calc. series statistics" in the optimization menu combines the\
+ distribution moments of all data sets in one output file\
+ ("[...]_seriesStats.dat") for each active parameter. Finally, it shows a\
+ simple plot of the mean and its standard deviation across\
+ the scattering angles.</li>
+</ul>
+[ For more information, please see http://www.mcdls.net ]
 """)
 
 CHANGESTEXT = (u"""
-
-Changes in v1.3:
-- Adjustable rebinning method for input data prior to fit process
-- Optional lower and/or upper clipping of input data
-- User extensible models: All models are dynamically loaded from
-  the *models* directory on startup. Just drop your own custom .PY
-  model file in there. Please, see the existing models for examples.
-- Complete fit configuration is written to HDF5 file .mh5
-- Added intensity (vol²) and surface weighted histograms
-- No default histogram ranges anymore, the user is asked for a range
-  if none is defined
-- Remembered histogram ranges for each model between program sessions
-- Alternative Goodness-of-Fit indicator output added,
-  see [Henn 2016]: http://dx.doi.org/10.1107/S2053273316013206
-- Current repetition included in progress log message
-- Numerical results of series analysis written to a single file
-  for all active parameters
-- Internal UI improvements, removed unused/obsolete/redundant code
-- Many bug fixes and small improvements
-- Python3 compatibility, but standalone packages still use Python2
-
-Changes in v1.2:
-- Smearing added for pinhole systems as well
-- Trapezoidal and Gaussian beam profiles can be used
-- Datapoints can be clipped from the beginning of the dataset
-- some bug fixes
-
-Changes in v1.1:
-- Slit-smearing added for Kratky-cameras
-- Q-limits added
-
-Changes in v1.0.1:
-- Updated SLD range limits for models: lmadensesphere and ellipsoids
-- Updated information on related literature
-
-Changes in v1.0:
-- Compiled versions available for Linux, Mac OS X and Windows.
-- Histogram ranges automatically follow parameter ranges
-  (can be disabled)
-- Shannon channel estimate shown in the file dialog
-- Tooltips shown when hovering over an input window
-- All output stored in directories
-- Number input boxes now allow scientific notation input
-- Stability improvements and code cleanup
-- Improved plotting routine
-- Range statistics list functionality added
-- Improved division of GUI items into vertical tabs
-- More information shown in data list
-- Correct handling when fitting multiple files
-- Range estimate now uses minimum Q by itself,
-  no longer considers Q-spacing
-- LMA Dense Spheres, spherical and ellipsoidal core shell models
-  work again
-- Extended internal parameter functionality, using JSON defaults file
-- Improvements towards implementing RangeInfo in the GUI
-
-Changes in 0.0.11:
-- distribution statistics log output and writing to stats file
-- plain SAS evaluation (no fit) if no param is active
-- all output files with extensions and storing in settings
-- configuration file now *.cfg
-- single start/stop button
-
-Changes in 0.0.10:
-- data file listing widget on top with short info
-  - double-click uses sphere size est. for sphere model radius range
-- start/stop buttons
-  - allows to abort current calculation and restart
-- column names in output files
-- data file names stored with settings
-- switch to enable/disable background level fit
-- multiple plot figures on Windows supported
-
-Changes in 0.0.9:
-- added GUI to public McSAS repository
-
-Changes in 0.0.8:
-- new model: GaussianChain, verified against SASfit:
-  http://sasfit.sf.net/manual/Gaussian_Chain#Gauss_2
-- fixed volume function exponent in Kholodenko
-  was v² instead of just v
-
-Changes in 0.0.7:
-- Using restructured McSAS
-- building GUI for models and global settings dynamically
-- new model: Kholodenkos worm-like structure, verified against SASfit
-
-Changes in 0.0.6:
-Fixed handling of negative values in PDH data files.
-
-Changes in 0.0.5:
-'Number-weighted distributions now come with correct-looking observability limits.'
- https://bitbucket.org/pkwasniew/mcsas/commits/81bbf84
 
 """.replace('\n\n', '<hr />')) # html horz. line instead of 2x newline
 # make 'changes xyz' bold; wondering how much weight markdown might add (?)
