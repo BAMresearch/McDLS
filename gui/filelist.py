@@ -38,10 +38,10 @@ class FileList(DataList):
 
     def __init__(self, *args, **kwargs):
         super(FileList, self).__init__(*args, **kwargs)
-        self.addMenuEntry(
-            name = "simulate", text = tr("add simulated"), menuStates = "*",
-            toolTip = tr("Add simulated data."),
-            callbacks = self.simulateData)
+#        self.addMenuEntry(
+#            name = "simulate", text = tr("add simulated"), menuStates = "*",
+#            toolTip = tr("Add simulated data."),
+#            callbacks = self.simulateData)
 
     def simulateData(self):
         print("simulateData")
