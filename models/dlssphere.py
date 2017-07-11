@@ -4,7 +4,7 @@
 from __future__ import division, absolute_import
 from past.utils import old_div
 import numpy
-from numpy import pi, exp, sqrt, sin, cos
+from numpy import pi, exp, sin, cos
 from bases.algorithm import RandomUniform
 from bases.model import DLSModel
 from utils.parameter import FitParameter, Parameter
@@ -30,6 +30,13 @@ class DLSSphere(DLSModel):
 
     def volume(self):
         return (pi*4./3.) * self.radius()**3
+
+    def surface(self):
+        r"""Calculates the surface of a sphere defined by:
+
+        :math:`s(r) = 4 \pi r^2`
+        """
+        return 4. * pi * self.radius() * self.radius()
 
     def _ffSphere(self):
         if not self.withFF():
