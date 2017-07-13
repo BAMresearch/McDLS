@@ -107,6 +107,8 @@ If convergence is not reached, the following can be attempted:
 """)
 
 CHANGESTEXT = (u"""
+Changes in v1.0.1:
+- Bugfix for an EOFError in Windows with 'Calc. series statistics' enabled
 
 """.replace('\n\n', '<hr />')) # html horz. line instead of 2x newline
 # make 'changes xyz' bold; wondering how much weight markdown might add (?)
