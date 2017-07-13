@@ -20,7 +20,7 @@ from multiprocessing import Process, Pipe
 import matplotlib
 import matplotlib.pyplot as pyplot
 
-from utils import isString, isList
+from utils import isString, isList, mcopen
 from utils.units import Deg, NM3
 from mcsas.plotting import PlotResults
 from log import timestampFormatted
@@ -51,7 +51,7 @@ def processFitFile(dirpath, filename, *args):
     logging.info("processing '{}'".format(os.path.join(dirpath, filename)))
     filepath = os.path.join(dirpath, filename)
     lines = None
-    with open(filepath, 'rb') as fd:
+    with mcopen(filepath, 'rb') as fd:
         lines = [l.decode("utf8") for l in fd.readlines()]
     if lines is None or len(lines) < 2:
         logging.error("No lines found!")
