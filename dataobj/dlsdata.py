@@ -357,7 +357,7 @@ class DLSData(DataObj):
 
     @property
     def seriesKeyName(self):
-        return ("Scattering angle ({})"
+        return (u"Scattering angle ({})"
                 .format(self.anglesUnit.displayMagnitudeName))
 
     @property
