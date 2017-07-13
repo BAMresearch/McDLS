@@ -12,6 +12,7 @@ import logging
 import time
 import os.path
 import codecs
+import tempfile
 from collections import OrderedDict
 try: 
     import configparser
@@ -127,12 +128,102 @@ class OutputFilename(object):
             QUrl.fromLocalFile(fnUrl).toEncoded()))
         return fn
 
+    def writeResults(self, mcResult, fileKey, descr, columnNames,
+                     extension = '.txt'):
+        if not all(cn in mcResult for cn in columnNames):
+            logging.warning(
+                'Writing results: some of the requested {d} not found!'
+                .format(d = descr))
+            logging.warning(str(columnNames))
+            return
+        fn = self.filenameVerbose(fileKey, descr, extension = extension)
+        logging.info("Containing the following columns:")
+        cwidth = max([len(cn) for cn in columnNames])
+        fmt = "{0}[ {1:" + str(cwidth) + "s} ]"
+        for cn in columnNames:
+            msg = fmt.format(self._indent, cn)
+            peek = np.ravel(mcResult[cn])
+            if len(peek) == 2:
+                for value in peek[0:2]:
+                    try:
+                        msg += " {0: .4e}".format(value)
+                    except ValueError:
+                        msg += " {0: >14s}".format(value)
+            logging.info(msg)
+        # write header:
+        AsciiFile.writeHeaderLine(fn, columnNames)
+        # (additional header lines can be appended if necessary)
+        data = np.vstack([mcResult[cn] for cn in columnNames]).T
+        # append to the header, do not overwrite:
+        AsciiFile.appendFile(fn, data)
+
+class SeriesStatsDataSet(object):
+    """Just for the file name formatting."""
+    title = u"series statistics"
+
+def processSeries(series, path, logfn = None, queue = None):
+    # set up output redirection to file, because we're in another process here
+    if os.path.isfile(logfn):
+        log.replaceStdOutErr() # redirect all output to logging.info/err
+        logFile = logging.FileHandler(logfn, encoding = "utf8")
+        log.replaceHandler(logFile) # removes everything else
+    # init the plot
+    seriesPlot = PlotSeriesStats()
+    # data formatted for file output, gathered across histograms
+    fileData = dict()
+    columnNames = ( # columns appearing in the output file header
+        ["seriesKey", "param", "lower", "upper", "weighting"]
+        + list(Moments.fieldNames()))
+    for seriesItem in series.items():
+        processSeriesStats(seriesItem, seriesPlot, fileData, columnNames)
+    # write series statistics to output file
+    LastPath.set(path)
+    outFn = OutputFilename(SeriesStatsDataSet, createDir = False)
+    outFn.writeResults(fileData, "", SeriesStatsDataSet.title,
+                       columnNames, extension = '.dat')
+    if queue is not None:
+        queue.put(True)
+    seriesPlot.show()
+    if os.path.isfile(logfn):
+        os.remove(logfn)
+
+def processSeriesStats(seriesItem, seriesPlot, fileData, columnNames):
+    # gather data values indexed by columns names first
+    stats = dict()
+    ((sampleName, seriesKeyName, (pname, lo, hi, weight)),
+      valuePairs) = seriesItem
+    paramUnit = valuePairs[0]   # strip the unit off of the values
+    valuePairs = valuePairs[1:]
+    columnNames[0] = seriesKeyName.replace(" ", "_")
+    for seriesKey, moments in valuePairs:
+        values = (seriesKey, pname, lo, hi, weight) + moments
+        for name, value in zip(columnNames, values):
+            if name not in stats:
+                stats[name] = []
+            # for plotting below, no float-str conversion here
+            stats[name].append(value)
+    # convert numerical stats to proper formatted text for file output
+    for key, values in stats.items():
+        # proper float-str formatting for text file output
+        if key not in fileData:
+            fileData[key] = []
+        for value in values:
+            if isList(value):
+                value = ";".join([AsciiFile.formatValue(v)
+                                  for v in value])
+            fileData[key].append(AsciiFile.formatValue(value))
+    # simple statistics plotting, kind of a prototype for now ...
+    stats["seriesKeyName"] = seriesKeyName
+    stats["seriesKey"] = stats[columnNames[0]]
+    stats["unit"] = paramUnit
+    stats["title"] = sampleName
+    seriesPlot.plot(stats)
+
 class Calculator(HDFMixin):
     _algo = None  # McSAS algorithm instance
     _outFn = None # handles output file names, creates directories
     _series = None # stores results of multiple data sets for a final summary
     # static settings, move this to global app settings later
-    indent = "    "
     nolog = False
 
     def __init__(self):
@@ -197,7 +288,7 @@ class Calculator(HDFMixin):
         fn = self._outFn.filenameVerbose("log", "this log")
         logFile = logging.FileHandler(fn, encoding = "utf8")
         widgetHandler = log.getWidgetHandlers()[0]
-        log.replaceHandler(widgetHandler) # remove everything else
+        log.replaceHandler(widgetHandler) # removes everything else
         log.addHandler(logFile)
         try:
             # show last lines about pdf output from separate thread
@@ -264,69 +355,35 @@ class Calculator(HDFMixin):
     def postProcess(self):
         if not self.algo.seriesStats():
             return
+        if not len(self._series):
+            logging.warn("No series statistics available, not plotting.")
+            return
         # works similar to _writeStatistics() but not using parameters
-
-        class DummyDataSet(object):
-            """Just for the file name formatting."""
-            title = u"series statistics"
-
-        def processSeries(series):
-            seriesPlot = PlotSeriesStats()
-            # data formatted for file output, gathered across histograms
-            fileData = dict()
-            columnNames = ( # columns appearing in the output file header
-                ["seriesKey", "param", "lower", "upper", "weighting"]
-                + list(Moments.fieldNames()))
-            for seriesItem in series.items():
-                processSeriesStats(seriesItem, seriesPlot, fileData, columnNames)
-            # since we are the last writer, changing outFn doesn't hurt
-            self._outFn = OutputFilename(DummyDataSet, createDir = False)
-            self._writeResultHelper(fileData, "", "series statistics",
-                                    columnNames, extension = '.dat')
-            seriesPlot.show()
-
-        def processSeriesStats(seriesItem, seriesPlot, fileData, columnNames):
-            # gather data values indexed by columns names first
-            stats = dict()
-            ((sampleName, seriesKeyName, (pname, lo, hi, weight)),
-              valuePairs) = seriesItem
-            paramUnit = valuePairs[0]   # strip the unit off of the values
-            valuePairs = valuePairs[1:]
-            columnNames[0] = seriesKeyName.replace(" ", "_")
-            for seriesKey, moments in valuePairs:
-                values = (seriesKey, pname, lo, hi, weight) + moments
-                for name, value in zip(columnNames, values):
-                    if name not in stats:
-                        stats[name] = []
-                    # for plotting below, no float-str conversion here
-                    stats[name].append(value)
-            # convert numerical stats to proper formatted text for file output
-            for key, values in stats.items():
-                # proper float-str formatting for text file output
-                if key not in fileData:
-                    fileData[key] = []
-                for value in values:
-                    if isList(value):
-                        value = ";".join([AsciiFile.formatValue(v)
-                                          for v in value])
-                    fileData[key].append(AsciiFile.formatValue(value))
-            # simple statistics plotting, kind of a prototype for now ...
-            stats["seriesKeyName"] = seriesKeyName
-            stats["seriesKey"] = stats[columnNames[0]]
-            stats["unit"] = paramUnit
-            stats["title"] = sampleName
-            seriesPlot.plot(stats)
-
-        if isMac():
-            processSeries(self._series)
-        else:
-            from multiprocessing import Process
-            proc = Process(target = processSeries, args = (self._series,))
-            proc.start()
+        pargs = (self._series, LastPath.get())
+        if isMac(): # plotting does not block, no multiproc needed
+            processSeries(*pargs)
+            return
+        from multiprocessing import Process, Queue
+        logfh, logfn = tempfile.mkstemp()
+        os.close(logfh)
+        queue = Queue()
+        pkwargs = dict(logfn = logfn, queue = queue)
+        proc = Process(target = processSeries, args = pargs,
+                       kwargs = pkwargs)
+        proc.start()
+        try: # block until the queue contains sth -> log can be read
+            queue.get(True, 5)
+        except Queue.Empty:
+            return
+        if os.path.isfile(logfn):
+            log.disableFormatter()
+            with mcopen(logfn, 'r') as fd:
+                logging.info(fd.read())
+            log.enableFormatter()
 
     def _writeStatistics(self, param):
         """Gathers the statistics column-wise first and converts them to a
-        row oriented text file in _writeResultHelper()"""
+        row oriented text file in OutputFilename.writeResults()"""
         stats = dict()
         columnNames = (("lower", "upper", "weighting")
                         + Moments.fieldNames())
@@ -337,17 +394,15 @@ class Calculator(HDFMixin):
                 if name not in stats:
                     stats[name] = []
                 stats[name].append(AsciiFile.formatValue(value))
-        self._writeResultHelper(stats, "stats_"+param.name(),
-                                "distribution statistics",
-                                columnNames, extension = '.dat')
+        self._outFn.writeResults(stats, "stats_"+param.name(),
+                                 "distribution statistics",
+                                 columnNames, extension = '.dat')
 
     def _writeFit(self, mcResult):
         columnNames = ('fitX0', 'dataMean', 'dataStd',
                        'fitMeasValMean', 'fitMeasValStd')
-        self._writeResultHelper(mcResult, "fit", "fit data",
-            columnNames,
-            extension = '.dat'
-        )
+        self._outFn.writeResults(mcResult, "fit", "fit data",
+                                 columnNames, extension = '.dat')
 
     def _writeDistrib(self, param):
         for h in param.histograms():
@@ -357,7 +412,7 @@ class Calculator(HDFMixin):
                 Obs = h.observability,
                 cdfMean = h.cdf.mean, cdfStd = h.cdf.std
             )
-            self._writeResultHelper(histRes, str(h), "distributions",
+            self._outFn.writeResults(histRes, str(h), "distributions",
                 ("xMean", "xWidth", # fixed order of result columns
                  "yMean", "yStd", "Obs",
                  "cdfMean", "cdfStd"),
@@ -408,34 +463,5 @@ class Calculator(HDFMixin):
                 config.set(sectionName, p.name(), p.value())
         with mcopen(fn, 'w') as configfile:
             config.write(configfile)
-
-    def _writeResultHelper(self, mcResult, fileKey, descr, columnNames,
-                           extension = '.txt'):
-        if not all(cn in mcResult for cn in columnNames):
-            logging.warning(
-                'Writing results: some of the requested {d} not found!'
-                .format(d = descr))
-            logging.warning(str(columnNames))
-            return
-        fn = self._outFn.filenameVerbose(fileKey, descr, extension = extension)
-        logging.info("Containing the following columns:")
-        cwidth = max([len(cn) for cn in columnNames])
-        fmt = "{0}[ {1:" + str(cwidth) + "s} ]"
-        for cn in columnNames:
-            msg = fmt.format(self.indent, cn)
-            peek = np.ravel(mcResult[cn])
-            if len(peek) == 2:
-                for value in peek[0:2]:
-                    try:
-                        msg += " {0: .4e}".format(value)
-                    except ValueError:
-                        msg += " {0: >14s}".format(value)
-            logging.info(msg)
-        # write header:
-        AsciiFile.writeHeaderLine(fn, columnNames)
-        # (additional header lines can be appended if necessary)
-        data = np.vstack([mcResult[cn] for cn in columnNames]).T
-        # append to the header, do not overwrite:
-        AsciiFile.appendFile(fn, data)
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
