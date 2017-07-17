@@ -107,6 +107,9 @@ If convergence is not reached, the following can be attempted:
 """)
 
 CHANGESTEXT = (u"""
+Changes in v1.0.2:
+- fixed series statistics plot log in case it needs too much time
+- fixed open data file dialog title for DLS/ASC files
 Changes in v1.0.1:
 - Bugfix for an EOFError in Windows with 'Calc. series statistics' enabled
 
