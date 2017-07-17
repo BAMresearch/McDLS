@@ -68,9 +68,7 @@ class FileList(DataList):
         if fileList is None or type(fileList) is bool:
             fileList = getOpenFiles(self,
                 # show same unit as in SASData.__init__()
-                u"Load one or more data files with q({qu}) and intensity({iu})"
-                .format(qu = ScatteringVector(u"nm⁻¹").displayMagnitudeName,
-                        iu = ScatteringIntensity(u"(m sr)⁻¹").displayMagnitudeName),
+                u"Load one or more .ASC data files",
                 LastPath.get(), multiple = True,
                 filefilter = getFileFilter()
             )
