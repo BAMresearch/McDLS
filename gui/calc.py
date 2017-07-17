@@ -363,7 +363,7 @@ class Calculator(HDFMixin):
         if isMac(): # plotting does not block, no multiproc needed
             processSeries(*pargs)
             return
-        from multiprocessing import Process, Queue
+        from multiprocessing import Process, Queue, queues
         logfh, logfn = tempfile.mkstemp()
         os.close(logfh)
         queue = Queue()
@@ -372,8 +372,8 @@ class Calculator(HDFMixin):
                        kwargs = pkwargs)
         proc.start()
         try: # block until the queue contains sth -> log can be read
-            queue.get(True, 5)
-        except Queue.Empty:
+            queue.get(True, 10)
+        except queues.Empty:
             return
         if os.path.isfile(logfn):
             log.disableFormatter()
