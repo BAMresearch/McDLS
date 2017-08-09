@@ -46,7 +46,7 @@
     },
     "testConvVariance" : {
         "displayName" : "Test goodness of fit variance?",
-        "description" : "Instead of trying to reach a given goodness of fit value (convergence criterion), the variance of the goodness of fit values of the last ten successful improvements has to be reached.",
+        "description" : "Instead of trying to reach a given goodness of fit value (convergence criterion), the variance of the goodness of fit values of the last 20 successful improvements has to be reached.",
         "default" : false,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",

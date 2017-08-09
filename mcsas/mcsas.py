@@ -40,7 +40,7 @@ class ConvBuffer(object):
     _testConvVariance = None
     _y = None
     _x = None
-    _size = 20
+    _size = 20 # number of values for variance or slope calc.
     _huge = 9.9e199 # 1e200 is max in the GUI, but need _size buffer too
 
     def __init__(self, minConv, testConvVariance = False):
