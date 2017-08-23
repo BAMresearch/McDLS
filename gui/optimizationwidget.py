@@ -36,8 +36,8 @@ class OptimizationWidget(AlgorithmWidget):
         self.advanced = self._makeEntry("showAdvanced", bool, False,
             widgetType = AdvancedSettings, widgets = tuple(self.makeWidgets(
                 "numContribs", "compensationExponent", 
-                "findBackground", "maxIterations", "showIncomplete",
-                "seriesStats")))
+                "findBackground", "positiveBackground", "maxIterations", 
+                "showIncomplete", "seriesStats")))
         hlayout.addWidget(self.defaults)
         hlayout.addWidget(self.advanced)
         self.sigValueChanged.connect(self.advanced.updateWidgets)

@@ -331,6 +331,7 @@ class McSAS(AlgorithmBase):
             sc[0] = data.f.limit[1] / modelData.cumInt.max()
 #        sc *= sum(wset)
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.positiveBackground.value(),
                                             self.model)
         # for the least squares fit, normalize the intensity by the sum of
         # weights which is << 1 (for SAXS, usually it's the sum
@@ -543,6 +544,7 @@ class McSAS(AlgorithmBase):
         # store the model instance too
         data = self.data
         bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.positiveBackground.value(),
                                             self.model)
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):

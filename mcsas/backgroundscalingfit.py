@@ -32,15 +32,26 @@ class BackgroundScalingFit(object):
                           third output argument, default: False
     :arg background: *(optional)* Enables a flat background contribution,
                      default: True
+    :arg positiveBackground: *(optional)* Fixes the background values to positive only,
+                     default: False
 
     :returns: (*sc*, *conval*): A tuple of an array containing the
               intensity scaling factor and background and the reduced
               chi-squared value.
     """
     _findBackground = None # True: find optimal background as well
+    _positiveBackground = None # True: Fix background to positive values only
 
-    def __init__(self, findBackground, *args):
+    def __init__(self, findBackground, positiveBackground, *args):
         self._findBackground = bool(findBackground)
+        self._positiveBackground = bool(positiveBackground)
+
+    def signBackground(self, b):
+        """ Fixes the background to positive values if bool is set """
+        if self._positiveBackground:
+            return abs(b)
+        else:
+            return b
 
     @staticmethod
     def chi(sc, dataMeas, dataErr, dataCalc):
@@ -48,6 +59,12 @@ class BackgroundScalingFit(object):
         """
         return (dataMeas - sc[0] * dataCalc - sc[1]) / dataErr
     
+    @staticmethod
+    def chiPosBg(sc, dataMeas, dataErr, dataCalc):
+        """Chi calculation, difference of measured and calculated signal.
+        """
+        return (dataMeas - sc[0] * dataCalc - abs(sc[1])) / dataErr
+
     @staticmethod
     def chiNoBg(sc, dataMeas, dataErr, dataCalc):
         """Chi calculation, difference of measured and calculated signal,
@@ -73,7 +90,7 @@ class BackgroundScalingFit(object):
         """Returns the input data scaled by the provided factor and background
         level applied if requested."""
         if self._findBackground:
-            return (data * sc[0]) + sc[1] # apply background on request
+            return (data * sc[0]) + self.signBackground(sc[1]) # apply background on request
         # else:
         return (data * sc[0])
 
@@ -81,6 +98,8 @@ class BackgroundScalingFit(object):
         func = self.chiNoBg
         if self._findBackground:
             func = self.chi
+            if self._positiveBackground:
+                func = self.chiPosBg
         sc, success = optimize.leastsq(func, sc, args = (dataMeas, dataErr, dataCalc),
                                        full_output = False)
         return sc
@@ -109,6 +128,8 @@ class BackgroundScalingFit(object):
 
         if not self._findBackground:
             sc[1] = 0.0
+        else:
+            sc[1] = self.signBackground(sc[1])
         # calculate convergence value
         conval = self.chiSqr(dataMeas, dataErr, self.dataScaled(dataCalc, sc))
         aGoFs = self.aGoFsAlpha(dataMeas, dataErr, self.dataScaled(dataCalc, sc))
