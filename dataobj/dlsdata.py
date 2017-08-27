@@ -175,8 +175,8 @@ class DLSData(DataObj):
     @classproperty
     @classmethod
     def displayDataDescr(cls):
-        return ("Title", "Measurements", "Data points",
-                "Angle(s)", "Description")
+        return ("Title", "Measurements", "#Data",
+                "Angle", "Description")
 
     @classproperty
     @classmethod
