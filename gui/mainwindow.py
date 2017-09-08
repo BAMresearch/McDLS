@@ -113,6 +113,10 @@ CHANGESTEXT = (u"""
 Changes in v1.0.2:
 - fixed series statistics plot log in case it needs too much time
 - fixed open data file dialog title for DLS .ASC files
+- updated description of optimization option "goodness of fit variance"
+- minor fix in column header of data set list UI
+- updated icons for MacOS
+- minor fixes
 Changes in v1.0.1:
 - Bugfix for an EOFError in Windows with 'Calc. series statistics' enabled
 
