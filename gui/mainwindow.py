@@ -112,13 +112,13 @@ If convergence is not reached, the following can be attempted:
 CHANGESTEXT = (u"""
 Changes in v1.0.2:
 - fixed series statistics plot log in case it needs too much time
-- fixed open data file dialog title for DLS/ASC files
+- fixed open data file dialog title for DLS .ASC files
 Changes in v1.0.1:
 - Bugfix for an EOFError in Windows with 'Calc. series statistics' enabled
 
 """.replace('\n\n', '<hr />')) # html horz. line instead of 2x newline
 # make 'changes xyz' bold; wondering how much weight markdown might add (?)
-CHANGESTEXT = re.sub(r"([\s\w]*[cC]hanges.*\:)",
+CHANGESTEXT = re.sub(r"([cC]hanges[^\:]+\:)",
                      r"<strong>\1</strong>",
                      CHANGESTEXT)
 
