@@ -164,7 +164,7 @@ class SeriesStatsDataSet(object):
 
 def processSeries(series, path, logfn = None, queue = None):
     # set up output redirection to file, because we're in another process here
-    if os.path.isfile(logfn):
+    if isString(logfn) and os.path.isfile(logfn):
         log.replaceStdOutErr() # redirect all output to logging.info/err
         logFile = logging.FileHandler(logfn, encoding = "utf8")
         log.replaceHandler(logFile) # removes everything else
@@ -185,7 +185,7 @@ def processSeries(series, path, logfn = None, queue = None):
     if queue is not None:
         queue.put(True)
     seriesPlot.show()
-    if os.path.isfile(logfn):
+    if isString(logfn) and os.path.isfile(logfn):
         os.remove(logfn)
 
 def processSeriesStats(seriesItem, seriesPlot, fileData, columnNames):
@@ -374,7 +374,7 @@ class Calculator(HDFMixin):
             queue.get(True, 10)
         except queues.Empty:
             return
-        if os.path.isfile(logfn):
+        if isString(logfn) and os.path.isfile(logfn):
             log.disableFormatter()
             with mcopen(logfn, 'r') as fd:
                 logging.info(fd.read())
