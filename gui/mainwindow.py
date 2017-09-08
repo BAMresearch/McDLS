@@ -47,9 +47,12 @@ Output files of a Monte Carlo run are stored in a directory named after\
  results.
 
 <br /><strong>Literature:</strong>
-This suite and method are detailed in:
-- Bressler, I. et al, J. Appl. Cryst. 00: 000-111.
-  http://dx.doi.org/
+This suite and method are detailed in:"""+
+#- Bressler, I. et al, J. Appl. Cryst. 00: 000-111.
+#  http://dx.doi.org/
+u"""
+- [soon]
+  ...
 - Bressler, I. et al, J. Appl. Cryst. 48: 962-969.
   http://dx.doi.org/10.1107/S1600576715007347
 - Pauw, B. R. et al., J. Appl. Cryst. 46: 365-371.
