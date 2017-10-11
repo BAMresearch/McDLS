@@ -523,6 +523,7 @@ class PlotResults(object):
         plotTitle = plotPar.displayName()
         xLabel = u'{} ({})'.format(plotPar.name(), plotPar.suffix())
 
+        # expand the x axis to leave a little more space left and right of the plot
         if parHist.xscale == 'log':
             xLim = (histXLowerEdge.min() * (1 - self._axisMargin), 
                     histXLowerEdge.max() * (1 + self._axisMargin))
@@ -533,6 +534,7 @@ class PlotResults(object):
                     histXLowerEdge.max() + 0.25 * self._axisMargin * xDiff) 
             xScale = 'linear'
 
+        # vertical limits also should be adjusted a little
         yLim = (0, HistYMean.max() * (1 + self._axisMargin) )
         # histogram axes settings:
         hAxDict = self._AxDict.copy()
@@ -559,7 +561,7 @@ class PlotResults(object):
         #plot grid
         self.plotGrid(hAxis)
 
-        # duplicate:
+        # duplicate axes for the CDF plot:
         suppAx = hAxis.twinx()
         suppAx.set_ylim(0, 1.2)
         suppAx.set_ylabel('Cumulative distribution function')
@@ -574,6 +576,7 @@ class PlotResults(object):
             hAxis.bar(histXLowerEdge[validi], HistYMean[validi[0:-1]], 
                     width = histXWidth[validi[0:-1]], color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
+                    align = "edge", # align bar by left edge
                     label = 'MC size histogram')
         suppAx.plot(histXMean, HistCDF, '-', color = 'grey', linewidth = 2,
                     zorder = 5, label = 'Cumulative distribution function')
