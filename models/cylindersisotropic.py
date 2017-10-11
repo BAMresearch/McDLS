@@ -3,6 +3,8 @@
 
 from __future__ import absolute_import
 import numpy, scipy, scipy.special
+import numpy as np
+import logging
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
 from utils.parameter import FitParameter, Parameter
 from bases.model import SASModel
@@ -32,13 +34,9 @@ class CylindersIsotropic(SASModel):
                     displayName = "Aspect ratio of the Cylinder",
                     generator = RandomExponential,
                     valueRange = (1e-3, 1e3)),
-            FitParameter("psiAngle", 0.1, unit = Angle(u'°'),
-                    displayName = "Internal Parameter, not user adjustable",
-                    generator = RandomUniform,
-                    valueRange = (0.01, 2 * pi + 0.01)),
-            Parameter("psiAngleDivisions", 303.,
+            Parameter("intDiv", 100.,
                     displayName = "Orientation Integration Divisions",
-                    valueRange = (1, numpy.inf)),
+                    valueRange = (1, 1e4)),
             Parameter("sld", SLD(u'Å⁻²').toSi(1e-6), unit = SLD(u'Å⁻²'),
                     displayName = "Scattering length density difference",
                     valueRange = (0, numpy.inf))
@@ -52,20 +50,32 @@ class CylindersIsotropic(SASModel):
     def formfactor(self, dataset):
         # psi and phi defined in fig. 1, Pauw et al, J. Appl. Cryst. 2010
         # used in the equation for a cylinder from Pedersen, 1997
+        # reworked on 20171010, changed to SASfit function (eq.3.215, sasfit doc 0.94.6)
 
-        psiRange = self.psiAngle.valueRange()
-        psi = numpy.linspace(psiRange[0], psiRange[1], self.psiAngleDivisions())
+        # not sure we need the step size, since the integration uses np.average
+        x, step = numpy.linspace(0., 1., self.intDiv() + 1, endpoint = False, retstep = True)
+        x = x[1:] # clip zero value
+        # logging.info("Shape cylinder int. x: {}, q: {}".format(x.shape, dataset.q.shape))
 
         if self.useAspect():
             halfLength = self.radius() * self.aspect()
         else:
             halfLength = 0.5 * self.length()
-        qRsina = numpy.outer(dataset.q, self.radius() * sin((psi) ))
-        qLcosa = numpy.outer(dataset.q, halfLength * cos((psi) ))
-        fsplit = ((2.*scipy.special.j1(qRsina)/qRsina * sinc(qLcosa/pi))
-                  * sqrt(abs(sin((psi) ))[newaxis,:] + 0. * qRsina))
-        #integrate over orientation
-        return numpy.sqrt(numpy.mean(fsplit**2, axis=1)) # should be length q
+
+        QRsqrtx = numpy.outer(dataset.q, self.radius() * np.sqrt(1. - x**2.) )
+        QLx     = numpy.outer(dataset.q, 2. * halfLength * x )
+        # shape of the above two: [q, numInt]
+
+        numerator   = scipy.special.j1(QRsqrtx) * np.sin(QLx / 2.)
+        denominator = QRsqrtx * QLx
+        fsplit = numerator / denominator
+        # shape of fsplit: [q, numInt]
+
+        # fsplit = ((scipy.special.j1(qRsina)/qRsina * sinc(qLcosa/pi))
+        #           * sqrt(abs(sin((psi) ))[newaxis,:] + 0. * qRsina))
+
+        # return 16 * np.sqrt(step * np.sum(fsplit**2, axis = 1))
+        return 16 * np.sqrt(np.trapz(fsplit**2, dx = step, axis = 1))
 
     def volume(self):
         if self.useAspect():
