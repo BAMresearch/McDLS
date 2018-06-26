@@ -78,6 +78,19 @@ If convergence is not reached, the following can be attempted:
 
 CHANGESTEXT = (u"""
 
+Changes in v1.3.1:
+- Bugfix for high aspect ratio cylinders
+- Fix for alignment problems of bars in the histograms
+- Updated the isotropically scattering cylinder model to use the
+  (faster) SASfit equation
+- Added switch for limiting background values to positive values only.
+- Switched to trapezoidal smearing by default
+- Plotting fixed for incomplete input data
+- Fixed syntax error in experimental NXcanSASFile
+- Bugfix for 'could not plot background' on Windows
+- Change extension of archive to hdf5 to make it understood by
+  receiving programs (Dawn, Origin)
+
 Changes in v1.3:
 - Adjustable rebinning method for input data prior to fit process
 - Optional lower and/or upper clipping of input data
