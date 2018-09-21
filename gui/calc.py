@@ -80,7 +80,7 @@ class OutputFilename(object):
         return self._timestamp
 
     def __init__(self, dataset, createDir = True):
-        self._outDir = LastPath.get()
+        self._outDir = os.path.dirname(dataset.filename)
         if not os.path.isdir(self._outDir):
             logging.warning("Output path '{}' does not exist!"
                             .format(self._outDir))
