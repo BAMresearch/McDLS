@@ -12,7 +12,8 @@ from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
 from QtCore import Qt, QSettings, QFileInfo
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
-                   QSizePolicy, QApplication, QToolBox, QIcon)
+                   QSizePolicy, QApplication, QToolBox)
+from QtGui5 import QIcon
 from gui.bases.mainwindow import MainWindow as MainWindowBase
 from gui.bases.logwidget import LogWidget
 from gui.bases.dockwidget import DockWidget

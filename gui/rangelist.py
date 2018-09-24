@@ -8,8 +8,9 @@ import logging
 from gui.qt import QtCore, QtGui
 from QtCore import Qt, QFileInfo, QMargins
 from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
-                   QLabel, QComboBox, QPalette, QDialog, QSpinBox,
+                   QLabel, QComboBox, QDialog, QSpinBox,
                    QCheckBox)
+from QtGui5 import QPalette
 import numpy as np
 from gui.bases.datalist import DataList
 from gui.bases.mixins import AppSettings

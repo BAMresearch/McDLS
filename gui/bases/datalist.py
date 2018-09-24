@@ -30,7 +30,8 @@ from gui.utils.translate import tr
 from gui.qt import QtCore, QtGui
 from QtCore import Qt, QMetaObject
 from QtGui import (QWidget, QAction, QTreeWidget, QTreeWidgetItem,
-                   QVBoxLayout, QPushButton, QAbstractItemView, QKeySequence)
+                   QVBoxLayout, QPushButton, QAbstractItemView)
+from QtGui5 import QKeySequence
 from gui.bases.mixins.dropwidget import DropWidget
 from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
 from gui.bases.mixins.titlehandler import TitleHandler

@@ -6,7 +6,8 @@ import logging
 
 from gui.qt import QtCore, QtGui
 from QtCore import QFileInfo
-from QtGui import (QWidget, QPalette)
+from QtGui import QWidget
+from QtGui5 import QPalette
 
 # required for svg graphics support
 from gui.qt import QtSvg, QtXml, pluginDirs

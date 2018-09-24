@@ -3,8 +3,9 @@
 
 from __future__ import absolute_import # PEP328
 from builtins import str
-from QtGui import QLineEdit, QDoubleValidator, QValidator
-from QtCore import Qt
+from QtGui import QLineEdit
+from QtGui5 import QDoubleValidator, QValidator
+from QtCore import Qt, QLocale
 from utils import clip
 
 class SciEntryValidator(QDoubleValidator):

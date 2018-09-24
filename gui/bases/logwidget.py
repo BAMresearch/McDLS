@@ -11,7 +11,8 @@ import re
 import glob
 from gui.qt import QtCore, QtGui
 from QtCore import Qt, QRegExp, QTimer
-from QtGui import (QApplication, QKeySequence, QTextBrowser, QDesktopServices)
+from QtGui import (QApplication, QTextBrowser)
+from QtGui5 import QKeySequence, QDesktopServices
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
 import log

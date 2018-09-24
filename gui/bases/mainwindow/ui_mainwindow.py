@@ -1,37 +1,40 @@
 # -*- coding: utf-8 -*-
-# gui/bases/mainwindow/ui_mainwindow.py
 
-from __future__ import absolute_import
-from builtins import object
-from gui.qt import QtCore, QtGui
-from gui.utils.translate import fromUtf8
+# Form implementation generated from reading ui file './gui/bases/mainwindow/ui_mainwindow.ui',
+# licensing of './gui/bases/mainwindow/ui_mainwindow.ui' applies.
+#
+# Created: Wed Sep 19 12:35:50 2018
+#      by: pyside2-uic  running on PySide2 5.11.1
+#
+# WARNING! All changes made in this file will be lost!
+
+from PySide2 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName(fromUtf8("MainWindow"))
+        MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
-        MainWindow.setStyleSheet(fromUtf8("\n"
+        MainWindow.setStyleSheet("\n"
 "   QMainWindow::separator:hover {\n"
 "    background: darkgrey;\n"
 "   }\n"
-"  "))
+"  ")
         MainWindow.setDocumentMode(True)
-        MainWindow.setDockOptions(QtGui.QMainWindow.AnimatedDocks|QtGui.QMainWindow.ForceTabbedDocks)
-        self.centralwidget = QtGui.QWidget(MainWindow)
-        self.centralwidget.setObjectName(fromUtf8("centralwidget"))
+        MainWindow.setDockOptions(QtWidgets.QMainWindow.AnimatedDocks|QtWidgets.QMainWindow.ForceTabbedDocks)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setObjectName(fromUtf8("menubar"))
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtGui.QStatusBar(MainWindow)
-        self.statusbar.setObjectName(fromUtf8("statusbar"))
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         pass
 
-from . import mainwindow_rc
-
-# vim: set ts=4 sw=4 sts=4 tw=0:
+from gui.bases.mainwindow import mainwindow_rc
