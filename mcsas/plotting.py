@@ -30,10 +30,13 @@ try:
 except ImportError:
     pass # no pyside
 
+if not isMac():
+    matplotlib.rcParams['backend'] = 'TkAgg'
+
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
 from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
-        text, plot, grid, legend, title, xlim, ylim, gca, axis,
+        text, plot, grid, legend, title, xlim, ylim, sca, gca, axis,
         close, colorbar, imshow, subplot, axes, show, savefig,
         get_current_fig_manager)
 
@@ -157,7 +160,7 @@ class PlotResults(object):
             yscale = 'log'
         # set general axes settings:
         self._AxDict = dict(
-                axis_bgcolor = (.97, .97, .97),
+                facecolor = (.97, .97, .97),
                 xscale = "log", yscale = yscale)
 
         # number of histograms:
@@ -201,7 +204,7 @@ class PlotResults(object):
             InfoAxis = self._ah[rangei * 2 * (self._nHists + 1)]
             # make active:
             self.plotInfo(InfoAxis)
-            axes(InfoAxis)
+            sca(InfoAxis)
 
             # plot histograms
             # https://stackoverflow.com/a/952952
@@ -405,7 +408,7 @@ class PlotResults(object):
     def plotPartial(self, fitX0, fitMeasVal, fitSTD, qAxis, label = 'MC partial measVal'):
         """plots 1D data and fit"""
         #make active:
-        axes(qAxis)
+        sca(qAxis)
         plot(fitX0, fitMeasVal, 'b-', lw = 1, label = label)
 
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
@@ -434,7 +437,7 @@ class PlotResults(object):
                 })
 
         # make active:
-        axes(qAxis)
+        sca(qAxis)
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
         # plot original data
@@ -485,7 +488,7 @@ class PlotResults(object):
     def plotInfo(self, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
         # make active:
-        axes(InfoAxis)
+        sca(InfoAxis)
         # show volume-weighted info:
         ovString = self.formatAlgoInfo()
         delta = 0.001 # minor offset
@@ -496,7 +499,7 @@ class PlotResults(object):
     def plotStats(self, parHist, rangei, fig, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
         # make active:
-        axes(InfoAxis)
+        sca(InfoAxis)
         # show volume-weighted info:
         delta = 0.001 # minor offset
         ovString = self.formatRangeInfo(parHist, rangei, weighti = 0)
@@ -508,7 +511,7 @@ class PlotResults(object):
     def plotHist(self, plotPar, parHist, hAxis, rangei):
         """histogram plot"""
         # make active:
-        axes(hAxis)
+        sca(hAxis)
 
         histXLowerEdge = plotPar.toDisplay(parHist.xLowerEdge)
         histXMean =      plotPar.toDisplay(parHist.xMean)
