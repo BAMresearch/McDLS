@@ -223,7 +223,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
                          "of {}% intensity.".format(minUncertaintyPercent))
             self.f.siDataU = upd
         # reset invalid uncertainties to np.inf
-        invInd = (True - np.isfinite(self.f.siDataU))
+        invInd = (True ^ np.isfinite(self.f.siDataU))
         self.f.siDataU[invInd] = np.inf
 
     @property
