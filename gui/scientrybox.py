@@ -16,6 +16,7 @@ class SciEntryValidator(QDoubleValidator):
         # FIXME: On Windows, python crashes here, sometimes ...
         # everything looks ok, except that it 'stops working'
         super(SciEntryValidator, self).__init__(parent)
+        self.setLocale(QLocale.c())
         self.setNotation(QDoubleValidator.ScientificNotation)
         # some defaults if nothing is set
         self.setRange(-1e200, 1e200)
@@ -30,7 +31,7 @@ class SciEntryValidator(QDoubleValidator):
         self.parent().indicateCorrectness(state is QValidator.State.Acceptable)
         if self.parent().hasFocus(): # change nothing, by default
             return QValidator.State.Acceptable, input, pos
-        # verfiy the value range in any case,
+        # verify the value range in any case,
         # QDoubleValidator.validate() fails sometimes on the range
         input = self.fixup(input)
         # else: on focus left, fix it if required and validate again
@@ -56,7 +57,7 @@ class SciEntryBox(QLineEdit):
     toolTipFmt = "A value between {lo} and {hi} (including)."
 
     def __init__(self, parent = None):
-        super(SciEntryBox, self).__init__(parent)
+        super(SciEntryBox, self).__init__()
 
         val = SciEntryValidator(self)
         self.setValidator(val)
