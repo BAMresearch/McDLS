@@ -10,6 +10,7 @@ import os.path
 import logging
 import collections
 import sys
+import traceback
 
 try:
     # make all modifications to sys (below) local to this module
@@ -496,7 +497,6 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                         break
                 except Exception as e:
                     errorOccured = True
-                    import traceback
                     logging.error(traceback.format_exc())
                     itemName = str(item)
                     try:
@@ -512,7 +512,6 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             # catch and display _all_ exceptions in user friendly manner
             # DisplayException(e)
             errorOccured = True
-            import traceback
             logging.error(traceback.format_exc())
             pass
         if errorOccured:
@@ -580,6 +579,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                 # on error, skip the current file
                 errorOccured = True
                 logging.error(str(e).replace("\n"," ") + " ... skipping")
+                logging.error(traceback.format_exc())
                 continue
             if data is not None:
                 lastItem = self.add(data)
