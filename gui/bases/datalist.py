@@ -497,6 +497,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                         break
                 except Exception as e:
                     errorOccured = True
+                    logging.error(str(e).replace("\n"," "))
                     logging.error(traceback.format_exc())
                     itemName = str(item)
                     try:
@@ -512,6 +513,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
             # catch and display _all_ exceptions in user friendly manner
             # DisplayException(e)
             errorOccured = True
+            logging.error(str(e).replace("\n"," "))
             logging.error(traceback.format_exc())
             pass
         if errorOccured:
