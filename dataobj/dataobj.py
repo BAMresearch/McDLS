@@ -338,7 +338,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
                         )
 
         # remove empty bins:
-        validi = (True - np.isnan(fBin))
+        validi = (True ^ np.isnan(fBin))
         validi[np.argwhere(validMask != True)] = False
         # store values:
         self.f.binnedData, self.f.binnedDataU = fBin[validi], fuBin[validi]

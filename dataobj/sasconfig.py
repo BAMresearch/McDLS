@@ -95,7 +95,7 @@ class TrapezoidSmearing(SmearingConfig):
 
     def inputValid(self):
         # returns True if the input values are valid
-        return (self.umbra() > 0.) and (self.penumbra > self.umbra())
+        return (self.umbra() > 0.) and (self.penumbra() > self.umbra())
 
     @property
     def showParams(self):
