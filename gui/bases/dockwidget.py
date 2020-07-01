@@ -2,9 +2,8 @@
 # gui/bases/dockwidget.py
 
 from __future__ import absolute_import # PEP328
-from gui.qt import QtCore, QtGui
-from QtCore import QDir, QSize, Qt
-from QtGui import QApplication, QDockWidget, QWidget
+from QtCore import QSize, Qt
+from QtWidgets import QApplication, QDockWidget, QWidget
 from gui.utils.signal import Signal
 
 class DockWidget(QDockWidget):

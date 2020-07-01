@@ -2,8 +2,7 @@
 # gui/utils/__init__.py
 
 from __future__ import absolute_import # PEP328
-from gui.qt import QtGui
-from QtGui import QApplication
+from QtWidgets import QApplication
 
 def processEventLoop():
     QApplication.processEvents()

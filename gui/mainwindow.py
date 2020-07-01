@@ -8,11 +8,11 @@ import re
 import sys
 import logging
 
-from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal
 from QtCore import Qt, QSettings, QFileInfo
-from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
-                   QSizePolicy, QApplication, QToolBox, QIcon)
+from QtGui import QIcon
+from QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
+                   QSizePolicy, QApplication, QToolBox)
 from gui.bases.mainwindow import MainWindow as MainWindowBase
 from gui.bases.logwidget import LogWidget
 from gui.bases.dockwidget import DockWidget

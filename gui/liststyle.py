@@ -4,9 +4,9 @@
 from __future__ import absolute_import # PEP328
 import logging
 
-from gui.qt import QtCore, QtGui
 from QtCore import QFileInfo
-from QtGui import (QWidget, QPalette)
+from QtGui import QPalette
+from QtWidgets import QWidget
 
 # required for svg graphics support
 from gui.qt import QtSvg, QtXml, pluginDirs

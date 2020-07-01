@@ -28,10 +28,9 @@ def renderSVGQt(contents, outfn, size):
     (compared to inkscape output).
     Unused, but kept for reference.
     """
-    from gui.qt import QtCore, QtSvg, QtGui
     from QtSvg import QSvgRenderer
     from QtCore import QByteArray
-    from QtGui import QImage, QPainter, QApplication
+    from QtWidgets import QImage, QPainter, QApplication
     app = QApplication([])
     svg = QSvgRenderer(QByteArray(contents.encode("utf-8")))
     img = QImage(size, size, QImage.Format_ARGB32)

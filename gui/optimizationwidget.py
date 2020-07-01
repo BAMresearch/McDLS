@@ -3,9 +3,8 @@
 
 from __future__ import absolute_import # PEP328
 
-from gui.qt import QtCore, QtGui
 from QtCore import Qt
-from QtGui import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)
+from QtWidgets import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)
 from gui.bases.mixins.titlehandler import TitleHandler
 from gui.algorithmwidget import AlgorithmWidget, rearrangeWidgets
 from gui.settingsgroup import DefaultSettings, AdvancedSettings

@@ -8,9 +8,8 @@ from collections import OrderedDict
 from utils import isString, isList, isMap
 from gui.utils.translate import tr
 from gui.bases.mixins.titlehandler import TitleHandler
-from gui.qt import QtCore, QtGui
 from QtCore import Qt
-from QtGui import QAction
+from QtWidgets import QAction
 
 def escapeAmp(text):
     return text.replace("&", "&&")

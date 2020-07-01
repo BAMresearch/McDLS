@@ -3,7 +3,8 @@
 
 from __future__ import absolute_import # PEP328
 from builtins import str
-from QtGui import QLineEdit, QDoubleValidator, QValidator
+from QtGui import QDoubleValidator, QValidator
+from QtWidgets import QLineEdit
 from QtCore import Qt
 from utils import clip
 

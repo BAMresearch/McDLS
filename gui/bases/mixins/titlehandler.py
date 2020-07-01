@@ -2,9 +2,8 @@
 # gui/bases/mixins/titlehandler.py
 
 from __future__ import absolute_import # PEP328
-from gui.qt import QtCore, QtGui
 from QtCore import QObject
-from QtGui import QWidget
+from QtWidgets import QWidget
 from bases.dataset import TitleMixin
 from utils import isString, isCallable
 

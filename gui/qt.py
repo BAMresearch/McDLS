@@ -9,11 +9,12 @@ import sys
 import os
 import importlib
 
-import PySide
-from PySide import QtGui, QtCore, QtSvg, QtXml
-from PySide import __path__ as PySidePath
+import PySide2
+from PySide2 import QtWidgets, QtGui, QtCore, QtSvg, QtXml
+from PySide2 import __path__ as PySidePath
 
 try:
+    sys.modules["QtWidgets"] = QtWidgets
     sys.modules["QtGui"] = QtGui
     sys.modules["QtCore"] = QtCore
     sys.modules["QtSvg"] = QtSvg

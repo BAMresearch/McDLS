@@ -2,8 +2,7 @@
 # gui/bases/settingswidget_test.py
 
 from __future__ import absolute_import # PEP328
-from gui.qt import QtGui
-from QtGui import QSpinBox, QDoubleSpinBox, QLineEdit, QApplication
+from QtWidgets import QSpinBox, QDoubleSpinBox, QLineEdit, QApplication
 from gui.bases.settingswidget import SettingsWidget
 from utils import EPS
 

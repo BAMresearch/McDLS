@@ -27,10 +27,10 @@ from bases.dataset import DataSet, DisplayMixin
 from utils import isList, isMap, isString
 from utils.lastpath import LastPath
 from gui.utils.translate import tr
-from gui.qt import QtCore, QtGui
 from QtCore import Qt, QMetaObject
-from QtGui import (QWidget, QAction, QTreeWidget, QTreeWidgetItem,
-                   QVBoxLayout, QPushButton, QAbstractItemView, QKeySequence)
+from QtGui import QKeySequence
+from QtWidgets import (QWidget, QAction, QTreeWidget, QTreeWidgetItem,
+                   QVBoxLayout, QPushButton, QAbstractItemView)
 from gui.bases.mixins.dropwidget import DropWidget
 from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
 from gui.bases.mixins.titlehandler import TitleHandler
@@ -421,7 +421,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         self.listWidget.addTopLevelItem(DataItem(data))
         item = self.listWidget.topLevelItem(len(self)-1)
         if not self._nestedItems:
-            item.setFlags(int(item.flags()) - int(Qt.ItemIsDropEnabled))
+            item.setFlags(item.flags() & ~Qt.ItemIsDropEnabled)
         return item
 
     def topLevelItems(self):
@@ -578,6 +578,8 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
                 # DisplayException(e)
                 # on error, skip the current file
                 errorOccured = True
+                import traceback
+                logging.error(traceback.format_exc())
                 logging.error(str(e).replace("\n"," ") + " ... skipping")
                 continue
             if data is not None:
