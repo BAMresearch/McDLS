@@ -21,36 +21,36 @@ class SciEntryValidator(QDoubleValidator):
         self.setRange(-1e200, 1e200)
         self.setDecimals(9)
 
-    def validate(self, input, pos):
-        state, value, pos = QDoubleValidator.validate(self, input, pos)
+    def validate(self, txt, pos):
+        state, value, pos = QDoubleValidator.validate(self, txt, pos)
         if state is QValidator.State.Invalid:
             # do not accept any invalid text, usually not float compatible
             return state, value, pos
         # highlight the input on errorneous values, but accept them
         self.parent().indicateCorrectness(state is QValidator.State.Acceptable)
         if self.parent().hasFocus(): # change nothing, by default
-            return QValidator.State.Acceptable, input, pos
+            return QValidator.State.Acceptable, txt, pos
         # verfiy the value range in any case,
         # QDoubleValidator.validate() fails sometimes on the range
-        input = self.fixup(input)
+        txt = self.fixup(txt)
         # else: on focus left, fix it if required and validate again
         if state is not QValidator.State.Acceptable:
-            state, input, pos = QDoubleValidator.validate(self, input, pos)
+            state, txt, pos = QDoubleValidator.validate(self, txt, pos)
             if state is not QValidator.State.Acceptable: # keep focus
                 self.parent().setFocus(Qt.OtherFocusReason)
         self.parent().indicateCorrectness(state is QValidator.State.Acceptable)
-        return state, input, pos
+        return state, txt, pos
 
-    def fixup(self, input):
+    def fixup(self, txt):
         """Restricts the value to the valid range defined by setTop() and
         setBottom(). Limits the precision as well."""
         # restrict the value to the valid range
         try:
-            input = self.parent().fmt.format(
-                clip(float(input), self.bottom(), self.top()))
+            txt = self.parent().fmt.format(
+                clip(float(txt), self.bottom(), self.top()))
         except ValueError:
             pass # do nothing if float conversion fails
-        return str(input)
+        return str(txt)
 
 class SciEntryBox(QLineEdit):
     toolTipFmt = "A value between {lo} and {hi} (including)."
