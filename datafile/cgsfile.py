@@ -175,13 +175,19 @@ class CGSFile(AsciiFile):
         return self._units
 
     def parseDate(self, text, *args):
-        values = [int(v) for v in text.split('/')]
+        try:
+            values = [int(v) for v in text.split('/')]
+        except ValueError: # int(v) fails
+            return
         values.reverse()
         self._date = datetime.date(*values)
         self.setTimestamp()
 
     def parseTime(self, text, *args):
-        values = [int(v) for v in text.split(':')]
+        try:
+            values = [int(v) for v in text.split(':')]
+        except ValueError: # int(v) fails
+            return
         self._time = datetime.time(*values)
         self.setTimestamp()
 
@@ -296,8 +302,9 @@ class CGSFile(AsciiFile):
         # correlation array
         dlsData.setTau(self._tauUnit, self.correlation[:, 0])
         dlsData.setCorrelation(self.correlation[:, 1:])
-        dlsData.setCapTime(Sec, self.countRate[:, 0])
-        dlsData.setCountRate(self.countRate[:, 1:])
+        if isList(self.countRate):
+            dlsData.setCapTime(Sec, self.countRate[:, 0])
+            dlsData.setCountRate(self.countRate[:, 1:])
         dlsData.initConfig() # has to be called after setup
         return dlsData
 
