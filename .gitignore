@@ -5,3 +5,4 @@ doc/_build
 .hg*
 lmfit*
 testdata/* *-*-*_*-*-*/
+.DS_Store
