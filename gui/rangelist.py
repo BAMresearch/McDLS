@@ -5,12 +5,11 @@ from __future__ import absolute_import # PEP328
 from builtins import zip
 import logging
 
-from gui.qt import QtCore, QtGui
 from QtCore import Qt, QFileInfo, QMargins
-from QtGui import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
+from QtGui import QPalette
+from QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QComboBox, QDialog, QSpinBox,
                    QCheckBox)
-from QtGui5 import QPalette
 import numpy as np
 from gui.bases.datalist import DataList
 from gui.bases.mixins import AppSettings

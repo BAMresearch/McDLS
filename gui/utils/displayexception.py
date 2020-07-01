@@ -7,8 +7,7 @@ import logging
 import traceback
 import inspect
 from gui.utils.translate import tr
-from gui.qt import QtGui
-from QtGui import QMessageBox, QApplication
+from QtWidgets import QMessageBox, QApplication
 
 class DisplayException(QMessageBox):
     """

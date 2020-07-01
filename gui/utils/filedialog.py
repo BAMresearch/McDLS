@@ -8,8 +8,7 @@ File dialogs and convenience functions.
 
 from __future__ import absolute_import # PEP328
 import os
-from gui.qt import QtGui
-from QtGui import QFileDialog, QDialog
+from QtWidgets import QFileDialog, QDialog
 from utils import isList
 
 def fileDialogType():

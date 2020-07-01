@@ -3,9 +3,8 @@
 
 from __future__ import absolute_import # PEP328
 from __future__ import print_function
-from gui.qt import QtCore, QtGui
 from QtCore import (Qt, QThread, QMetaObject)
-from QtGui import (QApplication, QMessageBox)
+from QtWidgets import (QApplication, QMessageBox)
 
 class DialogInteraction(QThread):
     """Simulates user interaction on blocking widgets.

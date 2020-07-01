@@ -5,7 +5,7 @@ from __future__ import absolute_import # PEP328
 from builtins import str
 import sys
 import logging
-from QtGui import QMainWindow
+from QtWidgets import QMainWindow
 from QtCore import QSettings, QByteArray, QTimer
 from gui.utils.appversion import QAppVersion
 from gui.utils.translate import tr
@@ -79,7 +79,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, AppSettings):
                     custom.append(key)
                 else: # qsettings doesn't contain the key, add it
                     self.appSettings.setValue(key,
-                            QByteArray.fromBase64(value.encode()))
+                            QByteArray.fromBase64(str.encode(value)))
                     default.append(key)
             if len(default) > 0:
                 logmsg += " Defaults for {0}.".format(", ".join(default))

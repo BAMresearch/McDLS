@@ -4,9 +4,8 @@
 from __future__ import absolute_import # PEP328
 from gui.utils.translate import tr
 from gui.utils import processEventLoop
-from gui.qt import QtGui, QtCore
 from QtCore import Qt
-from QtGui import QProgressDialog, QApplication
+from QtWidgets import QProgressDialog, QApplication
 
 class ProgressDialog(QProgressDialog):
     """

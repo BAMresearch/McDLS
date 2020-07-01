@@ -6,7 +6,7 @@ import logging
 
 from gui.qt import QtCore, QtGui
 from QtCore import Qt
-from QtGui import (QWidget, QGridLayout, QVBoxLayout, QLabel)
+from QtWidgets import (QWidget, QGridLayout, QVBoxLayout, QLabel)
 from utils import isList
 from bases.algorithm import AlgorithmBase
 from gui.utils.signal import Signal

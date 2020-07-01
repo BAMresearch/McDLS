@@ -3,8 +3,7 @@
 
 from __future__ import absolute_import # PEP328
 from builtins import str
-from gui.qt import QtCore, QtGui
-from QtGui import (QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox,
+from QtWidgets import (QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox,
                    QAbstractButton, QAbstractSpinBox, QGroupBox)
 from QtCore import QSignalMapper, QObject
 from gui.utils.signal import Signal

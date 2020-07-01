@@ -56,6 +56,9 @@ class FileList(DataList):
         self.updateData(updateFunc = lambda data: data.config.updateFuMin(),
                         showProgress = False)
         self.selectionChanged() # emit the last data object finally
+        print("TEST", self)
+        self.updateData(updateFunc = lambda data: print(data),
+                        showProgress = False)
 
     def configFromLast(self):
         """Get the data config of the last item in the list."""

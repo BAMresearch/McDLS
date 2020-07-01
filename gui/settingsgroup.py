@@ -4,9 +4,8 @@
 from __future__ import absolute_import # PEP328
 
 from builtins import object
-from gui.qt import QtCore, QtGui
 from QtCore import Qt
-from QtGui import (QWidget, QGridLayout, QGroupBox)
+from QtWidgets import (QWidget, QGridLayout, QGroupBox)
 from gui.algorithmwidget import rearrangeWidgets
 
 class SettingsGroup(object):

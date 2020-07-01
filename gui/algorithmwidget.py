@@ -7,10 +7,9 @@ from past.utils import old_div
 from builtins import range
 import logging
 
-from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal, tryDisconnect
 from QtCore import Qt, QSettings, QRegExp
-from QtGui import (QWidget, QHBoxLayout, QPushButton,
+from QtWidgets import (QWidget, QHBoxLayout, QPushButton,
                    QLabel, QLayout, QGridLayout)
 from gui.bases.datalist import DataList
 from gui.bases.settingswidget import SettingsWidget

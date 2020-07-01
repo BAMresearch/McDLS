@@ -9,9 +9,8 @@ import logging
 import imp
 import os
 
-from gui.qt import QtCore, QtGui
 from gui.utils.signal import Signal, tryDisconnect
-from QtGui import (QWidget, QVBoxLayout, QComboBox)
+from QtWidgets import (QWidget, QVBoxLayout, QComboBox)
 from gui.bases.mixins import TitleHandler, AppSettings
 from utils import isString
 from utils.findmodels import FindModels
