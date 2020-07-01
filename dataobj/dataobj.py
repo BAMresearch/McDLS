@@ -232,7 +232,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
                          "of {}% intensity.".format(minUncertaintyPercent))
             self.f.siDataU = upd
         # reset invalid uncertainties to np.inf
-        invInd = (True - np.isfinite(self.f.siDataU))
+        invInd = (True ^ np.isfinite(self.f.siDataU))
         self.f.siDataU[invInd] = np.inf
 
     @property
@@ -347,7 +347,7 @@ class DataObj(with_metaclass(ABCMeta, type('NewBase', (DataSet, DisplayMixin), {
                         )
 
         # remove empty bins:
-        validi = (True - np.isnan(fBin))
+        validi = (True ^ np.isnan(fBin))
         validi[np.argwhere(validMask != True)] = False
         # store values:
         self.f.binnedData, self.f.binnedDataU = fBin[validi], fuBin[validi]
