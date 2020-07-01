@@ -28,18 +28,21 @@ class SciEntryValidator(QDoubleValidator):
             # do not accept any invalid text, usually not float compatible
             return state, value, pos
         # highlight the input on errorneous values, but accept them
-        self.parent().indicateCorrectness(state is QValidator.State.Acceptable)
+        self.parent().indicateCorrectness(state is not QValidator.State.Invalid)
         if self.parent().hasFocus(): # change nothing, by default
             return QValidator.State.Acceptable, txt, pos
-        # verfiy the value range in any case,
+        # verify the value range in any case,
         # QDoubleValidator.validate() fails sometimes on the range
         txt = self.fixup(txt)
-        # else: on focus left, fix it if required and validate again
-        if state is not QValidator.State.Acceptable:
-            state, txt, pos = QDoubleValidator.validate(self, txt, pos)
-            if state is not QValidator.State.Acceptable: # keep focus
-                self.parent().setFocus(Qt.OtherFocusReason)
-        self.parent().indicateCorrectness(state is QValidator.State.Acceptable)
+        state, txt, pos = QDoubleValidator.validate(self, txt, pos)
+        if state is QValidator.State.Invalid: # keep focus
+            self.parent().setFocus(Qt.OtherFocusReason)
+        self.parent().indicateCorrectness(state is not QValidator.State.Invalid)
+        if state is QValidator.State.Intermediate:
+            # there is an issue with floating point format not being accepted
+            # with ScientificNotation set, ignore this here since the value is clipped above
+            # avoid endless loop because of this
+            state = QValidator.State.Acceptable
         return state, txt, pos
 
     def fixup(self, txt):
