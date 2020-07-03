@@ -22,7 +22,7 @@ from dataobj import DLSData
 from getUncertainties import getUncertainties, simulate
 
 # required for svg graphics support
-from gui.liststyle import setBackgroundStyleSheet                              
+from gui.liststyle import setBackgroundStyleSheet
 
 from gui.qt import QtCore
 from QtCore import QTime
