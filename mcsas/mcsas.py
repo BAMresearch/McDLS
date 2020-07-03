@@ -538,6 +538,8 @@ class McSAS(AlgorithmBase):
         modelData = self.model.calc(data, rset, compensationExponent)
         ft, vset, wset, sset = (modelData.cumInt, modelData.vset,
                                 modelData.wset, modelData.sset)
+        if any(array(rset.shape) == 0): # no active params, just return model intensity
+            return [rset, modelData.chisqrInt, -1, {'scaling': 1, 'background': 0}]
 
         # Optimize the intensities and calculate convergence criterium
         # generate initial guess for scaling factor and background
