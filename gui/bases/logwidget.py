@@ -240,7 +240,7 @@ class LogWidget(QTextBrowser, ContextMenuWidget):
                              fn, filefilter)
         if fn is None or len(fn) < 1:
             return
-        with mcopen(fn, 'w') as fd:
+        with mcopen(fn, 'wb') as fd:
             fd.write(bytearray(self.contents(), "utf8"))
         return fn
 
