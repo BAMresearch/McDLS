@@ -157,7 +157,7 @@ class PlotResults(object):
             yscale = 'log'
         # set general axes settings:
         self._AxDict = dict(
-                axis_bgcolor = (.97, .97, .97),
+                facecolor = (.97, .97, .97),
                 xscale = "log", yscale = yscale)
 
         # number of histograms:
@@ -482,7 +482,7 @@ class PlotResults(object):
             xpos, ypos = titleHandler.get_position()
             titleHandler.set_position((xpos, ypos + self._charHeight*2.2))
             legendAlpha = 0.7
-            suppAx.set_axis_bgcolor(qAxis.get_axis_bgcolor())
+            suppAx.set_facecolor(qAxis.get_facecolor())
 
         qAxis.legend(legendHandle, legendLabel, loc = 1, fancybox = True,
                      framealpha = legendAlpha, prop = self._textfont)
