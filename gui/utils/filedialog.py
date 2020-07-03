@@ -60,11 +60,15 @@ def getOpenFiles(parent, labeltext, path,
         return [QFileDialog.getOpenFileName(parent, **kwargs)]
 
 def getSaveFile(parent, labeltext, path, filefilter):
+    fnfilter = makeFilter(filefilter)
     fileList = QFileDialog.getSaveFileName(
         parent,
         caption = labeltext,
         directory = path,
-        filter = makeFilter(filefilter))
+        filter = fnfilter)
+    if isList(fileList):
+        fileList = [fn for fn in fileList if fnfilter not in fn]
+        fileList = fileList[0] if len(fileList) else None
     return fileList
 
 def getSaveDirectory(parent, labeltext, path):
