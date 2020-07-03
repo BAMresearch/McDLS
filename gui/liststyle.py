@@ -28,11 +28,13 @@ def setBackgroundStyleSheet(widget, imgpath):
             background-repeat:      no-repeat;
             background-position:    center center;
             background-attachment:  fixed;
-            background-color:       white;
+            background-color:       {bgcol};
         }}
     """
     # convert path to qt style formatting (separators, ...)
     imgpath = QFileInfo(makeAbsolutePath(imgpath)).absoluteFilePath()
-    widget.setStyleSheet(stylesheet.format(path = imgpath))
+    # also set background color of image to same used in GUI (covers dark mode)
+    bgcol = widget.listWidget.palette().color(QPalette.Base)
+    widget.setStyleSheet(stylesheet.format(path=imgpath, bgcol=bgcol.name()))
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
