@@ -51,7 +51,7 @@ def HDFCleanup(infile):
     
     inputIsFilename = False
     if isString(infile): # a filename was supplied
-        infile = h5py.File(infile)
+        infile = h5py.File(infile, 'r')
         inputIsFilename = True
     def hdfDeepCopy(infile, outfilename):
         """Copies the internals of an open HDF5 file object (infile) to a second file."""
@@ -76,7 +76,7 @@ def HDFCleanup(infile):
     except:
         # move back the backup
         shutil.move(tempfname, origfname) 
-    infile = h5py.File(origfname) # reopen new file
+    infile = h5py.File(origfname, 'r') # reopen new file
     # cleanup:
     for filename in [tempfname, tempofname]:
         try:
@@ -110,7 +110,7 @@ class HDFWriter(object):
 
     @classmethod
     def open(cls, filename, rootLocation = None):
-        return HDFWriter(h5py.File(filename, driver = 'core',
+        return HDFWriter(h5py.File(filename, 'w', driver = 'core',
                                    backing_store = True), rootLocation)
 
     @property
