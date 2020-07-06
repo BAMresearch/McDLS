@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mixins/dropwidget.py
 
-from builtins import str
-from builtins import object
-
 class DropWidget(object):
     """
     Drag&Drop support for widgets which inherit from this.

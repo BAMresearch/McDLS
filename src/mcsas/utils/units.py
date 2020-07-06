@@ -35,7 +35,6 @@ Selecting a default:
 
 """
 
-from builtins import str
 import logging
 import collections
 import numpy as np # For arrays

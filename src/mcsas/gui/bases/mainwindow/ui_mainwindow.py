@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from builtins import object
 from ...qt import QtCore, QtGui
 from ...utils.translate import fromUtf8
 

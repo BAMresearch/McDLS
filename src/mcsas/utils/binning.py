@@ -16,7 +16,6 @@
    deviation of the intensities in the bins are computed.
 """
 
-from builtins import range
 from numpy import (zeros, mean, sqrt, std, reshape, size, linspace,
                    argsort, ones, array, sort, diff)
 

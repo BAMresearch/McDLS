@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/displayexception.py
 
-from builtins import str
 import logging
 import traceback
 import inspect

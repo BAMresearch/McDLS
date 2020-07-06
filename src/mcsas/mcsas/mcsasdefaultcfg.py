@@ -5,8 +5,6 @@ default for settings and info used for a McSAS run
 used by McSASCfg
 """
 
-from builtins import str
-from builtins import object
 import logging, json
 import os, inspect
 import numpy as np

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # utils/propertynames.py
 
-from builtins import object
 import inspect
 
 class PropertyNames(object):

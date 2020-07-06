@@ -4,8 +4,6 @@
 Defines the format of the final report on success of an MC fit. 
 """
 
-from builtins import range
-from builtins import object
 import logging
 import inspect
 import os.path

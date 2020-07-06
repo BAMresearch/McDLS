@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mixins/contextmenuwidget.py
 
-from builtins import str
-from builtins import object
 from collections import OrderedDict
 from QtCore import Qt
 from QtWidgets import QAction

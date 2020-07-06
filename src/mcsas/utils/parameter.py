@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # utils/parameter.py
 
-from builtins import str
-from builtins import range
-from builtins import object
 import logging
 import numpy as np
 

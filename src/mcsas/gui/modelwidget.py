@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/modelwidget.py
 
-from builtins import str
-from builtins import range
 import sys
 import logging
 import imp

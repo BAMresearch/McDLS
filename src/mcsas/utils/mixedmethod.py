@@ -16,7 +16,6 @@ to that individual instance only. For classes modifications apply on the
 class level which applies changes to all instances created from that.
 """
 
-from builtins import object
 from functools import partial
 
 class mixedmethod(object):

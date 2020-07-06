@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/logwidget.py
 
-from builtins import str
-from builtins import filter
 import os
 import os.path
 import sys

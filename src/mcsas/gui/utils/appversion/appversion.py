@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/appversion/appversion.py
 
-from builtins import object
 import inspect
 import os.path
 import re

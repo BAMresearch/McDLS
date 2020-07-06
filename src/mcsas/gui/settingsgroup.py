@@ -2,7 +2,6 @@
 # gui/settingsgroup.py
 
 
-from builtins import object
 from QtCore import Qt
 from QtWidgets import (QWidget, QGridLayout, QGroupBox)
 

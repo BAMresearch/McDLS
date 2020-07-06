@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/dataset/dataset.py
 
-from builtins import object
 from abc import ABCMeta, abstractproperty
 from future.utils import with_metaclass
 

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # utils/__init__.py
 
-from builtins import str
 import sys
 import codecs
 import numpy as np
+
 from .tests import (isList, isString, isNonEmptyString, isMap, isSet,
                          isNumber, isInteger, isCallable)
 from .tests import isLinux, isMac, isWindows, isFrozen

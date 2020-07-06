@@ -4,7 +4,6 @@
 """
 Interface and convenience methods for general logging.
 """
-from builtins import str
 
 import sys
 import time
