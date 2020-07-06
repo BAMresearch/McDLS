@@ -15,7 +15,6 @@
    distances to the centres. If error provided is empty, the standard
    deviation of the intensities in the bins are computed.
 """
-from __future__ import print_function
 
 from builtins import range
 from numpy import (zeros, mean, sqrt, std, reshape, size, linspace,

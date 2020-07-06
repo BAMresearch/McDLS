@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/dialoginteraction.py
 
-from __future__ import print_function
 from QtCore import (Qt, QThread, QMetaObject)
 from QtWidgets import (QApplication, QMessageBox)
 
