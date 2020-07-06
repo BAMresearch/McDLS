@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # log/__init__.py
 
-from __future__ import absolute_import
 import logging
 from .log import (timestampFormat, timestamp, timestampFormatted, formatter,
                   replaceStdOutErr, replaceHandler, addHandler, removeHandler)

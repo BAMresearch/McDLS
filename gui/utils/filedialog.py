@@ -6,7 +6,6 @@ File dialogs and convenience functions.
 
 """
 
-from __future__ import absolute_import # PEP328
 import os
 from QtWidgets import QFileDialog, QDialog
 from utils import isList

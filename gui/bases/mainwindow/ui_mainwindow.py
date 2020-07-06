@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mainwindow/ui_mainwindow.py
 
-from __future__ import absolute_import
 from builtins import object
 from gui.qt import QtCore, QtGui
 from gui.utils.translate import fromUtf8

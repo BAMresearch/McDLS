@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/nxcansasfile.py
 
-from __future__ import absolute_import # PEP328
 from builtins import range
 from builtins import object
 import h5py

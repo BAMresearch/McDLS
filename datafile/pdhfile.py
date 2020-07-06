@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/pdhfile.py
 
-from __future__ import absolute_import # PEP328
 from builtins import range
 from builtins import object
 from utils import isList, isInteger, isString

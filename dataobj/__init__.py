@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # dataobj/__init__.py
 
-from __future__ import absolute_import # PEP328
 
 __all__ = ["DataObj", "SASData", "DLSData", "DataConfig"]
 

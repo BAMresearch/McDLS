@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/modelwidget.py
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 from builtins import range
 import sys

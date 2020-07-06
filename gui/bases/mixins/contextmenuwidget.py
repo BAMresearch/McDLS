@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mixins/contextmenuwidget.py
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 from builtins import object
 from collections import OrderedDict

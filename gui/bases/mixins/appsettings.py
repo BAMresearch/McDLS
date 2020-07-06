@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mixins/algorithmwidget.py
 
-from __future__ import absolute_import # PEP328
 
 from gui.qt import QtCore
 from QtCore import QSettings

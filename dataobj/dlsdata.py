@@ -6,8 +6,7 @@ Represents data from dynamic light scattering (DLS) measurement.
 
 """
 
-from __future__ import division, absolute_import # PEP328
-
+from __future__ import division
 from builtins import str
 from builtins import range
 from past.utils import old_div

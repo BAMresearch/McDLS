@@ -5,7 +5,6 @@
 Represents input data associated with a measurement.
 """
 
-from __future__ import absolute_import # PEP328
 from builtins import range
 import os # Miscellaneous operating system interfaces
 from numpy import all as np_all

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mainwindow/mainwindow.py
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 import sys
 import logging

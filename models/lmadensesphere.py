@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # models/lmadensesphere.py
 
-from __future__ import absolute_import
 import numpy as np
 from numpy import pi, sin, cos
 import logging

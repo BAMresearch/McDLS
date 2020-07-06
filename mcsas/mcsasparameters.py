@@ -6,6 +6,7 @@ import os
 import inspect
 import logging                                                                 
 import json
+
 from utils import units, isString
 from utils.propertynames import PropertyNames
 from utils.parameter import Parameter

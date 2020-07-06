@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/__init__.py
 
-from __future__ import absolute_import
 __all__ = ["DataFile", "AsciiFile", "ArrayFile", "PDHFile", "PDHHeader",
            "CGSFile", "getFileFilter", "loaddatafile"]
 

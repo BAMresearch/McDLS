@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/__init__.py
 
-from __future__ import absolute_import
 
 from .algorithmbase import AlgorithmBase
 from .numbergenerator import NumberGenerator, RandomUniform, RandomExponential

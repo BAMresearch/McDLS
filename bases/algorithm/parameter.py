@@ -50,7 +50,6 @@ that attribute in general for all new instances to be created
 which is behaves like a default value.
 """
 
-from __future__ import absolute_import
 from builtins import object
 from builtins import str
 

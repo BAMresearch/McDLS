@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/settingswidget.py
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 from QtWidgets import (QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox,
                    QAbstractButton, QAbstractSpinBox, QGroupBox)

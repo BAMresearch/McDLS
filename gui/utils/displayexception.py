@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/displayexception.py
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 import logging
 import traceback

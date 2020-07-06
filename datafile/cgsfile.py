@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/pdhfile.py
 
-from __future__ import absolute_import # PEP328
 import logging
 import datetime
 import re

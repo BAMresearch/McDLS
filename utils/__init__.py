@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # utils/__init__.py
 
-from __future__ import absolute_import
 from builtins import str
 import sys
 import codecs

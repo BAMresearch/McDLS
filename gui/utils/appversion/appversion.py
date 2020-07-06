@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/appversion/appversion.py
 
-from __future__ import absolute_import # PEP328
 from builtins import object
 import inspect
 import os.path

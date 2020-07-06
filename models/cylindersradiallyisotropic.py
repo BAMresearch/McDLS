@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # models/cylinders.py
 
-from __future__ import absolute_import
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos
 from utils.parameter import FitParameter, Parameter
