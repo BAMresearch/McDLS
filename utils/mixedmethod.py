@@ -15,7 +15,6 @@ it works on the instance data. Thus, for instances modifications apply
 to that individual instance only. For classes modifications apply on the
 class level which applies changes to all instances created from that.
 """
-from __future__ import print_function
 
 from builtins import object
 from functools import partial

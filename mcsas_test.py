@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # mcsas_test.py
 
-from __future__ import print_function # python3 print()
-
 import os.path
 import pickle
 import logging
