@@ -2,7 +2,7 @@
 # bases/model/dlsmodeldata.py
 
 from numpy import sqrt
-from bases.model import ModelData
+from . import ModelData
 
 class DLSModelData(ModelData):
 

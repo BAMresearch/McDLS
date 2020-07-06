@@ -3,7 +3,8 @@
 
 from QtCore import QSize, Qt
 from QtWidgets import QApplication, QDockWidget, QWidget
-from gui.utils.signal import Signal
+
+from ..utils.signal import Signal
 
 class DockWidget(QDockWidget):
     """

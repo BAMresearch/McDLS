@@ -12,7 +12,8 @@ import inspect
 import os.path
 import h5py
 import numpy as np
-from utils import isCallable, isString, isList, isNumber, isInteger, classname
+
+from . import isCallable, isString, isList, isNumber, isInteger, classname
 
 HDFString = str # Python 3 default
 try:

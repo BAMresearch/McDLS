@@ -16,12 +16,13 @@ from operator import itemgetter
 import numpy as np
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty, zeros_like)
-from utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
-from utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
+
+from ..utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
+from ..utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
                          NoUnit)
-from bases.algorithm import Parameter
-from dataobj import DataObj, DataVector, DataConfig
-from bases.model import DLSModel
+from ..bases.algorithm import Parameter
+from . import DataObj, DataVector, DataConfig
+from ..bases.model import DLSModel
 
 # Boltzmann constant in m²·kg·s⁻²·K⁻¹ (SI units)
 KB = 1.38064852 * 1e-23

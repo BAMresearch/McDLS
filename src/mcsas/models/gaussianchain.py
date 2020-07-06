@@ -2,11 +2,12 @@
 # models/gaussianchain.py
 
 import numpy
-from utils import mixedmethod
-from utils.parameter import FitParameter, Parameter
-from bases.model import SASModel
-from bases.algorithm import RandomUniform, RandomExponential
-from utils.units import Length, SLD, NoUnit
+
+from mcsas.utils import mixedmethod
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.bases.model import SASModel
+from mcsas.bases.algorithm import RandomUniform, RandomExponential
+from mcsas.utils.units import Length, SLD, NoUnit
 
 class GaussianChain(SASModel):
     r"""Form factor of flexible polymer chains which are not selfavoiding

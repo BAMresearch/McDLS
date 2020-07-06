@@ -3,10 +3,11 @@
 
 import numpy
 from numpy import pi, exp, sin, cos
-from bases.algorithm import RandomUniform
-from bases.model import DLSModel
-from utils.parameter import FitParameter, Parameter
-from utils.units import NM
+
+from mcsas.bases.algorithm import RandomUniform
+from mcsas.bases.model import DLSModel
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.utils.units import NM
 
 class DLSSphere(DLSModel):
     """Sphere Form factor for DLS"""

@@ -3,11 +3,11 @@
 
 from builtins import object
 from abc import ABCMeta, abstractproperty
+from future.utils import with_metaclass
+
 from .titlemixin import TitleMixin
 from .rawarraymixin import RawArrayMixin
-from utils import isString, classproperty
-from future.utils import with_metaclass
-from functools import reduce
+from ...utils import isString, classproperty
 
 class DisplayMixin(with_metaclass(ABCMeta, object)):
     """Provides additional data to display in a list or tree view."""

@@ -7,10 +7,11 @@ import re
 import os.path
 from numpy import array as np_array
 from collections import OrderedDict
-from utils.units import Angle, Temperature, DynamicViscosity, Length, MSec, Sec
-from datafile import AsciiFile
-from utils import classproperty, isList
-from dataobj import DLSData
+
+from ..utils.units import Angle, Temperature, DynamicViscosity, Length, MSec, Sec
+from . import AsciiFile
+from ..utils import classproperty, isList
+from ..dataobj import DLSData
 
 def text2num(valueText, dtype = float):
     value = None

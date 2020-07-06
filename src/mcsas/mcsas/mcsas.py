@@ -17,19 +17,19 @@ import logging
 logging.basicConfig(level = logging.INFO)
 import subprocess, os, shutil, tempfile
 
-from utils import isList 
-from bases.dataset import DataSet
-from bases.algorithm import AlgorithmBase
-from utils.parameter import isActiveFitParam
-from utils.tests import isMac
-from bases.model import ScatteringModel
-from gui.utils import processEventLoop
-from mcsas.backgroundscalingfit import BackgroundScalingFit
-from log import timestampFormatted
+from ..utils import isList 
+from ..bases.dataset import DataSet
+from ..bases.algorithm import AlgorithmBase
+from ..utils.parameter import isActiveFitParam
+from ..utils.tests import isMac
+from ..bases.model import ScatteringModel
+from ..gui.utils import processEventLoop
+from .backgroundscalingfit import BackgroundScalingFit
+from ..log import timestampFormatted
 
 from . import PlotResults
 from . import McSASParameters
-from dataobj import SASData
+from ..dataobj import SASData
 
 class ConvBuffer(object):
     """Implements kind of a ring buffer to store a limited number

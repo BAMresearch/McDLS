@@ -11,13 +11,14 @@ import glob
 from QtCore import Qt, QRegExp, QTimer
 from QtGui import QKeySequence, QDesktopServices
 from QtWidgets import (QApplication, QTextBrowser)
-from gui.bases.mixins.titlehandler import TitleHandler
-from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
-import log
-from utils import isString, mcopen
-from utils.lastpath import LastPath
-from gui.utils.translate import tr
-from gui.utils.filedialog import getSaveFile
+
+from .mixins.titlehandler import TitleHandler
+from .mixins.contextmenuwidget import ContextMenuWidget
+from mcsas import log
+from ...utils import isString, mcopen
+from ...utils.lastpath import LastPath
+from ..utils.translate import tr
+from ..utils.filedialog import getSaveFile
 
 # precompile regular expression for urls
 URLREGEXP = re.compile(r"((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))")

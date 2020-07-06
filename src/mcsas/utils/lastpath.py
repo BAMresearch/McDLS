@@ -9,7 +9,8 @@ from builtins import str
 from builtins import object
 import os
 import logging
-from utils import isString
+
+from . import isString
 
 def getHomeDir():
     return os.path.expanduser('~')

@@ -3,7 +3,8 @@
 
 from functools import partial
 from nose.tools import assert_raises
-from dataobj.sasconfig import SASConfig
+
+from .sasconfig import SASConfig
 
 def assertDefaults(sc): # from dataconfig_test
     assert sc.x0Low()  == 0.0

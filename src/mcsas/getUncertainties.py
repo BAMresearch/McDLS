@@ -19,10 +19,10 @@ from multiprocessing import Process, Pipe
 import matplotlib
 import matplotlib.pyplot as pyplot
 
-from utils import isString, isList, mcopen
-from utils.units import Deg, NM3
-from mcsas.plotting import PlotResults
-from log import timestampFormatted
+from .utils import isString, isList, mcopen
+from .utils.units import Deg, NM3
+from .mcsas.plotting import PlotResults
+from .log import timestampFormatted
 
 def angleFromFilename(name):
     match = re.findall('\[([^°\]]+)°\]', name)
@@ -291,8 +291,8 @@ def dummy(doPlot):
 #    print(outFn.basename, outFn.timestamp)
     #CGSFile.appendHeaderLine(fn, CGSFile.signatures()[-1])
 
-from datafile import AsciiFile
-from gui.calc import OutputFilename
+from .datafile import AsciiFile
+from .gui.calc import OutputFilename
 
 class DummyDataSet(object):
     """Just for proper output file formatting."""

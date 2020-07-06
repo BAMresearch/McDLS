@@ -3,29 +3,29 @@
 
 from builtins import zip
 import logging
-
 from QtCore import Qt, QFileInfo, QMargins
 from QtGui import QPalette
 from QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QLabel, QComboBox, QDialog, QSpinBox,
                    QCheckBox)
 import numpy as np
-from gui.bases.datalist import DataList
-from gui.bases.mixins import AppSettings
-from utils import isList, testfor
-from utils.parameter import (ParameterBase, ParameterNumerical, Histogram,
-                             isFitParam, isActiveFitParam)
-from gui.calc import Calculator
+
+from .bases.datalist import DataList
+from .bases.mixins import AppSettings
+from ..utils import isList, testfor
+from ..utils.parameter import (ParameterBase, ParameterNumerical, Histogram,
+                                   isFitParam, isActiveFitParam)
+from .calc import Calculator
 
 # do not remove, dialog will not work without this
-from gui.scientrybox import SciEntryBox
+from .scientrybox import SciEntryBox
 
-from bases.model import ScatteringModel
+from ..bases.model import ScatteringModel
 
 # required for svg graphics support
-from gui.qt import QtSvg, QtXml, pluginDirs
-from gui.liststyle import setBackgroundStyleSheet
-from main import makeAbsolutePath
+from .qt import QtSvg, QtXml, pluginDirs
+from .liststyle import setBackgroundStyleSheet
+from ..main import makeAbsolutePath
 
 def getItemIndex(comboBox, text):
     for i in range(comboBox.count()):

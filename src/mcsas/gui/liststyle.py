@@ -2,14 +2,13 @@
 # gui/liststyle.py
 
 import logging
-
 from QtCore import QFileInfo
 from QtGui import QPalette
 from QtWidgets import QWidget
 
 # required for svg graphics support
-from gui.qt import QtSvg, QtXml, pluginDirs
-from main import makeAbsolutePath
+from .qt import QtSvg, QtXml, pluginDirs
+from ..main import makeAbsolutePath
 
 def makeAlternatingRowColorsTransparent(widget):
     palette = widget.palette()

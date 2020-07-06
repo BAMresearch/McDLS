@@ -5,8 +5,9 @@ from builtins import str
 import logging
 import traceback
 import inspect
-from gui.utils.translate import tr
 from QtWidgets import QMessageBox, QApplication
+
+from .translate import tr
 
 class DisplayException(QMessageBox):
     """

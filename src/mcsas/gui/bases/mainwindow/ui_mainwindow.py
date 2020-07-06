@@ -2,8 +2,8 @@
 # gui/bases/mainwindow/ui_mainwindow.py
 
 from builtins import object
-from gui.qt import QtCore, QtGui
-from gui.utils.translate import fromUtf8
+from ...qt import QtCore, QtGui
+from ...utils.translate import fromUtf8
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

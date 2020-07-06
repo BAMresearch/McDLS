@@ -6,13 +6,14 @@ from builtins import range
 from builtins import object
 import logging
 import numpy as np
-from utils import mixedmethod, isList, testfor, isInteger, classproperty
-from bases.algorithm.parameter import ValueRangeError
-from bases.algorithm import (ParameterBase, ParameterFloat,
-                             ParameterNumerical, ParameterBoolean,
-                             ParameterLog, ParameterString)
-from bases.algorithm import Parameter
-from bases.dataset import DataSet, DisplayMixin
+
+from . import mixedmethod, isList, testfor, isInteger, classproperty
+from ..bases.algorithm.parameter import ValueRangeError
+from ..bases.algorithm import (ParameterBase, ParameterFloat,
+                               ParameterNumerical, ParameterBoolean,
+                               ParameterLog, ParameterString)
+from ..bases.algorithm import Parameter
+from ..bases.dataset import DataSet, DisplayMixin
 
 def _makeProperty(varName):
     def getter(selforcls):

@@ -17,20 +17,22 @@ except NameError:
     pass
 
 from time import time as timestamp
-from gui.utils.signal import Signal
-from utils.error import EmptySelection
-from gui.utils.displayexception import DisplayException
-from bases.dataset import DataSet, DisplayMixin
-from utils import isList, isMap, isString
-from utils.lastpath import LastPath
-from gui.utils.translate import tr
 from QtCore import Qt, QMetaObject
 from QtGui import QKeySequence
 from QtWidgets import (QWidget, QAction, QTreeWidget, QTreeWidgetItem,
-                   QVBoxLayout, QPushButton, QAbstractItemView)
-from gui.bases.mixins.dropwidget import DropWidget
-from gui.bases.mixins.contextmenuwidget import ContextMenuWidget
-from gui.bases.mixins.titlehandler import TitleHandler
+                       QVBoxLayout, QPushButton, QAbstractItemView)
+
+from ..utils.signal import Signal
+from ..utils.displayexception import DisplayException
+from ...bases.dataset import DataSet, DisplayMixin
+from ...utils.error import EmptySelection
+from ...utils import isList, isMap, isString
+from ...utils.lastpath import LastPath
+from ..utils.translate import tr
+
+from .mixins.dropwidget import DropWidget
+from .mixins.contextmenuwidget import ContextMenuWidget
+from .mixins.titlehandler import TitleHandler
 
 # alternative implementation to DataItem._store which fails
 class __ItemStore__(object):

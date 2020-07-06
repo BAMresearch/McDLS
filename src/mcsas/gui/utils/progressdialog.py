@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # gui/utils/progressdialog.py
 
-from gui.utils.translate import tr
-from gui.utils import processEventLoop
 from QtCore import Qt
 from QtWidgets import QProgressDialog, QApplication
+
+from .translate import tr
+from . import processEventLoop
 
 class ProgressDialog(QProgressDialog):
     """

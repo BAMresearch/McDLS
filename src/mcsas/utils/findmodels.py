@@ -11,9 +11,10 @@ import os
 import sys
 import imp
 from collections import OrderedDict
-from bases.model import ScatteringModel
-from main import makeAbsolutePath
-from utils import isList, classproperty
+
+from ..bases.model import ScatteringModel
+from ..main import makeAbsolutePath
+from . import isList, classproperty
 
 def _getValidClasses(mod, isTopLevel = True):
     if not inspect.ismodule(mod):

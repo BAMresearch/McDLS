@@ -8,7 +8,7 @@ A class describing a vector with limits, units, mask and uncertainties
 from builtins import str
 from builtins import object
 import numpy as np
-from utils.units import Unit, NoUnit
+from ..utils.units import Unit, NoUnit
 
 class DataVector(object):
     """ a class for combining aspects of a particular vector of data.

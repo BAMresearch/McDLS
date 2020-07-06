@@ -5,7 +5,8 @@ from builtins import object
 import inspect
 import os.path
 import re
-from utils import isNonEmptyString, mcopen
+
+from ....utils import isNonEmptyString, mcopen
 
 class AppVersion(object):
     """

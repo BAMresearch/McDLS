@@ -20,21 +20,20 @@ except ImportError:
 import numpy as np
 import pickle
 
-from gui.qt import QtCore
+from .qt import QtCore
 from QtCore import QUrl
-from bases.dataset import DataSet
-from utils import (isList, isString, isNumber, testfor, isMac, fixFilename,
-                   mcopen)
-from utils.lastpath import LastPath
-from utils.units import Angle
-from datafile import PDHFile, AsciiFile
-from gui.utils.displayexception import DisplayException
-import log
-from mcsas.mcsas import McSAS
-from utils.parameter import Histogram, Moments, isActiveFitParam
-from dataobj import SASData
-from utils.hdf import HDFMixin
-from mcsas.plotting import PlotSeriesStats
+from ..bases.dataset import DataSet
+from ..utils import (isList, isString, isNumber, testfor, isMac, fixFilename, mcopen)
+from ..utils.lastpath import LastPath
+from ..utils.units import Angle
+from ..datafile import PDHFile, AsciiFile
+from .utils.displayexception import DisplayException
+from mcsas import log
+from ..mcsas import McSAS
+from ..utils.parameter import Histogram, Moments, isActiveFitParam
+from ..dataobj import SASData
+from ..utils.hdf import HDFMixin
+from ..mcsas.plotting import PlotSeriesStats
 
 DEFAULTSECT = configparser.DEFAULTSECT
 

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/qt.py
 
-
 __all__ = []
 
 import sys

@@ -4,7 +4,7 @@
 
 from builtins import object
 from scipy import optimize
-from bases.model import SASModel
+from ..bases.model import SASModel
 
 class BackgroundScalingFit(object):
     """

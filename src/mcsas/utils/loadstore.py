@@ -9,7 +9,7 @@
 """
 
 import pickle
-from utils import mcopen
+from . import mcopen
 
 def pickleLoad(filename):
     """Loads data from a pickle file"""

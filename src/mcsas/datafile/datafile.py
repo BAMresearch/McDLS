@@ -6,10 +6,11 @@ from builtins import object
 import os.path
 from abc import ABCMeta, abstractmethod, abstractproperty
 from numpy import ndarray as np_ndarray
-from utils.error import FileError
-from utils.lastpath import LastPath
-from utils import classproperty
 from future.utils import with_metaclass
+
+from ..utils.error import FileError
+from ..utils.lastpath import LastPath
+from ..utils import classproperty
 
 class DataFile(with_metaclass(ABCMeta, object)):
     """

@@ -59,10 +59,11 @@ from math import log10 as math_log10
 from math import fabs as math_fabs
 from inspect import getmembers
 import numpy as np
-from utils import (isString, isNumber, isList, isMap, isSet, testfor,
-                   assertName, classname, classproperty, clip, isCallable)
-from utils.mixedmethod import mixedmethod
-from utils.units import NoUnit
+
+from ...utils import (isString, isNumber, isList, isMap, isSet, testfor,
+                     assertName, classname, classproperty, clip, isCallable)
+from ...utils.mixedmethod import mixedmethod
+from ...utils.units import NoUnit
 from .numbergenerator import NumberGenerator, RandomUniform
 
 def generateValues(numberGenerator, defaultRange, lower, upper, count):

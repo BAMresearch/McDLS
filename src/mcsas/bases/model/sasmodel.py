@@ -6,7 +6,7 @@ import numpy as np
 from abc import ABCMeta
 from future.utils import with_metaclass
 
-from bases.model import SASModelData, ScatteringModel
+from . import SASModelData, ScatteringModel
 
 class SASModel(with_metaclass(ABCMeta, ScatteringModel)):
     canSmear = False # Indicates a model function which supports smearing...

@@ -4,10 +4,11 @@
 import numpy as np
 from numpy import pi, sin, cos
 import logging
-from bases.algorithm import RandomUniform
-from utils.parameter import FitParameter, Parameter
-from bases.model import SASModel
-from utils.units import Length, Fraction, NoUnit, SLD
+
+from mcsas.bases.algorithm import RandomUniform
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.bases.model import SASModel
+from mcsas.utils.units import Length, Fraction, NoUnit, SLD
 
 class LMADenseSphere(SASModel):
     """Form factor of a sphere convoluted with a structure factor,

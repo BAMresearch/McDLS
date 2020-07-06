@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # gui/version.py
 
-from gui.utils.appversion import QAppVersion
+from .utils.appversion import QAppVersion
 
 version = QAppVersion(
     programName = "McDLS",

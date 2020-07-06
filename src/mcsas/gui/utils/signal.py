@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # gui/utils/signal.py
 
-from gui.qt import QtCore
+from ..qt import QtCore
 
 if not hasattr(QtCore, 'Signal'):  ## for pyside compatibility
     QtCore.Signal = QtCore.pyqtSignal

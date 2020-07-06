@@ -6,11 +6,11 @@ import os.path
 import logging
 from abc import ABCMeta, abstractmethod
 from future.utils import with_metaclass
-
 from numpy import arange, zeros, argmax, hstack
-from utils import isList, mixedmethod, testfor, classname
-from bases.algorithm import AlgorithmBase
-from utils.parameter import isActiveFitParam
+
+from ...utils import isList, mixedmethod, testfor, classname
+from ..algorithm import AlgorithmBase
+from ...utils.parameter import isActiveFitParam
 
 class ScatteringModel(with_metaclass(ABCMeta, AlgorithmBase)):
     @abstractmethod

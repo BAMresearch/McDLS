@@ -20,10 +20,11 @@ True
 
 import logging
 import numpy as np # For arrays
-from utils import classproperty
-from utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
-from dataobj import DataObj, SASConfig, DataVector
-from bases.model import SASModel
+
+from ..utils import classproperty
+from ..utils.units import Length, ScatteringVector, ScatteringIntensity, Angle
+from . import DataObj, SASConfig, DataVector
+from ..bases.model import SASModel
 
 class SASData(DataObj):
     """Represents one set of data from a unique source (a file, for example).

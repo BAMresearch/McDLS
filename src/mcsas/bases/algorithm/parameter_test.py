@@ -2,13 +2,14 @@
 # bases/algorithm/parameter_test.py
 
 from builtins import object
-from bases.algorithm.parameter import (
+from nose.tools import raises
+
+from .parameter import (
         ParameterBase, ParameterNumerical, ParameterFloat, ParameterLog,
         factory,
         ParameterNameError, DefaultValueError, ValueRangeError,
         SuffixError, SteppingError, DecimalsError, DisplayValuesError)
-from bases.algorithm import Parameter, NumberGenerator, RandomUniform
-from nose.tools import raises
+from . import Parameter, NumberGenerator, RandomUniform
 
 class Dummy(object):
     def dummyFunc(value):

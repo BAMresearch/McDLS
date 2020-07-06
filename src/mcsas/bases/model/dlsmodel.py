@@ -2,9 +2,10 @@
 # bases/model/dlsmodel.py
 
 from abc import ABCMeta
-from bases.algorithm import Parameter
-from utils.units import NoUnit
-from bases.model import ScatteringModel, DLSModelData, DLSModelDataPlainVol
+
+from ..algorithm import Parameter
+from ...utils.units import NoUnit
+from . import ScatteringModel, DLSModelData, DLSModelDataPlainVol
 
 class DLSModel(ScatteringModel):
     __metaclass__ = ABCMeta
