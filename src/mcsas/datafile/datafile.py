@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/datafile.py
 
-from builtins import str
-from builtins import object
 import os.path
 from abc import ABCMeta, abstractmethod, abstractproperty
 from numpy import ndarray as np_ndarray

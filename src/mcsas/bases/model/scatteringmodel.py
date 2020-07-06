@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/model/scatteringmodel.py
 
-from builtins import zip
 import os.path
 import logging
 from abc import ABCMeta, abstractmethod

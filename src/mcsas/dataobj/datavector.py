@@ -5,8 +5,6 @@
 A class describing a vector with limits, units, mask and uncertainties
 """
 
-from builtins import str
-from builtins import object
 import numpy as np
 from ..utils.units import Unit, NoUnit
 

@@ -3,9 +3,6 @@
 
 from future import standard_library
 standard_library.install_aliases()
-from builtins import zip
-from builtins import str
-from builtins import object
 import sys
 import logging
 import time

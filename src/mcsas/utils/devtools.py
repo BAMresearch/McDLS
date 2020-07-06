@@ -6,7 +6,6 @@ Definitions used during development only.
 This module is supposed to not being required in a release package.
 """
 
-from builtins import str
 import sys
 import inspect
 import os, os.path

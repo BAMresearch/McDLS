@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/nxcansasfile.py
 
-from builtins import range
-from builtins import object
 import h5py
 
 from ..utils import isList, isInteger, isString

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/parameter_test.py
 
-from builtins import object
 from nose.tools import raises
 
 from .parameter import (

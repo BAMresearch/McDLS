@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/rangelist.py
 
-from builtins import zip
 import logging
 from QtCore import Qt, QFileInfo, QMargins
 from QtGui import QPalette

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/algorithmbase_test.py
 
-from builtins import zip
 from nose.tools import raises, assert_raises
 from numpy import array as np_array
 from numpy import uint32, float64, dtype

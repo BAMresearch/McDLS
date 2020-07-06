@@ -6,8 +6,6 @@ Represents data from dynamic light scattering (DLS) measurement.
 
 """
 
-from builtins import str
-from builtins import range
 import logging
 import copy
 from collections import OrderedDict

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/dataset/rawarraymixin.py
 
-from builtins import object
 from numpy import ndarray as np_ndarray
 
 class RawArrayMixin(object):

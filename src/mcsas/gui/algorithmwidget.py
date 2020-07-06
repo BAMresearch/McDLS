@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/algorithmwidget.py
 
-from builtins import range
 import logging
 
 from .utils.signal import Signal, tryDisconnect

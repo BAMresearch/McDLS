@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/mainwindow.py
 
-from builtins import str
 from QtGui import QDoubleValidator, QValidator
 from QtWidgets import QLineEdit
 from QtCore import Qt

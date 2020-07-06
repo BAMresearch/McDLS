@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # dataobj/dataconfig.py
 
-
-from builtins import object
 from abc import ABCMeta, abstractproperty
 from types import MethodType
 import numpy

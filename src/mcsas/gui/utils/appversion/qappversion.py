@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/appversion/qappversion.py
 
-from builtins import str
 from ...qt import QtCore
 from QtCore import QCoreApplication as coreApp
 

@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/pdhfile.py
 
-from builtins import range
-from builtins import object
 from ..utils import isList, isInteger, isString
 from ..utils import classproperty
 from . import ArrayFile

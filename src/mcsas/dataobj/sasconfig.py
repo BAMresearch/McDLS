@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # dataobj/sasconfig.py
 
-
-from builtins import str
 import logging
 from abc import ABCMeta
 import numpy as np

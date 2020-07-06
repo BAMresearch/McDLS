@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/datalist.py
 
-from builtins import str
-from builtins import range
 import os.path
 import logging
 import collections

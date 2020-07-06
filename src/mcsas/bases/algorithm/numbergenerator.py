@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/numbergenerator.py
 
-from builtins import str
-from builtins import range
-from builtins import object
 from abc import ABCMeta, abstractmethod
 from future.utils import with_metaclass
 import numpy

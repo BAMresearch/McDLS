@@ -5,8 +5,6 @@
 Helper functions for HDF5 functionality
 """
 
-from builtins import str
-from builtins import object
 import logging
 import inspect
 import os.path

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mainwindow/mainwindow.py
 
-from builtins import str
 import sys
 import logging
 from QtWidgets import QMainWindow

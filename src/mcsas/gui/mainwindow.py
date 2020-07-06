@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/mainwindow.py
 
-from builtins import str
 import os.path
 import re
 import sys

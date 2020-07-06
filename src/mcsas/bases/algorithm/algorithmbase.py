@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/algorithmbase.py
 
-from builtins import str
-from builtins import object
 from ...utils import isString, isList, testfor, assertName
 from ...utils.mixedmethod import mixedmethod
 from ...utils import classproperty, classname

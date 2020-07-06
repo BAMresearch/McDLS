@@ -2,8 +2,6 @@
 # mcsas/mcsas.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
-from builtins import str
-from builtins import range
 import numpy # For arrays
 from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,

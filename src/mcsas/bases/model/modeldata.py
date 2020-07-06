@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/model/modeldata.py
 
-from builtins import object
-
 class ModelData(object):
     _cumInt = None
     _vset = None

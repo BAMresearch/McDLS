@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/filelist.py
 
-from builtins import range
 import logging
 import os.path
 from collections import OrderedDict
