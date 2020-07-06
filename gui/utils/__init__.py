@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/__init__.py
 
-from __future__ import absolute_import # PEP328
 from QtWidgets import QApplication
 
 def processEventLoop():

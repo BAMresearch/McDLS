@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # models/sphere.py
 
-from __future__ import absolute_import
 import numpy
 from numpy import pi, sin, cos
 from bases.algorithm import RandomUniform

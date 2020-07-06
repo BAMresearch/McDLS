@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/rangelist.py
 
-from __future__ import absolute_import # PEP328
 from builtins import zip
 import logging
 

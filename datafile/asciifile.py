@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/asciifile.py
 
-from __future__ import absolute_import # PEP328
 import codecs
 from abc import ABCMeta, abstractmethod
 from numpy import array as np_array

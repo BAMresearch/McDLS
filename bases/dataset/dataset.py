@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/dataset/dataset.py
 
-from __future__ import absolute_import
 from builtins import object
 from abc import ABCMeta, abstractproperty
 from .titlemixin import TitleMixin

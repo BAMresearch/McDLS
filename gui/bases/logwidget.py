@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/logwidget.py
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 from builtins import filter
 import os

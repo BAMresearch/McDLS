@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/datawidget.py
 
-from __future__ import absolute_import # PEP328
 import logging
 
 from gui.qt import QtCore, QtGui

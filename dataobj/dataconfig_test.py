@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # dataobj/dataconfig_test.py
 
-from __future__ import absolute_import # PEP328
 from functools import partial
 from nose.tools import assert_raises
 from dataobj.dataconfig import DataConfig

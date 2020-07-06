@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/mainwindow.py
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 from QtGui import QDoubleValidator, QValidator
 from QtWidgets import QLineEdit

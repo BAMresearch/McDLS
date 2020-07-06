@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/qt.py
 
-from __future__ import absolute_import # PEP328
 
 __all__ = []
 

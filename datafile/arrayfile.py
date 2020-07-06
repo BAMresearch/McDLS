@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # datafile/arrayfile.py
 
-from __future__ import absolute_import # PEP328
 from numpy import array as np_array
 from numpy import ndarray as np_ndarray
 from datafile.asciifile import AsciiFile

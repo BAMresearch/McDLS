@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/settingsgroup.py
 
-from __future__ import absolute_import # PEP328
 
 from builtins import object
 from QtCore import Qt

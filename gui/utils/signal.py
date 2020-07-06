@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/signal.py
 
-from __future__ import absolute_import # PEP328
 from gui.qt import QtCore
 
 if not hasattr(QtCore, 'Signal'):  ## for pyside compatibility

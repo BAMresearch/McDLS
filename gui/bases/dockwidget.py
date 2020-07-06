@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/dockwidget.py
 
-from __future__ import absolute_import # PEP328
 from QtCore import QSize, Qt
 from QtWidgets import QApplication, QDockWidget, QWidget
 from gui.utils.signal import Signal

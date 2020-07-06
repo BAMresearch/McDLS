@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # models/kholodenko.py
 
-from __future__ import absolute_import
 import logging
 import numpy
 from scipy.special import j1 as bessel_j1

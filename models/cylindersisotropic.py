@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # models/cylinders.py
 
-from __future__ import absolute_import
 import numpy, scipy, scipy.special
 import numpy as np
 import logging

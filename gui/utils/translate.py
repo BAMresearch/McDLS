@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/translate.py
 
-from __future__ import absolute_import # PEP328
 from QtWidgets import QApplication
 
 def tr(s):

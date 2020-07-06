@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # bases/algorithm/parameter_test.py
 
-from __future__ import absolute_import # PEP328
 from builtins import object
 from bases.algorithm.parameter import (
         ParameterBase, ParameterNumerical, ParameterFloat, ParameterLog,

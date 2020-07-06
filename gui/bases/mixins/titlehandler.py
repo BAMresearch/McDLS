@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mixins/titlehandler.py
 
-from __future__ import absolute_import # PEP328
 from QtCore import QObject
 from QtWidgets import QWidget
 from bases.dataset import TitleMixin

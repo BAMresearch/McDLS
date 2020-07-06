@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/utils/progressdialog.py
 
-from __future__ import absolute_import # PEP328
 from gui.utils.translate import tr
 from gui.utils import processEventLoop
 from QtCore import Qt

@@ -4,7 +4,6 @@
 """
 McSAS Core
 """
-from __future__ import absolute_import
 
 from .mcsasparameters import McSASParameters
 from .mcsasdefaultcfg import ExtendedEncoder, cInfo

@@ -5,7 +5,6 @@
 A class describing a vector with limits, units, mask and uncertainties
 """
 
-from __future__ import absolute_import # PEP328
 from builtins import str
 from builtins import object
 import numpy as np

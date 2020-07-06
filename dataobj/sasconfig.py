@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # dataobj/sasconfig.py
 
-from __future__ import absolute_import # PEP328
 
 from builtins import str
 import logging

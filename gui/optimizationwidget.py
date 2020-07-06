@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/optimizationwidget.py
 
-from __future__ import absolute_import # PEP328
 
 from QtCore import Qt
 from QtWidgets import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)

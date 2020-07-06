@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/calc.py
 
-from __future__ import absolute_import # PEP328
 from future import standard_library
 standard_library.install_aliases()
 from builtins import zip
