@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # bases/dataset/rawarraymixin.py
 
-from numpy import ndarray as np_ndarray
+import numpy as np
 
 class RawArrayMixin(object):
     """
@@ -30,6 +30,6 @@ class RawArrayMixin(object):
     @classmethod
     def isValidInput(cls, rawArray):
         return (rawArray is not None and
-                isinstance(rawArray, np_ndarray))
+                isinstance(rawArray, np.ndarray))
 
 # vim: set ts=4 sts=4 sw=4 tw=0:
