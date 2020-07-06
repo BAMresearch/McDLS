@@ -5,7 +5,6 @@
 Utils for testing something.
 """
 
-from past.builtins import basestring
 import collections
 import platform
 import numpy
@@ -16,12 +15,12 @@ try:
     from QtCore import QString
 except:
     # defines QString as regular python string if it could not be imported
-    QString = basestring
+    QString = str
 
 # object tests
 
 def isString(obj):
-    return isinstance(obj, basestring) or isinstance(obj, QString)
+    return isinstance(obj, str) or isinstance(obj, QString)
 
 def isList(obj):
     return (not isString(obj) and
