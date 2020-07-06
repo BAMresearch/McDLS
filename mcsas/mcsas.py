@@ -2,8 +2,6 @@
 # mcsas/mcsas.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
-from __future__ import (division, unicode_literals)
-
 from builtins import str
 from builtins import range
 import numpy # For arrays
