@@ -37,8 +37,9 @@ SCRIPT_PATH, SCRIPT_FILENAME = getScriptPath()
 import argparse
 import logging
 import multiprocessing
-from mcsas.log import replaceStdOutErr
-from mcsas.utils import isMac, isLinux
+
+from .log import replaceStdOutErr
+from .utils import isMac, isLinux
 
 if (isLinux() and hasattr(sys, "frozen")
     and "LD_LIBRARY_PATH" not in os.environ):
@@ -78,7 +79,7 @@ def main(argv = None):
         raise
     # forwarding logging setting, quick fix 
     import mcsas.gui.calc # importing here makes avoids import loops elsewhere
-    gui.calc.Calculator.nolog = args.nolog
+    mcsas.gui.calc.Calculator.nolog = args.nolog
 
     # initiate logging (to console stderr for now)
     replaceStdOutErr() # replace all text output with our sinks

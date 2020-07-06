@@ -6,11 +6,12 @@ from builtins import object
 from abc import ABCMeta, abstractproperty
 from types import MethodType
 import numpy
-from bases.algorithm import AlgorithmBase
-from bases.algorithm import Parameter # not defined in utils.parameter
-from utils.mixedmethod import mixedmethod
-from utils.units import NoUnit, Fraction
-from utils import isCallable, classname
+
+from ..bases.algorithm import AlgorithmBase
+from ..bases.algorithm import Parameter # not defined in utils.parameter
+from ..utils.mixedmethod import mixedmethod
+from ..utils.units import NoUnit, Fraction
+from ..utils import isCallable, classname
 
 def funcNotInFuncList(f, flst):
     """Custom predicate for comparing bounded methods:

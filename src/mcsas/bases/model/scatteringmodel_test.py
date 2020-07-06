@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # bases/model/scatteringmodel_test.py
 
-from bases.model import SASModel
-from utils.parameter import FitParameter
+from . import SASModel
+from ...utils.parameter import FitParameter
 
 class DummyModel(SASModel):
     shortName = "DummyModelName"

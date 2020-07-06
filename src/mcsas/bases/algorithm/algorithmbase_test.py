@@ -5,9 +5,9 @@ from builtins import zip
 from nose.tools import raises, assert_raises
 from numpy import array as np_array
 from numpy import uint32, float64, dtype
-from bases.algorithm.algorithmbase import (AlgorithmNameError,
-                                           AlgorithmParameterError)
-from bases.algorithm import (AlgorithmBase, Parameter)
+
+from .algorithmbase import AlgorithmNameError, AlgorithmParameterError
+from .algorithm import AlgorithmBase, Parameter
 
 TestPar = Parameter("testPar", 5.0, valueRange = (4.0, 13.0))
 

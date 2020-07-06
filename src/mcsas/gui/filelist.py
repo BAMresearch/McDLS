@@ -2,18 +2,32 @@
 # gui/filelist.py
 
 import logging
+import os.path
+from collections import OrderedDict
 
-from gui.utils.signal import Signal
-from gui.bases.datalist import DataList
-from gui.utils.filedialog import getOpenFiles
-from datafile import getFileFilter
-from utils.lastpath import LastPath
-from utils.units import ScatteringVector, ScatteringIntensity
-from datafile import loaddatafile
-from dataobj import DataObj
-
+from .utils.signal import Signal
+from .bases.datalist import DataList
+from .utils.filedialog import getOpenFiles, getSaveDirectory
+from .utils.translate import tr
+from .utils import processEventLoop
+from ..datafile import getFileFilter
+from ..utils.lastpath import LastPath
+from ..utils.units import ScatteringVector, ScatteringIntensity
+from ..utils import isList
+from ..datafile import loaddatafile
+from ..dataobj import DataObj
+from ..dataobj import DLSData
+from ..getUncertainties import getUncertainties, simulate
 # required for svg graphics support
-from gui.liststyle import setBackgroundStyleSheet
+from .liststyle import setBackgroundStyleSheet
+
+from .qt import QtCore
+from QtCore import QTime
+
+def delay(msecs):
+    dieTime = QTime.currentTime().addMSecs(msecs)
+    while QTime.currentTime() < dieTime:
+        processEventLoop()
 
 class FileList(DataList):
     sigSphericalSizeRange = Signal((float, float))

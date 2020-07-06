@@ -3,10 +3,11 @@
 
 import numpy
 from numpy import pi, sin, cos
-from bases.algorithm import RandomUniform
-from utils.parameter import FitParameter, Parameter
-from bases.model import SASModel
-from utils.units import Length, NM, SLD
+
+from mcsas.bases.algorithm import RandomUniform
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.bases.model import SASModel
+from mcsas.utils.units import Length, NM, SLD
 
 class Sphere(SASModel):
     """Form factor of a sphere"""

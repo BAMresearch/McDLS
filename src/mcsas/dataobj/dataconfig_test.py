@@ -3,7 +3,8 @@
 
 from functools import partial
 from nose.tools import assert_raises
-from dataobj.dataconfig import DataConfig
+
+from .dataconfig import DataConfig
 
 DataConfig.factory()
 

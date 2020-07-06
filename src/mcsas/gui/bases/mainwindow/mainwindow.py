@@ -6,11 +6,11 @@ import sys
 import logging
 from QtWidgets import QMainWindow
 from QtCore import QSettings, QByteArray, QTimer
-from gui.utils.appversion import QAppVersion
-from gui.utils.translate import tr
-from gui.utils.signal import Signal
-from gui.bases.mainwindow.ui_mainwindow import Ui_MainWindow
-from gui.bases.mixins import AppSettings
+from ...utils.appversion import QAppVersion
+from ...utils.translate import tr
+from ...utils.signal import Signal
+from ..mainwindow.ui_mainwindow import Ui_MainWindow
+from ..mixins import AppSettings
 
 class MainWindow(QMainWindow, Ui_MainWindow, AppSettings):
     """

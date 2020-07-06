@@ -5,9 +5,10 @@ from builtins import str
 from builtins import range
 from builtins import object
 from abc import ABCMeta, abstractmethod
-import numpy
-from utils import classname
 from future.utils import with_metaclass
+import numpy
+
+from ...utils import classname
 
 # it seems treating number generators as instances is more convenient than
 # the current implementation (types/classes only)

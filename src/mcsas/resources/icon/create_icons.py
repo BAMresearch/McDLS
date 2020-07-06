@@ -19,7 +19,7 @@ import math
 
 sys.path.append(os.getcwd())
 
-from gui.version import version
+from mcsas.gui.version import version
 
 ICONSIZES = (16, 32, 48, 64, 128, 256, 512, 1024)
 

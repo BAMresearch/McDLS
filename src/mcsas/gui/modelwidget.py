@@ -8,16 +8,16 @@ import logging
 import imp
 import os
 
-from gui.utils.signal import Signal, tryDisconnect
+from .utils.signal import Signal, tryDisconnect
 from QtWidgets import (QWidget, QVBoxLayout, QComboBox)
-from gui.bases.mixins import TitleHandler, AppSettings
-from utils import isString
-from utils.findmodels import FindModels
-from bases.model import ScatteringModel
-from gui.scientrybox import SciEntryBox
-from gui.algorithmwidget import AlgorithmWidget
-from gui.utils.displayexception import DisplayException
-from dataobj import DataObj
+from .bases.mixins import TitleHandler, AppSettings
+from ..utils import isString
+from ..utils.findmodels import FindModels
+from ..bases.model import ScatteringModel
+from .scientrybox import SciEntryBox
+from .algorithmwidget import AlgorithmWidget
+from .utils.displayexception import DisplayException
+from ..dataobj import DataObj
 
 FIXEDWIDTH = 240
 

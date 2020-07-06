@@ -7,13 +7,14 @@ import logging
 from abc import ABCMeta
 import numpy as np
 from scipy import stats
-from bases.algorithm import AlgorithmBase
-from utils.parameter import Parameter
-from utils.units import (ScatteringIntensity, ScatteringVector, Angle,
-                         NoUnit)
-from utils import clip
-from dataobj import DataConfig
 from future.utils import with_metaclass
+
+from ..bases.algorithm import AlgorithmBase
+from ..utils.parameter import Parameter
+from ..utils.units import (ScatteringIntensity, ScatteringVector, Angle,
+                         NoUnit)
+from ..utils import clip
+from . import DataConfig
 
 class SmearingConfig(with_metaclass(ABCMeta, AlgorithmBase)):
     """Abstract base class, can't be instantiated."""

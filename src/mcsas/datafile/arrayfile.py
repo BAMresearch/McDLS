@@ -3,9 +3,10 @@
 
 from numpy import array as np_array
 from numpy import ndarray as np_ndarray
-from datafile.asciifile import AsciiFile
-from utils import classproperty
-from dataobj.sasdata import SASData
+
+from .asciifile import AsciiFile
+from ..utils import classproperty
+from ..dataobj.sasdata import SASData
 
 class ArrayFile(AsciiFile):
     """A data file containing a single array of data, mostly."""

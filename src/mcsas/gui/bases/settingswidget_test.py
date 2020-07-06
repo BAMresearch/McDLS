@@ -2,8 +2,9 @@
 # gui/bases/settingswidget_test.py
 
 from QtWidgets import QSpinBox, QDoubleSpinBox, QLineEdit, QApplication
-from gui.bases.settingswidget import SettingsWidget
-from utils import EPS
+
+from .settingswidget import SettingsWidget
+from ...utils import EPS
 
 class TestSettings(SettingsWidget):
     def setupUi(self, dummy):

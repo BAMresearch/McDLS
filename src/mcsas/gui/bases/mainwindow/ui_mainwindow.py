@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './gui/bases/mainwindow/ui_mainwindow.ui',
-# licensing of './gui/bases/mainwindow/ui_mainwindow.ui' applies.
-#
-# Created: Wed Sep 19 12:35:50 2018
-#      by: pyside2-uic  running on PySide2 5.11.1
-#
-# WARNING! All changes made in this file will be lost!
-
-from PySide2 import QtCore, QtGui, QtWidgets
+from builtins import object
+from ...qt import QtCore, QtGui
+from ...utils.translate import fromUtf8
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):

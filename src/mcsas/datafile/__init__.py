@@ -11,8 +11,7 @@ from .datafile import DataFile
 from .arrayfile import ArrayFile
 from .asciifile import AsciiFile
 from .pdhfile import PDHFile, PDHHeader
-
-from utils import isLinux, isString
+from ..utils import isLinux, isString
 
 def getFileFilter():
     """Returns the file filter text of all available data file formats which

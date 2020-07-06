@@ -8,7 +8,8 @@ File dialogs and convenience functions.
 
 import os
 from QtWidgets import QFileDialog, QDialog
-from utils import isList
+
+from ...utils import isList
 
 def fileDialogType():
     if sys.platform.startswith('win'):

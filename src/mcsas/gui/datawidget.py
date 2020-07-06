@@ -2,16 +2,16 @@
 # gui/datawidget.py
 
 import logging
-
-from gui.qt import QtCore, QtGui
+from .qt import QtCore, QtGui
 from QtCore import Qt
 from QtWidgets import (QWidget, QGridLayout, QVBoxLayout, QLabel)
-from utils import isList
-from bases.algorithm import AlgorithmBase
-from gui.utils.signal import Signal
-from gui.bases.mixins import TitleHandler, AppSettings
-from gui.algorithmwidget import AlgorithmWidget, SettingsGridWidget 
-from dataobj import DataObj, DataConfig
+
+from ..utils import isList
+from ..bases.algorithm import AlgorithmBase
+from .utils.signal import Signal
+from .bases.mixins import TitleHandler, AppSettings
+from .algorithmwidget import AlgorithmWidget, SettingsGridWidget 
+from ..dataobj import DataObj, DataConfig
 
 class DataWidget(QWidget, AppSettings):
     sigConfig = Signal((object,))

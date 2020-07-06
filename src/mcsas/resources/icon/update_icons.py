@@ -12,6 +12,7 @@ Call it like that from the McSAS source tree:
 
 import sys
 import os.path
+
 from create_icons import createIcons
 from build_iconset import buildIconSet
 

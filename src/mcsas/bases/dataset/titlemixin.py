@@ -2,7 +2,7 @@
 # bases/dataset/titlemixin.py
 
 from builtins import object
-from utils import isString
+from ...utils import isString
 
 class TitleMixin(object):
     """

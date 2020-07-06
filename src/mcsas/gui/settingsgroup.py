@@ -5,7 +5,8 @@
 from builtins import object
 from QtCore import Qt
 from QtWidgets import (QWidget, QGridLayout, QGroupBox)
-from gui.algorithmwidget import rearrangeWidgets
+
+from .algorithmwidget import rearrangeWidgets
 
 class SettingsGroup(object):
     _widgets = None # preconfigured widgets to show in this group

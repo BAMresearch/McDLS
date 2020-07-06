@@ -3,10 +3,10 @@
 
 from builtins import str
 from QtWidgets import (QWidget, QSpinBox, QDoubleSpinBox, QLineEdit, QCheckBox,
-                   QAbstractButton, QAbstractSpinBox, QGroupBox)
+                       QAbstractButton, QAbstractSpinBox, QGroupBox)
 from QtCore import QSignalMapper, QObject
-from gui.utils.signal import Signal
-from utils import isList, isString
+from ..utils.signal import Signal
+from ...utils import isList, isString
 
 class SettingsWidget(QWidget):
     """

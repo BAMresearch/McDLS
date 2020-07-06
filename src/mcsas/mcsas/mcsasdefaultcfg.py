@@ -1,7 +1,7 @@
-#!/usr/bin/env python                                                          
-#coding: utf8    
+# -*- coding: utf-8 -*-
+# mcsas/mcsasdefaultcfg.py
 """
-default for settings  and info used for a McSAS run
+default for settings and info used for a McSAS run
 used by McSASCfg
 """
 
@@ -10,9 +10,10 @@ from builtins import object
 import logging, json
 import os, inspect
 import numpy as np
-from utils.parameter import (Parameter, ParameterFloat,
+
+from ..utils.parameter import (Parameter, ParameterFloat,
         ParameterBoolean, ParameterNumerical, ParameterString)
-from utils import mcopen
+from ..utils import mcopen
 
 __author__ = "Brian R. Pauw"
 __contact__ = "brian@stack.nl"

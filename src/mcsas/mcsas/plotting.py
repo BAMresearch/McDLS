@@ -11,11 +11,12 @@ import inspect
 import os.path
 import numpy as np # For arrays
 import matplotlib
-from utils import isList, isString, isMac, isNumber
-from utils.units import Unit, NoUnit
-import log
-from main import makeAbsolutePath
-from dataobj import SASData
+
+from ..utils import isList, isString, isMac, isNumber
+from ..utils.units import Unit, NoUnit
+from mcsas import log
+from ..main import makeAbsolutePath
+from ..dataobj import SASData
 
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:

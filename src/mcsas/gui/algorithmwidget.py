@@ -4,18 +4,18 @@
 from builtins import range
 import logging
 
-from gui.utils.signal import Signal, tryDisconnect
+from .utils.signal import Signal, tryDisconnect
 from QtCore import Qt, QSettings, QRegExp
 from QtWidgets import (QWidget, QHBoxLayout, QPushButton,
                    QLabel, QLayout, QGridLayout)
-from gui.bases.datalist import DataList
-from gui.bases.settingswidget import SettingsWidget
-from gui.bases.mixins import TitleHandler, AppSettings
-from bases.algorithm import AlgorithmBase, ParameterFloat # instance for test
-from utils import isList, isString, testfor
-from utils.parameter import (ParameterNumerical, FitParameterBase)
-from gui.calc import Calculator
-from gui.scientrybox import SciEntryBox
+from .bases.datalist import DataList
+from .bases.settingswidget import SettingsWidget
+from .bases.mixins import TitleHandler, AppSettings
+from ..bases.algorithm import AlgorithmBase, ParameterFloat # instance for test
+from ..utils import isList, isString, testfor
+from ..utils.parameter import ParameterNumerical, FitParameterBase
+from .calc import Calculator
+from .scientrybox import SciEntryBox
 
 FIXEDWIDTH = 120
 

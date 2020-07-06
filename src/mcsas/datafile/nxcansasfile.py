@@ -4,10 +4,11 @@
 from builtins import range
 from builtins import object
 import h5py
-from utils import isList, isInteger, isString
-from utils import classproperty
-from datafile.datafile import DataFile
-from dataobj.sasdata import SASData
+
+from ..utils import isList, isInteger, isString
+from ..utils import classproperty
+from .datafile import DataFile
+from ..dataobj.sasdata import SASData
 
 class NXcanSASFile(DataFile):
     """ A NXcanSAS file, which is a NeXus-conform HDF5 file for storing corrected SAS data. """

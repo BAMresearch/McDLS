@@ -5,10 +5,11 @@ import numpy, scipy, scipy.special
 import numpy as np
 import logging
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
-from utils.parameter import FitParameter, Parameter
-from bases.model import SASModel
-from bases.algorithm import RandomExponential, RandomUniform
-from utils.units import Length, NoUnit, Angle, SLD
+
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.bases.model import SASModel
+from mcsas.bases.algorithm import RandomExponential, RandomUniform
+from mcsas.utils.units import Length, NoUnit, Angle, SLD
 
 # parameters must not be inf
 

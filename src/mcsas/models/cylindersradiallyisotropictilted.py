@@ -12,8 +12,9 @@ value used for the integration is the mass-weighted centre.
 from builtins import range
 import numpy, scipy, scipy.special, scipy.stats
 from numpy import pi, zeros, sin, cos, linspace, diff, sinc
-from utils.parameter import FitParameter, Parameter
-from bases.model import SASModel
+
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.bases.model import SASModel
 
 # parameters must not be inf
 

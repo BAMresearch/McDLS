@@ -3,9 +3,10 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis
-from utils.parameter import FitParameter, Parameter
-from bases.model import SASModel
-from utils.units import Length, Angle
+
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.bases.model import SASModel
+from mcsas.utils.units import Length, Angle
 
 # parameters must not be inf
 

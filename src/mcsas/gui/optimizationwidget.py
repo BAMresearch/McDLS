@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 # gui/optimizationwidget.py
 
-
 from QtCore import Qt
 from QtWidgets import (QWidget, QGridLayout, QVBoxLayout, QGroupBox)
-from gui.bases.mixins.titlehandler import TitleHandler
-from gui.algorithmwidget import AlgorithmWidget, rearrangeWidgets
-from gui.settingsgroup import DefaultSettings, AdvancedSettings
-from dataobj import DataObj, SASConfig
+
+from .bases.mixins.titlehandler import TitleHandler
+from .algorithmwidget import AlgorithmWidget, rearrangeWidgets
+from .settingsgroup import DefaultSettings, AdvancedSettings
+from ..dataobj import DataObj, SASConfig
 
 class OptimizationWidget(AlgorithmWidget):
     _tempCompExp = None

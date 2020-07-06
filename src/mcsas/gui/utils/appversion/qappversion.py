@@ -2,10 +2,11 @@
 # gui/utils/appversion/qappversion.py
 
 from builtins import str
-from gui.utils.appversion import AppVersion
-from utils import isString
-from gui.qt import QtCore
+from ...qt import QtCore
 from QtCore import QCoreApplication as coreApp
+
+from . import AppVersion
+from ....utils import isString
 
 class QAppVersion(AppVersion):
     """
@@ -33,4 +34,3 @@ class QAppVersion(AppVersion):
                 func(data)
 
 # vim: set ts=4 sw=4 sts=4 tw=0:
-

@@ -5,10 +5,11 @@ import logging
 import numpy
 from scipy.special import j1 as bessel_j1
 from scipy.integrate import quad
-from utils.parameter import FitParameter
-from bases.model import SASModel
-from bases.algorithm import RandomUniform, RandomExponential
-from utils.units import Length
+
+from mcsas.utils.parameter import FitParameter
+from mcsas.bases.model import SASModel
+from mcsas.bases.algorithm import RandomUniform, RandomExponential
+from mcsas.utils.units import Length
 
 LASTMSG = set()
 

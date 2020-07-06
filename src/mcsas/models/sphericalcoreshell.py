@@ -3,10 +3,11 @@
 
 import numpy, scipy, scipy.special
 from numpy import pi, zeros, sin, cos, sqrt, newaxis, sinc
-from utils.parameter import FitParameter, Parameter
-from bases.model import SASModel
-from bases.algorithm import RandomExponential, RandomUniform
-from utils.units import Length, SLD
+
+from mcsas.utils.parameter import FitParameter, Parameter
+from mcsas.bases.model import SASModel
+from mcsas.bases.algorithm import RandomExponential, RandomUniform
+from mcsas.utils.units import Length, SLD
 
 class SphericalCoreShell(SASModel):
     r"""Form factor for a spherical core shell structure

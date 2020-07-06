@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 # dataobj/__init__.py
 
-
 __all__ = ["DataObj", "SASData", "DataConfig"]
 
-from dataobj.dataobj import DataObj
-from dataobj.datavector import DataVector
-from dataobj.dataconfig import DataConfig
-from dataobj.sasconfig import SASConfig
-from dataobj.sasdata import SASData
+from .dataobj import DataObj
+from .datavector import DataVector
+from .dataconfig import DataConfig
+from .sasconfig import SASConfig
+from .sasdata import SASData
 
 if __name__ == "__main__":
     import doctest

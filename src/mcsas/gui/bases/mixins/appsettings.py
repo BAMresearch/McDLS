@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # gui/bases/mixins/algorithmwidget.py
 
-
-from gui.qt import QtCore
+from ...qt import QtCore
 from QtCore import QSettings
 
 class AppSettings(object):

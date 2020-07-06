@@ -5,7 +5,8 @@ from builtins import str
 from QtGui import QDoubleValidator, QValidator
 from QtWidgets import QLineEdit
 from QtCore import Qt
-from utils import clip
+
+from ..utils import clip
 
 class SciEntryValidator(QDoubleValidator):
     """Assumes the associated QLineEdit is provided as parent object

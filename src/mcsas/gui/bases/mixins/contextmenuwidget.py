@@ -4,11 +4,12 @@
 from builtins import str
 from builtins import object
 from collections import OrderedDict
-from utils import isString, isList, isMap
-from gui.utils.translate import tr
-from gui.bases.mixins.titlehandler import TitleHandler
 from QtCore import Qt
 from QtWidgets import QAction
+
+from ....utils import isString, isList, isMap
+from ...utils.translate import tr
+from .titlehandler import TitleHandler
 
 def escapeAmp(text):
     return text.replace("&", "&&")

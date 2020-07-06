@@ -3,8 +3,9 @@
 
 from QtCore import QObject
 from QtWidgets import QWidget
-from bases.dataset import TitleMixin
-from utils import isString, isCallable
+
+from ....bases.dataset import TitleMixin
+from ....utils import isString, isCallable
 
 class TitleHandler(TitleMixin):
     _updateFunc = None

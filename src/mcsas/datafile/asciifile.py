@@ -4,10 +4,11 @@
 import codecs
 from abc import ABCMeta, abstractmethod
 from numpy import array as np_array
-from datafile import DataFile
-from utils.error import FileError
-from utils import isString, isWindows, mcopen
 from future.utils import with_metaclass
+
+from .datafile import DataFile
+from ..utils.error import FileError
+from ..utils import isString, isWindows, mcopen
 
 class AsciiFile(with_metaclass(ABCMeta, DataFile)):
     """A generic ascii data file."""

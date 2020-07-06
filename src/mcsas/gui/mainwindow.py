@@ -7,34 +7,34 @@ import re
 import sys
 import logging
 
-from gui.utils.signal import Signal
+from .utils.signal import Signal
 from QtCore import Qt, QSettings, QFileInfo
 from QtGui import QIcon
 from QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
                    QSizePolicy, QApplication, QToolBox)
-from gui.bases.mainwindow import MainWindow as MainWindowBase
-from gui.bases.logwidget import LogWidget
-from gui.bases.dockwidget import DockWidget
-from gui.utils.filedialog import getOpenFiles
-from utils.lastpath import LastPath
-from utils import isMac
-from gui.utils import processEventLoop
-from gui.utils.displayexception import DisplayException
-from gui.version import version
-from gui.calc import Calculator
-from dataobj import SASData
+from .bases.mainwindow import MainWindow as MainWindowBase
+from .bases.logwidget import LogWidget
+from .bases.dockwidget import DockWidget
+from .utils.filedialog import getOpenFiles
+from ..utils.lastpath import LastPath
+from ..utils import isMac
+from .utils import processEventLoop
+from .utils.displayexception import DisplayException
+from .version import version
+from .calc import Calculator
+from ..dataobj import SASData
 
-from gui.scientrybox import SciEntryBox
+from .scientrybox import SciEntryBox
 
 # required for svg graphics support
-from gui.qt import QtSvg, QtXml, pluginDirs
-from gui.rangelist import RangeList
-from gui.algorithmwidget import AlgorithmWidget
-from gui.datawidget import DataWidget
-from gui.optimizationwidget import OptimizationWidget
-from gui.modelwidget import ModelWidget
-from gui.filelist import FileList
-from main import makeAbsolutePath
+from .qt import QtSvg, QtXml, pluginDirs
+from .rangelist import RangeList
+from .algorithmwidget import AlgorithmWidget
+from .datawidget import DataWidget
+from .optimizationwidget import OptimizationWidget
+from .modelwidget import ModelWidget
+from .filelist import FileList
+from ..main import makeAbsolutePath
 
 INFOTEXT = ("""
 McSAS: Software for the retrieval of model parameter distributions from scattering patterns.

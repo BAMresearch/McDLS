@@ -3,9 +3,9 @@
 
 from builtins import range
 from builtins import object
-from utils import isList, isInteger, isString
-from utils import classproperty
-from datafile import ArrayFile
+from ..utils import isList, isInteger, isString
+from ..utils import classproperty
+from . import ArrayFile
 
 class PDHFile(ArrayFile):
 

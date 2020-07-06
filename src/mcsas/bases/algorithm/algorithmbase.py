@@ -3,9 +3,9 @@
 
 from builtins import str
 from builtins import object
-from utils import isString, isList, testfor, assertName
-from utils.mixedmethod import mixedmethod
-from utils import classproperty, classname
+from ...utils import isString, isList, testfor, assertName
+from ...utils.mixedmethod import mixedmethod
+from ...utils import classproperty, classname
 from .parameter import ParameterBase, ParameterError
 
 class AlgorithmError(Exception):
