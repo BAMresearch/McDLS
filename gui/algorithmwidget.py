@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/algorithmwidget.py
 
-from __future__ import division
-from past.utils import old_div
 from builtins import range
 import logging
 
@@ -39,7 +37,7 @@ def rearrangeWidgets(layout, widgets, targetWidth):
     numCols = max(1, getNumCols())
     # add them again with new column count
     for i, w in enumerate(widgets):
-        layout.addWidget(w, old_div(i, numCols), i % numCols, Qt.AlignTop)
+        layout.addWidget(w, i // numCols, i % numCols, Qt.AlignTop)
 
 class AlgorithmWidget(SettingsWidget, AppSettings):
     _algo = None
@@ -334,7 +332,7 @@ class AlgorithmWidget(SettingsWidget, AppSettings):
         except: 
             pass
         w.setFixedWidth(FIXEDWIDTH)
-        widgets.insert(old_div(len(widgets),2), w)
+        widgets.insert(len(widgets)//2, w)
 
         # Special widget settings for active fitting parameters:
         activeBtns = activeBtns and isinstance(param, FitParameterBase)

@@ -3,7 +3,6 @@
 # retrieves measurement uncertainties from McDLS result files and directories
 # which are possibly filtered, cropped and averaged by scattering angle
 
-from __future__ import unicode_literals
 from future import standard_library
 standard_library.install_aliases()
 from builtins import str

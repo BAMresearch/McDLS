@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # models/dlssphere.py
 
-from __future__ import division
-from past.utils import old_div
 import numpy
 from numpy import pi, exp, sin, cos
 from bases.algorithm import RandomUniform

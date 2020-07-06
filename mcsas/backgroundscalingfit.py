@@ -2,7 +2,6 @@
 # mcsas/backgroundscalingfit.py
 # Find the reST syntax at http://sphinx-doc.org/rest.html
 
-from __future__ import division
 from builtins import object
 from scipy import optimize
 from bases.model import SASModel

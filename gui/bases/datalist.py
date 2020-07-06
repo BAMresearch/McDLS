@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # gui/bases/datalist.py
 
-from __future__ import division
-from past.utils import old_div
 from builtins import str
 from builtins import range
 import os.path
@@ -300,7 +298,7 @@ class DataList(QWidget, DropWidget, ContextMenuWidget):
         """Selects all items in the list if not all are selected.
         Clears the selection if all items in the list already are selected.
         """
-        if (old_div(len(self.listWidget.selectedIndexes()), self.listWidget.columnCount())) == len(self):
+        if (len(self.listWidget.selectedIndexes()) // self.listWidget.columnCount()) == len(self):
             self.listWidget.clearSelection()
         else:
             self.listWidget.selectAll()

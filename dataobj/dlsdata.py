@@ -6,10 +6,8 @@ Represents data from dynamic light scattering (DLS) measurement.
 
 """
 
-from __future__ import division
 from builtins import str
 from builtins import range
-from past.utils import old_div
 import logging
 import copy
 from collections import OrderedDict
@@ -135,7 +133,7 @@ class MultiDataVector(DataVector):
             return a
         if self._count == 1:
             return a.reshape((-1, 1)) # nothing to do
-        rowCount = old_div(len(a), self._count)
+        rowCount = len(a) // self._count
         if self._wasRepeated: # just take the first non-duplicates
             result = a[:rowCount]
         else:
