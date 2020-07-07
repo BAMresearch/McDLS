@@ -6,7 +6,7 @@ import codecs
 import numpy as np
 
 from .tests import (isList, isString, isNonEmptyString, isMap, isSet,
-                         isNumber, isInteger, isCallable)
+                         isNumber, isInteger, isCallable, isIterable)
 from .tests import isLinux, isMac, isWindows, isFrozen
 from .tests import testfor, assertName
 from .mixedmethod import mixedmethod

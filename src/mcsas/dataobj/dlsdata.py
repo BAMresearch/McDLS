@@ -15,7 +15,7 @@ import numpy as np
 from numpy import (pi, sin, array, dstack, hstack, newaxis, repeat, outer,
                    flipud, concatenate, empty, zeros_like)
 
-from ..utils import classproperty, isCallable, isInteger, isList, hashNumpyArray
+from ..utils import classproperty, isCallable, isInteger, isList, isIterable, hashNumpyArray
 from ..utils.units import (Length, ScatteringVector, ScatteringIntensity, Angle,
                          NoUnit)
 from ..bases.algorithm import Parameter
@@ -533,7 +533,7 @@ class DLSData(DataObj):
         """Starts accumulation of related data sets among the currently loaded
         ones. Finally, removes such source data sets and adds the new combined
         one."""
-        if not isList(dataList) or not len(dataList):
+        if not isIterable(dataList):
             return # nothing to do
         samples = OrderedDict()
         def makeKey(data):
@@ -546,6 +546,8 @@ class DLSData(DataObj):
             if key not in samples:
                 samples[key] = []
             samples[key].append(d)
+        if not len(samples):
+            return # nothing to do
         dataList = [] # accumulate data objects if possible
         for dummy, lst in samples.items():
             if not len(lst):
