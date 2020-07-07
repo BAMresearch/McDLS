@@ -28,6 +28,14 @@ def isList(obj):
              or (isinstance(obj, numpy.ndarray)
                  and obj.ndim < 2)))
 
+def isIterable(obj):
+    try:
+        iter(obj)
+    except Exception:
+        return False
+    else:
+        return True
+
 def isNonEmptyString(obj):
     return (isString(obj) and len(obj) > 0)
 
