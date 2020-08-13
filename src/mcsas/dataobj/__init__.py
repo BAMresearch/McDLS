@@ -8,7 +8,7 @@ from .datavector import DataVector
 from .dataconfig import DataConfig
 from .sasconfig import SASConfig
 from .sasdata import SASData
-from .dlsdata import DLSData
+from .dlsdata import DLSData, DLSConfig
 
 if __name__ == "__main__":
     import doctest
