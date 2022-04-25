@@ -529,7 +529,7 @@ class DLSData(DataObj):
         return lst
 
     @staticmethod
-    def preProcess(dataList):
+    def preProcess(dataList): # FIXME: rename, e.g. to 'averageByAngle'
         """Starts accumulation of related data sets among the currently loaded
         ones. Finally, removes such source data sets and adds the new combined
         one."""
