@@ -304,7 +304,7 @@ class Calculator(HDFMixin):
         # write HDF5, show exceptions traceback, if any
         try:
             self.hdfStore(self._outFn.filenameVerbose(
-                "hdf5archive", "Complete state of the calculation",
+                "hdf5archive", "complete state of the calculation",
                 extension = '.hdf5'), rootLocation = "mcsasentry")
         except Exception as e:
             import traceback
