@@ -244,7 +244,7 @@ class PlotResults(object):
         # resize slightly to update figure to window size,
         # Windows&MacOS need this, just do it on Linux as well
         # somehow, left&right ylabel moves out of the window on windows (FIXME)
-        manager.resize(targetWidth*1.005, targetHeight*1.005)
+        manager.resize(int(targetWidth*1.005), int(targetHeight*1.005))
 
         if queue is not None:
             queue.put(True) # queue not empty means: plotting done here
@@ -341,7 +341,7 @@ class PlotResults(object):
         fig = figure(figsize = (self._figWidth, self._figHeight),
                      dpi = 80, facecolor = 'w', edgecolor = 'k')
         if isString(figureTitle):
-            fig.canvas.set_window_title(figureTitle)
+            get_current_fig_manager().set_window_title(figureTitle)
 
         charWidth, charHeight = getTextSize(fig, self._textfont)
         charWidth, charHeight = (charWidth / (cellWidth * fig.dpi),
