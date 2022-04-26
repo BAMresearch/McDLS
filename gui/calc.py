@@ -39,6 +39,7 @@ from utils.hdf import HDFMixin
 from mcsas.plotting import PlotSeriesStats
 
 DEFAULTSECT = configparser.DEFAULTSECT
+LOGLEVEL = logging.INFO
 
 def cfgwrite(self, fp):
     """Write an .ini-format representation of the configuration state."""
@@ -228,6 +229,7 @@ class Calculator(HDFMixin):
     nolog = False
 
     def __init__(self):
+        logging.getLogger().setLevel(LOGLEVEL)
         self._algo = McSAS.factory()()
 
     def hdfWrite(self, hdf):
@@ -298,6 +300,7 @@ class Calculator(HDFMixin):
         self._writeSettings(dict(), dataset)
         if self.nolog: # refers to the widgethandler
             log.removeHandler(widgetHandler)
+        logging.getLogger().setLevel(LOGLEVEL)
         #set data in the algorithm
         self._algo.data = dataset
 
