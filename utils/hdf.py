@@ -110,8 +110,7 @@ class HDFWriter(object):
 
     @classmethod
     def open(cls, filename, rootLocation = None):
-        return HDFWriter(h5py.File(filename, driver = 'core',
-                                   backing_store = True), rootLocation)
+        return HDFWriter(h5py.File(filename, 'w'), rootLocation)
 
     @property
     def location(self):
