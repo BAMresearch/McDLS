@@ -79,7 +79,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, AppSettings):
                     custom.append(key)
                 else: # qsettings doesn't contain the key, add it
                     self.appSettings.setValue(key,
-                            QByteArray.fromBase64(value))
+                            QByteArray.fromBase64(value.encode()))
                     default.append(key)
             if len(default) > 0:
                 logmsg += " Defaults for {0}.".format(", ".join(default))
