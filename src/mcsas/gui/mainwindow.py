@@ -104,7 +104,6 @@ If convergence is not reached, the following can be attempted:
  simple plot of the mean and its standard deviation across\
  the scattering angles.</li>
 </ul>
-[ For more information, please see http://www.mcdls.net ]
 """)
 
 CHANGESTEXT = (u"""
