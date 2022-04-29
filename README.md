@@ -11,8 +11,28 @@ results.
 
 *Coming Soon*
 
+### Current status ###
+
+The package should run on a Python 3 installation, for example an Anaconda environment.
+Standalone packages are available for Windows. 
+
+### Requirements ###
+
+To run McDLS from the source code repository (i.e. using a Python interpreter), the following items are required:
+
+- [Python 3](https://www.python.org/downloads/), with the following packages:
+
+- [Numpy](http://www.scipy.org/scipylib/download.html) 
+
+- [Scipy](http://www.scipy.org/scipylib/download.html) 
+
+- [matplotlib](http://matplotlib.org/downloads.html) 
+
+- [PySide2](https://pypi.org/project/PySide2/) 
+
 ### Notes on DLS data handling
-- The program expects *.ASC data files, containing `ALV-7004 CGS-8F Data`
+
+- The program expects `*.ASC` data files, containing `ALV-7004 CGS-8F Data`
 in the first line of the file. It shows a warning otherwise.
 
 - It is recommended to load multiple files from measurements of the same
@@ -40,7 +60,7 @@ in the first line of the file. It shows a warning otherwise.
 
 - The option "Calc. series statistics" in the optimisation menu combines the
  distribution moments of all data sets in one output file
- ("[...]_seriesStats.dat") for each active parameter. Finally, it shows a
+ (`[...]_seriesStats.dat`) for each active parameter. Finally, it shows a
  simple plot of the mean and its standard deviation across
  the scattering angles.
  
