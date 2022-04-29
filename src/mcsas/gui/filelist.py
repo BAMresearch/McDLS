@@ -16,8 +16,6 @@ from ..utils.units import ScatteringVector, ScatteringIntensity
 from ..utils import isList
 from ..datafile import loaddatafile
 from ..dataobj import DataObj
-from ..dataobj import DLSData
-from ..getUncertainties import getUncertainties, simulate
 # required for svg graphics support
 from .liststyle import setBackgroundStyleSheet
 

@@ -14,9 +14,6 @@ from PySide2 import __path__ as PySidePath
 try:
     sys.modules["QtWidgets"] = QtWidgets
     sys.modules["QtGui"] = QtGui
-    if 'QtWidgets' in locals():
-        sys.modules["QtGui"] = QtWidgets
-    sys.modules["QtGui5"] = QtGui
     sys.modules["QtCore"] = QtCore
     sys.modules["QtSvg"] = QtSvg
     sys.modules["QtXml"] = QtXml

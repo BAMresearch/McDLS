@@ -30,4 +30,4 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         pass
 
-from gui.bases.mainwindow import mainwindow_rc
+from . import mainwindow_rc
