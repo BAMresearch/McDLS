@@ -8,6 +8,7 @@ import logging
 import time
 import os.path
 import codecs
+import inspect
 import tempfile
 from collections import OrderedDict
 try: 
@@ -33,6 +34,7 @@ from ..utils.hdf import HDFMixin
 from ..mcsas.plotting import PlotSeriesStats
 
 DEFAULTSECT = configparser.DEFAULTSECT
+LOGLEVEL = logging.INFO
 
 def cfgwrite(self, fp):
     """Write an .ini-format representation of the configuration state."""
@@ -74,7 +76,7 @@ class OutputFilename(object):
         return self._timestamp
 
     def __init__(self, dataset, createDir = True):
-        self._outDir = LastPath.get()
+        self._outDir = os.path.dirname(dataset.filename)
         if not os.path.isdir(self._outDir):
             logging.warning("Output path '{}' does not exist!"
                             .format(self._outDir))
@@ -222,6 +224,7 @@ class Calculator(HDFMixin):
     nolog = False
 
     def __init__(self):
+        logging.getLogger().setLevel(LOGLEVEL)
         self._algo = McSAS.factory()()
 
     def hdfWrite(self, hdf):
@@ -229,9 +232,7 @@ class Calculator(HDFMixin):
         hdf.writeMember(self, "algo")
         hdf.writeMember(self.algo, "data")
         hdf.writeMember(self, "model")
-        # for p in self.model.params():
-        #     logging.debug("Writing model parameter: {} value: {} to HDF5".format(p.name(), p.value()))
-        #     hdf.writeMember(self.model, p.name())
+#        hdf.writeDataset("modelCode", inspect.getsourcelines(self.model)[0])
 
     def hdfLoad(self, filehandle):
         """ load a calculator configuration """
@@ -294,13 +295,14 @@ class Calculator(HDFMixin):
         self._writeSettings(dict(), dataset)
         if self.nolog: # refers to the widgethandler
             log.removeHandler(widgetHandler)
+        logging.getLogger().setLevel(LOGLEVEL)
         #set data in the algorithm
         self._algo.data = dataset
 
         # write HDF5, show exceptions traceback, if any
         try:
             self.hdfStore(self._outFn.filenameVerbose(
-                "hdf5archive", "Complete state of the calculation",
+                "hdf5archive", "complete state of the calculation",
                 extension = '.hdf5'), rootLocation = "mcsasentry")
         except Exception as e:
             import traceback

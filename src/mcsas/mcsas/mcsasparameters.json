@@ -68,6 +68,14 @@
         "displayUnit" : "-",
         "isActive" : false
     },
+    "positiveBackground" : {
+        "displayName" : "Only positive backgrounds allowed?",
+        "description" : "Only positive values for the background are allowed.",
+        "default" : false,
+        "unitClass" : "NoUnit",
+        "displayUnit" : "-",
+        "isActive" : false
+    },
     "startFromMinimum" : {
         "displayName" : "depreciated",
         "description" : "Sets the initial guess to minimal values rather than a uniform dist.",

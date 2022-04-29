@@ -29,10 +29,13 @@ try:
 except ImportError:
     pass # no pyside
 
+if not isMac():
+    matplotlib.rcParams['backend'] = 'TkAgg'
+
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
 from matplotlib.pyplot import (figure, xticks, yticks, errorbar, bar,
-        text, plot, grid, legend, title, xlim, ylim, gca, axis,
+        text, plot, grid, legend, title, xlim, ylim, sca, gca, axis,
         close, colorbar, imshow, subplot, axes, show, savefig,
         get_current_fig_manager)
 
@@ -200,7 +203,7 @@ class PlotResults(object):
             InfoAxis = self._ah[rangei * 2 * (self._nHists + 1)]
             # make active:
             self.plotInfo(InfoAxis)
-            axes(InfoAxis)
+            sca(InfoAxis)
 
             # plot histograms
             # https://stackoverflow.com/a/952952
@@ -240,7 +243,7 @@ class PlotResults(object):
         # resize slightly to update figure to window size,
         # Windows&MacOS need this, just do it on Linux as well
         # somehow, left&right ylabel moves out of the window on windows (FIXME)
-        manager.resize(targetWidth*1.005, targetHeight*1.005)
+        manager.resize(int(targetWidth*1.005), int(targetHeight*1.005))
 
         if queue is not None:
             queue.put(True) # queue not empty means: plotting done here
@@ -337,7 +340,7 @@ class PlotResults(object):
         fig = figure(figsize = (self._figWidth, self._figHeight),
                      dpi = 80, facecolor = 'w', edgecolor = 'k')
         if isString(figureTitle):
-            fig.canvas.set_window_title(figureTitle)
+            get_current_fig_manager().set_window_title(figureTitle)
 
         charWidth, charHeight = getTextSize(fig, self._textfont)
         charWidth, charHeight = (charWidth / (cellWidth * fig.dpi),
@@ -404,7 +407,7 @@ class PlotResults(object):
     def plotPartial(self, fitX0, fitMeasVal, fitSTD, qAxis, label = 'MC partial measVal'):
         """plots 1D data and fit"""
         #make active:
-        axes(qAxis)
+        sca(qAxis)
         plot(fitX0, fitMeasVal, 'b-', lw = 1, label = label)
 
     def plot1D(self, dataset, fitX0, fitMeasVal, qAxis):
@@ -433,7 +436,7 @@ class PlotResults(object):
                 })
 
         # make active:
-        axes(qAxis)
+        sca(qAxis)
         qAxis.update(qAxDict)
         qAxis = self.setAxis(qAxis)
         # plot original data
@@ -499,7 +502,7 @@ class PlotResults(object):
     def plotInfo(self, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
         # make active:
-        axes(InfoAxis)
+        sca(InfoAxis)
         # show volume-weighted info:
         ovString = self.formatAlgoInfo()
         delta = 0.001 # minor offset
@@ -510,7 +513,7 @@ class PlotResults(object):
     def plotStats(self, parHist, rangei, fig, InfoAxis):
         """plots the range statistics in the small info axes above plots"""
         # make active:
-        axes(InfoAxis)
+        sca(InfoAxis)
         # show volume-weighted info:
         delta = 0.001 # minor offset
         ovString = self.formatRangeInfo(parHist, rangei, weighti = 0)
@@ -522,7 +525,7 @@ class PlotResults(object):
     def plotHist(self, plotPar, parHist, hAxis, rangei):
         """histogram plot"""
         # make active:
-        axes(hAxis)
+        sca(hAxis)
 
         histXLowerEdge = plotPar.toDisplay(parHist.xLowerEdge)
         histXMean =      plotPar.toDisplay(parHist.xMean)
@@ -537,6 +540,7 @@ class PlotResults(object):
         plotTitle = plotPar.displayName()
         xLabel = u'{} ({})'.format(plotPar.name(), plotPar.suffix())
 
+        # expand the x axis to leave a little more space left and right of the plot
         if parHist.xscale == 'log':
             xLim = (histXLowerEdge.min() * (1 - self._axisMargin), 
                     histXLowerEdge.max() * (1 + self._axisMargin))
@@ -547,6 +551,7 @@ class PlotResults(object):
                     histXLowerEdge.max() + 0.25 * self._axisMargin * xDiff) 
             xScale = 'linear'
 
+        # vertical limits also should be adjusted a little
         yLim = (0, HistYMean.max() * (1 + self._axisMargin) )
         # histogram axes settings:
         hAxDict = self._AxDict.copy()
@@ -573,7 +578,7 @@ class PlotResults(object):
         #plot grid
         self.plotGrid(hAxis)
 
-        # duplicate:
+        # duplicate axes for the CDF plot:
         suppAx = hAxis.twinx()
         suppAx.set_ylim(0, 1.2)
         suppAx.set_ylabel('Cumulative distribution function')
@@ -588,6 +593,7 @@ class PlotResults(object):
             hAxis.bar(histXLowerEdge[validi], HistYMean[validi[0:-1]], 
                     width = histXWidth[validi[0:-1]], color = 'orange',
                     edgecolor = 'black', linewidth = 1, zorder = 2,
+                    align = "edge", # align bar by left edge
                     label = 'MC size histogram')
         suppAx.plot(histXMean, HistCDF, '-', color = 'grey', linewidth = 2,
                     zorder = 5, label = 'Cumulative distrib.')

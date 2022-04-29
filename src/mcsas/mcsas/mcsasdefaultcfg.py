@@ -51,8 +51,6 @@ class cInfo(object):
     configuration parameters files.
     """
     parameters=None
-    logging.getLogger('McSAScfg')
-    logging.basicConfig(level = logging.DEBUG)
     parameterNames=list()
 
     def __init__(self,**kwargs):

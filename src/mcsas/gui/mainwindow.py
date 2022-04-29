@@ -115,6 +115,7 @@ Changes in v1.0.2:
 - minor fix in column header of data set list UI
 - updated icons for MacOS
 - minor fixes
+
 Changes in v1.0.1:
 - Bugfix for an EOFError in Windows with 'Calc. series statistics' enabled
 

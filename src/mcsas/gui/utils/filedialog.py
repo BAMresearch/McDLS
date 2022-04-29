@@ -64,7 +64,7 @@ def getSaveFile(parent, labeltext, path, filefilter):
     fileList = QFileDialog.getSaveFileName(
         parent,
         caption = labeltext,
-        dir = path,
+        directory = path,
         filter = fnfilter)
     if isList(fileList):
         fileList = [fn for fn in fileList if fnfilter not in fn]

@@ -402,11 +402,14 @@ class McSAS(AlgorithmBase):
         (*numReps*) of times. If convergence is not achieved, it will try 
         again for a maximum of *maxRetries* attempts.
         """
+
         # get settings
         numContribs = self.numContribs()
         numReps = self.numReps()
         if not any([isActiveFitParam(p) for p in self.model.params()]):
             numContribs, numReps = 1, 1
+        else:
+            numContribs, numReps = self.numContribs(), self.numReps()
         # find out how many values a shape is defined by:
         contributions = zeros((numContribs, 
             self.model.activeParamCount(), 
@@ -446,7 +449,7 @@ class McSAS(AlgorithmBase):
                                 numContribs,
                                 outputMeasVal = True, outputDetails = True,
                                 nRun = nr)
-                if any(array(contributions.shape) == 0):
+                if not any([isActiveFitParam(p) for p in self.model.params()]):
                     break # nothing active, nothing to fit
                 if self.stop:
                     logging.warning("Stop button pressed, exiting...")
@@ -544,8 +547,10 @@ class McSAS(AlgorithmBase):
             # avoid numerical errors
             sc[0] = data.f.limit[1] / modelData.chisqrInt.max()
 #        sc *= sum(wset)
-        bgScalingFit = BackgroundScalingFit(self.findBackground(),
-                                            self.fixed1stPoint())
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.positiveBackground.value(),
+                                            self.fixed1stPoint(),
+                                            self.model)
         # for the least squares fit, normalize the intensity by the sum of
         # weights which is << 1 (for SAXS, usually it's the sum
         # of the scatterers volumes), though increasing ft and reducing the
@@ -781,8 +786,10 @@ class McSAS(AlgorithmBase):
         # data, store it in result too, enables to postprocess later
         # store the model instance too
         data = self.data
-        bgScalingFit = BackgroundScalingFit(self.findBackground(),
-                                            self.fixed1stPoint())
+        bgScalingFit = BackgroundScalingFit(self.findBackground.value(),
+                                            self.positiveBackground.value(),
+                                            self.fixed1stPoint(),
+                                            self.model)
         # calc vol/num fraction and scaling factors for each repetition
         for ri in range(numReps):
             rset = contribs[:, :, ri] # single set of R for this calculation
