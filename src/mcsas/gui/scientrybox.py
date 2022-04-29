@@ -3,7 +3,7 @@
 
 from QtGui import QDoubleValidator, QValidator
 from QtWidgets import QLineEdit
-from QtCore import Qt
+from QtCore import Qt, QLocale
 
 from ..utils import clip
 
