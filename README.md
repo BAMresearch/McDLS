@@ -1,3 +1,8 @@
+<a href="https://github.com/BAMresearch/McDLS/releases/download/dls_1.0.1/McDLS.1.0.1.for.Windows.zip" target="_blank"><img src="https://img.shields.io/badge/Download%20for%20Windows-1.0.1-orange" alt="Download for Windows"></a>
+<a href="https://github.com/BAMresearch/McDLS/releases/download/dls_1.0.2/McDLS.1.0.2.for.MacOS.dmg" target="_blank"><img src="https://img.shields.io/badge/Download%20for%20macOS-1.0.2-orange" alt="Download for macOS"></a>
+
+<img align="right" width="200px" src="src/mcsas/resources/icon/mcsas_0128.png">
+
 ## McDLS
 
 Software for the retrieval of model parameter distributions from
