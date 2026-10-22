@@ -16,6 +16,8 @@ from mcsas import log
 from ..main import makeAbsolutePath
 from ..dataobj import SASData
 
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
+
 # set up matplotlib.pyplot, do this *before* importing pyplot
 try:
     # actually, we're using the TkAgg backend via matplotlibrc (Windows/Linux)
@@ -100,7 +102,8 @@ class PlotResults(object):
     # although the matplotlib version is the same for both (1.3.1)
     _infoTextFontSize = 10 # 'small'
     _infoText = {
-            "fontsize" : _infoTextFontSize, "size" : _infoTextFontSize,
+            "fontsize" : _infoTextFontSize,
+            #"size" : _infoTextFontSize,
             "horizontalalignment" : 'center',
             "multialignment" : 'center',
             "verticalalignment" : 'center'
