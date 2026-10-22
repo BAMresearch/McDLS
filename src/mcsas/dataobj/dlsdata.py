@@ -50,8 +50,8 @@ class DLSConfig(DataConfig):
                 "correlation data of each angle if there are multiple "
                 "measurements of the same sample. <br />Finally, "
                 "there will be a single data object for each angle which "
-                "contains the correlation mean and its standard deviation "
-                "interpreted as measurement uncertainty."),
+                "contains the correlation mean and its standard error of the "
+                "mean (SD/sqrt(N)) as measurement uncertainty."),
         Parameter("outlierThreshold", 3.5, unit = NoUnit(),
             displayName = "outlier threshold",
             valueRange = (0., 1e3),
@@ -440,7 +440,7 @@ class DLSData(DataObj):
             arr = array([getattr(o, prop)[0] for o in others])
             setFunc = getattr(self, _propSetterName(prop))
             if isCallable(setFunc):
-                setFunc(arr.mean(), arr.std(ddof = ddof))
+                setFunc(arr.mean(), arr.std(ddof = ddof) / np.sqrt(arr.shape[-1]))
         # angles unchanged, but ensure they're identical everywhere
         assert array([self.angles == o.angles for o in others]).all(), \
                "Scattering angles differ between all DLS data to be combined!"
@@ -469,11 +469,11 @@ class DLSData(DataObj):
                 # different count of good data for each angle average
                 corrClean  = stacked[:,a,self.config.filterMask[a]]
                 corr[:,a]  = corrClean.mean(-1)
-                corrU[:,a] = corrClean.std(-1, ddof = ddof)
+                corrU[:,a] = corrClean.std(-1, ddof = ddof) / np.sqrt(corrClean.shape[-1])
                 if stackedCR is not None:
                     crClean  = stackedCR[:,a,self.config.filterMask[a]]
                     cr[:,a]  = crClean.mean(-1)
-                    crU[:,a] = crClean.std(-1, ddof = ddof)
+                    crU[:,a] = crClean.std(-1, ddof = ddof) / np.sqrt(crClean.shape[-1])
                 if (self.config.outlierMap is None
                     or angle not in self.config.outlierMap
                     or not len(self.config.outlierMap[angle])):
@@ -485,11 +485,13 @@ class DLSData(DataObj):
                                 u = self.anglesUnit.displayMagnitudeName,
                                 o = sorted(list(self.config.outlierMap[angle]))))
         else:
-            corr, corrU = stacked.mean(-1), stacked.std(-1, ddof = ddof)
+            corr = stacked.mean(-1)
+            corrU = stacked.std(-1, ddof = ddof) / np.sqrt(stacked.shape[-1])
             if stackedCR is not None:
-                cr, crU     = stackedCR.mean(-1), stackedCR.std(-1, ddof = ddof)
+                cr = stackedCR.mean(-1)
+                crU = stackedCR.std(-1, ddof = ddof) / np.sqrt(stackedCR.shape[-1])
         # combine the mean across all data sets with the existing tau
-        # combine the std. deviation with the existing tau
+        # combine the std. error of the mean with the existing tau
         self.setCorrelation(corr, corrU)
         assert len(self.x0.siData) == len(self.f.siData), \
             "Dimensions of flattened data arrays do not match!"
