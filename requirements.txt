@@ -1,0 +1,7 @@
+# python3.10 -m venv mcdls
+future
+numpy<2
+PySide2
+scipy
+matplotlib
+h5py
