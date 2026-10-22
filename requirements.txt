@@ -5,3 +5,5 @@ PySide2
 scipy
 matplotlib
 h5py
+# ubuntu:
+# apt install python3.10-tk
