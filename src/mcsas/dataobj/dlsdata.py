@@ -167,6 +167,7 @@ class DLSData(DataObj):
                    # calculated properties
                    "scatteringVector", "gammaDivR", "tauGamma",
                    "capTime" ,"countRate")
+    _runCounts = None # number of averaged runs per angle, see accumulate()
 
     @classproperty
     @classmethod
@@ -465,9 +466,11 @@ class DLSData(DataObj):
             if stackedCR is not None:
                 cr    = np.zeros(stackedCR.shape[0:2])
                 crU   = np.zeros(stackedCR.shape[0:2])
+            runCounts = []
             for a, angle in enumerate(self.angles):
                 # different count of good data for each angle average
                 corrClean  = stacked[:,a,self.config.filterMask[a]]
+                runCounts.append(corrClean.shape[-1])
                 corr[:,a]  = corrClean.mean(-1)
                 corrU[:,a] = corrClean.std(-1, ddof = ddof) / np.sqrt(corrClean.shape[-1])
                 if stackedCR is not None:
@@ -487,12 +490,14 @@ class DLSData(DataObj):
         else:
             corr = stacked.mean(-1)
             corrU = stacked.std(-1, ddof = ddof) / np.sqrt(stacked.shape[-1])
+            runCounts = [stacked.shape[-1]] * stacked.shape[1]
             if stackedCR is not None:
                 cr = stackedCR.mean(-1)
                 crU = stackedCR.std(-1, ddof = ddof) / np.sqrt(stackedCR.shape[-1])
         # combine the mean across all data sets with the existing tau
         # combine the std. error of the mean with the existing tau
         self.setCorrelation(corr, corrU)
+        self._runCounts = runCounts
         assert len(self.x0.siData) == len(self.f.siData), \
             "Dimensions of flattened data arrays do not match!"
         # same for count rate data
@@ -506,6 +511,25 @@ class DLSData(DataObj):
         self.config.update(oldConfig)
         return self
 
+    @property
+    def chi2Expected(self):
+        """Expected reduced chi-squared of the true model when the
+        uncertainty is the standard error of the mean estimated from the
+        same M runs: each normalized residual follows a Student t
+        distribution with M-1 degrees of freedom, E[t^2] = (M-1)/(M-3).
+        Averaged over angles if this data set contains several."""
+        if not self._runCounts:
+            return 1.
+        expected = []
+        for m in self._runCounts:
+            if m > 3:
+                expected.append((m - 1.) / (m - 3.))
+            else: # infinite or undefined for M <= 3
+                logging.warning("Only {} run(s) averaged: the expected "
+                    "chi-squared is undefined, using 1.".format(m))
+                expected.append(1.)
+        return float(np.mean(expected))
+
     def splitPerAngle(self):
         lst = []
         if self.numAngles == 1:
@@ -515,6 +539,8 @@ class DLSData(DataObj):
             another = copy.copy(self)
             another.setAngles(self.anglesUnit, self.angles[i, newaxis])
             another.setMeasIndices(measIndices[i])
+            if self._runCounts is not None:
+                another._runCounts = [self._runCounts[i]]
             another.setTau(self.tau.unit, self.tau.rawDataSrcShape)
             another.setCorrelation(
                     self.correlation.rawDataSrcShape[:, i, newaxis],

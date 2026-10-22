@@ -38,7 +38,7 @@
     "convergenceCriterion" : {
         "displayName" : "convergence criterion",
         "valueRange" : [0,Infinity],
-        "description" : "Reduced Chi-squared value to reach for optimisation success.",
+        "description" : "Reduced Chi-squared value to reach for optimisation success, relative to the value expected for the true model (1 for known uncertainties, (M-1)/(M-3) for the mean of M DLS runs).",
         "default" : 1.00,
         "unitClass" : "NoUnit",
         "displayUnit" : "-",

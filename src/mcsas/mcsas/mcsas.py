@@ -420,8 +420,15 @@ class McSAS(AlgorithmBase):
         times = zeros(numReps)
         contribMeasVal = zeros([1, self.data.count, numReps])
 
-        self._convBuffer = ConvBuffer(self.convergenceCriterion(),
-                                      self.testConvVariance())
+        minConv = self.convergenceCriterion()
+        if not self.testConvVariance():
+            # relative to the chi-squared expected for the true model,
+            # 1 for data with known uncertainties, (M-1)/(M-3) for the
+            # mean of M runs with the SEM as uncertainty (DLS)
+            minConv *= getattr(self.data, "chi2Expected", 1.)
+            logging.info("Convergence criterion: chi-squared &lt; {0:.4g}"
+                         .format(minConv))
+        self._convBuffer = ConvBuffer(minConv, self.testConvVariance())
         # This is the loop that repeats the MC optimization numReps times,
         # after which we can calculate an uncertainty on the Results.
         for nr in range(numReps):
@@ -616,7 +623,7 @@ class McSAS(AlgorithmBase):
                 pdfRecorder.capture(rset,
                     bgScalingFit.dataScaled(testModelData.chisqrInt, sc),
                     numIter, numMoves)
-                text = "/{0:.3g}".format(self.convergenceCriterion())
+                text = "/{0:.3g}".format(self._convBuffer._minConv)
                 if self.testConvVariance():
                     text = ", var= {0:.3g}".format(self._convBuffer.key) + text
                 logging.info("rep {rep}/{reps}, good iter {it}: "
