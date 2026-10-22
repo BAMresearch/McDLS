@@ -36,7 +36,7 @@ Selecting a default:
 """
 
 import logging
-import collections
+from collections.abc import Sequence
 import numpy as np # For arrays
 from numpy import pi
 
@@ -151,13 +151,13 @@ class Unit(object):
         return iUnit / oUnit
 
     def toSi(self, value):
-        if isinstance(value, collections.Sequence): # for lists&tuples
+        if isinstance(value, Sequence): # for lists&tuples
             return type(value)((v * self.magnitudeConversion for v in value))
         # else:
         return value * self.magnitudeConversion
 
     def toDisplay(self, value):
-        if isinstance(value, collections.Sequence): # for lists&tuples
+        if isinstance(value, Sequence): # for lists&tuples
             return type(value)((v / self.magnitudeConversion for v in value))
         # else:
         return value / self.magnitudeConversion

@@ -6,7 +6,7 @@ import numpy # For arrays
 from numpy import (inf, array, reshape, shape, pi, diff, zeros,
                   size, sum, sqrt, log10,
                   isnan, newaxis)
-from scipy.integrate import simps
+from scipy.integrate import simpson
 # useful for debugging numpy RuntimeWarnings
 # numpy.seterr(all = "raise", under = "ignore")
 import time # Timekeeping and timing of objects
@@ -176,7 +176,7 @@ class DistribRecorder(object):
                         move = numMoves, it = numIter,
                         xr = self._xrange,
                         resMean = res.mean(), resVar = res.var(), resArea =
-                        simps(res, x = signalData[:,0], even='first'))
+                        simpson(res, x = signalData[:,0], even='first'))
                    .replace("\n","")]
 #            print("cmd:", cmd)
 #            return
