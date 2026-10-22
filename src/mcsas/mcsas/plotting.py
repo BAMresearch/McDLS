@@ -32,7 +32,7 @@ except ImportError:
     pass # no pyside
 
 if not isMac():
-    matplotlib.rcParams['backend'] = 'TkAgg'
+    matplotlib.rcParams['backend'] = 'QtAgg'
 
 import matplotlib.font_manager as fm
 from matplotlib import gridspec
