@@ -5,7 +5,7 @@ import logging
 import datetime
 import re
 import os.path
-from numpy import array as np_array
+import numpy as np
 from collections import OrderedDict
 
 from ..utils.units import Angle, Temperature, DynamicViscosity, Length, MSec, Sec
@@ -298,11 +298,11 @@ class CGSFile(AsciiFile):
         # scattering angles
         aunit = Angle(self.units['angles'])
         if self.angles is not None:
-            dlsData.setAngles(aunit, aunit.toSi(np_array(self.angles)))
+            dlsData.setAngles(aunit, aunit.toSi(np.array(self.angles)))
         # correlation array
         dlsData.setTau(self._tauUnit, self.correlation[:, 0])
         dlsData.setCorrelation(self.correlation[:, 1:])
-        if isList(self.countRate):
+        if isList(self.countRate) or isinstance(self.countRate, np.ndarray):
             dlsData.setCapTime(Sec, self.countRate[:, 0])
             dlsData.setCountRate(self.countRate[:, 1:])
         dlsData.initConfig() # has to be called after setup

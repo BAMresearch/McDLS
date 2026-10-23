@@ -608,7 +608,7 @@ class DLSData(DataObj):
             return # None or inconsistent data to analyse
         # outlier detection by median absolute deviation from:
         # http://stackoverflow.com/a/22357811
-        stacked = dstack((d.countRate.rawDataSrcShape for d in dataList))
+        stacked = dstack([d.countRate.rawDataSrcShape for d in dataList])
         # median over stacking axis, extend array shape by one dim
         median = np.median(stacked, axis = -1)[:,:,None]
         diff = np.sqrt(np.sum((stacked - median)**2, axis = 0)) # sum along tau
