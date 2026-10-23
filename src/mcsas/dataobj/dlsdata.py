@@ -545,9 +545,9 @@ class DLSData(DataObj):
             another.setCorrelation(
                     self.correlation.rawDataSrcShape[:, i, newaxis],
                     self.correlation.rawDataUSrcShape[:, i, newaxis])
-            if isList(self.capTime):
+            if self.capTime is not None:
                 another.setCapTime(self.capTime.unit, self.capTime.rawDataSrcShape)
-            if isList(self.countRate):
+            if self.countRate is not None:
                 another.setCountRate(self.countRate.rawDataSrcShape[:, i, newaxis],
                                      self.countRate.rawDataUSrcShape[:, i, newaxis])
             # reset config in order to fix callbacks, but maintain option values
