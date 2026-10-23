@@ -78,12 +78,12 @@ def main(argv = None):
 #        with open(logfn, "w") as fd:
 #            fd.write("argv: " + str(sys.argv) + "\n")
         raise
-    # forwarding logging setting, quick fix 
+    # forwarding logging setting, quick fix
     import mcsas.gui.calc # importing here makes avoids import loops elsewhere
     mcsas.gui.calc.Calculator.nolog = args.nolog
 
     # initiate logging (to console stderr for now)
-    replaceStdOutErr() # replace all text output with our sinks
+    #replaceStdOutErr() # replace all text output with our sinks
 
     if not args.text:
         from mcsas.gui.mainwindow import eventLoop
